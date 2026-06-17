@@ -69,8 +69,6 @@ class LLMMgr:
     def __init__(s,prov="auto"):s.a=None;s.prov=None;s.model=None;s.try_init(prov=prov)
     def try_init(s,prov="auto"):
         from gbt.llm import GBTLLM
-        # 再次确保 .env 已加载
-        _load_env_force()
         disc=AutoKeyConfig.scan()
         valid=[p for p,i in disc.items() if i["status"]=="available"]
         if prov!="auto" and prov in valid:valid.insert(0,prov)

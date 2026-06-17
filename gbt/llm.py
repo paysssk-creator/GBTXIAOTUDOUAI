@@ -64,8 +64,17 @@ class GBTLLM:
                           os.path.join(os.path.dirname(__file__),"..",".env"),
                           os.path.join(os.path.dirname(__file__),"..","..",".env")]:
                     if _p and os.path.exists(_p):
-                        from dotenv import dotenv_values
-                        v = dotenv_values(_p).get(ek)
+                        try:
+                            with open(_p,"r",encoding="utf-8") as f:
+                                for line in f:
+                                    line=line.strip()
+                                    if not line or line.startswith("#"): continue
+                                    if "=" in line:
+                                        kk,vv=line.split("=",1)
+                                        if kk.strip()==ek:
+                                            v=vv.strip().strip('"').strip("'")
+                                            break
+                        except: pass
                         if v: print(f"KEY from .env: {ek}={v[:8]}...{v[-4:]}"); break
             if v:
                 print(f"KEY used: {ek}={v[:8]}...{v[-4:]}")
