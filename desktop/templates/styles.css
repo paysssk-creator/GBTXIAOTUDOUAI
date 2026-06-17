@@ -53,9 +53,8 @@ body{
 
 /* ── Titlebar ── */
 #tb{height:var(--title-h);display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);flex-shrink:0;-webkit-app-region:drag}
-#tb .logo{display:flex;align-items:center;gap:var(--s2);-webkit-app-region:no-drag}
-#tb .logo .g{width:18px;height:18px;border-radius:var(--r1);background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800}
-#tb .logo span{font-size:12px;font-weight:600;color:var(--t3)}
+#tb .logo{display:flex;align-items:center;-webkit-app-region:no-drag}
+#tb .logo span{font-size:12px;font-weight:500;color:var(--t3)}
 #tb .btns{display:flex;-webkit-app-region:no-drag}
 .tbb{width:36px;height:var(--title-h);border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .1s var(--e-out)}.tbb:hover{background:rgba(0,0,0,.04);color:var(--t1)}.tbb.cl:hover{background:var(--red);color:#fff}
 
