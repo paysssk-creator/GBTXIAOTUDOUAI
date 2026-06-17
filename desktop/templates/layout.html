@@ -1,285 +1,229 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 
-<div id="titlebar">
-  <div class="brand">
-    <div class="g">G</div>
-    <span>GBT Pro</span>
-  </div>
-  <div class="win">
-    <button class="wb" onclick="win.min()"><i class="ph ph-minus"></i></button>
-    <button class="wb" onclick="win.max()"><i class="ph ph-square"></i></button>
-    <button class="wb close" onclick="win.close()"><i class="ph ph-x"></i></button>
+<div id="tb">
+  <div class="logo"><div class="g">G</div><span>GBT Pro</span></div>
+  <div class="btns">
+    <button class="tb-btn" onclick="win.min()"><i class="ph ph-minus"></i></button>
+    <button class="tb-btn" onclick="win.max()"><i class="ph ph-square"></i></button>
+    <button class="tb-btn cl" onclick="win.close()"><i class="ph ph-x"></i></button>
   </div>
 </div>
 
-<div id="app-body">
-  <nav id="sidebar">
-    <div class="sb-top">
-      <div class="sb-identity">
-        <div class="sb-avatar">G</div>
-        <div class="sb-title">
-          <h2>GBT Pro</h2>
-          <div class="sub">Desktop AI Agent</div>
-        </div>
+<div id="app">
+  <nav id="sb">
+    <div class="sb-head">
+      <div class="sb-id">
+        <div class="sb-av">G</div>
+        <div><h2>GBT Pro</h2><div class="ver">DeepSeek v4-pro</div></div>
       </div>
     </div>
     <div class="sb-nav">
-      <div class="nav-group">
-        <div class="nav-label">Conversation</div>
-        <button class="nav-item active" data-view="chat" onclick="switchView('chat',this)">
-          <i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span>
-        </button>
-        <button class="nav-item" data-view="reason" onclick="switchView('reason',this)">
-          <i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span>
-        </button>
-      </div>
-      <div class="nav-group">
-        <div class="nav-label">MCP Tools</div>
-        <button class="nav-item" onclick="runTool('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
-        <button class="nav-item" onclick="runTool('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
-        <button class="nav-item" onclick="runTool('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
-        <button class="nav-item" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
-      </div>
+      <button class="ni active" data-view="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span></button>
+      <button class="ni" data-view="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span></button>
+      <div class="sb-sep"></div>
+      <div class="sb-label">Tools</div>
+      <button class="ni" onclick="run('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
+      <button class="ni" onclick="run('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
+      <button class="ni" onclick="run('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
+      <button class="ni" onclick="ev()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
     </div>
-    <div class="sb-footer">
-      <select id="ms" onchange="switchProvider()" class="ms"><option>Loading…</option></select>
-      <div class="sb-status">
-        <span class="sb-dot" id="status-dot"></span>
-        <span id="status-text">Connecting</span>
-      </div>
+    <div class="sb-foot">
+      <div class="st-row"><span class="sb-dot" id="sd"></span><span id="stx">Connecting</span></div>
     </div>
   </nav>
 
-  <div id="main">
-    <div class="chat-view" id="chat-view">
-      <div class="messages" id="msgs">
-        <div class="welcome" id="welcome">
-          <div class="welcome-icon"><i class="ph ph-sparkle"></i></div>
-          <h3>Welcome to GBT Pro</h3>
-          <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 13 integrated tools<br>Analyze code, reason deeply, scan security, auto-fix.</p>
-          <div class="welcome-chips">
-            <button class="chip" onclick="quick('Analyze my project structure')"><i class="ph ph-folder-open"></i> Analyze Project</button>
-            <button class="chip" onclick="quick('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> Security Scan</button>
-            <button class="chip" onclick="switchView('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-brain"></i> Deep Reason</button>
+  <div id="mn">
+    <!-- Market ticker (floating) -->
+    <div class="mkt-ticker" id="mk"></div>
+    <!-- Status bar (floating) -->
+    <div class="status-bar"><div class="stat-item"><span class="stat-dot cpu"></span><span id="cv2">—</span></div><div class="stat-item"><span class="stat-dot mem"></span><span id="rv">—</span></div><div class="stat-item"><span class="stat-dot key"></span><span id="kv">—</span></div></div>
+
+    <!-- Main Card -->
+    <div class="card">
+      <!-- Badge bar -->
+      <div class="badge-bar">
+        <button class="plus-badge" onclick="go('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-sparkle"></i> Deep Reasoning</button>
+        <button class="ia-btn" onclick="go('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-sidebar-simple"></i></button>
+      </div>
+
+      <!-- Chat View -->
+      <div class="chat-area" id="cv">
+        <div class="welcome" id="wc">
+          <h1>我们该做什么？</h1>
+          <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描 · 自动修复</p>
+          <div class="quick-suggestions" style="width:100%">
+            <div class="qs-label">快速开始</div>
+            <button class="qs-row" onclick="qt('Analyze my project structure')"><i class="ph ph-folder-open"></i> 排查项目结构<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+            <button class="qs-row" onclick="qt('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> 安全漏洞扫描<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+            <button class="qs-row" onclick="qt('Help me plan the implementation')"><i class="ph ph-git-branch"></i> 规划实施方案<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+            <button class="qs-row" onclick="run('audit')"><i class="ph ph-squares-four"></i> 将常用工具连接到 GBT<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
           </div>
         </div>
-      </div>
-      <div class="input-bar">
-        <div class="input-wrap">
-          <textarea id="ci" placeholder="Message GBT…" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
-          <button class="send-btn" onclick="chat()"><i class="ph ph-paper-plane-right"></i></button>
+        <div class="msg-list" id="ml"></div>
+        <div class="input-area">
+          <div class="input-card">
+            <textarea id="ci" placeholder="随心输入…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ch()}"></textarea>
+            <div class="input-actions">
+              <div class="ia-left">
+                <button class="ia-btn"><i class="ph ph-paperclip"></i></button>
+              </div>
+              <div class="ia-right">
+                <select class="model-select" id="ms" onchange="sp()"><option>DeepSeek v4-pro</option></select>
+                <button class="send-btn" onclick="ch()"><i class="ph ph-arrow-up"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="footer-hint"><i class="ph ph-folder"></i> 进入项目工作</div>
         </div>
       </div>
-    </div>
 
-    <div id="reason-view" style="display:none">
-      <div class="reason-header">
-        <h3>Deep Reasoning Engine</h3>
-        <div class="sub">Step-by-step logical decomposition for complex decisions</div>
-        <div class="mode-pills">
-          <button class="mp active" data-mode="CHAIN" onclick="setRM('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
-          <button class="mp" data-mode="TREE" onclick="setRM('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
-          <button class="mp" data-mode="SWOT" onclick="setRM('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
-          <button class="mp" data-mode="ROOT_CAUSE" onclick="setRM('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+      <!-- Reason View -->
+      <div class="chat-area" id="rv" style="display:none">
+        <div class="rh">
+          <h3>Deep Reasoning Engine</h3>
+          <div class="sub">Step-by-step logical decomposition for complex decisions</div>
+          <div class="mps">
+            <button class="mp active" data-mode="CHAIN" onclick="sm('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
+            <button class="mp" data-mode="TREE" onclick="sm('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
+            <button class="mp" data-mode="SWOT" onclick="sm('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
+            <button class="mp" data-mode="ROOT_CAUSE" onclick="sm('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+          </div>
         </div>
-      </div>
-      <div class="reason-body-wrap" id="reason-content">
-        <div class="welcome"><h3>Deep Reasoning</h3><p>Enter a complex question — the engine breaks it down step by step.</p></div>
-      </div>
-      <div class="input-bar">
-        <div class="input-wrap">
-          <textarea id="ri" placeholder="Ask a reasoning question…" rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
-          <button class="send-btn" onclick="reason()"><i class="ph ph-lightbulb"></i></button>
+        <div class="msg-list" id="rl">
+          <div class="welcome"><h1 style="font-size:24px">深度推理</h1><p>输入复杂问题——引擎将逐步拆解分析</p></div>
+        </div>
+        <div class="input-area">
+          <div class="input-card">
+            <textarea id="ri" placeholder="提出推理问题…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();rs()}"></textarea>
+            <div class="input-actions">
+              <div class="ia-left"></div>
+              <div class="ia-right">
+                <button class="send-btn" onclick="rs()"><i class="ph ph-arrow-up"></i></button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <aside id="panel">
-    <div class="panel-sec">
-      <h4>System Monitor</h4>
-      <div class="stat"><div class="stat-row"><span>CPU</span><span class="val" id="cv2">—</span></div><div class="stat-bar"><div class="fill fill-cpu" id="cb" style="width:0%"></div></div></div>
-      <div class="stat"><div class="stat-row"><span>Memory</span><span class="val" id="rv">—</span></div><div class="stat-bar"><div class="fill fill-mem" id="rb" style="width:0%"></div></div></div>
-      <div class="stat"><div class="stat-row"><span>API Keys</span><span class="val" id="kv">—</span></div><div class="stat-bar"><div class="fill fill-key" id="kb" style="width:0%"></div></div></div>
-    </div>
-    <div class="panel-sec">
-      <h4>LLM Engine</h4>
-      <div class="info-card accent"><i class="ph ph-cpu"></i> <span id="ll">Provider: —</span></div>
-      <div class="info-card info"><i class="ph ph-brain"></i> <span id="mc">Model: —</span></div>
-      <div class="info-card success"><i class="ph ph-plugs-connected"></i> <span id="dv">MCP: —</span></div>
-    </div>
-    <div class="panel-sec">
-      <h4>A-Shares Market</h4>
-      <div id="market-panel" style="font-size:12px;color:var(--text-muted)">Loading…</div>
-    </div>
-    <div class="panel-sec">
-      <h4>Providers</h4>
-      <div id="pl" style="font-size:12px;color:var(--text-muted)">Loading…</div>
-    </div>
-  </aside>
 </div>
 
 <script>
-const A='/api', D=document, win=function(){};
-let RM='CHAIN', st={};
+var A='/api',D=document,win=function(){};
+var RM='CHAIN',st={};
+var $=function(id){return D.getElementById(id)};
+var es=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
+var ts=function(){return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})};
 
-const $=id=>D.getElementById(id);
-const esc=t=>{const e=D.createElement('span');e.textContent=t;return e.innerHTML};
-const now=()=>new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
-
-function switchView(v,btn){
-  D.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+function go(v,btn){
+  D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});
   if(btn)btn.classList.add('active');
-  $('chat-view').style.display=v==='chat'?'flex':'none';
-  $('reason-view').style.display=v==='reason'?'flex':'none';
+  $('cv').style.display=v==='chat'?'flex':'none';
+  $('rv').style.display=v==='reason'?'flex':'none';
   (v==='reason'?$('ri'):$('ci')).focus();
 }
-function setRM(m,btn){RM=m;D.querySelectorAll('.mp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-function quick(t){$('ci').value=t;chat();}
-function toast(t){const d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(()=>d.remove(),3000);}
-const hideWelcome=()=>{const w=$('welcome');if(w)w.style.display='none';};
+function sm(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');}
+function qt(t){$('ci').value=t;ch()}
+function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},3000);}
+function hideW(){var w=$('wc');if(w)w.style.display='none';}
 
-function addMsg(role,text,containerId){
-  const c=$(containerId||'msgs');
-  if(!containerId) hideWelcome();
-  const g=D.createElement('div'); g.className='msg-group';
-  const isUser=role==='user';
-  g.innerHTML=
-    '<div class="msg-avatar '+(isUser?'user':'ai')+'">'+(isUser?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
-    '<div class="msg-body">'+
-      '<div class="msg-header"><span class="msg-author">'+(isUser?'You':'GBT')+'</span><span class="msg-time">'+now()+'</span></div>'+
-      '<div class="msg-content">'+esc(text)+'</div>'+
-    '</div>'+
-    '<div class="msg-actions"><button class="msg-act-btn" title="Copy" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.querySelector(\'.msg-content\').textContent);toast(\'Copied\')"><i class="ph ph-copy"></i></button></div>';
-  c.appendChild(g);
-  c.scrollTop=c.scrollHeight;
-  return g;
+function add(role,txt,cid){
+  var c=$(cid||'ml');if(!cid)hideW();
+  var g=D.createElement('div');g.className='mg';
+  var isU=role==='user';
+  g.innerHTML='<div class="av '+(isU?'u':'a')+'">'+(isU?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
+    '<div class="mb"><div class="mh"><span class="mauth">'+(isU?'You':'GBT')+'</span><span class="mtime">'+ts()+'</span></div>'+
+    '<div class="mc">'+es(txt)+'</div></div>';
+  c.appendChild(g);c.scrollTop=c.scrollHeight;return g;
 }
 
-function chat(){
-  const t=$('ci').value.trim(); if(!t) return; $('ci').value='';
-  addMsg('user',t);
-  const g=addMsg('ai','Thinking…');
-  g.querySelector('.msg-content').classList.add('thinking');
+function ch(){
+  var t=$('ci').value.trim();if(!t)return;$('ci').value='';
+  add('user',t);var g=add('ai','');g.querySelector('.mc').classList.add('th');
   fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
-  .then(r=>r.json()).then(r=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').textContent=r.response||r.error;
-  }).catch(e=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  .then(function(r){return r.json()}).then(function(r){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').textContent=r.response||r.error;
+  }).catch(function(e){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>';
   });
 }
 
-function reason(){
-  const t=$('ri').value.trim(); if(!t) return; $('ri').value='';
-  const c=$('reason-content'),w=c.querySelector('.welcome');
-  if(w) w.style.display='none';
-  addMsg('user','['+RM+'] '+t,'reason-content');
-  const g=addMsg('ai','Analyzing with '+RM+'…','reason-content');
-  g.querySelector('.msg-content').classList.add('thinking');
+function rs(){
+  var t=$('ri').value.trim();if(!t)return;$('ri').value='';
+  var h=$('rl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
+  add('user','['+RM+'] '+t,'rl');
+  var g=add('ai','','rl');g.querySelector('.mc').classList.add('th');
   fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
-  .then(r=>r.json()).then(r=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').innerHTML=
-      '<div class="reason-card">'+
-      '<div class="reason-meta"><span class="reason-badge">'+(r.mode||RM)+'</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
-      '<div class="reason-body">'+esc(r.conclusion||'No conclusion')+'</div></div>';
-    c.scrollTop=c.scrollHeight;
-  }).catch(e=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  .then(function(r){return r.json()}).then(function(r){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').innerHTML='<div class="rc"><div class="rmt"><span class="rb">'+(r.mode||RM)+
+      '</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
+      '<div class="rbo">'+es(r.conclusion||'No conclusion')+'</div></div>';
+    h.scrollTop=h.scrollHeight;
+  }).catch(function(e){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>';
   });
 }
 
-function switchProvider(){
-  const p=$('ms').value; if(!p||!st.p||!st.p[p]||st.p[p].status!='available') return;
-  const g=addMsg('ai','Switching to '+st.p[p].name+'…');
-  g.querySelector('.msg-content').classList.add('thinking');
+function sp(){
+  var p=$('ms').value;if(!p)return;
+  var g=add('ai','');g.querySelector('.mc').classList.add('th');
   fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
-  .then(r=>r.json()).then(j=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed';
+  .then(function(r){return r.json()}).then(function(j){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed';
   });
 }
 
-function runTool(s){
-  hideWelcome();
-  const g=addMsg('ai','Running '+s+'…');
-  g.querySelector('.msg-content').classList.add('thinking');
-  fetch(A+'/mcp/'+s,{method:'POST'}).then(r=>r.json()).then(r=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--text-muted)">'+(r.data||'').substring(0,300)+'</small>':'');
+function run(s){
+  hideW();
+  var g=add('ai','');g.querySelector('.mc').classList.add('th');
+  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--text-tertiary)">'+(r.data||'').substring(0,300)+'</small>':'');
   });
 }
 
-function evo(){
-  hideWelcome();
-  const g=addMsg('ai','Starting 6-step evolution…');
-  g.querySelector('.msg-content').classList.add('thinking');
-  fetch(A+'/evolve',{method:'POST'}).then(r=>r.json()).then(r=>{
-    g.querySelector('.msg-content').classList.remove('thinking');
-    g.querySelector('.msg-content').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL';
+function ev(){hideW();var g=add('ai','');g.querySelector('.mc').classList.add('th');
+  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){
+    g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL';
   });
 }
 
 async function init(){
-  try{
-    const r=await fetch(A+'/status'); st=await r.json();
-    $('ll').textContent='Provider: '+st.llm; $('mc').textContent='Model: '+st.model;
-    $('kv').textContent=st.keys_available+'/'+st.keys_total;
-    $('kb').style.width=(st.keys_available/st.keys_total*100)+'%';
-    $('dv').textContent='MCP: '+st.mcp_count+' servers';
-    $('status-text').textContent=st.llm+' '+st.model;
-    $('status-dot').classList.add('online');
-  }catch(e){}
-  await loadProviders(); await loadMarket();
-  loadSystem(); setInterval(loadSystem,4000);
-  setInterval(loadMarket,30000);
+  try{var r=await fetch(A+'/status');st=await r.json();
+    $('stx').textContent=st.llm+' '+st.model;$('sd').classList.add('on');
+    $('kv').textContent=st.keys_available+'/'+st.keys_total+' keys';
+  }catch(e){$('stx').textContent='Offline';}
+  await ldP();
+  ldM();ldS();
+  setInterval(ldS,4000);setInterval(ldM,30000);
 }
 
-async function loadProviders(){
-  try{
-    const r=await fetch(A+'/providers'); st.p=await r.json();
-    const s=$('ms'), pl=$('pl'); s.innerHTML=''; pl.innerHTML='';
-    for(const k in st.p){
-      const v=st.p[k], on=v.status==='available';
-      s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';
-      pl.innerHTML+='<div class="prov-row"><span class="prov-dot '+(on?'on':'off')+'"></span>'+v.name+'</div>';
-    }
-  }catch(e){}
-}
+async function ldP(){try{var r=await fetch(A+'/providers');st.p=await r.json();var s=$('ms');s.innerHTML='';
+  for(var k in st.p){var v=st.p[k],on=v.status==='available';
+    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';}
+}catch(e){}}
 
-async function loadMarket(){
-  try{
-    const r=await fetch(A+'/market'); const d=await r.json();
-    const mp=$('market-panel');
-    if(!d.updated||!d.indices.length){mp.innerHTML='<span style="color:var(--text-muted)">Market offline</span>';return}
-    let h='';
-    d.indices.forEach(i=>{
-      const dir=i.change>=0?'mkt-up':'mkt-down', arr=i.change>=0?'+':'';
-      h+='<div class="mkt-row"><span class="mkt-name">'+i.name+'</span><span class="mkt-price '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkt-chg '+dir+'">'+arr+i.change+'</span><span class="mkt-chg '+dir+'" style="min-width:44px">'+arr+i.changePct+'%</span></div>';
-    });
-    mp.innerHTML=h;
-  }catch(e){}
-}
+async function ldM(){try{var r=await fetch(A+'/market');var d=await r.json();var mk=$('mk');
+  if(!d.updated||!d.indices.length){mk.innerHTML='';return}
+  var h='';d.indices.slice(0,3).forEach(function(i){var dir=i.change>=0?'up':'dn',arr=i.change>=0?'+':'';
+    h+='<span>'+i.name.substring(0,4)+' <b class="'+dir+'">'+i.price.toFixed(0)+'</b> <span class="'+dir+'">'+arr+i.changePct+'%</span></span>';});
+  mk.innerHTML=h;}catch(e){}}
 
-async function loadSystem(){
-  try{
-    const r=await fetch(A+'/system'); const d=await r.json();
-    $('cv2').textContent=d.cpu+'%'; $('cb').style.width=d.cpu+'%';
-    $('rv').textContent=d.memory+'%'; $('rb').style.width=d.memory+'%';
-  }catch(e){}
-}
+async function ldS(){try{var r=await fetch(A+'/system');var d=await r.json();
+  $('cv2').textContent='CPU '+d.cpu+'%';$('rv').textContent='RAM '+d.memory+'%';}catch(e){}}
 
-D.addEventListener('keydown',e=>{
-  if(e.ctrlKey&&e.key==='1'){e.preventDefault();switchView('chat',D.querySelector('[data-view=chat]'));}
-  if(e.ctrlKey&&e.key==='2'){e.preventDefault();switchView('reason',D.querySelector('[data-view=reason]'));}
+D.addEventListener('keydown',function(e){
+  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-view=chat]'));}
+  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-view=reason]'));}
 });
 
 init();
