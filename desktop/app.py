@@ -53,7 +53,7 @@ else:
 C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
 H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
 J=open(os.path.join(TD,"scripts.js"),encoding="utf-8").read() if os.path.exists(os.path.join(TD,"scripts.js")) else ""
-HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT</title><style>{C}</style></head><body>{H}</body></html>'
+HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro</title><style>{C}</style></head><body>{H}</body></html>'
 
 # ── LLM Manager with failover ──
 class LLMMgr:
