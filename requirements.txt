@@ -1,0 +1,22 @@
+# GBT Agent Framework v1.5.1 — 依赖
+# 核心
+openai>=1.0.0
+python-dotenv>=1.0.0
+requests>=2.31
+ollama>=0.1.0
+# 桌面/操控
+Pillow>=10.0
+flask>=3.0
+pyautogui>=0.9
+pyttsx3>=2.90
+SpeechRecognition>=3.10
+pyperclip>=1.8
+psutil>=5.9
+# 可选增强
+# tesserocr>=2.6
+# easyocr>=1.7
+# opencv-python>=4.8
+# bleak>=0.21
+# screeninfo>=0.8
+# pycaw>=20230407
+# win10toast>=0.9
