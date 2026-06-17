@@ -164,6 +164,7 @@ body{
 .cn-item:hover{background:var(--bg-hover);border-color:var(--b-sub)}
 .cn-item .cn-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;transition:color .1s var(--e-out)}
 .cn-item .cn-name{font-size:12px;font-weight:500;color:var(--t2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cn-item .cn-tools{font-size:9px;color:var(--t4);margin-left:4px;background:rgba(0,0,0,.02);padding:0 4px;border-radius:var(--r-full);font-weight:500}
 .cn-item .cn-badge{font-size:10px;font-weight:600;padding:1px 7px;border-radius:var(--r-full);flex-shrink:0}
 .cn-item .cn-badge.on{background:var(--green-bg);color:var(--green)}
 .cn-item .cn-badge.off{background:rgba(0,0,0,.02);color:var(--t4)}

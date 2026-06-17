@@ -272,6 +272,107 @@ def cn_disconnect(cid):
     reg.disconnect(cid)
     return jsonify({"ok":True,"status":"disconnected"})
 
+@app.route("/api/connectors/<cid>/action",methods=["POST"])
+def cn_action(cid):
+    """Execute a native connector action."""
+    d = request.json or {}
+    act = d.get("action","")
+    args = d.get("args",{})
+    r = {"ok":False,"error":"Unknown action"}
+    # ── Filesystem ──
+    if cid == "filesystem":
+        p = args.get("path","")
+        if act == "list" and p:
+            try:
+                items = []
+                for f in os.listdir(p):
+                    fp = os.path.join(p,f)
+                    items.append({"name":f,"is_dir":os.path.isdir(fp),"size":os.path.getsize(fp) if os.path.isfile(fp) else 0})
+                r = {"ok":True,"path":p,"items":items[:50]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "read" and p:
+            try:
+                with open(p,"r",encoding="utf-8",errors="replace") as f:
+                    r = {"ok":True,"content":f.read()[:5000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "write" and p:
+            try:
+                with open(p,"w",encoding="utf-8") as f: f.write(args.get("content",""))
+                r = {"ok":True,"written":len(args.get("content",""))}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Terminal ──
+    elif cid == "terminal":
+        cmd = args.get("cmd","")
+        if act == "exec" and cmd:
+            try:
+                res = subprocess.run(cmd,shell=True,capture_output=True,text=True,timeout=30,cwd=args.get("cwd") or os.path.expanduser("~"))
+                r = {"ok":True,"stdout":res.stdout[:3000],"stderr":res.stderr[:1000],"code":res.returncode}
+            except subprocess.TimeoutExpired: r = {"ok":False,"error":"Timeout (30s)"}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Git ──
+    elif cid == "git":
+        repo = args.get("repo",os.path.dirname(os.path.dirname(__file__)))
+        if act == "status":
+            try:
+                res = subprocess.run("git status --short",shell=True,capture_output=True,text=True,timeout=10,cwd=repo)
+                r = {"ok":True,"output":res.stdout,"branch":subprocess.run("git branch --show-current",shell=True,capture_output=True,text=True,cwd=repo).stdout.strip()}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "log":
+            try:
+                res = subprocess.run("git log --oneline -10",shell=True,capture_output=True,text=True,timeout=10,cwd=repo)
+                r = {"ok":True,"commits":res.stdout.strip().split("\n") if res.stdout else []}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Process Manager ──
+    elif cid == "process":
+        if act == "list":
+            try:
+                res = subprocess.run("tasklist /fo csv /nh",shell=True,capture_output=True,text=True,timeout=10)
+                procs = []
+                for line in res.stdout.strip().split("\n")[:30]:
+                    parts = line.replace('"','').split(",")
+                    if len(parts)>=2: procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
+                r = {"ok":True,"processes":procs}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Display / Screenshot ──
+    elif cid == "display":
+        if act == "screenshot":
+            try:
+                import tempfile
+                tmp = os.path.join(tempfile.gettempdir(),"gbt_screenshot.png")
+                # Uses pyautogui if available
+                try:
+                    import pyautogui
+                    img = pyautogui.screenshot()
+                    img.save(tmp)
+                    r = {"ok":True,"path":tmp,"size":os.path.getsize(tmp)}
+                except ImportError:
+                    # Fallback to PowerShell
+                    ps = f"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds | ConvertTo-Json"
+                    res = subprocess.run(["powershell","-NoProfile","-Command",ps],capture_output=True,text=True,timeout=10)
+                    r = {"ok":True,"display_info":res.stdout.strip()[:500]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Market ──
+    elif cid == "market":
+        if act == "get_indices":
+            try:
+                import urllib.request,re
+                indices = {'sh000001':'SSE','sz399001':'SZSE','sz399006':'ChiNext','sh000688':'STAR50','sh000300':'CSI300','sz399005':'SME100'}
+                codes = ",".join(indices.keys())
+                req = urllib.request.Request("http://hq.sinajs.cn/list="+codes,headers={"Referer":"https://finance.sina.com.cn"})
+                raw = urllib.request.urlopen(req,timeout=5).read().decode("gbk")
+                result = []
+                for line in raw.strip().split("\n"):
+                    m = re.search(r"(sh\d+|sz\d+)",line)
+                    if not m: continue
+                    pm = re.search(r'="(.+)"',line)
+                    if not pm: continue
+                    parts = pm.group(1).split(",")
+                    if len(parts)<4: continue
+                    result.append({"code":m.group(0),"name":indices.get(m.group(0),parts[0]),"price":float(parts[3] or 0),"change":round(float(parts[3] or 0)-float(parts[2] or 0),2)})
+                r = {"ok":True,"indices":result}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    return jsonify(r)
+
 @app.route("/api/reason",methods=["POST"])
 def rs():
     d=request.json or {};

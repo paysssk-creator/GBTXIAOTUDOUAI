@@ -207,9 +207,11 @@ async function loadConnectors(){
       cats[cat].forEach(function(c){
         var st=c.status;var sc=st==='connected'?'on':(st==='error'?'err':'off');
         var stx=st==='connected'?'Active':(st==='error'?'Error':'Off');
-        h+='<div class="cn-item '+sc+'" onclick="connToggle(\''+c.id+'\',\''+st+'\')" title="'+c.description+'">';
+        var toolCount = c.tools ? c.tools.length : 0;
+        var toolHint = toolCount > 0 ? (toolCount+' tools') : '';
+        h+='<div class="cn-item '+sc+'" onclick="cnToggle(\''+c.id+'\',\''+st+'\')" title="'+c.description+'\n'+toolHint+'">';
         h+='<i class="cn-icon '+c.icon+'"></i>';
-        h+='<span class="cn-name">'+c.name+'</span>';
+        h+='<span class="cn-name">'+c.name+(toolCount>0?'<span class="cn-tools">'+toolCount+'</span>':'')+'</span>';
         h+='<span class="cn-badge '+sc+'">'+stx+'</span></div>';
       });
     }
@@ -217,7 +219,7 @@ async function loadConnectors(){
   }catch(e){$('cn').innerHTML='<span style="color:var(--red);font-size:11px">Failed to load</span>'}
 }
 
-function connToggle(id,status){
+function cnToggle(id,status){
   var ep=status==='connected'?'disconnect':'connect';
   fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
     toast(j.ok?('Connected: '+j.status):(j.error||'Failed'));loadConnectors();
