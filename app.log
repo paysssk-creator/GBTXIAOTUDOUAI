@@ -1,0 +1,40 @@
+Agent init: too many values to unpack (expected 3) - demo mode
+Browser: http://localhost:8765
+python-dotenv could not parse statement starting at line 1
+python-dotenv could not parse statement starting at line 2
+python-dotenv could not parse statement starting at line 4
+python-dotenv could not parse statement starting at line 5
+python-dotenv could not parse statement starting at line 6
+python-dotenv could not parse statement starting at line 7
+python-dotenv could not parse statement starting at line 8
+python-dotenv could not parse statement starting at line 9
+✅ LLM: 智谱(GLM) | glm-4-flash
+🔧 工具已注册: help
+🔧 工具已注册: status
+🔧 工具已注册: memory_set
+🔧 工具已注册: memory_get
+🔧 工具已注册: evolve
+🔧 工具已注册: guard
+🔧 工具已注册: mirror
+🔧 工具已注册: reason
+🔧 工具已注册: winctl
+📦 加载记忆: 1 条
+✅ [GBTxiaotudou] 初始化完成, 工具=启用
+⚕ GBT GBTxiaotudou 全能开发者就绪！
+🔌 MCP: 19个服务器
+🔧 工具已注册: mcp
+🔧 工具已注册: mcp_list
+🔧 工具已注册: mcp_search
+🔧 工具已注册: mcp_health
+🔧 工具已注册: mcp_pipeline
+🔧 工具已注册: scanner
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8765
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [17/Jun/2026 16:34:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [17/Jun/2026 16:34:55] "GET /api/status HTTP/1.1" 200 -
+127.0.0.1 - - [17/Jun/2026 16:34:55] "GET /api/providers HTTP/1.1" 200 -
+127.0.0.1 - - [17/Jun/2026 16:35:10] "GET /api/status HTTP/1.1" 200 -
+127.0.0.1 - - [17/Jun/2026 16:35:10] "GET / HTTP/1.1" 200 -

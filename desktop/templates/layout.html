@@ -1,0 +1,21 @@
+<div id="app">
+<div class="tb"><h3>GBT v2.0</h3><div class="btns"><button onclick="win.min()">–</button><button onclick="win.max()">[]</button><button class="cls" onclick="win.close()">X</button></div></div>
+<div class="lt">
+<aside class="sd">
+<div class="lg"><div class="ic">G</div><div><h2>GBT</h2><span>v2.0</span></div></div>
+<nav>
+<div class="grp"><div class="lb">AI</div><button class="ac" onclick="v('chat')">Chat</button><button onclick="v('reason')">Deep Reason</button></div>
+<div class="grp"><div class="lb">Tools</div><button onclick="mcp('scanner')">Scanner</button><button onclick="mcp('audit')">Audit</button><button onclick="mcp('auto-fix')">Auto Fix</button><button onclick="ev()">6-Step Evolve</button><button onclick="mcp('mirror-deploy')">Mirror</button></div>
+<div class="grp"><div class="lb">System</div><button onclick="wc()">Screenshot</button><button onclick="wc()">Voice</button><button onclick="wc()">WiFi</button></div>
+</nav>
+<div class="sf"><select id="ms" onchange="sm()"><option>Loading...</option></select></div>
+</aside>
+<main class="mn">
+<div class="top"><div class="inf"><span class="dt"></span><span id="ll">LLM:--</span><span id="mc">MCP:--</span></div></div>
+<div class="cn">
+<div class="ch" id="cv">
+<div class="cms" id="cms"><div class="em"><div class="ei">GBT</div><h3>AI Desktop Agent</h3><p>13 LLMs · 19 MCP · 8 Reason · 15 WinCtl<br>Type a message to get started.</p><div class="qsa"><button onclick="qk('Analyze project')">Analyze</button><button onclick="qk('Security scan')">Scan</button><button onclick="qr()">Reason</button></div></div></div>
+<div class="ci"><div class="ir"><textarea id="ci" placeholder="Message GBT..." onkeydown="if(event.ctrlKey&&event.key=='Enter'){send();event.preventDefault()}" oninput="this.style.height='32px';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea><button class="snd" onclick="send()">Send</button></div></div>
+</div>
+<aside class="pn"><h3>System</h3><div class="cd"><div class="rw"><span>CPU</span><span class="vl b" id="cv2">--</span></div><div class="br2"><div style="width:30%;background:var(--bl)" id="cb"></div></div></div><div class="cd"><div class="rw"><span>RAM</span><span class="vl o" id="rv">--</span></div><div class="br2"><div style="width:45%;background:var(--o)" id="rb"></div></div></div><div class="cd"><div class="rw"><span>Keys</span><span class="vl g" id="kv">--</span></div><div class="br2"><div style="width:30%;background:var(--g)" id="kb"></div></div></div><div class="cd"><div class="rw"><span>MCP</span><span class="vl b" id="dv">--</span></div></div><h3>Providers</h3><div class="pl" id="pl">Loading...</div></aside>
+</div></main></div></div>
