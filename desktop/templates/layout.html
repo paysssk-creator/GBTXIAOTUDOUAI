@@ -6,9 +6,9 @@
 <div id="tb">
   <div class="logo"><div class="g">G</div><span>GBT Pro</span></div>
   <div class="btns">
-    <button class="tbb" onclick="win.min()"><i class="ph ph-minus"></i></button>
-    <button class="tbb" onclick="win.max()"><i class="ph ph-square"></i></button>
-    <button class="tbb cl" onclick="win.close()"><i class="ph ph-x"></i></button>
+    <button class="tbb" onclick="w.min()"><i class="ph ph-minus"></i></button>
+    <button class="tbb" onclick="w.max()"><i class="ph ph-square"></i></button>
+    <button class="tbb cl" onclick="w.close()"><i class="ph ph-x"></i></button>
   </div>
 </div>
 
@@ -21,14 +21,14 @@
       </div>
     </div>
     <div class="sb-nav">
-      <button class="ni active" data-view="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span></button>
-      <button class="ni" data-view="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span></button>
+      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span></button>
+      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span></button>
       <div class="sb-div"></div>
-      <div class="sb-label">MCP Tools</div>
-      <button class="ni" onclick="run('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
-      <button class="ni" onclick="run('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
-      <button class="ni" onclick="run('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
-      <button class="ni" onclick="ev()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
+      <div class="sb-label">Tools</div>
+      <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
+      <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
+      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
+      <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
     </div>
     <div class="sb-foot">
       <span class="sb-dot" id="sd"></span><span id="stx">Connecting</span>
@@ -36,20 +36,20 @@
   </nav>
 
   <div id="mn">
-    <button class="panel-toggle" id="pt" onclick="tp()" title="Panel"><i class="ph ph-sidebar-simple"></i></button>
+    <button class="pt" id="pt" onclick="togglePanel()" title="Toggle Panel"><i class="ph ph-sidebar-simple"></i></button>
 
     <div class="card" id="card">
-      <!-- Chat -->
+      <!-- Chat View -->
       <div class="chat-area" id="cv" style="display:none">
         <div class="msg-list" id="ml"></div>
         <div class="input-area">
           <div class="input-card">
-            <textarea id="ci" placeholder="随心输入…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ch()}"></textarea>
+            <textarea id="ci" placeholder="Message GBT…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
             <div class="input-actions">
               <div class="ia-left"><button class="ia-btn"><i class="ph ph-paperclip"></i></button></div>
               <div class="ia-right">
-                <select class="model-select" id="ms" onchange="sp()"><option>DeepSeek v4-pro</option></select>
-                <button class="send-btn" onclick="ch()"><i class="ph ph-arrow-up"></i></button>
+                <select class="mdl" id="ms" onchange="switchProv()"><option>Loading…</option></select>
+                <button class="send" onclick="chat()"><i class="ph ph-arrow-up"></i></button>
               </div>
             </div>
           </div>
@@ -59,37 +59,37 @@
       <!-- Welcome -->
       <div class="welcome" id="wc">
         <h1>我们该做什么？</h1>
-        <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描 · 自动修复</p>
-        <div class="quick-suggestions">
-          <div class="qs-label">快速开始</div>
-          <button class="qs-row" onclick="qt('Analyze my project structure')"><i class="ph ph-folder-open"></i> 排查项目结构<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-row" onclick="qt('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> 安全漏洞扫描<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-row" onclick="qt('Help me plan the implementation')"><i class="ph ph-git-branch"></i> 规划实施方案<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-row" onclick="run('audit')"><i class="ph ph-squares-four"></i> 将常用工具连接到 GBT<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+        <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描</p>
+        <div class="qs">
+          <div class="qs-l">Quick Start</div>
+          <button class="qs-r" onclick="qchat('Analyze my project structure')"><i class="ph ph-folder-open"></i> Analyze Project<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="qchat('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> Security Scan<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="qchat('Help me plan implementation')"><i class="ph ph-git-branch"></i> Plan Implementation<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="mcp('audit')"><i class="ph ph-squares-four"></i> Connect Tools<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
         </div>
       </div>
 
-      <!-- Reason -->
+      <!-- Reason View -->
       <div class="chat-area" id="rv" style="display:none">
         <div class="rh">
           <h3>Deep Reasoning Engine</h3>
           <div class="sub">Step-by-step logical decomposition for complex decisions</div>
           <div class="mps">
-            <button class="mp active" data-mode="CHAIN" onclick="sm('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
-            <button class="mp" data-mode="TREE" onclick="sm('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
-            <button class="mp" data-mode="SWOT" onclick="sm('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
-            <button class="mp" data-mode="ROOT_CAUSE" onclick="sm('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+            <button class="mp on" data-m="CHAIN" onclick="setMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
+            <button class="mp" data-m="TREE" onclick="setMode('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
+            <button class="mp" data-m="SWOT" onclick="setMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
+            <button class="mp" data-m="ROOT_CAUSE" onclick="setMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
           </div>
         </div>
         <div class="msg-list" id="rl">
-          <div class="welcome"><h1 style="font-size:24px">深度推理</h1><p>输入复杂问题——引擎将逐步拆解分析</p></div>
+          <div class="welcome"><h1 style="font-size:24px">Deep Reasoning</h1><p>Enter a complex question — the engine breaks it down step by step.</p></div>
         </div>
         <div class="input-area">
           <div class="input-card">
-            <textarea id="ri" placeholder="提出推理问题…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();rs()}"></textarea>
+            <textarea id="ri" placeholder="Ask a reasoning question…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
             <div class="input-actions">
               <div class="ia-left"></div>
-              <div class="ia-right"><button class="send-btn" onclick="rs()"><i class="ph ph-arrow-up"></i></button></div>
+              <div class="ia-right"><button class="send" onclick="reason()"><i class="ph ph-arrow-up"></i></button></div>
             </div>
           </div>
         </div>
@@ -97,170 +97,190 @@
     </div>
   </div>
 
-  <!-- Right Panel: Connectors + Market + System -->
+  <!-- Right Panel -->
   <aside id="pn">
     <div class="ps">
-      <h4>Connections & Plugins</h4>
-      <div id="cn"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+      <div class="ps-h">Connections & Plugins</div>
+      <div id="cn"></div>
     </div>
     <div class="ps">
-      <h4>A-Shares 实时行情</h4>
-      <div id="mk">Loading…</div>
+      <div class="ps-h">A-Shares Market</div>
+      <div id="mk"></div>
     </div>
     <div class="ps">
-      <h4>System Monitor</h4>
-      <div id="sy"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+      <div class="ps-h">System Monitor</div>
+      <div id="sy"></div>
     </div>
     <div class="ps">
-      <h4>Device Control</h4>
-      <div id="dv"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+      <div class="ps-h">Device Status</div>
+      <div id="dv"></div>
     </div>
     <div class="ps">
-      <h4>LLM Engine</h4>
-      <div id="ll" style="font-size:11px;color:var(--t3)">Loading…</div>
+      <div class="ps-h">LLM Engine</div>
+      <div id="ll"></div>
     </div>
   </aside>
 </div>
 
 <script>
-var A='/api',D=document,win=function(){},RM='CHAIN',st={},panelOpen=false;
+var A='/api',D=document,w=function(){};
+var RM='CHAIN',ST={},pnOpen=false;
 var $=function(id){return D.getElementById(id)};
-var es=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
-var ts=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+var esc=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
+var tfmt=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
 
-function tp(){
-  panelOpen=!panelOpen;
-  var p=$('pn'),pt=$('pt'),c=$('card');
-  if(panelOpen){p.classList.add('open');pt.classList.add('active');c.classList.add('narrow')}
-  else{p.classList.remove('open');pt.classList.remove('active');c.classList.remove('narrow')}
+function togglePanel(){
+  pnOpen=!pnOpen;
+  if(pnOpen){$('pn').classList.add('open');$('pt').classList.add('on');$('card').classList.add('narrow')}
+  else{$('pn').classList.remove('open');$('pt').classList.remove('on');$('card').classList.remove('narrow')}
 }
 function go(v,btn){
   D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
-  var w=$('wc'),cv=$('cv'),rv=$('rv');
-  if(v==='chat'){w.style.display='none';cv.style.display='flex';rv.style.display='none'}
-  else if(v==='reason'){w.style.display='none';cv.style.display='none';rv.style.display='flex'}
-  (v==='reason'?$('ri'):$('ci')).focus();
+  $('wc').style.display=v==='chat'?'none':'flex';
+  $('cv').style.display=v==='chat'?'flex':'none';
+  $('rv').style.display=v==='reason'?'flex':'none';
+  if(v==='chat')setTimeout(function(){$('ci').focus()},50);
+  else if(v==='reason')setTimeout(function(){$('ri').focus()},50);
 }
-function sm(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}
-function qt(t){go('chat',D.querySelector('[data-view=chat]'));$('ci').value=t;ch()}
-function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},3000)}
+function setMode(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('on')});btn.classList.add('on')}
+function qchat(t){go('chat',D.querySelector('[data-v=chat]'));$('ci').value=t;chat()}
+function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},2800)}
 
-function add(role,txt,cid){
-  var c=$(cid||'ml'),g=D.createElement('div');g.className='mg';var isU=role==='user';
-  g.innerHTML='<div class="av '+(isU?'u':'a')+'">'+(isU?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
-    '<div class="mb"><div class="mh"><span class="mauth">'+(isU?'You':'GBT')+'</span><span class="mtime">'+ts()+'</span></div>'+
-    '<div class="mc">'+es(txt)+'</div></div>';
+function addMsg(role,txt,cid){
+  var c=$(cid||'ml'),g=D.createElement('div');g.className='mg';var u=role==='user';
+  g.innerHTML='<div class="av '+(u?'u':'a')+'">'+(u?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
+    '<div class="mb"><div class="mh"><span class="mauth">'+(u?'You':'GBT')+'</span><span class="mtime">'+tfmt()+'</span></div>'+
+    '<div class="mc">'+esc(txt)+'</div></div>';
   c.appendChild(g);c.scrollTop=c.scrollHeight;return g;
 }
 
-function ch(){
+function chat(){
   var t=$('ci').value.trim();if(!t)return;$('ci').value='';
-  add('user',t);var g=add('ai','');g.querySelector('.mc').classList.add('th');
+  addMsg('user',t);var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
-  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=r.response||r.error})
-  .catch(function(e){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>'});
+  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').textContent=r.response||r.error})
+  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>'});
 }
 
-function rs(){
+function reason(){
   var t=$('ri').value.trim();if(!t)return;$('ri').value='';
   var h=$('rl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
-  add('user','['+RM+'] '+t,'rl');var g=add('ai','','rl');g.querySelector('.mc').classList.add('th');
+  addMsg('user','['+RM+'] '+t,'rl');var g=addMsg('ai','','rl');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
-  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');
+  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
     g.querySelector('.mc').innerHTML='<div class="rc"><div class="rmt"><span class="rb">'+(r.mode||RM)+
       '</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
-      '<div class="rbo">'+es(r.conclusion||'No conclusion')+'</div></div>';h.scrollTop=h.scrollHeight})
-  .catch(function(e){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>'});
+      '<div class="rbo">'+esc(r.conclusion||'No conclusion')+'</div></div>';h.scrollTop=h.scrollHeight})
+  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>'});
 }
 
-function sp(){var p=$('ms').value;if(!p)return;var g=add('ai','');g.querySelector('.mc').classList.add('th');
+function switchProv(){
+  var p=$('ms').value;if(!p)return;
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
-  .then(function(r){return r.json()}).then(function(j){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed'});}
-
-function run(s){go('chat',D.querySelector('[data-view=chat]'));var g=add('ai','');g.querySelector('.mc').classList.add('th');
-  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});}
-
-function ev(){go('chat',D.querySelector('[data-view=chat]'));var g=add('ai','');g.querySelector('.mc').classList.add('th');
-  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL'});}
-
-// ── Panel data loaders ──
-async function ldM(){
-  try{var r=await fetch(A+'/market'),d=await r.json(),mk=$('mk');
-    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">Market offline</span>';return}
-    var h='';d.indices.forEach(function(i){var dir=i.change>=0?'up':'dn',arr=i.change>=0?'+':'';
-      h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';});
-    mk.innerHTML=h;}catch(e){}
+  .then(function(r){return r.json()}).then(function(j){g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed'});
 }
 
-async function ldS(){
-  try{var r=await fetch(A+'/system'),d=await r.json(),sy=$('sy');
-    var dc=0;try{var rd=await fetch(A+'/devices'),dd=await rd.json();dc=dd.disk_c;}catch(e){}
-    sy.innerHTML=
-      '<div class="sys-row"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>'+
-      '<div class="sys-row"><div class="sr"><span>RAM '+d.memory_used_gb+'/'+d.memory_total_gb+'GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>'+
-      (dc.total_gb?'<div class="sys-row"><div class="sr"><span>C: '+dc.used_gb+'/'+dc.total_gb+'GB</span><span class="sv">'+(dc.total_gb?Math.round(dc.used_gb/dc.total_gb*100):0)+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+(dc.total_gb?Math.round(dc.used_gb/dc.total_gb*100):0)+'%"></div></div></div>':'');
-  }catch(e){}
+function mcp(s){
+  go('chat',D.querySelector('[data-v=chat]'));
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});
 }
 
-async function ldD(){
-  try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
-    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+g.name+'</div><div class="dv-info">'+(g.ram_mb?('<span class="dv-stat">VRAM: '+g.ram_mb+'MB</span>'):'')+'<span class="dv-stat">'+g.driver+'</span></div></div>';})}
-    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;
-      h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> Audio Devices</div><div class="dv-info"><span class="dv-stat">'+ac+'/'+d.audio.length+' active</span></div></div>';}
-    if(d.disks&&d.disks.length){d.disks.forEach(function(dk){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+dk.model+'</div><div class="dv-info"><span class="dv-stat">'+dk.size_gb+' GB</span></div></div>';})}
-    if(d.network&&d.network.length){d.network.forEach(function(n){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+n.name+'</div><div class="dv-info"><span class="dv-stat">'+(n.speed_mbps?n.speed_mbps+' Mbps':'Connected')+'</span></div></div>';})}
-    if(h)dv.innerHTML=h;else dv.innerHTML='<span style="color:var(--t4);font-size:11px">No device data</span>';
-  }catch(e){}
+function evo(){
+  go('chat',D.querySelector('[data-v=chat]'));
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL'});
 }
 
-async function ldC(){
-  try{var r=await fetch(A+'/connectors'),d=await r.json(),cn=$('cn'),h='';
+// ── Panel Data ──
+
+async function loadConnectors(){
+  try{var r=await fetch(A+'/connectors'),d=await r.json(),c=$('cn'),h='';
     var cats=d.by_category||{};
-    var catNames={code:'Code & Dev',data:'Data & Web',communication:'Communication',device:'Device Control'};
+    var labels={code:'Code & Dev',data:'Data & Web',communication:'Communication',device:'Device Ctrl'};
     for(var cat in cats){
-      h+='<div class="cn-cat">'+(catNames[cat]||cat)+'</div>';
+      h+='<div class="cn-cat">'+(labels[cat]||cat)+'</div>';
       cats[cat].forEach(function(c){
-        var statClass=c.status==='connected'?'connected on':(c.status==='error'?'disconnected err':'disconnected off');
-        var statText=c.status==='connected'?'Active':(c.status==='error'?'Error':'Inactive');
-        h+='<div class="cn-card '+ (c.status==='connected'?'connected':'disconnected') +'" onclick="cnTog(\''+c.id+'\',\''+c.status+'\')" title="'+c.description+'">';
-        h+='<i class="'+c.icon+'"></i>';
+        var st=c.status;var sc=st==='connected'?'on':(st==='error'?'err':'off');
+        var stx=st==='connected'?'Active':(st==='error'?'Error':'Off');
+        h+='<div class="cn-item '+sc+'" onclick="connToggle(\''+c.id+'\',\''+st+'\')" title="'+c.description+'">';
+        h+='<i class="cn-icon '+c.icon+'"></i>';
         h+='<span class="cn-name">'+c.name+'</span>';
-        h+='<span class="cn-stat '+statClass+'">'+statText+'</span>';
-        h+='</div>';
+        h+='<span class="cn-badge '+sc+'">'+stx+'</span></div>';
       });
     }
-    cn.innerHTML=h;
-  }catch(e){}
+    c.innerHTML=h||'<span style="color:var(--t4);font-size:11px">No connectors</span>';
+  }catch(e){$('cn').innerHTML='<span style="color:var(--red);font-size:11px">Failed to load</span>'}
 }
 
-function cnTog(id,status){
+function connToggle(id,status){
   var ep=status==='connected'?'disconnect':'connect';
   fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    toast((j.ok?'Connected: ':'Failed: ')+(j.status||j.error||''));ldC();
+    toast(j.ok?('Connected: '+j.status):(j.error||'Failed'));loadConnectors();
   });
 }
 
-async function init(){
-  try{var r=await fetch(A+'/status');st=await r.json();
-    $('stx').textContent=st.llm+' '+st.model;$('sd').classList.add('on');
-    $('ll').innerHTML=
-      '<div class="dv-card"><div class="dv-name">'+st.llm+'</div><div class="dv-info">'+st.model+' · '+st.mcp_count+' MCP servers · '+st.keys_available+'/'+st.keys_total+' keys</div></div>';
-  }catch(e){$('stx').textContent='Offline'}
-  await ldP();ldC();ldM();ldS();ldD();
-  setInterval(function(){ldS();ldD()},5000);
-  setInterval(ldM,30000);
+async function loadMarket(){
+  try{var r=await fetch(A+'/market'),d=await r.json(),mk=$('mk');
+    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">Market closed</span>';return}
+    var h='';d.indices.forEach(function(i){
+      var dir=i.change>=0?'mk-up':'mk-dn',arr=i.change>=0?'+':'';
+      h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';
+    });
+    mk.innerHTML=h;}catch(e){}
 }
 
-async function ldP(){try{var r=await fetch(A+'/providers');st.p=await r.json();var s=$('ms'),pl=$('pl');s.innerHTML='';pl.innerHTML='';
-  for(var k in st.p){var v=st.p[k],on=v.status==='available';
+async function loadSystem(){
+  try{var r=await fetch(A+'/system'),d=await r.json(),sy=$('sy');
+    var h='<div class="sys-r"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>';
+    h+='<div class="sys-r"><div class="sr"><span>RAM '+d.memory_used_gb+'/'+d.memory_total_gb+' GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>';
+    sy.innerHTML=h;
+    // Also load disk
+    try{var rd=await fetch(A+'/devices'),dd=await rd.json();
+      if(dd.disk_c&&dd.disk_c.total_gb){
+        var du=dd.disk_c,pct=Math.round(du.used_gb/du.total_gb*100);
+        sy.innerHTML+='<div class="sys-r"><div class="sr"><span>C: '+du.used_gb+'/'+du.total_gb+' GB</span><span class="sv">'+pct+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+pct+'%"></div></div></div>';
+      }
+    }catch(e){}
+  }catch(e){}
+}
+
+async function loadDevices(){
+  try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
+    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+g.name+'</div><div class="dv-i">'+(g.ram_mb?'VRAM '+g.ram_mb+' MB':'')+'</div></div>'})}
+    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> Audio</div><div class="dv-i">'+ac+'/'+d.audio.length+' devices</div></div>'}
+    if(d.disks&&d.disks.length){d.disks.forEach(function(dk){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+dk.model+'</div><div class="dv-i">'+dk.size_gb+' GB</div></div>'})}
+    if(d.network&&d.network.length){d.network.forEach(function(n){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+n.name+'</div><div class="dv-i">'+(n.speed_mbps?n.speed_mbps+' Mbps':'Connected')+'</div></div>'})}
+    dv.innerHTML=h||'<span style="color:var(--t4);font-size:11px">No device data</span>';
+  }catch(e){}
+}
+
+async function loadProviders(){
+  try{var r=await fetch(A+'/providers');ST.p=await r.json();var s=$('ms'),ll=$('ll');s.innerHTML='';var h='';
+  for(var k in ST.p){var v=ST.p[k],on=v.status==='available';
     s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';
-    pl.innerHTML+='<div class="pvr"><span class="pvd '+(on?'on':'off')+'"></span>'+v.name+'</div>';}
-}catch(e){}}
+    var dots=on?'<span style="color:var(--green)">●</span>':'<span style="color:var(--t4)">○</span>';
+    h+=dots+' '+v.name+'<br>';}
+  ll.innerHTML=h||'No providers';
+}catch(e){}
+
+async function init(){
+  try{var r=await fetch(A+'/status');ST=await r.json();
+    $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
+    $('ll').innerHTML='<div class="p-info">'+ST.llm+' · '+ST.model+'<br>'+ST.mcp_count+' MCP servers · '+ST.keys_available+'/'+ST.keys_total+' keys</div>';
+  }catch(e){$('stx').textContent='Offline'}
+  await Promise.all([loadProviders(),loadConnectors(),loadMarket(),loadSystem(),loadDevices()]);
+  setInterval(function(){loadSystem();loadDevices()},5000);
+  setInterval(loadMarket,30000);
+}
 
 D.addEventListener('keydown',function(e){
-  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-view=chat]'))}
-  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-view=reason]'))}
+  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-v=chat]'))}
+  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-v=reason]'))}
 });
 
 init();
