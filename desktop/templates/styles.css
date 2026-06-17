@@ -1,5 +1,36 @@
+﻿/* ---- A-Shares Market ---- */
+.market-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.market-row:last-child { border-bottom: none; }
+.market-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex: 1;
+}
+.market-price {
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 56px;
+}
+.market-chg {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 48px;
+}
+
 /* ===================================================
-   GBT Pro — Professional Desktop Design System v3
+   GBT Pro 鈥?Professional Desktop Design System v3
    Reference: Linear / VS Code / Arc / Raycast
    =================================================== */
 

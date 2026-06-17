@@ -124,7 +124,13 @@
         <h3>LLM Engine</h3>
         <div class="panel-badge accent-border" id="ll">Provider: --</div>
         <div class="panel-badge info-border" id="mc">Model: --</div>
-        <div class="panel-badge" id="dv" style="border-left:2px solid var(--success)">MCP: -- servers</div>
+        <div class="panel-badge" id="dv" style="border-left:2px solid up">MCP: -- servers</div>
+      </div>
+      <div class="rp-section">
+        <h3>A-Shares Market</h3>
+        <div id="market-panel">
+          <div style="font-size:11px;color:var(--text-tertiary);padding:4px 0">Loading...</div>
+        </div>
       </div>
       <div class="rp-section">
         <h3>Providers</h3>
@@ -220,7 +226,7 @@ function doReason(){
     c.scrollTop=99999;
   }).catch(function(e){
     d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').innerHTML='<span style="color:var(--danger)">Error: '+e.message+'</span>';
+    d.querySelector('.msg-bubble').innerHTML='<span style="color:down">Error: '+e.message+'</span>';
   });
 }
 
@@ -278,13 +284,14 @@ async function init(){
     document.getElementById('status-text').textContent=st.llm+' · '+st.model;
     document.getElementById('status-dot').classList.add('online');
   }catch(e){document.getElementById('status-text').textContent='Offline';}
-  await loadProviders();
+  await loadProviders();await loadMarket();
   setInterval(function(){
     document.getElementById('cv2').textContent=Math.floor(Math.random()*25+8)+'%';
     document.getElementById('cb').style.width=Math.floor(Math.random()*30+10)+'%';
     document.getElementById('rv').textContent=Math.floor(Math.random()*20+35)+'%';
     document.getElementById('rb').style.width=Math.floor(Math.random()*25+40)+'%';
   },4000);
+  setInterval(loadMarket,30000);
 }
 
 async function loadProviders(){
@@ -297,6 +304,23 @@ async function loadProviders(){
       s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'':'')+v.name+'</option>';
       pl.innerHTML+='<div class="provider-item"><span class="provider-dot '+(on?'on':'off')+'"></span><span>'+v.name+'</span></div>';
     }
+  }catch(e){}
+}
+
+async function loadMarket(){
+  try{
+    var r=await fetch(A+'/market');var d=await r.json();
+    var mp=document.getElementById('market-panel');
+    if(!d.updated){mp.innerHTML='<div style="font-size:11px;color:var(--text-tertiary)">Market offline</div>';return;}
+    var h='';
+    d.indices.forEach(function(i){
+      var cls=i.change>=0?'up':'down';
+      var arrow=i.change>=0?'↑':'↓';
+      h+='<div class="market-row"><span class="market-name">'+i.name+'</span>'+
+        '<span class="market-price" class="'+cls+'">'+i.price.toFixed(2)+'</span>'+
+        '<span class="market-chg" class="'+cls+'">'+arrow+Math.abs(i.changePct).toFixed(2)+'%</span></div>';
+    });
+    mp.innerHTML=h;
   }catch(e){}
 }
 
