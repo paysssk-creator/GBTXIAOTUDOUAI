@@ -201,7 +201,7 @@ function evo(){
 async function loadConnectors(){
   try{var r=await fetch(A+'/connectors'),d=await r.json(),c=$('cn'),h='';
     var cats=d.by_category||{};
-    var labels={code:'Code & Dev',data:'Data & Web',communication:'Communication',device:'Device Ctrl'};
+    var labels={code:'Code & Dev',data:'Data & Web',security:'Security',communication:'Communication',device:'Device Ctrl'};
     for(var cat in cats){
       h+='<div class="cn-cat">'+(labels[cat]||cat)+'</div>';
       cats[cat].forEach(function(c){

@@ -384,6 +384,95 @@ def cn_action(cid):
                     result.append({"code":m.group(0),"name":indices.get(m.group(0),parts[0]),"price":float(parts[3] or 0),"change":round(float(parts[3] or 0)-float(parts[2] or 0),2)})
                 r = {"ok":True,"indices":result}
             except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Web Search ──
+    elif cid == "web_search":
+        q = args.get("query","")
+        if act == "search" and q:
+            try:
+                import urllib.request, json
+                # Use DuckDuckGo HTML (no API key needed)
+                url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(q)
+                req = urllib.request.Request(url, headers={"User-Agent":"GBT/1.0"})
+                raw = urllib.request.urlopen(req, timeout=10).read().decode("utf-8",errors="replace")
+                # Extract titles and snippets
+                import re
+                results = []
+                for m in re.finditer(r'<a[^>]*class="result__a"[^>]*>(.*?)</a>', raw, re.DOTALL):
+                    results.append({"title":re.sub(r'<[^>]+>','',m.group(1)).strip()})
+                r = {"ok":True,"query":q,"results":results[:10]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "fetch":
+            url = args.get("url","")
+            if url:
+                try:
+                    req = urllib.request.Request(url, headers={"User-Agent":"GBT/1.0"})
+                    raw = urllib.request.urlopen(req, timeout=10).read().decode("utf-8",errors="replace")[:5000]
+                    r = {"ok":True,"url":url,"content":raw}
+                except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Weather ──
+    elif cid == "weather":
+        city = args.get("city","Bangkok")
+        if act == "current":
+            try:
+                import urllib.request, json
+                url = f"https://wttr.in/{urllib.parse.quote(city)}?format=j1"
+                req = urllib.request.Request(url, headers={"User-Agent":"GBT/1.0"})
+                raw = urllib.request.urlopen(req, timeout=8).read().decode("utf-8")
+                data = json.loads(raw)
+                cc = data.get("current_condition",[{}])[0]
+                r = {"ok":True,"city":city,"temp_c":cc.get("temp_C","?"),"humidity":cc.get("humidity","?"),"desc":cc.get("weatherDesc",[{}])[0].get("value","?")}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── PyPI ──
+    elif cid == "pypi":
+        pkg = args.get("package","")
+        if act == "search" and pkg:
+            try:
+                import urllib.request, json
+                url = f"https://pypi.org/pypi/{urllib.parse.quote(pkg)}/json"
+                req = urllib.request.Request(url, headers={"User-Agent":"GBT/1.0"})
+                raw = urllib.request.urlopen(req, timeout=8).read().decode("utf-8")
+                data = json.loads(raw)
+                info = data.get("info",{})
+                r = {"ok":True,"name":info.get("name",pkg),"version":info.get("version","?"),"summary":(info.get("summary","") or "")[:200]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Network Scanner (Security) ──
+    elif cid == "network":
+        target = args.get("target","127.0.0.1")
+        if act == "ping":
+            try:
+                res = subprocess.run(["ping","-n","2","-w","2000",target],capture_output=True,text=True,timeout=10)
+                r = {"ok":True,"target":target,"reachable":res.returncode==0,"output":res.stdout[:500]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "dns":
+            try:
+                res = subprocess.run(["nslookup",target],capture_output=True,text=True,timeout=10)
+                r = {"ok":True,"target":target,"output":res.stdout[:2000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "traceroute":
+            try:
+                res = subprocess.run(["tracert","-h","10","-w","2000",target],capture_output=True,text=True,timeout=30)
+                r = {"ok":True,"target":target,"output":res.stdout[:2000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── Registry Editor ──
+    elif cid == "registry":
+        key = args.get("key","")
+        if act == "read" and key:
+            try:
+                res = subprocess.run(["reg","query",key],capture_output=True,text=True,timeout=10)
+                r = {"ok":True,"key":key,"output":res.stdout[:2000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── WiFi ──
+    elif cid == "wifi":
+        if act == "scan":
+            try:
+                res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=True)
+                r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:3000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
+        elif act == "info":
+            try:
+                res = subprocess.run("netsh wlan show interfaces",capture_output=True,text=True,timeout=10,shell=True)
+                r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:2000]}
+            except Exception as e: r = {"ok":False,"error":str(e)}
     return jsonify(r)
 
 @app.route("/api/reason",methods=["POST"])

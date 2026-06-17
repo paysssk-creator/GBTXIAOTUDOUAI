@@ -54,7 +54,24 @@ class ConnectorRegistry:
         self.add(ConnectorInfo(
             id="pypi", name="PyPI", description="Python package management",
             icon="ph ph-package", category="code",
-            tools=[{"name":"install","desc":"Install package"},{"name":"uninstall","desc":"Remove package"},{"name":"search","desc":"Search packages"}]
+            tools=[{"name":"search","desc":"Search packages"},{"name":"info","desc":"Package details"}]
+        ))
+        
+        # ── Security & Hacking ──
+        self.add(ConnectorInfo(
+            id="network", name="Network Scanner", description="Ping, DNS, traceroute, port scan",
+            icon="ph ph-radar", category="security",
+            tools=[{"name":"ping","desc":"Ping host"},{"name":"dns","desc":"DNS lookup"},{"name":"traceroute","desc":"Trace route"}]
+        ))
+        self.add(ConnectorInfo(
+            id="wifi", name="WiFi Analyzer", description="Scan networks, signal strength",
+            icon="ph ph-wifi-high", category="security",
+            tools=[{"name":"scan","desc":"Scan WiFi networks"},{"name":"info","desc":"Interface info"}]
+        ))
+        self.add(ConnectorInfo(
+            id="registry", name="Registry Editor", description="Windows registry read/write",
+            icon="ph ph-database", category="security",
+            tools=[{"name":"read","desc":"Read registry key"},{"name":"write","desc":"Write registry key"}]
         ))
         
         # ── Communication & Cloud ──
@@ -138,7 +155,7 @@ class ConnectorRegistry:
                 "config_keys": c.config_keys, "tools": c.tools
             })
         # Sort: connected first, then by category
-        cats = {"device": 0, "code": 1, "data": 2, "communication": 3}
+        cats = {"device": 0, "code": 1, "data": 2, "security": 3, "communication": 4}
         result.sort(key=lambda x: (0 if x["status"]=="connected" else 1, cats.get(x["category"], 9), x["name"]))
         return result
     
