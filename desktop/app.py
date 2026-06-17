@@ -68,7 +68,7 @@ class LLMMgr:
         if not valid:
             s.a=None;s.prov=None;L.warning("No keys - demo mode");return False
         p=valid[0]
-        try:s.a=GBTLLM(provider=p,timeout=5);s.prov=p;s.model=s.a.model;L.info(f"LLM: {PROVIDERS[p]['name']} | {s.model}");return True
+        try:s.a=GBTLLM(provider=p,timeout=120);s.prov=p;s.model=s.a.model;L.info(f"LLM: {PROVIDERS[p]['name']} | {s.model}");return True
         except Exception as e:
             L.warning(f"LLM {p}: {e} - demo mode")
             s.a=None;s.prov=None;return False
