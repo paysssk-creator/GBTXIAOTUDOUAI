@@ -1,236 +1,352 @@
 """
-app.py — GBT桌面智能体APP
-双模式: tkinter GUI / Flask Web
+app.py — GBT桌面智能体APP v2.0
+双模式: tkinter GUI 主页 / Flask Web 主页
+精心设计的现代化桌面AI智能体界面
 """
 
-import os, sys, threading, time
+import os, sys, threading, time, json, platform
 from typing import Optional
+from datetime import datetime
 
 try:
     import tkinter as tk
-    from tkinter import ttk, scrolledtext
+    from tkinter import ttk, scrolledtext, messagebox
     GUI_OK = True
-except: GUI_OK = False
+except:
+    GUI_OK = False
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from agents.gbt_agent import GBTAgent
 from tools.mcp_tools import register_all_mcp_tools
 from gbt.mcp import get_mcp, call_mcp
+from gbt.providers import PROVIDERS, AutoKeyConfig
 
+
+# ═══════════════════════════════════════════
+#  GBT Desktop App v2.0 - Homepage Design
+# ═══════════════════════════════════════════
 
 class GBTDesktopApp:
 
-    def __init__(self, provider="auto", project=None):
-        self.p = project or os.getcwd(); self.provider = provider
-        self.agent = None; self.r = None; self.st = None
-        self.cd = None; self.ci = None; self.qe = None
+    def __init__(self, provider="auto", project=None, web_mode=False):
+        self.p = project or os.getcwd()
+        self.provider = provider
+        self.agent = None
         self._init_agent()
-        if GUI_OK: self._gui()
-        else: self._web()
+        if web_mode:
+            self._launch_web()
+        elif GUI_OK:
+            self._launch_gui()
+        else:
+            self._launch_web()
 
     def _init_agent(self):
         try:
             self.agent = GBTAgent(provider=self.provider, project_root=self.p)
             register_all_mcp_tools(self.agent._tools, self.p)
+            print(f"GBT Agent [{self.agent.llm.provider_name}] OK")
         except Exception as e:
-            print(f"⚠️ Agent: {e}")
-            try: self.agent = GBTAgent(provider="ollama", project_root=self.p)
-            except: print("❌ 无LLM可用")
+            print(f"Agent init: {e}")
+            try:
+                self.agent = GBTAgent(provider="ollama", project_root=self.p)
+                register_all_mcp_tools(self.agent._tools, self.p)
+            except:
+                print("No LLM available - demo mode")
+                self.agent = None
 
-    # ── GUI ──
-    def _gui(self):
-        self.r = tk.Tk(); self.r.title("⚕ GBT小土豆 — 桌面智能体")
-        self.r.geometry("950x680"); self.r.minsize(550,380)
-        bg, fg = "#1e1e2e", "#cdd6f4"; self.r.configure(bg=bg)
-        self._bar(bg,fg)
-        pw = ttk.PanedWindow(self.r, orient=tk.HORIZONTAL)
-        pw.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-        L = ttk.Frame(pw, width=230); self._sidepanel(L,bg,fg); pw.add(L,weight=0)
-        R = ttk.Frame(pw); self._chatpanel(R,bg,fg); pw.add(R,weight=1)
-        self._statusbar(bg,fg)
-        self.r.protocol("WM_DELETE_WINDOW", lambda: self.r.destroy())
+    # ═══════════════════════ TKINTER GUI ═══════════════════════
+
+    def _launch_gui(self):
+        self.r = tk.Tk()
+        self.r.title("GBT - AI Desktop Agent v2.0")
+        self.r.geometry("1100x720")
+        self.r.minsize(900, 600)
+        C = {
+            "base":"#1e1e2e","mantle":"#181825","crust":"#11111b",
+            "surface0":"#313244","surface1":"#45475a","text":"#cdd6f4",
+            "subtext":"#a6adc8","subtext0":"#6c7086","blue":"#89b4fa",
+            "lavender":"#b4befe","mauve":"#cba6f7","pink":"#f5c2e7",
+            "red":"#f38ba8","peach":"#fab387","yellow":"#f9e2af",
+            "green":"#a6e3a1","teal":"#94e2d5","sky":"#89dceb",
+        }
+        self.C = C
+        self.r.configure(bg=C["base"])
+        self._build_titlebar()
+        self._build_homepage()
+        self._build_statusbar()
+        self.r.protocol("WM_DELETE_WINDOW", self._on_close)
         self.r.mainloop()
 
-    def _bar(self,bg,fg):
-        b = tk.Frame(self.r, bg="#181825", height=36)
-        b.pack(fill=tk.X)
-        tk.Label(b, text="⚕ GBT v1.4", bg="#181825", fg="#f5c2e7",
-                font=("Microsoft YaHei",12,"bold")).pack(side=tk.LEFT, padx=10)
-        self.st = tk.Label(b, text="🟢", bg="#181825", fg="#a6e3a1")
-        self.st.pack(side=tk.RIGHT, padx=10)
-
-    def _sidepanel(self,p,bg,fg):
-        tk.Label(p,text="🔧 工具箱",bg=bg,fg=fg,font=("Microsoft YaHei",11,"bold")).pack(pady=5)
-        btns = [
-            ("🧠 推理",lambda:self._dlg("深度推理","问题:")),
-            ("🔍 扫描",lambda:self._mcp("scanner")),
-            ("📋 审计",lambda:self._mcp("audit","--strict")),
-            ("🧬 进化",lambda:self._evolve()),
-            ("🪞 镜像",lambda:self._mcp("mirror-deploy")),
-            ("🔧 修复",lambda:self._mcp("auto-fix","--confirm")),
-            ("💾 备份",lambda:self._backup()),
-            ("🖥️ 系统",lambda:self._sys()),
-            ("🔌 MCP",lambda:self._show_mcp()),
-        ]
-        for t, c in btns:
-            tk.Button(p, text=t, command=c, bg="#313244", fg=fg,
-                relief=tk.FLAT, cursor="hand2", font=("Microsoft YaHei",10)
-            ).pack(fill=tk.X, pady=2, padx=5)
-        tk.Label(p,text="快捷推理:",bg=bg,fg=fg).pack(pady=(10,0))
-        self.qe = tk.Entry(p, bg="#313244", fg=fg, insertbackground=fg)
-        self.qe.pack(fill=tk.X, padx=5)
-        self.qe.bind("<Return>", lambda e: self._qask())
-        tk.Button(p, text="⚡推理", command=self._qask,
-                 bg="#cba6f7", fg="#1e1e2e").pack(fill=tk.X, padx=5, pady=2)
-
-    def _chatpanel(self,p,bg,fg):
-        tk.Label(p,text="💬 对话",bg=bg,fg=fg,font=("Microsoft YaHei",11,"bold")).pack(pady=3)
-        self.cd = scrolledtext.ScrolledText(p, bg="#313244", fg=fg,
-            font=("Consolas",10), wrap=tk.WORD, state=tk.DISABLED)
-        self.cd.pack(fill=tk.BOTH, expand=True, padx=3)
-        inf = tk.Frame(p, bg=bg); inf.pack(fill=tk.X, padx=3, pady=3)
-        self.ci = tk.Text(inf, height=3, bg="#313244", fg=fg, font=("Consolas",10))
+    def _build_chatarea(self, p):
+        C = self.C
+        wf = tk.Frame(p, bg=C["base"]); wf.pack(fill=tk.X, pady=(8,4))
+        tk.Label(wf, text="Chat", bg=C["base"], fg=C["text"],
+                font=("Microsoft YaHei",11,"bold")).pack(side=tk.LEFT)
+        tk.Button(wf, text="Clear", command=self._clear_chat, bg=C["surface0"],
+                fg=C["subtext"], relief=tk.FLAT, cursor="hand2",
+                font=("Microsoft YaHei",8), bd=0, padx=8).pack(side=tk.RIGHT)
+        self.cd = scrolledtext.ScrolledText(p, bg=C["surface0"], fg=C["text"],
+                font=("Consolas",10), wrap=tk.WORD, state=tk.DISABLED, relief=tk.FLAT)
+        self.cd.pack(fill=tk.BOTH, expand=True, padx=2)
+        for role, c, f in [("assistant",C["green"],("Consolas",10)),
+                           ("user",C["blue"],("Consolas",10,"bold")),
+                           ("system",C["subtext0"],("Consolas",9)),
+                           ("mcp",C["mauve"],("Consolas",9)),
+                           ("reasoner",C["peach"],("Consolas",10,"bold")),
+                           ("evolve",C["teal"],("Consolas",10)),
+                           ("welcome",C["pink"],("Microsoft YaHei",11,"bold"))]:
+            self.cd.tag_config(role, foreground=c, font=f)
+        self._add_chat("welcome", self._welcome())
+        inf = tk.Frame(p, bg=C["base"]); inf.pack(fill=tk.X, padx=2, pady=(4,2))
+        self.ci = tk.Text(inf, height=3, bg=C["surface1"], fg=C["text"],
+                font=("Consolas",10), relief=tk.FLAT, padx=8, pady=6)
         self.ci.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.ci.bind("<Control-Return>", lambda e: self._send())
-        tk.Button(inf, text="→", command=self._send,
-                 bg="#89b4fa", fg="#1e1e2e", width=6).pack(side=tk.RIGHT)
+        tk.Button(inf, text="Send", command=self._send, bg=C["blue"],
+                fg=C["crust"], relief=tk.FLAT, cursor="hand2",
+                font=("Microsoft YaHei",10,"bold"), bd=0, width=8).pack(side=tk.RIGHT, padx=(4,0),fill=tk.Y)
 
-    def _statusbar(self,bg,fg):
-        m = get_mcp(); s = len(m.list_servers())
-        llm = f"{self.agent.llm.provider_name}" if self.agent and hasattr(self.agent,'llm') else "?"
-        self.sb = tk.Label(self.r, text=f"MCP:{s} | LLM:{llm} | {self.p}",
-                          bg="#181825", fg="#6c7086", anchor=tk.W)
-        self.sb.pack(fill=tk.X, side=tk.BOTTOM)
+    def _build_dashboard(self, p):
+        C = self.C
+        tk.Label(p, text="Dashboard", bg=C["base"], fg=C["text"],
+                font=("Microsoft YaHei",11,"bold")).pack(pady=(10,8), anchor=tk.W)
+        self._card(p, "System", self._sys_info())
+        mcp = get_mcp(); srvs = mcp.list_servers()
+        self._card(p, "MCP Servers", f"Connected: {len(srvs)}\n"+"\n".join(f"  {s}" for s in srvs[:8]))
+        disc = AutoKeyConfig.scan(); av = sum(1 for v in disc.values() if v["status"]=="available")
+        self._card(p, "API Keys", f"Available: {av}/{len(PROVIDERS)}\n"+"\n".join(
+            f"  {'OK' if v['status']=='available' else '--'} {cfg['name']}" for pid,info in list(disc.items())[:13]))
+        tk.Label(p, text="Quick Commands", bg=C["base"],
+                fg=C["subtext0"], font=("Microsoft YaHei",9)).pack(pady=(10,2),anchor=tk.W,padx=6)
+        for ct, cf in [("tools",lambda:self._send_cmd("tools")),
+                       ("keys",lambda:self._send_cmd("keys")),
+                       ("status",lambda:self._send_cmd("status")),
+                       ("help",lambda:self._send_cmd("help"))]:
+            tk.Button(p, text=f"  {ct}", command=cf, bg=C["surface0"],
+                fg=C["text"], relief=tk.FLAT, cursor="hand2",
+                font=("Consolas",9), bd=0, padx=10, pady=3, anchor=tk.W
+                ).pack(fill=tk.X, pady=1, padx=6)
+        tk.Label(p, text="GBT v2.0", bg=C["base"],
+                fg=C["subtext0"], font=("Consolas",8)).pack(side=tk.BOTTOM, pady=(0,8))
 
-    def _add(self, role, txt):
-        self.cd.config(state=tk.NORMAL)
-        ic = {"assistant":"🤖","user":"👤","reasoner":"🧠","mcp":"🔌","evolve":"🧬","system":"📌"}
-        self.cd.insert(tk.END, f"\n{ic.get(role,'•')} ", "r")
-        self.cd.insert(tk.END, txt[:3000]+"\n"); self.cd.see(tk.END)
-        self.cd.config(state=tk.DISABLED)
+    def _reason_dlg(self):
+        d = tk.Toplevel(self.r); d.title("Deep Reason"); d.geometry("500x180")
+        d.configure(bg=self.C["base"])
+        tk.Label(d, text="Question:", bg=self.C["base"], fg=self.C["text"],
+                font=("Microsoft YaHei",11)).pack(pady=(10,5))
+        e = tk.Entry(d, bg=self.C["surface0"], fg=self.C["text"],
+                    font=("Consolas",10), relief=tk.FLAT)
+        e.pack(fill=tk.X, padx=15, pady=5, ipady=4)
+        mf = tk.Frame(d, bg=self.C["base"]); mf.pack(pady=5)
+        mv = tk.StringVar(value="chain")
+        for t,v in [("Chain","chain"),("Tree","tree"),("SWOT","swot"),
+                    ("Root","root_cause"),("Decide","decision"),("Estimate","estimate"),
+                    ("Compare","compare"),("Plan","plan")]:
+            tk.Radiobutton(mf, text=t, variable=mv, value=v, bg=self.C["base"],
+                fg=self.C["text"], selectcolor=self.C["surface0"],
+                font=("Microsoft YaHei",8)).pack(side=tk.LEFT, padx=2)
+        def go():
+            q = e.get().strip()
+            if not q: return
+            m = mv.get(); d.destroy()
+            self._add_chat("user", f"[Reason:{m}] {q}")
+            threading.Thread(target=self._do_reason, args=(q,m), daemon=True).start()
+        e.bind("<Return>", lambda ev: go())
+        tk.Button(d, text="Start", command=go, bg=self.C["blue"],
+                fg=self.C["crust"], font=("Microsoft YaHei",10,"bold"),
+                relief=tk.FLAT, bd=0, padx=20, pady=4).pack(pady=5)
 
-    def _send(self):
-        t = self.ci.get("1.0", tk.END).strip()
-        if not t or not self.agent: return
-        self.ci.delete("1.0", tk.END); self._add("user", t)
-        threading.Thread(target=self._chat_do, args=(t,), daemon=True).start()
+    def _multi_dlg(self):
+        d = tk.Toplevel(self.r); d.title("Multi-Reason"); d.geometry("400x120")
+        d.configure(bg=self.C["base"])
+        tk.Label(d, text="Multi-mode (chain+swot+root):", bg=self.C["base"],
+                fg=self.C["text"], font=("Microsoft YaHei",10)).pack(pady=(10,5))
+        e = tk.Entry(d, bg=self.C["surface0"], fg=self.C["text"],
+                    font=("Consolas",10), relief=tk.FLAT)
+        e.pack(fill=tk.X, padx=15, pady=5, ipady=4)
+        def go():
+            q = e.get().strip()
+            if not q: return
+            d.destroy()
+            self._add_chat("user", f"[Multi] {q}")
+            threading.Thread(target=self._do_multi, args=(q,), daemon=True).start()
+        e.bind("<Return>", lambda ev: go())
+        tk.Button(d, text="Start", command=go, bg=self.C["mauve"],
+                fg=self.C["crust"], relief=tk.FLAT, bd=0, padx=20, pady=4).pack(pady=5)
 
-    def _chat_do(self, t):
-        self.st.config(text="🟡"); self.r.update()
-        try:
-            r = self.agent.run(t)
-            self.r.after(0, lambda: self._add("assistant", r[:3000]))
-        except Exception as e:
-            self.r.after(0, lambda: self._add("system", f"❌{e}"))
-        self.r.after(0, lambda: self.st.config(text="🟢"))
 
-    def _qask(self):
-        t = self.qe.get().strip()
-        if not t: return
-        self.qe.delete(0, tk.END); self._add("user", f"[推理] {t}")
-        threading.Thread(target=self._reason_do, args=(t,"chain"), daemon=True).start()
-
-    def _reason_do(self, q, m):
-        self.st.config(text="🧠")
+    def _do_reason(self, q, m):
+        self._up("reason")
         try:
             r = self.agent.deep_reason(q, m)
-            self.r.after(0, lambda: self._add("reasoner",
-                f"## {r.mode.value} 置信度{r.confidence:.0%}\n{r.conclusion[:2000]}"))
+            out = f"## {m} Conf:{r.confidence:.0%}\n{r.conclusion[:2000]}\n{r.duration:.1f}s"
+            self.r.after(0, lambda: self._add_chat("reasoner", out))
         except Exception as e:
-            self.r.after(0, lambda: self._add("system", f"❌{e}"))
-        self.r.after(0, lambda: self.st.config(text="🟢"))
+            self.r.after(0, lambda: self._add_chat("system", f"ERR: {e}"))
+        self._up("ok")
 
-    def _dlg(self, title, prompt):
-        d = tk.Toplevel(self.r); d.title(title); d.geometry("450x110")
-        d.configure(bg="#1e1e2e")
-        tk.Label(d, text=prompt, bg="#1e1e2e", fg="#cdd6f4").pack(pady=5)
-        e = tk.Entry(d, bg="#313244", fg="#cdd6f4", width=55); e.pack(pady=5)
-        def ok():
-            t = e.get().strip()
-            if t: d.destroy(); threading.Thread(target=lambda: self._reason_do(t,"chain"), daemon=True).start()
-        e.bind("<Return>", lambda ev: ok())
-        tk.Button(d, text="确认", command=ok, bg="#89b4fa").pack()
-
-    def _mcp(self, s, a=""):
-        threading.Thread(target=lambda: self._mcp_do(s,a), daemon=True).start()
-
-    def _mcp_do(self, s, a):
-        self.st.config(text="🔌")
-        r = call_mcp(s, "", a)
-        ic = "✅" if r.ok else "❌"
-        self.r.after(0, lambda: self._add("mcp", f"{ic} {s}: {r.data[:1200] if r.data else r.error}"))
-        self.r.after(0, lambda: self.st.config(text="🟢"))
-
-    def _evolve(self):
-        threading.Thread(target=self._evolve_do, daemon=True).start()
-
-    def _evolve_do(self):
-        self.st.config(text="🧬")
+    def _do_multi(self, q):
+        self._up("reason")
         try:
-            r = self.agent.evolve("桌面")
-            self.r.after(0, lambda: self._add("evolve", f"{'✅' if r.success else '❌'} {r.summary}"))
+            rs = self.agent.reason_multi(q, ["chain","swot","root_cause"])
+            for r in rs:
+                out = f"## {r.mode.value} Conf:{r.confidence:.0%}\n{r.conclusion[:1000]}\n---"
+                self.r.after(0, lambda o=out: self._add_chat("reasoner", o))
         except Exception as e:
-            self.r.after(0, lambda: self._add("system", f"❌{e}"))
-        self.r.after(0, lambda: self.st.config(text="🟢"))
+            self.r.after(0, lambda: self._add_chat("system", f"ERR: {e}"))
+        self._up("ok")
 
-    def _backup(self):
-        import subprocess
+    def _mcp_async(self, srv, a=""):
+        self._add_chat("system", f"MCP/{srv}...")
+        threading.Thread(target=self._do_mcp, args=(srv,a), daemon=True).start()
+
+    def _do_mcp(self, srv, a):
+        self._up("mcp")
+        r = call_mcp(srv, "", a)
+        ic = "OK" if r.ok else "FAIL"
+        d = r.data[:1500] if r.data else r.error
+        self.r.after(0, lambda: self._add_chat("mcp", f"{ic} {srv}: {d}"))
+        self._up("ok")
+
+    def _evolve_async(self):
+        self._add_chat("system", "6-Step Evolve starting...")
+        threading.Thread(target=self._do_evolve, daemon=True).start()
+
+    def _do_evolve(self):
+        self._up("evolve")
+
+    # ═══════════════════════ FLASK WEB MODE ═══════════════════════
+
+    def _launch_web(self):
         try:
-            r = subprocess.run("git add -A && git commit -m 'desktop'",
-                shell=True, capture_output=True, text=True, cwd=self.p, timeout=10)
-            self._add("system", f"💾 {r.stdout[:300] or r.stderr[:300]}")
-        except: self._add("system", "💾 Git不可用")
+            from flask import Flask, request, jsonify, render_template_string
+            app = Flask(__name__)
 
-    def _sys(self):
-        import platform
-        try:
-            import psutil
-            i = (f"🖥️ {platform.system()} {platform.release()} | "
-                 f"CPU:{psutil.cpu_count()}核{psutil.cpu_percent()}% | "
-                 f"RAM:{psutil.virtual_memory().percent}%")
-        except:
-            i = f"🖥️ {platform.system()} {platform.release()}"
-        self._add("system", i)
+            @app.route("/")
+            def home():
+                return render_template_string(WEB_HTML)
 
-    def _show_mcp(self):
-        s = get_mcp().list_servers()
-        self._add("system", f"## 🔌 MCP({len(s)})\n" + "\n".join(f"- {n}" for n in s))
+            @app.route("/api/chat", methods=["POST"])
+            def api_chat():
+                d = request.json or {}
+                if not self.agent: return jsonify({"error":"Agent not initialized"})
+                r = self.agent.run(d.get("text",""))[:5000]
+                return jsonify({"response":r})
 
-    def _web(self):
-        try:
-            from flask import Flask, request, jsonify
-            a = Flask(__name__)
-            @a.route("/api/chat", methods=["POST"])
-            def c():
-                d = request.json
-                r = self.agent.run(d.get("text",""))[:5000] if self.agent else "未初始化"
-                return jsonify({"response": r})
-            @a.route("/api/reason", methods=["POST"])
-            def r():
-                d = request.json
+            @app.route("/api/reason", methods=["POST"])
+            def api_reason():
+                d = request.json or {}
+                if not self.agent: return jsonify({"error":"Agent not initialized"})
                 r = self.agent.deep_reason(d.get("text",""), d.get("mode","chain"))
-                return jsonify({"mode": r.mode.value, "conclusion": r.conclusion, "confidence": r.confidence})
-            @a.route("/api/mcp")
-            def m(): return jsonify({"servers": get_mcp().list_servers()})
-            @a.route("/api/mcp/<s>", methods=["POST"])
-            def mc(s):
-                r = call_mcp(s)
-                return jsonify({"ok": r.ok, "data": r.data[:3000], "error": r.error})
-            print("\n🌐 http://localhost:8765\n")
-            a.run(host="127.0.0.1", port=8765, debug=False)
-        except ImportError:
-            print("❌ pip install flask")
+                return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,
+                               "confidence":r.confidence,"plan":r.plan})
+
+            @app.route("/api/status")
+            def api_status():
+                mcp = get_mcp(); disc = AutoKeyConfig.scan()
+                return jsonify({
+                    "mcp_servers": mcp.list_servers(),
+                    "mcp_count": len(mcp.list_servers()),
+                    "llm": self.agent.llm.provider_name if self.agent else "N/A",
+                    "model": self.agent.llm.model if self.agent else "N/A",
+                    "keys_available": sum(1 for v in disc.values() if v["status"]=="available"),
+                    "keys_total": len(PROVIDERS),
+                    "platform": platform.system(),
+                    "python": platform.python_version(),
+                })
+
+            @app.route("/api/mcp")
+            def api_mcp_list():
+                return jsonify({"servers": get_mcp().list_servers()})
+
+            @app.route("/api/mcp/<server>", methods=["POST"])
+            def api_mcp(server):
+                r = call_mcp(server);
+                return jsonify({"ok":r.ok,"data":r.data[:3000],"error":r.error})
+
+            @app.route("/api/providers")
+            def api_providers():
+
+    # Web homepage HTML loaded from template file
+    WEB_HTML = ""
+    _template_path = os.path.join(os.path.dirname(__file__), "templates", "homepage.html")
+    if os.path.exists(_template_path):
+        with open(_template_path, "r", encoding="utf-8") as f:
+            WEB_HTML = f.read()
 
 
 def main():
     import argparse
-    p = argparse.ArgumentParser(description="GBT桌面智能体")
-    p.add_argument("--provider", default="auto"); p.add_argument("--project", default=os.getcwd())
+    p = argparse.ArgumentParser(description="GBT Desktop Agent v2.0")
+    p.add_argument("--provider", default="auto")
+    p.add_argument("--project", default=os.getcwd())
     p.add_argument("--web", action="store_true")
-    a = p.parse_args()
-    if a.web: global GUI_OK; GUI_OK = False
-    GBTDesktopApp(provider=a.provider, project=a.project)
+    p.add_argument("--port", type=int, default=8765)
+    args = p.parse_args()
+    web_mode = args.web or not GUI_OK
+    GBTDesktopApp(provider=args.provider, project=args.project, web_mode=web_mode)
+
 
 if __name__ == "__main__":
     main()
+                disc = AutoKeyConfig.scan()
+                r = {}
+                for pid, info in disc.items():
+                    cfg = info["config"]
+                    r[pid] = {"name":cfg["name"],"status":info["status"],
+                              "models":cfg.get("models",[]),"pricing":cfg.get("pricing","")}
+                return jsonify(r)
 
+            print("\n" + "="*50)
+            print("  GBT v2.0 Web Homepage")
+            print("  http://localhost:8765")
+            print("="*50 + "\n")
+            app.run(host="127.0.0.1", port=8765, debug=False)
+        except ImportError:
+            print("ERROR: pip install flask")
+        try:
+            rpt = self.agent.evolve("desktop-trigger")
+            ic = "OK" if rpt.success else "FAIL"
+            ss = ", ".join(f"{s.name}={s.status.value}" for s in rpt.steps)
+            self.r.after(0, lambda: self._add_chat("evolve", f"{ic} Steps: {ss}"))
+        except Exception as e:
+            self.r.after(0, lambda: self._add_chat("system", f"ERR: {e}"))
+        self._up("ok")
+
+    def _winctl_a(self, f, a):
+        threading.Thread(target=self._do_winctl, args=(f,a), daemon=True).start()
+
+    def _do_winctl(self, f, a):
+        self._up("sys")
+        try:
+            r = self.agent.winctl(f, a)
+            d = (r.data or r.error)[:1500]
+            self.r.after(0, lambda: self._add_chat("system", f"WinCtl {f}.{a}: {d}"))
+        except Exception as e:
+            self.r.after(0, lambda: self._add_chat("system", f"ERR: {e}"))
+        self._up("ok")
+
+    def _git_backup(self):
+        import subprocess
+        try:
+            r = subprocess.run("git add -A && git commit -m desktop",
+                shell=True, capture_output=True, text=True, cwd=self.p, timeout=10)
+            self._add_chat("system", f"Git: {r.stdout[:200] or 'Done'}")
+        except: self._add_chat("system", "Git unavailable")
+
+    def _clear_chat(self):
+        self.cd.config(state=tk.NORMAL); self.cd.delete("1.0",tk.END)
+        self.cd.config(state=tk.DISABLED); self._add_chat("welcome", self._welcome())
+
+    def _up(self, s):
+        icons = {"ok":"🟢","reason":"🧠","mcp":"🔌","evolve":"🧬","sys":"🖥️"}
+        try: self.r.after(0, lambda: self.status_dot.config(text=icons.get(s,s)))
+        except: pass
+
+    def _on_close(self):
+        self.r.destroy()
+    def _quick_reason(self, mode):
+        self._add_chat("user", f"[Reason:{mode}] Analyze project architecture")
+        threading.Thread(target=self._do_reason,
+                args=("Analyze the project architecture and potential improvements", mode),
+                daemon=True).start()
