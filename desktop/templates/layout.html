@@ -97,8 +97,12 @@
     </div>
   </div>
 
-  <!-- Right Panel -->
+  <!-- Right Panel: Connectors + Market + System -->
   <aside id="pn">
+    <div class="ps">
+      <h4>Connections & Plugins</h4>
+      <div id="cn"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+    </div>
     <div class="ps">
       <h4>A-Shares 实时行情</h4>
       <div id="mk">Loading…</div>
@@ -114,10 +118,6 @@
     <div class="ps">
       <h4>LLM Engine</h4>
       <div id="ll" style="font-size:11px;color:var(--t3)">Loading…</div>
-    </div>
-    <div class="ps">
-      <h4>Providers</h4>
-      <div id="pl" style="font-size:11px;color:var(--t3)">Loading…</div>
     </div>
   </aside>
 </div>
@@ -214,13 +214,40 @@ async function ldD(){
   }catch(e){}
 }
 
+async function ldC(){
+  try{var r=await fetch(A+'/connectors'),d=await r.json(),cn=$('cn'),h='';
+    var cats=d.by_category||{};
+    var catNames={code:'Code & Dev',data:'Data & Web',communication:'Communication',device:'Device Control'};
+    for(var cat in cats){
+      h+='<div class="cn-cat">'+(catNames[cat]||cat)+'</div>';
+      cats[cat].forEach(function(c){
+        var statClass=c.status==='connected'?'connected on':(c.status==='error'?'disconnected err':'disconnected off');
+        var statText=c.status==='connected'?'Active':(c.status==='error'?'Error':'Inactive');
+        h+='<div class="cn-card '+ (c.status==='connected'?'connected':'disconnected') +'" onclick="cnTog(\''+c.id+'\',\''+c.status+'\')" title="'+c.description+'">';
+        h+='<i class="'+c.icon+'"></i>';
+        h+='<span class="cn-name">'+c.name+'</span>';
+        h+='<span class="cn-stat '+statClass+'">'+statText+'</span>';
+        h+='</div>';
+      });
+    }
+    cn.innerHTML=h;
+  }catch(e){}
+}
+
+function cnTog(id,status){
+  var ep=status==='connected'?'disconnect':'connect';
+  fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
+    toast((j.ok?'Connected: ':'Failed: ')+(j.status||j.error||''));ldC();
+  });
+}
+
 async function init(){
   try{var r=await fetch(A+'/status');st=await r.json();
     $('stx').textContent=st.llm+' '+st.model;$('sd').classList.add('on');
     $('ll').innerHTML=
       '<div class="dv-card"><div class="dv-name">'+st.llm+'</div><div class="dv-info">'+st.model+' · '+st.mcp_count+' MCP servers · '+st.keys_available+'/'+st.keys_total+' keys</div></div>';
   }catch(e){$('stx').textContent='Offline'}
-  await ldP();ldM();ldS();ldD();
+  await ldP();ldC();ldM();ldS();ldD();
   setInterval(function(){ldS();ldD()},5000);
   setInterval(ldM,30000);
 }

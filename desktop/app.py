@@ -40,6 +40,7 @@ logging.basicConfig(level=logging.INFO,format="%(message)s");L=logging.getLogger
 from flask import Flask,jsonify,request,render_template_string
 from gbt.mcp import get_mcp,call_mcp
 from gbt.providers import PROVIDERS,AutoKeyConfig
+from gbt.connectors.registry import get_registry as get_connectors
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -253,6 +254,23 @@ def dv():
         du_used=round(du_total-du_free,1)
     except:pass
     return jsonify({"gpu":gpus,"audio":audio,"disks":disks,"network":net,"disk_c":{"total_gb":du_total,"used_gb":du_used,"free_gb":du_free}})
+
+@app.route("/api/connectors")
+def cn():
+    """List all connectors/plugins with status."""
+    reg = get_connectors()
+    return jsonify({"connectors": reg.list_all(), "by_category": reg.list_by_category()})
+
+@app.route("/api/connectors/<cid>/connect",methods=["POST"])
+def cn_connect(cid):
+    reg = get_connectors()
+    return jsonify(reg.connect(cid))
+
+@app.route("/api/connectors/<cid>/disconnect",methods=["POST"])
+def cn_disconnect(cid):
+    reg = get_connectors()
+    reg.disconnect(cid)
+    return jsonify({"ok":True,"status":"disconnected"})
 
 @app.route("/api/reason",methods=["POST"])
 def rs():

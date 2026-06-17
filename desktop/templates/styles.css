@@ -152,6 +152,19 @@ body{
 
 /* Provider rows */
 .pvr{display:flex;align-items:center;gap:var(--s2);padding:2px 0;font-size:11px;color:var(--t2)}
+
+/* Connector cards */
+.cn-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t4);margin:var(--s3) 0 var(--s1)}
+.cn-card{display:flex;align-items:center;gap:var(--s2);padding:var(--s1) var(--s2);border-radius:var(--r2);margin-bottom:1px;transition:all .12s var(--e-out);cursor:pointer;border:1px solid transparent}
+.cn-card:hover{background:var(--bg-hover);border-color:var(--b-sub)}
+.cn-card i{font-size:14px;flex-shrink:0}
+.cn-card .cn-name{font-size:12px;font-weight:500;color:var(--t2);flex:1}
+.cn-card .cn-stat{font-size:10px;padding:1px 6px;border-radius:var(--r-full);font-weight:600}
+.cn-stat.on{background:var(--green-glow);color:var(--green)}
+.cn-stat.off{background:rgba(0,0,0,.03);color:var(--t4)}
+.cn-stat.err{background:var(--red-glow);color:var(--red)}
+.cn-card.connected i{color:var(--accent)}
+.cn-card.disconnected i{color:var(--t4)}
 .pvd{width:5px;height:5px;border-radius:50%;flex-shrink:0}.pvd.on{background:var(--green)}.pvd.off{background:var(--t4)}
 
 /* Toast */
