@@ -166,8 +166,9 @@ class EvolveEngine:
         else:
             try:
                 if self._tool("memory.js"):
+                    ed = desc or "6步进化完成"
                     self._node("memory.js",
-                        f'--project "{self.p}" --evolve "{desc or \"6步进化完成\"}"')
+                        f'--project "{self.p}" --evolve "{ed}"')
                     print("  📦 记忆记录")
                 st = self._cmd("git status --porcelain", silent=True)
                 if st.strip():

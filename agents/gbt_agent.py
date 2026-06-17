@@ -5,7 +5,7 @@ gbt_agent.py — GBT全能开发者Agent
 
 import os
 from datetime import datetime
-from typing import Optional, Iterator
+from typing import Optional, Iterator, List, Tuple, Dict, Any, Callable
 from gbt.llm import GBTLLM
 from gbt.tool import ToolRegistry
 from gbt.agent import SimpleAgent, AgentConfig

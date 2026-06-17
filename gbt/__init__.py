@@ -1,7 +1,13 @@
 """
 GBT Agent Framework - AI原生Agent框架核心
-按照 hello-agents 框架模式构建，为 GBT小土豆全能开发者 提供Agent大脑
 """
+
+import sys, os
+if sys.platform == 'win32':
+    try: sys.stdout.reconfigure(encoding='utf-8')
+    except: pass
+    try: sys.stderr.reconfigure(encoding='utf-8')
+    except: pass
 
 from .llm import GBTLLM
 from .tool import ToolRegistry, Tool

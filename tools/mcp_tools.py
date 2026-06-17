@@ -61,7 +61,7 @@ def register_all_mcp_tools(registry: ToolRegistry, project: str = ".") -> ToolRe
                 srv, method, *rest = srv
                 args = rest[0] if rest else ""
         registry.register(name, desc,
-            lambda **kw, s=srv, m=method, a=args: mcp_call(s, m, a),
+            lambda **kw: mcp_call(srv, method, args),
             {"query": "可选查询参数"})
 
     print(f"🔧 万能MCP: {len(servers)}个服务器, {len(core_servers)+5}个工具")

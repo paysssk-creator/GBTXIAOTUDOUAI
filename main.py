@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 """
+import sys, os
+if sys.platform == 'win32':
+    try: sys.stdout.reconfigure(encoding='utf-8')
+    except: pass
+    try: sys.stderr.reconfigure(encoding='utf-8')
+    except: pass
+
 GBT Agent Framework — 主入口
 用法: python main.py [--provider auto] [--model MODEL] [--project PATH]
 
