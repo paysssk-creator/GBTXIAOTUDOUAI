@@ -9,31 +9,39 @@ sys.path.insert(0,_here)                          # exe同级目录
 sys.path.insert(0,os.path.join(_here,".."))       # 开发模式
 sys.path.insert(0,os.path.join(os.path.dirname(sys.executable) if getattr(sys,'frozen',False) else _here,".."))
 
-# ── 加载 .env (多路径fallback) ──
-from dotenv import dotenv_values as _dotenv_values
+# ── 加载 .env (多路径fallback, 手动解析避免 python-dotenv 报错) ──
 def _load_env_force():
-    """多路径强制加载 .env，输出debug信息"""
-    paths=[]
+    """多路径强制加载 .env，去重避免重复"""
+    raw_paths=[]
     if getattr(sys,'frozen',False):
-        paths=[
-            os.path.join(os.path.dirname(sys.executable), ".env"),
-            os.path.join(sys._MEIPASS, ".env"),
-            os.path.join(sys._MEIPASS, "..", ".env"),
+        raw_paths=[
+            os.path.join(os.path.dirname(sys.executable),".env"),
+            os.path.join(sys._MEIPASS,".env"),
         ]
     else:
-        paths=[os.path.join(_here, ".env"), os.path.join(_here, "..", ".env")]
+        raw_paths=[os.path.join(_here,".env"),os.path.join(_here,"..",".env")]
+    paths=[]
+    seen=set()
+    for _p in raw_paths:
+        _rp=os.path.normpath(os.path.abspath(_p))
+        if _rp not in seen and os.path.exists(_rp):
+            seen.add(_rp); paths.append(_rp)
     for _p in paths:
-        if os.path.exists(_p):
-            try:
-                vals=_dotenv_values(_p)
-                for k,v in vals.items():
-                    if v:
-                        os.environ[k]=v
-                        if 'KEY' in k.upper():
-                            mask=v[:8]+"..."+v[-4:] if len(v)>12 else "***"
-                            print(f"ENV LOAD: {k}={mask} from {_p}")
-            except Exception as _e:
-                print(f"ENV FAIL: {_p} -> {_e}")
+        try:
+            with open(_p,"r",encoding="utf-8") as f:
+                for line in f:
+                    line=line.strip()
+                    if not line or line.startswith("#"): continue
+                    if "=" in line:
+                        k,v=line.split("=",1)
+                        k=k.strip();v=v.strip().strip('"').strip("'")
+                        if k and v:
+                            os.environ[k]=v
+                            if 'KEY' in k.upper():
+                                mask=v[:8]+"..."+v[-4:] if len(v)>12 else "***"
+                                print(f"ENV: {k}={mask}")
+        except Exception as _e:
+            print(f"ENV FAIL: {_p} -> {_e}")
 _load_env_force()
 
 logging.basicConfig(level=logging.INFO,format="%(message)s");L=logging.getLogger("GBT")

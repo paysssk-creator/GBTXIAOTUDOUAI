@@ -12,7 +12,7 @@ for d in ["build", "dist"]:
     p = os.path.join(PROJECT, d)
     if os.path.exists(p):
         shutil.rmtree(p)
-        print(f"🧹 清理: {p}")
+        print(f"Clean: {p}")
 
 # ── PyInstaller 命令 ──
 pyinstaller_args = [
@@ -61,9 +61,9 @@ print("=" * 60)
 
 result = subprocess.run(pyinstaller_args, cwd=PROJECT)
 if result.returncode != 0:
-    print(f"\n❌ 打包失败 (code={result.returncode})")
+    print(f"\nFAIL (code={result.returncode})")
     sys.exit(1)
 
-print(f"\n✅ 打包成功!")
+print(f"\nBUILD OK!")
 print(f"   输出: {os.path.join(PROJECT, 'dist', 'GBT', 'GBT.exe')}")
 print(f"   大小: {os.path.getsize(os.path.join(PROJECT, 'dist', 'GBT', 'GBT.exe')) / 1024 / 1024:.1f} MB")
