@@ -1,308 +1,271 @@
-<div id="app">
-  <header class="titlebar">
-    <div class="tb-logo">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="url(#g)"/><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">G</text><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6d5ce7"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs></svg>
-      <span>GBT Pro</span>
-    </div>
-    <div class="tb-actions">
-      <button class="tb-btn" onclick="win.min()">─</button>
-      <button class="tb-btn" onclick="win.max()">□</button>
-      <button class="tb-btn tb-close" onclick="win.close()">✕</button>
-    </div>
-  </header>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 
-  <div class="app-body">
-    <nav class="sidebar">
-      <div class="sb-brand">
-        <div class="sb-avatar">G</div>
-        <div class="sb-title"><h1>GBT Pro</h1><span>Desktop Agent</span></div>
-      </div>
-      <div class="sb-nav">
-        <div class="nav-section">
-          <div class="nav-label">Conversation</div>
-          <button class="nav-item active" data-view="chat" onclick="switchView('chat',this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-            <span>Chat</span>
-            <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary)">Ctrl+1</span>
-          </button>
-          <button class="nav-item" data-view="reason" onclick="switchView('reason',this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Deep Reason</span>
-            <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary)">Ctrl+2</span>
-          </button>
-        </div>
-        <div class="nav-section">
-          <div class="nav-label">Tools</div>
-          <button class="nav-item" onclick="mcp('scanner')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-            <span>Scanner</span>
-          </button>
-          <button class="nav-item" onclick="mcp('audit')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Security Audit</span>
-          </button>
-          <button class="nav-item" onclick="mcp('auto-fix')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Auto Fix</span>
-          </button>
-          <button class="nav-item" onclick="ev()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-            <span>6-Step Evolve</span>
-          </button>
-        </div>
-      </div>
-      <div class="sb-footer">
-        <select id="ms" onchange="switchModel()" class="model-select"><option>Loading...</option></select>
-        <div class="sb-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
-      </div>
-    </nav>
-
-    <main class="main-content">
-      <!-- Chat View -->
-      <div class="chat-area" id="chat-view">
-        <div class="chat-messages" id="cms">
-          <div class="welcome-center" id="welcome">
-            <div class="welcome-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-            </div>
-            <h2>Hi, I'm GBT</h2>
-            <p>DeepSeek v4-pro · 19 MCP Servers · 13 Tools<br>Ask me anything — analyze, reason, scan, fix.</p>
-            <div class="welcome-actions">
-              <button onclick="quickSend('Analyze my project structure')">Analyze Project</button>
-              <button onclick="quickSend('Scan for security vulnerabilities')">Security Scan</button>
-              <button onclick="switchView('reason',document.querySelector('[data-view=reason]'))">Deep Reason</button>
-            </div>
-          </div>
-        </div>
-        <div class="chat-input">
-          <div class="input-wrapper">
-            <textarea id="ci" placeholder="Message GBT... (Enter to send, Shift+Enter for new line)" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
-            <button class="send-btn" onclick="send()" title="Send">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reason View -->
-      <div class="reason-area" id="reason-view" style="display:none">
-        <div class="reason-header">
-          <h2>Deep Reasoning Engine</h2>
-          <p>Step-by-step logical decomposition for complex problems</p>
-          <div class="reason-modes">
-            <button class="rm-btn active" data-mode="CHAIN" onclick="selectReasonMode('CHAIN',this)">Chain-of-Thought</button>
-            <button class="rm-btn" data-mode="TREE" onclick="selectReasonMode('TREE',this)">Tree Analysis</button>
-            <button class="rm-btn" data-mode="SWOT" onclick="selectReasonMode('SWOT',this)">SWOT</button>
-            <button class="rm-btn" data-mode="ROOT_CAUSE" onclick="selectReasonMode('ROOT_CAUSE',this)">5-Why Root Cause</button>
-          </div>
-        </div>
-        <div class="reason-content" id="reason-content">
-          <div class="welcome-center">
-            <h2>Deep Reasoning</h2>
-            <p>Enter a complex question below — the AI will break it down and reason step by step.</p>
-          </div>
-        </div>
-        <div class="chat-input">
-          <div class="input-wrapper">
-            <textarea id="ri" placeholder="Ask a reasoning question... (Enter to send)" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();doReason()}"></textarea>
-            <button class="send-btn" onclick="doReason()" title="Reason">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <aside class="right-panel">
-      <div class="rp-section">
-        <h3>System Monitor</h3>
-        <div class="stat-item"><div class="stat-row"><span>CPU</span><span id="cv2">--</span></div><div class="stat-bar"><div class="stat-bar-fill fill-cpu" id="cb" style="width:30%"></div></div></div>
-        <div class="stat-item"><div class="stat-row"><span>Memory</span><span id="rv">--</span></div><div class="stat-bar"><div class="stat-bar-fill fill-mem" id="rb" style="width:45%"></div></div></div>
-        <div class="stat-item"><div class="stat-row"><span>API Keys</span><span id="kv">--</span></div><div class="stat-bar"><div class="stat-bar-fill fill-key" id="kb" style="width:30%"></div></div></div>
-      </div>
-      <div class="rp-section">
-        <h3>LLM Engine</h3>
-        <div class="panel-badge accent-border" id="ll">Provider: --</div>
-        <div class="panel-badge info-border" id="mc">Model: --</div>
-        <div class="panel-badge" id="dv" style="border-left:2px solid up">MCP: -- servers</div>
-      </div>
-      <div class="rp-section">
-        <h3>A-Shares Market</h3>
-        <div id="market-panel">
-          <div style="font-size:11px;color:var(--text-tertiary);padding:4px 0">Loading...</div>
-        </div>
-      </div>
-      <div class="rp-section">
-        <h3>Providers</h3>
-        <div id="pl" style="font-size:11px;color:var(--text-tertiary)">Loading...</div>
-      </div>
-    </aside>
+<div id="titlebar">
+  <div class="brand">
+    <div class="icon">G</div>
+    <span>GBT Pro</span>
+  </div>
+  <div class="win-ctls">
+    <button class="win-btn" onclick="win.min()" title="Minimize"><i class="ph ph-minus"></i></button>
+    <button class="win-btn" onclick="win.max()" title="Maximize"><i class="ph ph-square"></i></button>
+    <button class="win-btn close" onclick="win.close()" title="Close"><i class="ph ph-x"></i></button>
   </div>
 </div>
 
+<div id="app-body">
+  <!-- ── Sidebar ── -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="avatar">G</div>
+      <div>
+        <h2>GBT Pro</h2>
+        <div class="ver">Desktop AI Agent</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Conversation</div>
+        <button class="nav-item active" data-view="chat" onclick="switchView('chat',this)">
+          <i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">&#x2318;1</span>
+        </button>
+        <button class="nav-item" data-view="reason" onclick="switchView('reason',this)">
+          <i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">&#x2318;2</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">MCP Tools</div>
+        <button class="tool-btn" onclick="runTool('scanner')"><i class="ph ph-scan"></i> Code Scanner</button>
+        <button class="tool-btn" onclick="runTool('audit')"><i class="ph ph-shield-check"></i> Security Audit</button>
+        <button class="tool-btn" onclick="runTool('auto-fix')"><i class="ph ph-wrench"></i> Auto Fix</button>
+        <button class="tool-btn" onclick="evo()"><i class="ph ph-arrows-clockwise"></i> 6-Step Evolve</button>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <select id="ms" onchange="switchModel()" class="model-select"><option>Loading…</option></select>
+      <div class="status-row">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Connecting</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <div id="main">
+    <!-- Chat View -->
+    <div class="chat-view" id="chat-view">
+      <div class="messages" id="msgs">
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">
+            <i class="ph ph-sparkle" style="font-size:28px"></i>
+          </div>
+          <h3>Hi, I'm GBT</h3>
+          <p>Powered by <b>DeepSeek v4-pro</b> — 19 services, 13 tools.<br>Analyze code, reason deeply, scan security, auto-fix.</p>
+          <div class="welcome-chips">
+            <button class="chip" onclick="quick('Analyze my project structure')"><i class="ph ph-folder-open"></i> Analyze Project</button>
+            <button class="chip" onclick="quick('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> Security Scan</button>
+            <button class="chip" onclick="switchView('reason',document.querySelector('[data-view=reason]'))"><i class="ph ph-brain"></i> Deep Reason</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-bar">
+        <div class="input-wrap">
+          <textarea id="ci" placeholder="Message GBT… (Enter send, Shift+Enter new line)" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
+          <button class="btn-send" onclick="chat()" title="Send"><i class="ph ph-paper-plane-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason View -->
+    <div id="reason-view" style="display:none">
+      <div class="reason-header">
+        <h3>Deep Reasoning Engine</h3>
+        <div class="sub">Step-by-step logical decomposition for complex decisions</div>
+        <div class="mode-pills">
+          <button class="mp active" data-mode="CHAIN" onclick="setReasonMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> Chain-of-Thought</button>
+          <button class="mp" data-mode="TREE" onclick="setReasonMode('TREE',this)"><i class="ph ph-tree-structure"></i> Tree Analysis</button>
+          <button class="mp" data-mode="SWOT" onclick="setReasonMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
+          <button class="mp" data-mode="ROOT_CAUSE" onclick="setReasonMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+        </div>
+      </div>
+      <div class="reason-body-wrap" id="reason-content">
+        <div class="welcome">
+          <h3>Deep Reasoning</h3>
+          <p>Enter a complex question — the engine breaks it down step by step.</p>
+        </div>
+      </div>
+      <div class="input-bar">
+        <div class="input-wrap">
+          <textarea id="ri" placeholder="Ask a reasoning question… (Enter send)" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
+          <button class="btn-send" onclick="reason()" title="Reason"><i class="ph ph-lightbulb"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right Panel ── -->
+  <aside id="panel">
+    <div class="panel-sec">
+      <h4>System</h4>
+      <div class="stat"><div class="stat-line"><span>CPU</span><span class="val" id="cv2">—</span></div><div class="stat-bar"><div class="fill fill-cpu" id="cb" style="width:28%"></div></div></div>
+      <div class="stat"><div class="stat-line"><span>Memory</span><span class="val" id="rv">—</span></div><div class="stat-bar"><div class="fill fill-mem" id="rb" style="width:42%"></div></div></div>
+      <div class="stat"><div class="stat-line"><span>API Keys</span><span class="val" id="kv">—</span></div><div class="stat-bar"><div class="fill fill-key" id="kb" style="width:28%"></div></div></div>
+    </div>
+
+    <div class="panel-sec">
+      <h4>LLM Engine</h4>
+      <div class="info-card accent" id="ll">Provider: —</div>
+      <div class="info-card info" id="mc">Model: —</div>
+      <div class="info-card success" id="dv">MCP: — servers</div>
+    </div>
+
+    <div class="panel-sec">
+      <h4>A-Shares Market</h4>
+      <div id="market-panel">
+        <div style="font-size:11px;color:var(--text-4);padding:4px 0">Loading…</div>
+      </div>
+    </div>
+
+    <div class="panel-sec">
+      <h4>Providers</h4>
+      <div id="pl" style="font-size:11px;color:var(--text-4)">Loading…</div>
+    </div>
+  </aside>
+</div>
+
 <script>
-var currentReasonMode='CHAIN';
+var A='/api',RM='CHAIN',st={},win={min:function(){},max:function(){},close:function(){}};
 
-function switchView(view,btn){
-  document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active')});
+function $(id){return document.getElementById(id)}
+function e(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML}
+
+function switchView(v,btn){
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  document.getElementById('chat-view').style.display=view==='chat'?'flex':'none';
-  document.getElementById('reason-view').style.display=view==='reason'?'flex':'none';
-  if(view==='reason')document.getElementById('ri').focus();
-  else document.getElementById('ci').focus();
+  $('chat-view').style.display=v==='chat'?'flex':'none';
+  $('reason-view').style.display=v==='reason'?'flex':'none';
+  if(v==='reason')$('ri').focus();else $('ci').focus()
 }
 
-function selectReasonMode(mode,btn){
-  currentReasonMode=mode;
-  document.querySelectorAll('.rm-btn').forEach(function(b){b.classList.remove('active')});
-  btn.classList.add('active');
-}
+function setReasonMode(m,btn){RM=m;document.querySelectorAll('.mp').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function quick(t){$('ci').value=t;chat()}
+function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
-function quickSend(text){document.getElementById('ci').value=text;send();}
-function removeWelcome(){var e=document.getElementById('welcome');if(e)e.remove();}
+function welcomeOff(){var w=$('welcome');if(w)w.style.display='none'}
 
-function addMsg(role,text){
-  removeWelcome();
+function addMsg(role,txt,where){
+  where=where||'msgs';var c=$(where);
+  if(where==='msgs')welcomeOff();
   var d=document.createElement('div');
-  d.className='message '+(role==='user'?'msg-user':'msg-ai');
-  d.innerHTML='<div class="msg-bubble">'+escapeHtml(text)+'</div>';
-  document.getElementById('cms').appendChild(d);
-  document.getElementById('cms').scrollTop=99999;
-  return d;
+  d.className='msg '+(role==='user'?'user':'ai');
+  d.innerHTML='<div class="bubble">'+e(txt)+'</div>';
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+  return d
 }
 
-function escapeHtml(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML;}
-
-function send(){
-  var t=document.getElementById('ci').value.trim();if(!t)return;
-  document.getElementById('ci').value='';
-  addMsg('user',t);
-  var d=addMsg('ai','Thinking...');
-  d.querySelector('.msg-bubble').classList.add('thinking');
-  fetch('/api/chat',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:t})
-  }).then(function(r){return r.json()}).then(function(r){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent=r.response||r.error;
-  }).catch(function(e){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent='Error: '+e.message;
-  });
+function chat(){
+  var t=$('ci').value.trim();if(!t)return;$('ci').value='';
+  addMsg('user',t);var d=addMsg('ai','Thinking…');
+  d.querySelector('.bubble').classList.add('thinking');
+  fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
+  .then(r=>r.json()).then(r=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').textContent=r.response||r.error
+  }).catch(e=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').textContent='Error: '+e.message
+  })
 }
 
-function doReason(){
-  var t=document.getElementById('ri').value.trim();if(!t)return;
-  document.getElementById('ri').value='';
-  var c=document.getElementById('reason-content');
-  var w=c.querySelector('.welcome-center');
-  if(w)w.remove();
-
-  var du=document.createElement('div');
-  du.className='message msg-user';
-  du.innerHTML='<div class="msg-bubble"><b>'+currentReasonMode+'</b>: '+escapeHtml(t)+'</div>';
-  c.appendChild(du);
-
-  var d=document.createElement('div');
-  d.className='message msg-ai';
-  d.innerHTML='<div class="msg-bubble thinking">Analyzing with '+currentReasonMode+' mode...</div>';
-  c.appendChild(d);
-  c.scrollTop=99999;
-
-  fetch('/api/reason',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:t,mode:currentReasonMode})
-  }).then(function(r){return r.json()}).then(function(r){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').innerHTML=
+function reason(){
+  var t=$('ri').value.trim();if(!t)return;$('ri').value='';
+  var c=$('reason-content'),w=c.querySelector('.welcome');
+  if(w)w.style.display='none';
+  addMsg('user','['+RM+'] '+t,'reason-content');
+  var d=addMsg('ai','Analyzing with '+RM+'…','reason-content');
+  d.querySelector('.bubble').classList.add('thinking');
+  fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
+  .then(r=>r.json()).then(r=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').innerHTML=
       '<div class="reason-card">'+
       '<div class="reason-meta">'+
-      '<span class="reason-badge">'+(r.mode||currentReasonMode)+'</span>'+
+      '<span class="reason-badge">'+(r.mode||RM)+'</span>'+
       '<span>'+(r.steps||0)+' steps</span>'+
       '<span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span>'+
       '</div>'+
-      '<div class="reason-conclusion">'+escapeHtml(r.conclusion||'No conclusion')+'</div>'+
+      '<div class="reason-body">'+e(r.conclusion||'No conclusion')+'</div>'+
       '</div>';
-    c.scrollTop=99999;
-  }).catch(function(e){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').innerHTML='<span style="color:down">Error: '+e.message+'</span>';
-  });
+    c.scrollTop=c.scrollHeight
+  }).catch(e=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').innerHTML='<span style="color:var(--red)">Error: '+e.message+'</span>'
+  })
 }
 
 function switchModel(){
-  var p=document.getElementById('ms').value;
-  if(!p||!st.p||!st.p[p]||st.p[p].status!='available')return;
-  var d=addMsg('ai','Switching to '+st.p[p].name+'...');
-  d.querySelector('.msg-bubble').classList.add('thinking');
-  fetch('/api/switch',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({provider:p})
-  }).then(function(r){return r.json()}).then(function(j){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent='Switched to '+j.name+' ('+j.model+')';
-    document.getElementById('ll').textContent='Provider: '+j.name;
-    document.getElementById('mc').textContent='Model: '+j.model;
-  }).catch(function(e){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent='Switch failed: '+e.message;
-  });
+  var p=$('ms').value;if(!p||!st.p||!st.p[p]||st.p[p].status!='available')return;
+  var d=addMsg('ai','Switching to '+st.p[p].name+'…');
+  d.querySelector('.bubble').classList.add('thinking');
+  fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
+  .then(r=>r.json()).then(j=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').textContent='Switched to '+j.name+' ('+j.model+')';
+    $('ll').textContent='Provider: '+j.name;$('mc').textContent='Model: '+j.model
+  })
 }
 
-function mcp(s){
-  removeWelcome();
-  var d=addMsg('ai','Running '+s+'...');
-  d.querySelector('.msg-bubble').classList.add('thinking');
-  fetch('/api/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent='['+s+'] '+(r.ok?'OK':'FAIL')+'\n'+(r.data||'').substring(0,500);
-  });
+function runTool(s){
+  welcomeOff();var d=addMsg('ai','Running <b>'+s+'</b>…');
+  d.querySelector('.bubble').classList.add('thinking');
+  fetch(A+'/mcp/'+s,{method:'POST'}).then(r=>r.json()).then(r=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').innerHTML='<b>['+s+']</b> '+(r.ok?'OK':'FAIL')+'<br><small style="color:var(--text-3)">'+(r.data||'').substring(0,400)+'</small>'
+  })
 }
 
-function ev(){
-  removeWelcome();
-  var d=addMsg('ai','Starting 6-step evolution...');
-  d.querySelector('.msg-bubble').classList.add('thinking');
-  fetch('/api/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){
-    d.querySelector('.msg-bubble').classList.remove('thinking');
-    d.querySelector('.msg-bubble').textContent='Evolve '+(r.ok?'SUCCESS':'FAIL')+'\n'+r.summary+'\nSteps: '+r.steps;
-  });
+function evo(){
+  welcomeOff();var d=addMsg('ai','Starting 6-step evolution…');
+  d.querySelector('.bubble').classList.add('thinking');
+  fetch(A+'/evolve',{method:'POST'}).then(r=>r.json()).then(r=>{
+    d.querySelector('.bubble').classList.remove('thinking');
+    d.querySelector('.bubble').textContent='Evolve '+(r.ok?'SUCCESS':'FAIL')+'\n'+r.summary+'\nSteps: '+r.steps
+  })
 }
 
 // Init
-var A='/api',st={},win={min:function(){},max:function(){},close:function(){}};
-
 async function init(){
   try{
-    var r=await fetch(A+'/status');
-    st=await r.json();
-    document.getElementById('ll').textContent='Provider: '+st.llm;
-    document.getElementById('mc').textContent='Model: '+st.model;
-    document.getElementById('kv').textContent=st.keys_available+'/'+st.keys_total;
-    document.getElementById('kb').style.width=(st.keys_available/st.keys_total*100)+'%';
-    document.getElementById('dv').textContent='MCP: '+st.mcp_count+' servers';
-    document.getElementById('status-text').textContent=st.llm+' · '+st.model;
-    document.getElementById('status-dot').classList.add('online');
-  }catch(e){document.getElementById('status-text').textContent='Offline';}
+    var r=await fetch(A+'/status');st=await r.json();
+    $('ll').textContent='Provider: '+st.llm;$('mc').textContent='Model: '+st.model;
+    $('kv').textContent=st.keys_available+'/'+st.keys_total;
+    $('kb').style.width=(st.keys_available/st.keys_total*100)+'%';
+    $('dv').textContent='MCP: '+st.mcp_count+' servers';
+    $('status-text').textContent=st.llm+' · '+st.model;
+    $('status-dot').classList.add('live')
+  }catch(e){$('status-text').textContent='Offline'}
   await loadProviders();await loadMarket();
-  setInterval(function(){
-    document.getElementById('cv2').textContent=Math.floor(Math.random()*25+8)+'%';
-    document.getElementById('cb').style.width=Math.floor(Math.random()*30+10)+'%';
-    document.getElementById('rv').textContent=Math.floor(Math.random()*20+35)+'%';
-    document.getElementById('rb').style.width=Math.floor(Math.random()*25+40)+'%';
+  setInterval(()=>{
+    $('cv2').textContent=Math.floor(Math.random()*22+6)+'%';
+    $('cb').style.width=Math.floor(Math.random()*24+8)+'%';
+    $('rv').textContent=Math.floor(Math.random()*18+35)+'%';
+    $('rb').style.width=Math.floor(Math.random()*22+38)+'%'
   },4000);
-  setInterval(loadMarket,30000);
+  setInterval(loadMarket,30000)
 }
 
 async function loadProviders(){
   try{
     var r=await fetch(A+'/providers');st.p=await r.json();
-    var s=document.getElementById('ms'),pl=document.getElementById('pl');
-    s.innerHTML='';pl.innerHTML='';
+    var s=$('ms'),pl=$('pl');s.innerHTML='';pl.innerHTML='';
     for(var k in st.p){
-      var v=st.p[k],on=v.status=='available';
-      s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'':'')+v.name+'</option>';
-      pl.innerHTML+='<div class="provider-item"><span class="provider-dot '+(on?'on':'off')+'"></span><span>'+v.name+'</span></div>';
+      var v=st.p[k],on=v.status==='available';
+      s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'&#9679; ':'&#9675; ')+v.name+'</option>';
+      pl.innerHTML+='<div class="prov-item"><span class="prov-dot '+(on?'on':'off')+'"></span><span>'+v.name+'</span></div>'
     }
   }catch(e){}
 }
@@ -310,24 +273,23 @@ async function loadProviders(){
 async function loadMarket(){
   try{
     var r=await fetch(A+'/market');var d=await r.json();
-    var mp=document.getElementById('market-panel');
-    if(!d.updated){mp.innerHTML='<div style="font-size:11px;color:var(--text-tertiary)">Market offline</div>';return;}
+    var mp=$('market-panel');
+    if(!d.updated||!d.indices.length){mp.innerHTML='<div style="font-size:11px;color:var(--text-4)">Market offline</div>';return}
     var h='';
     d.indices.forEach(function(i){
-      var cls=i.change>=0?'up':'down';
-      var arrow=i.change>=0?'↑':'↓';
-      h+='<div class="market-row"><span class="market-name">'+i.name+'</span>'+
-        '<span class="market-price" class="'+cls+'">'+i.price.toFixed(2)+'</span>'+
-        '<span class="market-chg" class="'+cls+'">'+arrow+Math.abs(i.changePct).toFixed(2)+'%</span></div>';
+      var dir=i.change>=0?'mkt-up':'mkt-down',arr=i.change>=0?'+':'';
+      h+='<div class="mkt-row"><span class="mkt-name">'+i.name+'</span>'+
+        '<span class="mkt-price '+dir+'">'+i.price.toFixed(2)+'</span>'+
+        '<span class="mkt-chg '+dir+'">'+arr+i.change+'</span>'+
+        '<span class="mkt-chg '+dir+'" style="min-width:44px;font-size:10px">'+arr+i.changePct+'%</span></div>'
     });
-    mp.innerHTML=h;
+    mp.innerHTML=h
   }catch(e){}
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown',function(e){
-  if(e.ctrlKey&&e.key==='1'){e.preventDefault();switchView('chat',document.querySelector('[data-view=chat]'));}
-  if(e.ctrlKey&&e.key==='2'){e.preventDefault();switchView('reason',document.querySelector('[data-view=reason]'));}
+  if((e.metaKey||e.ctrlKey)&&e.key==='1'){e.preventDefault();switchView('chat',document.querySelector('[data-view=chat]'))}
+  if((e.metaKey||e.ctrlKey)&&e.key==='2'){e.preventDefault();switchView('reason',document.querySelector('[data-view=reason]'))}
 });
 
 init();
