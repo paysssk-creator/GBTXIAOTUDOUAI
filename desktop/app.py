@@ -186,6 +186,66 @@ def sy():
         return jsonify({"cpu":cpu,"memory":mem_pct,"memory_used_gb":used_gb,"memory_total_gb":total_gb})
     except Exception as e:
         return jsonify({"cpu":0,"memory":0,"memory_used_gb":0,"memory_total_gb":0,"error":str(e)})
+@app.route("/api/devices")
+def dv():
+    """Real device inventory via WMI"""
+    import subprocess
+    def _ps(cmd):
+        try:
+            r=subprocess.run(["powershell","-NoProfile","-Command",cmd],capture_output=True,text=True,timeout=8)
+            return r.stdout.strip()
+        except:return ""
+    gpus=[]
+    try:
+        ps_cmd='Get-CimInstance Win32_VideoController | Select Name,AdapterRAM,DriverVersion | ConvertTo-Json'
+        out=_ps(ps_cmd)
+        if out:
+            import json as _j
+            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
+            for i in items:
+                ram=i.get('AdapterRAM',0) or 0
+                gpus.append({'name':i.get('Name','GPU'),'ram_mb':round(ram/(1024*1024),0) if ram else 0,'driver':i.get('DriverVersion','')})
+    except:gpus=[{'name':'GPU Info Unavailable','ram_mb':0,'driver':''}]
+    audio=[]
+    try:
+        out=_ps('Get-CimInstance Win32_SoundDevice | Select Name,Status | ConvertTo-Json')
+        if out:
+            import json as _j
+            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
+            for i in items:audio.append({'name':i.get('Name','Audio'),'status':i.get('Status','OK')})
+    except:pass
+    disks=[]
+    try:
+        out=_ps('Get-CimInstance Win32_DiskDrive | Select Model,Size | ConvertTo-Json')
+        if out:
+            import json as _j
+            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
+            for i in items:
+                sz=i.get('Size',0) or 0
+                disks.append({'model':(i.get('Model','Disk') or '').strip(),'size_gb':round(sz/(1024**3),0)})
+    except:pass
+    net=[]
+    try:
+        out=_ps('Get-CimInstance Win32_NetworkAdapter | Where-Object {$_.NetEnabled -eq $true} | Select Name,Speed | ConvertTo-Json')
+        if out:
+            import json as _j
+            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
+            for i in items:
+                sp=i.get('Speed',0) or 0
+                net.append({'name':i.get('Name','Network'),'speed_mbps':round(sp/(1000*1000),0) if sp else 0})
+    except:pass
+    # Disk usage
+    du_total=0;du_used=0;du_free=0
+    try:
+        import ctypes
+        free=ctypes.c_uint64();total=ctypes.c_uint64();tfree=ctypes.c_uint64()
+        ctypes.windll.kernel32.GetDiskFreeSpaceExW("C:\\",ctypes.byref(free),ctypes.byref(total),ctypes.byref(tfree))
+        du_total=round(total.value/(1024**3),1)
+        du_free=round(free.value/(1024**3),1)
+        du_used=round(du_total-du_free,1)
+    except:pass
+    return jsonify({"gpu":gpus,"audio":audio,"disks":disks,"network":net,"disk_c":{"total_gb":du_total,"used_gb":du_used,"free_gb":du_free}})
+
 @app.route("/api/reason",methods=["POST"])
 def rs():
     d=request.json or {};

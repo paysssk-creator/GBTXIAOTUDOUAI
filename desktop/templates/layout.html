@@ -6,9 +6,9 @@
 <div id="tb">
   <div class="logo"><div class="g">G</div><span>GBT Pro</span></div>
   <div class="btns">
-    <button class="tb-btn" onclick="win.min()"><i class="ph ph-minus"></i></button>
-    <button class="tb-btn" onclick="win.max()"><i class="ph ph-square"></i></button>
-    <button class="tb-btn cl" onclick="win.close()"><i class="ph ph-x"></i></button>
+    <button class="tbb" onclick="win.min()"><i class="ph ph-minus"></i></button>
+    <button class="tbb" onclick="win.max()"><i class="ph ph-square"></i></button>
+    <button class="tbb cl" onclick="win.close()"><i class="ph ph-x"></i></button>
   </div>
 </div>
 
@@ -23,64 +23,53 @@
     <div class="sb-nav">
       <button class="ni active" data-view="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span></button>
       <button class="ni" data-view="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span></button>
-      <div class="sb-sep"></div>
-      <div class="sb-label">Tools</div>
+      <div class="sb-div"></div>
+      <div class="sb-label">MCP Tools</div>
       <button class="ni" onclick="run('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
       <button class="ni" onclick="run('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
       <button class="ni" onclick="run('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
       <button class="ni" onclick="ev()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
     </div>
     <div class="sb-foot">
-      <div class="st-row"><span class="sb-dot" id="sd"></span><span id="stx">Connecting</span></div>
+      <span class="sb-dot" id="sd"></span><span id="stx">Connecting</span>
     </div>
   </nav>
 
   <div id="mn">
-    <!-- Market ticker (floating) -->
-    <div class="mkt-ticker" id="mk"></div>
-    <!-- Status bar (floating) -->
-    <div class="status-bar"><div class="stat-item"><span class="stat-dot cpu"></span><span id="cv2">—</span></div><div class="stat-item"><span class="stat-dot mem"></span><span id="rv">—</span></div><div class="stat-item"><span class="stat-dot key"></span><span id="kv">—</span></div></div>
+    <button class="panel-toggle" id="pt" onclick="tp()" title="Panel"><i class="ph ph-sidebar-simple"></i></button>
 
-    <!-- Main Card -->
-    <div class="card">
-      <!-- Badge bar -->
-      <div class="badge-bar">
-        <button class="plus-badge" onclick="go('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-sparkle"></i> Deep Reasoning</button>
-        <button class="ia-btn" onclick="go('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-sidebar-simple"></i></button>
-      </div>
-
-      <!-- Chat View -->
-      <div class="chat-area" id="cv">
-        <div class="welcome" id="wc">
-          <h1>我们该做什么？</h1>
-          <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描 · 自动修复</p>
-          <div class="quick-suggestions" style="width:100%">
-            <div class="qs-label">快速开始</div>
-            <button class="qs-row" onclick="qt('Analyze my project structure')"><i class="ph ph-folder-open"></i> 排查项目结构<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-            <button class="qs-row" onclick="qt('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> 安全漏洞扫描<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-            <button class="qs-row" onclick="qt('Help me plan the implementation')"><i class="ph ph-git-branch"></i> 规划实施方案<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-            <button class="qs-row" onclick="run('audit')"><i class="ph ph-squares-four"></i> 将常用工具连接到 GBT<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
-          </div>
-        </div>
+    <div class="card" id="card">
+      <!-- Chat -->
+      <div class="chat-area" id="cv" style="display:none">
         <div class="msg-list" id="ml"></div>
         <div class="input-area">
           <div class="input-card">
             <textarea id="ci" placeholder="随心输入…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ch()}"></textarea>
             <div class="input-actions">
-              <div class="ia-left">
-                <button class="ia-btn"><i class="ph ph-paperclip"></i></button>
-              </div>
+              <div class="ia-left"><button class="ia-btn"><i class="ph ph-paperclip"></i></button></div>
               <div class="ia-right">
                 <select class="model-select" id="ms" onchange="sp()"><option>DeepSeek v4-pro</option></select>
                 <button class="send-btn" onclick="ch()"><i class="ph ph-arrow-up"></i></button>
               </div>
             </div>
           </div>
-          <div class="footer-hint"><i class="ph ph-folder"></i> 进入项目工作</div>
         </div>
       </div>
 
-      <!-- Reason View -->
+      <!-- Welcome -->
+      <div class="welcome" id="wc">
+        <h1>我们该做什么？</h1>
+        <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描 · 自动修复</p>
+        <div class="quick-suggestions">
+          <div class="qs-label">快速开始</div>
+          <button class="qs-row" onclick="qt('Analyze my project structure')"><i class="ph ph-folder-open"></i> 排查项目结构<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-row" onclick="qt('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> 安全漏洞扫描<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-row" onclick="qt('Help me plan the implementation')"><i class="ph ph-git-branch"></i> 规划实施方案<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-row" onclick="run('audit')"><i class="ph ph-squares-four"></i> 将常用工具连接到 GBT<span class="qs-arrow"><i class="ph ph-arrow-right"></i></span></button>
+        </div>
+      </div>
+
+      <!-- Reason -->
       <div class="chat-area" id="rv" style="display:none">
         <div class="rh">
           <h3>Deep Reasoning Engine</h3>
@@ -100,40 +89,64 @@
             <textarea id="ri" placeholder="提出推理问题…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();rs()}"></textarea>
             <div class="input-actions">
               <div class="ia-left"></div>
-              <div class="ia-right">
-                <button class="send-btn" onclick="rs()"><i class="ph ph-arrow-up"></i></button>
-              </div>
+              <div class="ia-right"><button class="send-btn" onclick="rs()"><i class="ph ph-arrow-up"></i></button></div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Right Panel -->
+  <aside id="pn">
+    <div class="ps">
+      <h4>A-Shares 实时行情</h4>
+      <div id="mk">Loading…</div>
+    </div>
+    <div class="ps">
+      <h4>System Monitor</h4>
+      <div id="sy"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+    </div>
+    <div class="ps">
+      <h4>Device Control</h4>
+      <div id="dv"><span style="color:var(--t4);font-size:11px">Loading…</span></div>
+    </div>
+    <div class="ps">
+      <h4>LLM Engine</h4>
+      <div id="ll" style="font-size:11px;color:var(--t3)">Loading…</div>
+    </div>
+    <div class="ps">
+      <h4>Providers</h4>
+      <div id="pl" style="font-size:11px;color:var(--t3)">Loading…</div>
+    </div>
+  </aside>
 </div>
 
 <script>
-var A='/api',D=document,win=function(){};
-var RM='CHAIN',st={};
+var A='/api',D=document,win=function(){},RM='CHAIN',st={},panelOpen=false;
 var $=function(id){return D.getElementById(id)};
 var es=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
-var ts=function(){return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})};
+var ts=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
 
+function tp(){
+  panelOpen=!panelOpen;
+  var p=$('pn'),pt=$('pt'),c=$('card');
+  if(panelOpen){p.classList.add('open');pt.classList.add('active');c.classList.add('narrow')}
+  else{p.classList.remove('open');pt.classList.remove('active');c.classList.remove('narrow')}
+}
 function go(v,btn){
-  D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});
-  if(btn)btn.classList.add('active');
-  $('cv').style.display=v==='chat'?'flex':'none';
-  $('rv').style.display=v==='reason'?'flex':'none';
+  D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
+  var w=$('wc'),cv=$('cv'),rv=$('rv');
+  if(v==='chat'){w.style.display='none';cv.style.display='flex';rv.style.display='none'}
+  else if(v==='reason'){w.style.display='none';cv.style.display='none';rv.style.display='flex'}
   (v==='reason'?$('ri'):$('ci')).focus();
 }
-function sm(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');}
-function qt(t){$('ci').value=t;ch()}
-function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},3000);}
-function hideW(){var w=$('wc');if(w)w.style.display='none';}
+function sm(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}
+function qt(t){go('chat',D.querySelector('[data-view=chat]'));$('ci').value=t;ch()}
+function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},3000)}
 
 function add(role,txt,cid){
-  var c=$(cid||'ml');if(!cid)hideW();
-  var g=D.createElement('div');g.className='mg';
-  var isU=role==='user';
+  var c=$(cid||'ml'),g=D.createElement('div');g.className='mg';var isU=role==='user';
   g.innerHTML='<div class="av '+(isU?'u':'a')+'">'+(isU?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
     '<div class="mb"><div class="mh"><span class="mauth">'+(isU?'You':'GBT')+'</span><span class="mtime">'+ts()+'</span></div>'+
     '<div class="mc">'+es(txt)+'</div></div>';
@@ -144,86 +157,83 @@ function ch(){
   var t=$('ci').value.trim();if(!t)return;$('ci').value='';
   add('user',t);var g=add('ai','');g.querySelector('.mc').classList.add('th');
   fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
-  .then(function(r){return r.json()}).then(function(r){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').textContent=r.response||r.error;
-  }).catch(function(e){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>';
-  });
+  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=r.response||r.error})
+  .catch(function(e){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>'});
 }
 
 function rs(){
   var t=$('ri').value.trim();if(!t)return;$('ri').value='';
   var h=$('rl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
-  add('user','['+RM+'] '+t,'rl');
-  var g=add('ai','','rl');g.querySelector('.mc').classList.add('th');
+  add('user','['+RM+'] '+t,'rl');var g=add('ai','','rl');g.querySelector('.mc').classList.add('th');
   fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
-  .then(function(r){return r.json()}).then(function(r){
-    g.querySelector('.mc').classList.remove('th');
+  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');
     g.querySelector('.mc').innerHTML='<div class="rc"><div class="rmt"><span class="rb">'+(r.mode||RM)+
       '</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
-      '<div class="rbo">'+es(r.conclusion||'No conclusion')+'</div></div>';
-    h.scrollTop=h.scrollHeight;
-  }).catch(function(e){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>';
-  });
+      '<div class="rbo">'+es(r.conclusion||'No conclusion')+'</div></div>';h.scrollTop=h.scrollHeight})
+  .catch(function(e){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+es(e.message)+'</span>'});
 }
 
-function sp(){
-  var p=$('ms').value;if(!p)return;
-  var g=add('ai','');g.querySelector('.mc').classList.add('th');
+function sp(){var p=$('ms').value;if(!p)return;var g=add('ai','');g.querySelector('.mc').classList.add('th');
   fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
-  .then(function(r){return r.json()}).then(function(j){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed';
-  });
+  .then(function(r){return r.json()}).then(function(j){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed'});}
+
+function run(s){go('chat',D.querySelector('[data-view=chat]'));var g=add('ai','');g.querySelector('.mc').classList.add('th');
+  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');
+    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});}
+
+function ev(){go('chat',D.querySelector('[data-view=chat]'));var g=add('ai','');g.querySelector('.mc').classList.add('th');
+  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('th');g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL'});}
+
+// ── Panel data loaders ──
+async function ldM(){
+  try{var r=await fetch(A+'/market'),d=await r.json(),mk=$('mk');
+    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">Market offline</span>';return}
+    var h='';d.indices.forEach(function(i){var dir=i.change>=0?'up':'dn',arr=i.change>=0?'+':'';
+      h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';});
+    mk.innerHTML=h;}catch(e){}
 }
 
-function run(s){
-  hideW();
-  var g=add('ai','');g.querySelector('.mc').classList.add('th');
-  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--text-tertiary)">'+(r.data||'').substring(0,300)+'</small>':'');
-  });
+async function ldS(){
+  try{var r=await fetch(A+'/system'),d=await r.json(),sy=$('sy');
+    var dc=0;try{var rd=await fetch(A+'/devices'),dd=await rd.json();dc=dd.disk_c;}catch(e){}
+    sy.innerHTML=
+      '<div class="sys-row"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>'+
+      '<div class="sys-row"><div class="sr"><span>RAM '+d.memory_used_gb+'/'+d.memory_total_gb+'GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>'+
+      (dc.total_gb?'<div class="sys-row"><div class="sr"><span>C: '+dc.used_gb+'/'+dc.total_gb+'GB</span><span class="sv">'+(dc.total_gb?Math.round(dc.used_gb/dc.total_gb*100):0)+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+(dc.total_gb?Math.round(dc.used_gb/dc.total_gb*100):0)+'%"></div></div></div>':'');
+  }catch(e){}
 }
 
-function ev(){hideW();var g=add('ai','');g.querySelector('.mc').classList.add('th');
-  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){
-    g.querySelector('.mc').classList.remove('th');
-    g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL';
-  });
+async function ldD(){
+  try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
+    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+g.name+'</div><div class="dv-info">'+(g.ram_mb?('<span class="dv-stat">VRAM: '+g.ram_mb+'MB</span>'):'')+'<span class="dv-stat">'+g.driver+'</span></div></div>';})}
+    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;
+      h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> Audio Devices</div><div class="dv-info"><span class="dv-stat">'+ac+'/'+d.audio.length+' active</span></div></div>';}
+    if(d.disks&&d.disks.length){d.disks.forEach(function(dk){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+dk.model+'</div><div class="dv-info"><span class="dv-stat">'+dk.size_gb+' GB</span></div></div>';})}
+    if(d.network&&d.network.length){d.network.forEach(function(n){h+='<div class="dv-card"><div class="dv-name"><span class="dv-dot on"></span> '+n.name+'</div><div class="dv-info"><span class="dv-stat">'+(n.speed_mbps?n.speed_mbps+' Mbps':'Connected')+'</span></div></div>';})}
+    if(h)dv.innerHTML=h;else dv.innerHTML='<span style="color:var(--t4);font-size:11px">No device data</span>';
+  }catch(e){}
 }
 
 async function init(){
   try{var r=await fetch(A+'/status');st=await r.json();
     $('stx').textContent=st.llm+' '+st.model;$('sd').classList.add('on');
-    $('kv').textContent=st.keys_available+'/'+st.keys_total+' keys';
-  }catch(e){$('stx').textContent='Offline';}
-  await ldP();
-  ldM();ldS();
-  setInterval(ldS,4000);setInterval(ldM,30000);
+    $('ll').innerHTML=
+      '<div class="dv-card"><div class="dv-name">'+st.llm+'</div><div class="dv-info">'+st.model+' · '+st.mcp_count+' MCP servers · '+st.keys_available+'/'+st.keys_total+' keys</div></div>';
+  }catch(e){$('stx').textContent='Offline'}
+  await ldP();ldM();ldS();ldD();
+  setInterval(function(){ldS();ldD()},5000);
+  setInterval(ldM,30000);
 }
 
-async function ldP(){try{var r=await fetch(A+'/providers');st.p=await r.json();var s=$('ms');s.innerHTML='';
+async function ldP(){try{var r=await fetch(A+'/providers');st.p=await r.json();var s=$('ms'),pl=$('pl');s.innerHTML='';pl.innerHTML='';
   for(var k in st.p){var v=st.p[k],on=v.status==='available';
-    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';}
+    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';
+    pl.innerHTML+='<div class="pvr"><span class="pvd '+(on?'on':'off')+'"></span>'+v.name+'</div>';}
 }catch(e){}}
 
-async function ldM(){try{var r=await fetch(A+'/market');var d=await r.json();var mk=$('mk');
-  if(!d.updated||!d.indices.length){mk.innerHTML='';return}
-  var h='';d.indices.slice(0,3).forEach(function(i){var dir=i.change>=0?'up':'dn',arr=i.change>=0?'+':'';
-    h+='<span>'+i.name.substring(0,4)+' <b class="'+dir+'">'+i.price.toFixed(0)+'</b> <span class="'+dir+'">'+arr+i.changePct+'%</span></span>';});
-  mk.innerHTML=h;}catch(e){}}
-
-async function ldS(){try{var r=await fetch(A+'/system');var d=await r.json();
-  $('cv2').textContent='CPU '+d.cpu+'%';$('rv').textContent='RAM '+d.memory+'%';}catch(e){}}
-
 D.addEventListener('keydown',function(e){
-  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-view=chat]'));}
-  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-view=reason]'));}
+  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-view=chat]'))}
+  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-view=reason]'))}
 });
 
 init();
