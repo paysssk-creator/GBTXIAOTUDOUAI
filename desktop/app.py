@@ -131,7 +131,7 @@ def rs():
     from gbt.reasoner import DeepReasoner,ReasonMode as RM
     dr=DeepReasoner(llm.a);mode=getattr(RM,d.get("mode","CHAIN").upper(),RM.CHAIN)
     r=dr.reason(d.get("text",""),mode)
-    return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,"confidence":r.confidence,"steps":len(r.steps)})
+    return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,"confidence":r.confidence,"steps":len(r.nodes)})
 
 @app.route("/api/evolve",methods=["POST"])
 def ev():
