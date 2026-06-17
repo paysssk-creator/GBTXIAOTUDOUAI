@@ -270,6 +270,17 @@ async function loadProviders(){
   }catch(e){}
 }
 
+
+async function loadSystem(){
+  try{
+    var r=await fetch(A+'/system');var d=await r.json();
+    $('cv2').textContent=d.cpu+'%';
+    $('cb').style.width=d.cpu+'%';
+    $('rv').textContent=d.memory+'%';
+    $('rb').style.width=d.memory+'%'
+  }catch(e){}
+}
+
 async function loadMarket(){
   try{
     var r=await fetch(A+'/market');var d=await r.json();

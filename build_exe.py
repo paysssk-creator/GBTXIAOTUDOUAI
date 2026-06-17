@@ -37,6 +37,7 @@ pyinstaller_args = [
     "--hidden-import=dotenv",
     "--hidden-import=openai",
     "--hidden-import=ollama",
+    "--hidden-import=psutil",
     "--hidden-import=pyautogui",
     # 添加数据文件 — .env 和 templates
     "--add-data=.env;.",

@@ -152,6 +152,40 @@ def mk():
         return jsonify({"indices": [], "error": str(e), "updated": False})
 
 
+@app.route("/api/system")
+def sy():
+    import ctypes, ctypes.wintypes, time
+    try:
+        # CPU via GetSystemTimes
+        class FILETIME(ctypes.Structure):
+            _fields_=[("dwLowDateTime",ctypes.wintypes.DWORD),("dwHighDateTime",ctypes.wintypes.DWORD)]
+        idle0, kernel0, user0 = FILETIME(), FILETIME(), FILETIME()
+        ctypes.windll.kernel32.GetSystemTimes(ctypes.byref(idle0), ctypes.byref(kernel0), ctypes.byref(user0))
+        time.sleep(0.3)
+        idle1, kernel1, user1 = FILETIME(), FILETIME(), FILETIME()
+        ctypes.windll.kernel32.GetSystemTimes(ctypes.byref(idle1), ctypes.byref(kernel1), ctypes.byref(user1))
+        def ft_to_u64(ft): return (ft.dwHighDateTime << 32) | ft.dwLowDateTime
+        idle_d = ft_to_u64(idle1) - ft_to_u64(idle0)
+        kernel_d = ft_to_u64(kernel1) - ft_to_u64(kernel0)
+        user_d = ft_to_u64(user1) - ft_to_u64(user0)
+        total = kernel_d + user_d
+        cpu = round((total - idle_d) / total * 100, 1) if total > 0 else 0
+        # Memory via GlobalMemoryStatusEx
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_=[("dwLength",ctypes.wintypes.DWORD),("dwMemoryLoad",ctypes.wintypes.DWORD),
+                ("ullTotalPhys",ctypes.c_uint64),("ullAvailPhys",ctypes.c_uint64),
+                ("ullTotalPageFile",ctypes.c_uint64),("ullAvailPageFile",ctypes.c_uint64),
+                ("ullTotalVirtual",ctypes.c_uint64),("ullAvailVirtual",ctypes.c_uint64),
+                ("ullAvailExtendedVirtual",ctypes.c_uint64)]
+        mem = MEMORYSTATUSEX()
+        mem.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(mem))
+        mem_pct = mem.dwMemoryLoad
+        used_gb = round((mem.ullTotalPhys - mem.ullAvailPhys) / (1024**3), 1)
+        total_gb = round(mem.ullTotalPhys / (1024**3), 1)
+        return jsonify({"cpu":cpu,"memory":mem_pct,"memory_used_gb":used_gb,"memory_total_gb":total_gb})
+    except Exception as e:
+        return jsonify({"cpu":0,"memory":0,"memory_used_gb":0,"memory_total_gb":0,"error":str(e)})
 @app.route("/api/reason",methods=["POST"])
 def rs():
     d=request.json or {};
