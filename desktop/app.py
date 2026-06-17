@@ -61,7 +61,6 @@ else:
     TD = os.path.join(os.path.dirname(__file__),"templates")
 C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
 H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
-J=open(os.path.join(TD,"scripts.js"),encoding="utf-8").read() if os.path.exists(os.path.join(TD,"scripts.js")) else ""
 HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><style>{C}</style></head><body>{H}</body></html>'
 
 # ── LLM Manager with failover ──
@@ -92,12 +91,20 @@ llm=LLMMgr(prov="deepseek")
 
 # ── Flask API ──
 app=Flask(__name__)
+import logging as _logging
+_logging.getLogger("werkzeug").setLevel(_logging.WARNING)  # suppress dev server warnings
 @app.route("/favicon.ico")
 def favicon():
     import flask
-    ico = os.path.join(os.path.dirname(__file__),"GBT.ico")
-    if os.path.exists(ico):
-        return flask.send_file(ico,mimetype="image/x-icon")
+    # 多路径查找图标 (兼容开发模式和PyInstaller打包)
+    candidates=[
+        os.path.join(os.path.dirname(__file__),"GBT.ico"),
+        os.path.join(os.path.dirname(sys.executable),"GBT.ico") if getattr(sys,'frozen',False) else "",
+        os.path.join(sys._MEIPASS,"GBT.ico") if getattr(sys,'frozen',False) else "",
+    ]
+    for ico in candidates:
+        if ico and os.path.exists(ico):
+            return flask.send_file(ico,mimetype="image/x-icon")
     return "",204
 
 @app.route("/")

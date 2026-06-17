@@ -41,9 +41,9 @@ pyinstaller_args = [
     "--hidden-import=ollama",
     "--hidden-import=psutil",
     "--hidden-import=pyautogui",
-    # 添加数据文件 — .env 和 templates
-    "--add-data=.env;.",
+    # 添加数据文件 — templates 和图标
     "--add-data=desktop/templates;desktop/templates",
+    "--add-data=desktop/GBT.ico;.",
     # 路径注入 - 确保代码能找到同级 .env 和模块
     "--collect-all=gbt",
     "--collect-all=agents",
