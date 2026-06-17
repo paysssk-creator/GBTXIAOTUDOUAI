@@ -15,7 +15,7 @@
   ],
   "failed": [
     {
-      "name": "无未提交改动 (当前: 6)",
+      "name": "无未提交改动 (当前: 22)",
       "detail": ""
     },
     {
@@ -23,7 +23,7 @@
       "detail": "缺少 Cline 规则文件"
     }
   ],
-  "timestamp": "2026-06-17T08:57:33.644Z",
+  "timestamp": "2026-06-17T16:17:29.017Z",
   "summary": {
     "passed": 6,
     "warnings": 1,

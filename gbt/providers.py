@@ -28,7 +28,7 @@ PROVIDERS: Dict[str, dict] = {
         "description":"免费大杯，多模态强"},
     "deepseek": {"name":"DeepSeek","base_url":"https://api.deepseek.com/v1/",
         "env_keys":["DEEPSEEK_API_KEY","OPENAI_COMPATIBLE_API_KEY"],
-        "default_model":"deepseek-chat","models":["deepseek-chat","deepseek-reasoner","deepseek-coder-v2"],
+        "default_model":"deepseek-v4-pro","models":["deepseek-v4-pro","deepseek-chat","deepseek-reasoner","deepseek-coder-v2"],
         "auth_mode":"bearer","guide_url":"https://platform.deepseek.com/api_keys","pricing":"送500万tokens","tier":5,
         "description":"国产推理强，R1深度思考"},
     "qwen": {"name":"阿里(Qwen)","base_url":"https://dashscope.aliyuncs.com/compatible-mode/v1/",

@@ -1,31 +1,37 @@
 # Scan Report v3
 
-**Time**:2026-06-17T08:41:43.171Z
-**Deep**:Y
+**Time**:2026-06-17T16:17:29.045Z
+**Deep**:N
 
 ## Summary
 |Level|Count|
 |---|---|
-|medium|16|
-|low|2|
-|Total|**18**|
+|high|3|
+|medium|2|
+|low|18|
+|Total|**23**|
 
 ## Findings
-- **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
-- **[MEDIUM]** agents\gbt_agent.py:175 — return后死代码
-- **[MEDIUM]** agents\gbt_agent.py:181 — return后死代码
-- **[MEDIUM]** agents\gbt_agent.py:182 — return后死代码
-- **[MEDIUM]** agents\gbt_agent.py:207 — return后死代码
-- **[MEDIUM]** desktop\app.py:219 — return后死代码
-- **[MEDIUM]** gbt\agent.py:55 — return后死代码
-- **[MEDIUM]** gbt\agent.py:58 — return后死代码
-- **[MEDIUM]** gbt\guard.py:147 — return后死代码
-- **[MEDIUM]** gbt\llm.py:71 — return后死代码
-- **[MEDIUM]** gbt\mcp.py:72 — return后死代码
-- **[MEDIUM]** gbt\memory.py:81 — return后死代码
-- **[MEDIUM]** gbt\memory.py:105 — return后死代码
-- **[MEDIUM]** gbt\tool.py:58 — return后死代码
-- **[MEDIUM]** gbt\tool.py:90 — return后死代码
-- **[MEDIUM]** tools\mcp_tools.py:15 — return后死代码
+- **[HIGH]** desktop\templates\scripts.js:16 — innerHTML XSS
+- **[HIGH]** desktop\templates\scripts.js:22 — innerHTML XSS
+- **[HIGH]** desktop\templates\scripts.js:33 — innerHTML XSS
+- **[MEDIUM]** desktop\templates\scripts.js:9 — 空catch
+- **[MEDIUM]** desktop\templates\scripts.js:19 — 空catch
+- **[LOW]** desktop\templates\scripts.js:1 — var改用let
+- **[LOW]** desktop\templates\scripts.js:2 — var改用let
+- **[LOW]** desktop\templates\scripts.js:3 — var改用let
+- **[LOW]** desktop\templates\scripts.js:15 — var改用let
+- **[LOW]** desktop\templates\scripts.js:16 — var改用let
+- **[LOW]** desktop\templates\scripts.js:17 — var改用let
+- **[LOW]** desktop\templates\scripts.js:20 — var改用let
+- **[LOW]** desktop\templates\scripts.js:21 — var改用let
+- **[LOW]** desktop\templates\scripts.js:24 — var改用let
+- **[LOW]** desktop\templates\scripts.js:25 — var改用let
+- **[LOW]** desktop\templates\scripts.js:27 — var改用let
+- **[LOW]** desktop\templates\scripts.js:30 — var改用let
+- **[LOW]** desktop\templates\scripts.js:31 — var改用let
+- **[LOW]** desktop\templates\scripts.js:38 — var改用let
+- **[LOW]** desktop\templates\scripts.js:41 — var改用let
+- **[LOW]** desktop\templates\scripts.js:42 — var改用let
 - **[LOW]** gbt\mirror.py:55 — 待办标记
 - **[LOW]** gbt\mirror.py:56 — 待办标记

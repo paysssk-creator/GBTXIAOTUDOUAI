@@ -1,25 +1,15 @@
-# Python
+﻿*.log
 __pycache__/
-*.py[cod]
-*.egg-info/
-dist/
+*.pyc
 build/
-.eggs/
-*.egg
-
-# 环境
+dist/
+GBT.spec
+*.spec
+screen.png
+check.py
+run.py
+test_api.py
+test_gbt_app.py
+screen.py
 .env
-.venv/
-venv/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-
-# 系统
-.DS_Store
-Thumbs.db
-
-# GBT进化日志
-.gbt/
+.env.example

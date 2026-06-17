@@ -57,7 +57,20 @@ class GBTLLM:
         """多源查找API密钥"""
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
-            if v: return v
+            if not v:
+                # Fallback: 直接读 .env
+                for _p in [os.path.join(os.path.dirname(sys.executable),".env"),
+                          os.path.join(sys._MEIPASS,".env") if getattr(sys,'frozen',False) else "",
+                          os.path.join(os.path.dirname(__file__),"..",".env"),
+                          os.path.join(os.path.dirname(__file__),"..","..",".env")]:
+                    if _p and os.path.exists(_p):
+                        from dotenv import dotenv_values
+                        v = dotenv_values(_p).get(ek)
+                        if v: print(f"KEY from .env: {ek}={v[:8]}...{v[-4:]}"); break
+            if v:
+                print(f"KEY used: {ek}={v[:8]}...{v[-4:]}")
+                return v
+        print(f"NO KEY found for {cfg['env_keys']}")
         return None
 
     def _auto_detect(self) -> Optional[str]:

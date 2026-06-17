@@ -21,6 +21,12 @@ GBT Agent Framework — 主入口
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
+# ── 加载 .env ──
+from dotenv import load_dotenv
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path, override=True)
+
 from gbt.llm import GBTLLM
 from gbt.providers import AutoKeyConfig
 from gbt.tool import ToolRegistry
@@ -116,6 +122,8 @@ def main():
     args = {}
     argv = sys.argv[1:]
     i = 0
+    
+    query_to_run = None # 新增变量用于存储 --query 参数
 
     while i < len(argv):
         if argv[i] == "--scan-keys":
@@ -133,8 +141,31 @@ def main():
             args["model"] = argv[i + 1]; i += 2
         elif argv[i] == "--project" and i + 1 < len(argv):
             args["project"] = argv[i + 1]; i += 2
+        elif argv[i] == "--query" and i + 1 < len(argv):
+            query_to_run = argv[i + 1]; i += 2 # 获取 --query 的值
         else:
             i += 1
+
+    if query_to_run: # 如果存在 --query，直接运行查询
+        print_banner()
+        provider = args.get("provider", "auto")
+        model = args.get("model")
+        project = args.get("project", os.getcwd())
+
+        try:
+            llm = GBTLLM(provider=provider, model=model)
+        except ValueError as e:
+            print(f"\n❌ {e}")
+            print("运行 'python main.py --keys-guide' 查看获取指南")
+            return
+
+        agent = GBTAgent(llm=llm, project_root=project)
+        register_all_mcp_tools(agent._tools, project)
+
+        print(f"\n🧠 正在处理查询: {query_to_run}\n")
+        response = agent.run(query_to_run)
+        print(f"\n🤖 GBT: {response}\n")
+        return # 执行完毕后退出
 
     cmd_interactive(args)
 

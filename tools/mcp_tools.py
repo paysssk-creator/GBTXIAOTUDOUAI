@@ -53,15 +53,13 @@ def register_all_mcp_tools(registry: ToolRegistry, project: str = ".") -> ToolRe
         ("deepseek", "DeepSeek深度分析", "deepseek-analyzer"),
     ]
 
-    for name, desc, srv in core_servers:
+    for item in core_servers:
+        name, desc, srv_command, *extra_args = item # 允许额外参数
         method = ""
-        args = ""
-        if len(srv) > 1:  # tuple with method/args
-            if isinstance(srv, tuple):
-                srv, method, *rest = srv
-                args = rest[0] if rest else ""
+        args = " ".join(extra_args) # 将额外参数合并为字符串
+
         registry.register(name, desc,
-            lambda **kw: mcp_call(srv, method, args),
+            lambda **kw: mcp_call(srv_command, method, args),
             {"query": "可选查询参数"})
 
     print(f"🔧 万能MCP: {len(servers)}个服务器, {len(core_servers)+5}个工具")

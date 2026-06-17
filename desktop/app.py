@@ -2,24 +2,66 @@
 LLM switching + failover + real 6-step evolve
 """
 import os,sys,threading,json,logging,time,subprocess
-sys.path.insert(0,os.path.join(os.path.dirname(__file__),".."))
+
+# ── 路径初始化 ──
+_here = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0,_here)                          # exe同级目录
+sys.path.insert(0,os.path.join(_here,".."))       # 开发模式
+sys.path.insert(0,os.path.join(os.path.dirname(sys.executable) if getattr(sys,'frozen',False) else _here,".."))
+
+# ── 加载 .env (多路径fallback) ──
+from dotenv import dotenv_values as _dotenv_values
+def _load_env_force():
+    """多路径强制加载 .env，输出debug信息"""
+    paths=[]
+    if getattr(sys,'frozen',False):
+        paths=[
+            os.path.join(os.path.dirname(sys.executable), ".env"),
+            os.path.join(sys._MEIPASS, ".env"),
+            os.path.join(sys._MEIPASS, "..", ".env"),
+        ]
+    else:
+        paths=[os.path.join(_here, ".env"), os.path.join(_here, "..", ".env")]
+    for _p in paths:
+        if os.path.exists(_p):
+            try:
+                vals=_dotenv_values(_p)
+                for k,v in vals.items():
+                    if v:
+                        os.environ[k]=v
+                        if 'KEY' in k.upper():
+                            mask=v[:8]+"..."+v[-4:] if len(v)>12 else "***"
+                            print(f"ENV LOAD: {k}={mask} from {_p}")
+            except Exception as _e:
+                print(f"ENV FAIL: {_p} -> {_e}")
+_load_env_force()
+
 logging.basicConfig(level=logging.INFO,format="%(message)s");L=logging.getLogger("GBT")
 from flask import Flask,jsonify,request,render_template_string
 from gbt.mcp import get_mcp,call_mcp
 from gbt.providers import PROVIDERS,AutoKeyConfig
 
 # ── Build homepage ──
-TD=os.path.join(os.path.dirname(__file__),"templates")
+# ── 模板路径 (兼容打包模式) ──
+if getattr(sys,'frozen',False):
+    _base = sys._MEIPASS
+    TD = os.path.join(_base,"desktop","templates")
+    if not os.path.isdir(TD):
+        TD = os.path.join(_base,"templates")
+else:
+    TD = os.path.join(os.path.dirname(__file__),"templates")
 C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
 H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
 J=open(os.path.join(TD,"scripts.js"),encoding="utf-8").read()
-HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT v2.0</title><style>{C}</style></head><body>{H}<script>{J}</script></body></html>'
+HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT</title><style>{C}</style></head><body>{H}<script>{J}</script></body></html>'
 
 # ── LLM Manager with failover ──
 class LLMMgr:
-    def __init__(s):s.a=None;s.prov=None;s.model=None;s.try_init()
+    def __init__(s,prov="auto"):s.a=None;s.prov=None;s.model=None;s.try_init(prov=prov)
     def try_init(s,prov="auto"):
         from gbt.llm import GBTLLM
+        # 再次确保 .env 已加载
+        _load_env_force()
         disc=AutoKeyConfig.scan()
         valid=[p for p,i in disc.items() if i["status"]=="available"]
         if prov!="auto" and prov in valid:valid.insert(0,prov)
@@ -39,7 +81,7 @@ class LLMMgr:
             return s.a.invoke(msgs)
         except Exception as e:return f"[Error] {e}"
 
-llm=LLMMgr()
+llm=LLMMgr(prov="deepseek")
 
 # ── Flask API ──
 app=Flask(__name__)
@@ -87,7 +129,7 @@ def rs():
     d=request.json or {};
     if not llm.a:return jsonify({"mode":"demo","conclusion":"No LLM available.","confidence":0})
     from gbt.reasoner import DeepReasoner,ReasonMode as RM
-    dr=DeepReasoner(llm.a);mode=getattr(RM,d.get("mode","chain"),RM.chain)
+    dr=DeepReasoner(llm.a);mode=getattr(RM,d.get("mode","CHAIN").upper(),RM.CHAIN)
     r=dr.reason(d.get("text",""),mode)
     return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,"confidence":r.confidence,"steps":len(r.steps)})
 
@@ -107,15 +149,15 @@ def ev():
 def launch():
     try:
         import webview as wv
-        t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8765,debug=False,use_reloader=False),daemon=True)
+        t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8766,debug=False,use_reloader=False),daemon=True)
         t.start();time.sleep(1.5)
-        L.info("Desktop window opening...");wv.create_window("GBT v2.0","http://127.0.0.1:8765",width=1100,height=720,min_size=(900,600));wv.start()
+        L.info("Desktop window opening...");wv.create_window("GBT","http://127.0.0.1:8766",width=1100,height=720,min_size=(900,600));wv.start()
     except ImportError:
         L.warning("Browser mode");L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
 
 def main():
     import argparse;p=argparse.ArgumentParser();p.add_argument("--browser",action="store_true");a=p.parse_args()
-    if a.browser:L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
+    if a.browser:L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
     else:launch()
 
 if __name__=="__main__":main()

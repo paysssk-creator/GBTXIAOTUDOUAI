@@ -1,0 +1,3 @@
+[console_scripts]
+gbt = gbt.cli:main
+gbt-desktop = desktop.app:main
