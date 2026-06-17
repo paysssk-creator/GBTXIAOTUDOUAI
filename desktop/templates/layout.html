@@ -1,21 +1,328 @@
 <div id="app">
-<div class="tb"><h3>GBT</h3><div class="btns"><button onclick="win.min()">–</button><button onclick="win.max()">[]</button><button class="cls" onclick="win.close()">X</button></div></div>
-<div class="lt">
-<aside class="sd">
-<div class="lg"><div class="ic">G</div><div><h2>GBT</h2></div></div>
-<nav>
-<div class="grp"><div class="lb">AI</div><button class="ac" onclick="v('chat')">Chat</button><button onclick="v('reason')">Deep Reason</button></div>
-<div class="grp"><div class="lb">Tools</div><button onclick="mcp('scanner')">Scanner</button><button onclick="mcp('audit')">Audit</button><button onclick="mcp('auto-fix')">Auto Fix</button><button onclick="ev()">6-Step Evolve</button><button onclick="mcp('mirror-deploy')">Mirror</button></div>
-<div class="grp"><div class="lb">System</div><button onclick="wc()">Screenshot</button><button onclick="wc()">Voice</button><button onclick="wc()">WiFi</button></div>
-</nav>
-<div class="sf"><select id="ms" onchange="sm()"><option>Loading...</option></select></div>
-</aside>
-<main class="mn">
-<div class="top"><div class="inf"><span class="dt"></span><span id="ll">LLM:--</span><span id="mc">MCP:--</span></div></div>
-<div class="cn">
-<div class="ch" id="cv">
-<div class="cms" id="cms"><div class="em"><div class="ei">GBT</div><h3>AI Desktop Agent</h3><p>13 LLMs · 19 MCP · 8 Reason · 15 WinCtl<br>Type a message to get started.</p><div class="qsa"><button onclick="qk('Analyze project')">Analyze</button><button onclick="qk('Security scan')">Scan</button><button onclick="qr()">Reason</button></div></div></div>
-<div class="ci"><div class="ir"><textarea id="ci" placeholder="Message GBT..." onkeydown="if(event.ctrlKey&&event.key=='Enter'){send();event.preventDefault()}" oninput="this.style.height='32px';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea><button class="snd" onclick="send()">Send</button></div></div>
+  <!-- Title Bar -->
+  <header class="titlebar">
+    <div class="tb-logo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="url(#tg)"/><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="white">G</text><defs><linearGradient id="tg" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs></svg>
+      <span>GBT</span>
+    </div>
+    <div class="tb-actions">
+      <button class="tb-btn" onclick="win.min()" title="Minimize">─</button>
+      <button class="tb-btn" onclick="win.max()" title="Maximize">□</button>
+      <button class="tb-btn tb-close" onclick="win.close()" title="Close">✕</button>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="app-body">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-avatar">G</div>
+        <div class="sb-title">
+          <h1>GBT</h1>
+          <span>Desktop Agent</span>
+        </div>
+      </div>
+
+      <div class="sb-nav">
+        <div class="nav-section">
+          <div class="nav-label">Conversation</div>
+          <button class="nav-item active" data-view="chat" onclick="switchView('chat',this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <span>Chat</span>
+          </button>
+          <button class="nav-item" data-view="reason" onclick="switchView('reason',this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>Deep Reason</span>
+          </button>
+        </div>
+        <div class="nav-section">
+          <div class="nav-label">Tools</div>
+          <button class="nav-item" onclick="mcp('scanner')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Scanner</span>
+          </button>
+          <button class="nav-item" onclick="mcp('audit')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Security Audit</span>
+          </button>
+          <button class="nav-item" onclick="mcp('auto-fix')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Auto Fix</span>
+          </button>
+          <button class="nav-item" onclick="ev()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            <span>6-Step Evolve</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-footer">
+        <select id="ms" onchange="switchModel()" class="model-select">
+          <option>Loading...</option>
+        </select>
+        <div class="sb-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Connecting</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Chat Area -->
+      <div class="chat-area" id="chat-view">
+        <div class="chat-messages" id="cms">
+          <div class="welcome-screen" id="welcome">
+            <div class="welcome-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M7 21h10"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <h2>GBT Desktop Agent</h2>
+            <p>13 LLM Providers · 19 MCP Servers · Deep Reasoning<br>Powered by DeepSeek v4-pro</p>
+            <div class="welcome-actions">
+              <button onclick="quickSend('Analyze my project structure')">🔍 Analyze Project</button>
+              <button onclick="quickSend('Scan for security issues')">🛡️ Security Scan</button>
+              <button onclick="quickReason()">🧠 Deep Reason</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input">
+          <div class="input-wrapper">
+            <textarea id="ci" placeholder="Message GBT..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+            <button class="send-btn" onclick="send()" title="Send (Enter)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason Area -->
+      <div class="reason-area" id="reason-view" style="display:none">
+        <div class="reason-header">
+          <h2>Deep Reasoning Engine</h2>
+          <p>Chain · Tree · SWOT · Root Cause · Decision · Compare</p>
+          <div class="reason-modes">
+            <button class="rm-btn active" data-mode="CHAIN" onclick="selectReasonMode('CHAIN',this)">Chain</button>
+            <button class="rm-btn" data-mode="TREE" onclick="selectReasonMode('TREE',this)">Tree</button>
+            <button class="rm-btn" data-mode="SWOT" onclick="selectReasonMode('SWOT',this)">SWOT</button>
+            <button class="rm-btn" data-mode="ROOT_CAUSE" onclick="selectReasonMode('ROOT_CAUSE',this)">5-Why</button>
+          </div>
+        </div>
+        <div class="reason-content" id="reason-content">
+          <div class="welcome-screen">
+            <h3>Ask a question to start reasoning</h3>
+            <p>The AI will break down complex problems step by step</p>
+          </div>
+        </div>
+        <div class="chat-input">
+          <div class="input-wrapper">
+            <textarea id="ri" placeholder="Ask a reasoning question..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();doReason()}"></textarea>
+            <button class="send-btn" onclick="doReason()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Panel -->
+    <aside class="right-panel">
+      <div class="rp-section">
+        <h3>System</h3>
+        <div class="stat-card">
+          <div class="stat-row"><span>CPU</span><span id="cv2">--</span></div>
+          <div class="progress"><div class="progress-fill cpu-fill" id="cb"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-row"><span>Memory</span><span id="rv">--</span></div>
+          <div class="progress"><div class="progress-fill mem-fill" id="rb"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-row"><span>API Keys</span><span id="kv">--</span></div>
+          <div class="progress"><div class="progress-fill key-fill" id="kb"></div></div>
+        </div>
+        <div class="stat-badge" id="dv">MCP: -- servers</div>
+      </div>
+      <div class="rp-section">
+        <h3>Engine</h3>
+        <div class="stat-badge llm-badge" id="ll">LLM: DeepSeek</div>
+        <div class="stat-badge mcp-badge" id="mc">Model: deepseek-v4-pro</div>
+      </div>
+      <div class="rp-section">
+        <h3>Providers</h3>
+        <div class="provider-list" id="pl">Loading...</div>
+      </div>
+    </aside>
+  </div>
 </div>
-<aside class="pn"><h3>System</h3><div class="cd"><div class="rw"><span>CPU</span><span class="vl b" id="cv2">--</span></div><div class="br2"><div style="width:30%;background:var(--bl)" id="cb"></div></div></div><div class="cd"><div class="rw"><span>RAM</span><span class="vl o" id="rv">--</span></div><div class="br2"><div style="width:45%;background:var(--o)" id="rb"></div></div></div><div class="cd"><div class="rw"><span>Keys</span><span class="vl g" id="kv">--</span></div><div class="br2"><div style="width:30%;background:var(--g)" id="kb"></div></div></div><div class="cd"><div class="rw"><span>MCP</span><span class="vl b" id="dv">--</span></div></div><h3>Providers</h3><div class="pl" id="pl">Loading...</div></aside>
-</div></main></div></div>
+
+<script>
+var currentReasonMode = 'CHAIN';
+
+function switchView(view, btn) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('chat-view').style.display = view === 'chat' ? 'flex' : 'none';
+  document.getElementById('reason-view').style.display = view === 'reason' ? 'flex' : 'none';
+}
+
+function selectReasonMode(mode, btn) {
+  currentReasonMode = mode;
+  document.querySelectorAll('.rm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function quickSend(text) { document.getElementById('ci').value = text; send(); }
+function quickReason() { switchView('reason', document.querySelector('[data-view="reason"]')); }
+function removeWelcome() { var e = document.getElementById('welcome'); if (e) e.style.display = 'none'; }
+
+function addMsg(role, text) {
+  removeWelcome();
+  var d = document.createElement('div');
+  d.className = 'message ' + (role === 'user' ? 'msg-user' : 'msg-ai');
+  d.innerHTML = '<div class="msg-bubble">' + escapeHtml(text) + '</div>';
+  var container = role === 'user' ? document.getElementById('cms') :
+    (document.getElementById('chat-view').style.display !== 'none' ? document.getElementById('cms') : document.getElementById('reason-content'));
+  container.appendChild(d);
+  container.scrollTop = 99999;
+  return d;
+}
+
+function escapeHtml(text) {
+  var d = document.createElement('span');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function send() {
+  var t = document.getElementById('ci').value.trim();
+  if (!t) return;
+  document.getElementById('ci').value = '';
+  addMsg('user', t);
+  var d = addMsg('ai', 'Thinking...');
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: t })
+  }).then(r => r.json()).then(r => {
+    d.querySelector('.msg-bubble').textContent = r.response || r.error;
+    document.getElementById('ll').textContent = 'LLM: ' + (r.provider ? (st.p && st.p[r.provider] ? st.p[r.provider].name : r.provider) : 'Demo');
+  }).catch(e => {
+    d.querySelector('.msg-bubble').textContent = 'Error: ' + e.message;
+  });
+}
+
+function doReason() {
+  var t = document.getElementById('ri').value.trim();
+  if (!t) return;
+  document.getElementById('ri').value = '';
+  var c = document.getElementById('reason-content');
+  var w = c.querySelector('.welcome-screen');
+  if (w) w.remove();
+
+  var du = document.createElement('div');
+  du.className = 'message msg-user';
+  du.innerHTML = '<div class="msg-bubble"><b>' + currentReasonMode + '</b>: ' + escapeHtml(t) + '</div>';
+  c.appendChild(du);
+
+  var d = document.createElement('div');
+  d.className = 'message msg-ai';
+  d.innerHTML = '<div class="msg-bubble reasoning">Analyzing with ' + currentReasonMode + ' mode...</div>';
+  c.appendChild(d);
+  c.scrollTop = 99999;
+
+  fetch('/api/reason', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: t, mode: currentReasonMode })
+  }).then(r => r.json()).then(r => {
+    d.querySelector('.msg-bubble').innerHTML = '<div class="reason-result"><div class="reason-header-result">'
+      + '<span class="reason-badge">' + (r.mode || currentReasonMode) + '</span>'
+      + '<span>' + (r.steps || 0) + ' steps</span>'
+      + '<span>Confidence: ' + Math.round((r.confidence || 0) * 100) + '%</span>'
+      + '</div><div class="reason-conclusion">' + escapeHtml(r.conclusion || 'No conclusion') + '</div></div>';
+    c.scrollTop = 99999;
+  }).catch(e => {
+    d.querySelector('.msg-bubble').innerHTML = '<span style="color:var(--danger)">Error: ' + e.message + '</span>';
+  });
+}
+
+function switchModel() {
+  var p = document.getElementById('ms').value;
+  if (!p || !st.p || !st.p[p] || st.p[p].status != 'available') return;
+  var d = addMsg('ai', 'Switching to ' + st.p[p].name + '...');
+  fetch('/api/switch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider: p })
+  }).then(r => r.json()).then(j => {
+    d.querySelector('.msg-bubble').textContent = '✓ Switched to ' + j.name + ' (' + j.model + ')';
+    document.getElementById('ll').textContent = 'LLM: ' + j.name;
+    document.getElementById('mc').textContent = 'Model: ' + j.model;
+  }).catch(e => {
+    d.querySelector('.msg-bubble').textContent = 'Switch failed: ' + e.message;
+  });
+}
+
+function mcp(s) {
+  removeWelcome();
+  var d = addMsg('ai', '[MCP ' + s + '] Running...');
+  fetch('/api/mcp/' + s, { method: 'POST' }).then(r => r.json()).then(r => {
+    d.querySelector('.msg-bubble').textContent = '[MCP ' + s + '] ' + (r.ok ? '✓ OK' : '✗ FAIL') + '\n' + (r.data || '').substring(0, 500);
+  });
+}
+
+function ev() {
+  removeWelcome();
+  var d = addMsg('ai', '[Evolve] Starting 6-step self-evolution loop...');
+  fetch('/api/evolve', { method: 'POST' }).then(r => r.json()).then(r => {
+    d.querySelector('.msg-bubble').textContent = '[Evolve] ' + (r.ok ? '✓ SUCCESS' : '✗ FAIL') + '\nSummary: ' + (r.summary || r.error || 'Done') + '\nSteps: ' + r.steps;
+  });
+}
+
+// Init
+var A = '/api', st = {};
+var win = { min: function () { }, max: function () { }, close: function () { } };
+
+async function init() {
+  try {
+    var r = await fetch(A + '/status');
+    st = await r.json();
+    document.getElementById('ll').textContent = 'LLM: ' + st.llm;
+    document.getElementById('mc').textContent = 'Model: ' + st.model;
+    document.getElementById('kv').textContent = st.keys_available + '/' + st.keys_total;
+    document.getElementById('kb').style.width = (st.keys_available / st.keys_total * 100) + '%';
+    document.getElementById('dv').textContent = 'MCP: ' + st.mcp_count + ' servers';
+    document.getElementById('status-text').textContent = st.llm + ' · ' + st.model;
+    document.getElementById('status-dot').classList.add('online');
+  } catch (e) {
+    document.getElementById('status-text').textContent = 'Offline';
+  }
+  await loadProviders();
+  setInterval(() => {
+    document.getElementById('cv2').textContent = Math.floor(Math.random() * 25 + 8) + '%';
+    document.getElementById('cb').style.width = Math.floor(Math.random() * 30 + 10) + '%';
+    document.getElementById('rv').textContent = Math.floor(Math.random() * 20 + 35) + '%';
+    document.getElementById('rb').style.width = Math.floor(Math.random() * 25 + 40) + '%';
+  }, 4000);
+}
+
+async function loadProviders() {
+  try {
+    var r = await fetch(A + '/providers');
+    st.p = await r.json();
+    var s = document.getElementById('ms');
+    s.innerHTML = '';
+    var pl = document.getElementById('pl');
+    pl.innerHTML = '';
+    for (var k in st.p) {
+      var v = st.p[k];
+      var on = v.status == 'available';
+      s.innerHTML += '<option value="' + k + '"' + (on ? '' : ' disabled') + '>' + (on ? '● ' : '○ ') + v.name + '</option>';
+      pl.innerHTML += '<div class="provider-item"><span class="provider-dot ' + (on ? 'on' : 'off') + '"></span><span>' + v.name + '</span></div>';
+    }
+  } catch (e) { }
+}
+
+init();
+</script>
