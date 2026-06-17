@@ -144,8 +144,15 @@ body{
 .qs-r{display:flex;align-items:center;gap:var(--s3);width:100%;padding:var(--s2) 0;border-bottom:1px solid var(--b-sub);background:none;border-left:none;border-right:none;border-top:none;cursor:pointer;font-size:13px;color:var(--t2);font-weight:500;text-align:left;font-family:inherit;transition:all .1s var(--e-out)}.qs-r:last-child{border-bottom:none}.qs-r i{font-size:15px;color:var(--t3);transition:color .1s var(--e-out)}.qs-r .qs-ar{color:var(--t4);margin-left:auto;font-size:14px}.qs-r:hover{color:var(--t1)}.qs-r:hover i{color:var(--accent)}
 
 /* ── Right Panel ── */
-#pn{width:0;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--b-sub);overflow-y:auto;overflow-x:hidden;transition:width .22s var(--e-out);display:flex;flex-direction:column}
+#pn{width:0;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--b-sub);overflow-y:auto;overflow-x:hidden;transition:width .22s var(--e-out);display:flex;flex-direction:column;scroll-behavior:smooth}
 #pn.open{width:var(--panel-w);padding:var(--s4) var(--s4) var(--s8)}
+#pn.open .ps{animation:panelFadeIn .3s var(--e-out) both}
+#pn.open .ps:nth-child(1){animation-delay:0s}
+#pn.open .ps:nth-child(2){animation-delay:.05s}
+#pn.open .ps:nth-child(3){animation-delay:.10s}
+#pn.open .ps:nth-child(4){animation-delay:.15s}
+#pn.open .ps:nth-child(5){animation-delay:.20s}
+@keyframes panelFadeIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
 #pn::-webkit-scrollbar-thumb{background:var(--b-sub)}
 
 /* Panel section */

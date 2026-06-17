@@ -124,7 +124,7 @@
 
 <script>
 var A='/api',D=document,w=function(){};
-var RM='CHAIN',ST={},pnOpen=false;
+var RM='CHAIN',ST={},pnOpen=true;
 var $=function(id){return D.getElementById(id)};
 var esc=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
 var tfmt=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
@@ -271,6 +271,8 @@ async function loadProviders(){
 }catch(e){}
 
 async function init(){
+  // Auto-open panel to show all capabilities
+  $('pn').classList.add('open');$('pt').classList.add('on');$('card').classList.add('narrow');
   try{var r=await fetch(A+'/status');ST=await r.json();
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
     $('ll').innerHTML='<div class="p-info">'+ST.llm+' · '+ST.model+'<br>'+ST.mcp_count+' MCP servers · '+ST.keys_available+'/'+ST.keys_total+' keys</div>';
