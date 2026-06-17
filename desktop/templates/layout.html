@@ -5,302 +5,281 @@
 
 <div id="titlebar">
   <div class="brand">
-    <div class="icon">G</div>
+    <div class="g">G</div>
     <span>GBT Pro</span>
   </div>
-  <div class="win-ctls">
-    <button class="win-btn" onclick="win.min()" title="Minimize"><i class="ph ph-minus"></i></button>
-    <button class="win-btn" onclick="win.max()" title="Maximize"><i class="ph ph-square"></i></button>
-    <button class="win-btn close" onclick="win.close()" title="Close"><i class="ph ph-x"></i></button>
+  <div class="win">
+    <button class="wb" onclick="win.min()"><i class="ph ph-minus"></i></button>
+    <button class="wb" onclick="win.max()"><i class="ph ph-square"></i></button>
+    <button class="wb close" onclick="win.close()"><i class="ph ph-x"></i></button>
   </div>
 </div>
 
 <div id="app-body">
-  <!-- ── Sidebar ── -->
   <nav id="sidebar">
-    <div class="sidebar-header">
-      <div class="avatar">G</div>
-      <div>
-        <h2>GBT Pro</h2>
-        <div class="ver">Desktop AI Agent</div>
+    <div class="sb-top">
+      <div class="sb-identity">
+        <div class="sb-avatar">G</div>
+        <div class="sb-title">
+          <h2>GBT Pro</h2>
+          <div class="sub">Desktop AI Agent</div>
+        </div>
       </div>
     </div>
-    <div class="sidebar-nav">
+    <div class="sb-nav">
       <div class="nav-group">
-        <div class="nav-group-label">Conversation</div>
+        <div class="nav-label">Conversation</div>
         <button class="nav-item active" data-view="chat" onclick="switchView('chat',this)">
-          <i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">&#x2318;1</span>
+          <i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span>
         </button>
         <button class="nav-item" data-view="reason" onclick="switchView('reason',this)">
-          <i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">&#x2318;2</span>
+          <i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span>
         </button>
       </div>
       <div class="nav-group">
-        <div class="nav-group-label">MCP Tools</div>
-        <button class="tool-btn" onclick="runTool('scanner')"><i class="ph ph-scan"></i> Code Scanner</button>
-        <button class="tool-btn" onclick="runTool('audit')"><i class="ph ph-shield-check"></i> Security Audit</button>
-        <button class="tool-btn" onclick="runTool('auto-fix')"><i class="ph ph-wrench"></i> Auto Fix</button>
-        <button class="tool-btn" onclick="evo()"><i class="ph ph-arrows-clockwise"></i> 6-Step Evolve</button>
+        <div class="nav-label">MCP Tools</div>
+        <button class="nav-item" onclick="runTool('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
+        <button class="nav-item" onclick="runTool('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
+        <button class="nav-item" onclick="runTool('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
+        <button class="nav-item" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
       </div>
     </div>
-    <div class="sidebar-footer">
-      <select id="ms" onchange="switchModel()" class="model-select"><option>Loading…</option></select>
-      <div class="status-row">
-        <span class="status-dot" id="status-dot"></span>
+    <div class="sb-footer">
+      <select id="ms" onchange="switchProvider()" class="ms"><option>Loading…</option></select>
+      <div class="sb-status">
+        <span class="sb-dot" id="status-dot"></span>
         <span id="status-text">Connecting</span>
       </div>
     </div>
   </nav>
 
-  <!-- ── Main ── -->
   <div id="main">
-    <!-- Chat View -->
     <div class="chat-view" id="chat-view">
       <div class="messages" id="msgs">
         <div class="welcome" id="welcome">
-          <div class="welcome-icon">
-            <i class="ph ph-sparkle" style="font-size:28px"></i>
-          </div>
-          <h3>Hi, I'm GBT</h3>
-          <p>Powered by <b>DeepSeek v4-pro</b> — 19 services, 13 tools.<br>Analyze code, reason deeply, scan security, auto-fix.</p>
+          <div class="welcome-icon"><i class="ph ph-sparkle"></i></div>
+          <h3>Welcome to GBT Pro</h3>
+          <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 13 integrated tools<br>Analyze code, reason deeply, scan security, auto-fix.</p>
           <div class="welcome-chips">
             <button class="chip" onclick="quick('Analyze my project structure')"><i class="ph ph-folder-open"></i> Analyze Project</button>
             <button class="chip" onclick="quick('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> Security Scan</button>
-            <button class="chip" onclick="switchView('reason',document.querySelector('[data-view=reason]'))"><i class="ph ph-brain"></i> Deep Reason</button>
+            <button class="chip" onclick="switchView('reason',D.querySelector('[data-view=reason]'))"><i class="ph ph-brain"></i> Deep Reason</button>
           </div>
         </div>
       </div>
       <div class="input-bar">
         <div class="input-wrap">
-          <textarea id="ci" placeholder="Message GBT… (Enter send, Shift+Enter new line)" rows="1"
+          <textarea id="ci" placeholder="Message GBT…" rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
-          <button class="btn-send" onclick="chat()" title="Send"><i class="ph ph-paper-plane-right"></i></button>
+          <button class="send-btn" onclick="chat()"><i class="ph ph-paper-plane-right"></i></button>
         </div>
       </div>
     </div>
 
-    <!-- Reason View -->
     <div id="reason-view" style="display:none">
       <div class="reason-header">
         <h3>Deep Reasoning Engine</h3>
         <div class="sub">Step-by-step logical decomposition for complex decisions</div>
         <div class="mode-pills">
-          <button class="mp active" data-mode="CHAIN" onclick="setReasonMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> Chain-of-Thought</button>
-          <button class="mp" data-mode="TREE" onclick="setReasonMode('TREE',this)"><i class="ph ph-tree-structure"></i> Tree Analysis</button>
-          <button class="mp" data-mode="SWOT" onclick="setReasonMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
-          <button class="mp" data-mode="ROOT_CAUSE" onclick="setReasonMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+          <button class="mp active" data-mode="CHAIN" onclick="setRM('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
+          <button class="mp" data-mode="TREE" onclick="setRM('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
+          <button class="mp" data-mode="SWOT" onclick="setRM('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
+          <button class="mp" data-mode="ROOT_CAUSE" onclick="setRM('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
         </div>
       </div>
       <div class="reason-body-wrap" id="reason-content">
-        <div class="welcome">
-          <h3>Deep Reasoning</h3>
-          <p>Enter a complex question — the engine breaks it down step by step.</p>
-        </div>
+        <div class="welcome"><h3>Deep Reasoning</h3><p>Enter a complex question — the engine breaks it down step by step.</p></div>
       </div>
       <div class="input-bar">
         <div class="input-wrap">
-          <textarea id="ri" placeholder="Ask a reasoning question… (Enter send)" rows="1"
+          <textarea id="ri" placeholder="Ask a reasoning question…" rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
-          <button class="btn-send" onclick="reason()" title="Reason"><i class="ph ph-lightbulb"></i></button>
+          <button class="send-btn" onclick="reason()"><i class="ph ph-lightbulb"></i></button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Right Panel ── -->
   <aside id="panel">
     <div class="panel-sec">
-      <h4>System</h4>
-      <div class="stat"><div class="stat-line"><span>CPU</span><span class="val" id="cv2">—</span></div><div class="stat-bar"><div class="fill fill-cpu" id="cb" style="width:28%"></div></div></div>
-      <div class="stat"><div class="stat-line"><span>Memory</span><span class="val" id="rv">—</span></div><div class="stat-bar"><div class="fill fill-mem" id="rb" style="width:42%"></div></div></div>
-      <div class="stat"><div class="stat-line"><span>API Keys</span><span class="val" id="kv">—</span></div><div class="stat-bar"><div class="fill fill-key" id="kb" style="width:28%"></div></div></div>
+      <h4>System Monitor</h4>
+      <div class="stat"><div class="stat-row"><span>CPU</span><span class="val" id="cv2">—</span></div><div class="stat-bar"><div class="fill fill-cpu" id="cb" style="width:0%"></div></div></div>
+      <div class="stat"><div class="stat-row"><span>Memory</span><span class="val" id="rv">—</span></div><div class="stat-bar"><div class="fill fill-mem" id="rb" style="width:0%"></div></div></div>
+      <div class="stat"><div class="stat-row"><span>API Keys</span><span class="val" id="kv">—</span></div><div class="stat-bar"><div class="fill fill-key" id="kb" style="width:0%"></div></div></div>
     </div>
-
     <div class="panel-sec">
       <h4>LLM Engine</h4>
-      <div class="info-card accent" id="ll">Provider: —</div>
-      <div class="info-card info" id="mc">Model: —</div>
-      <div class="info-card success" id="dv">MCP: — servers</div>
+      <div class="info-card accent"><i class="ph ph-cpu"></i> <span id="ll">Provider: —</span></div>
+      <div class="info-card info"><i class="ph ph-brain"></i> <span id="mc">Model: —</span></div>
+      <div class="info-card success"><i class="ph ph-plugs-connected"></i> <span id="dv">MCP: —</span></div>
     </div>
-
     <div class="panel-sec">
       <h4>A-Shares Market</h4>
-      <div id="market-panel">
-        <div style="font-size:11px;color:var(--text-4);padding:4px 0">Loading…</div>
-      </div>
+      <div id="market-panel" style="font-size:12px;color:var(--text-muted)">Loading…</div>
     </div>
-
     <div class="panel-sec">
       <h4>Providers</h4>
-      <div id="pl" style="font-size:11px;color:var(--text-4)">Loading…</div>
+      <div id="pl" style="font-size:12px;color:var(--text-muted)">Loading…</div>
     </div>
   </aside>
 </div>
 
 <script>
-var A='/api',RM='CHAIN',st={},win={min:function(){},max:function(){},close:function(){}};
+const A='/api', D=document, win=function(){};
+let RM='CHAIN', st={};
 
-function $(id){return document.getElementById(id)}
-function e(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML}
+const $=id=>D.getElementById(id);
+const esc=t=>{const e=D.createElement('span');e.textContent=t;return e.innerHTML};
+const now=()=>new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
 
 function switchView(v,btn){
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  D.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   $('chat-view').style.display=v==='chat'?'flex':'none';
   $('reason-view').style.display=v==='reason'?'flex':'none';
-  if(v==='reason')$('ri').focus();else $('ci').focus()
+  (v==='reason'?$('ri'):$('ci')).focus();
 }
+function setRM(m,btn){RM=m;D.querySelectorAll('.mp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function quick(t){$('ci').value=t;chat();}
+function toast(t){const d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(()=>d.remove(),3000);}
+const hideWelcome=()=>{const w=$('welcome');if(w)w.style.display='none';};
 
-function setReasonMode(m,btn){RM=m;document.querySelectorAll('.mp').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
-function quick(t){$('ci').value=t;chat()}
-function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
-
-function welcomeOff(){var w=$('welcome');if(w)w.style.display='none'}
-
-function addMsg(role,txt,where){
-  where=where||'msgs';var c=$(where);
-  if(where==='msgs')welcomeOff();
-  var d=document.createElement('div');
-  d.className='msg '+(role==='user'?'user':'ai');
-  d.innerHTML='<div class="bubble">'+e(txt)+'</div>';
-  c.appendChild(d);c.scrollTop=c.scrollHeight;
-  return d
+function addMsg(role,text,containerId){
+  const c=$(containerId||'msgs');
+  if(!containerId) hideWelcome();
+  const g=D.createElement('div'); g.className='msg-group';
+  const isUser=role==='user';
+  g.innerHTML=
+    '<div class="msg-avatar '+(isUser?'user':'ai')+'">'+(isUser?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
+    '<div class="msg-body">'+
+      '<div class="msg-header"><span class="msg-author">'+(isUser?'You':'GBT')+'</span><span class="msg-time">'+now()+'</span></div>'+
+      '<div class="msg-content">'+esc(text)+'</div>'+
+    '</div>'+
+    '<div class="msg-actions"><button class="msg-act-btn" title="Copy" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.querySelector(\'.msg-content\').textContent);toast(\'Copied\')"><i class="ph ph-copy"></i></button></div>';
+  c.appendChild(g);
+  c.scrollTop=c.scrollHeight;
+  return g;
 }
 
 function chat(){
-  var t=$('ci').value.trim();if(!t)return;$('ci').value='';
-  addMsg('user',t);var d=addMsg('ai','Thinking…');
-  d.querySelector('.bubble').classList.add('thinking');
+  const t=$('ci').value.trim(); if(!t) return; $('ci').value='';
+  addMsg('user',t);
+  const g=addMsg('ai','Thinking…');
+  g.querySelector('.msg-content').classList.add('thinking');
   fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
   .then(r=>r.json()).then(r=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').textContent=r.response||r.error
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').textContent=r.response||r.error;
   }).catch(e=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').textContent='Error: '+e.message
-  })
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  });
 }
 
 function reason(){
-  var t=$('ri').value.trim();if(!t)return;$('ri').value='';
-  var c=$('reason-content'),w=c.querySelector('.welcome');
-  if(w)w.style.display='none';
+  const t=$('ri').value.trim(); if(!t) return; $('ri').value='';
+  const c=$('reason-content'),w=c.querySelector('.welcome');
+  if(w) w.style.display='none';
   addMsg('user','['+RM+'] '+t,'reason-content');
-  var d=addMsg('ai','Analyzing with '+RM+'…','reason-content');
-  d.querySelector('.bubble').classList.add('thinking');
+  const g=addMsg('ai','Analyzing with '+RM+'…','reason-content');
+  g.querySelector('.msg-content').classList.add('thinking');
   fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
   .then(r=>r.json()).then(r=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').innerHTML=
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').innerHTML=
       '<div class="reason-card">'+
-      '<div class="reason-meta">'+
-      '<span class="reason-badge">'+(r.mode||RM)+'</span>'+
-      '<span>'+(r.steps||0)+' steps</span>'+
-      '<span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span>'+
-      '</div>'+
-      '<div class="reason-body">'+e(r.conclusion||'No conclusion')+'</div>'+
-      '</div>';
-    c.scrollTop=c.scrollHeight
+      '<div class="reason-meta"><span class="reason-badge">'+(r.mode||RM)+'</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
+      '<div class="reason-body">'+esc(r.conclusion||'No conclusion')+'</div></div>';
+    c.scrollTop=c.scrollHeight;
   }).catch(e=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').innerHTML='<span style="color:var(--red)">Error: '+e.message+'</span>'
-  })
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  });
 }
 
-function switchModel(){
-  var p=$('ms').value;if(!p||!st.p||!st.p[p]||st.p[p].status!='available')return;
-  var d=addMsg('ai','Switching to '+st.p[p].name+'…');
-  d.querySelector('.bubble').classList.add('thinking');
+function switchProvider(){
+  const p=$('ms').value; if(!p||!st.p||!st.p[p]||st.p[p].status!='available') return;
+  const g=addMsg('ai','Switching to '+st.p[p].name+'…');
+  g.querySelector('.msg-content').classList.add('thinking');
   fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
   .then(r=>r.json()).then(j=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').textContent='Switched to '+j.name+' ('+j.model+')';
-    $('ll').textContent='Provider: '+j.name;$('mc').textContent='Model: '+j.model
-  })
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed';
+  });
 }
 
 function runTool(s){
-  welcomeOff();var d=addMsg('ai','Running <b>'+s+'</b>…');
-  d.querySelector('.bubble').classList.add('thinking');
+  hideWelcome();
+  const g=addMsg('ai','Running '+s+'…');
+  g.querySelector('.msg-content').classList.add('thinking');
   fetch(A+'/mcp/'+s,{method:'POST'}).then(r=>r.json()).then(r=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').innerHTML='<b>['+s+']</b> '+(r.ok?'OK':'FAIL')+'<br><small style="color:var(--text-3)">'+(r.data||'').substring(0,400)+'</small>'
-  })
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+''+(r.data?'<br><small style="color:var(--text-muted)">'+(r.data||'').substring(0,300)+'</small>':'');
+  });
 }
 
 function evo(){
-  welcomeOff();var d=addMsg('ai','Starting 6-step evolution…');
-  d.querySelector('.bubble').classList.add('thinking');
+  hideWelcome();
+  const g=addMsg('ai','Starting 6-step evolution…');
+  g.querySelector('.msg-content').classList.add('thinking');
   fetch(A+'/evolve',{method:'POST'}).then(r=>r.json()).then(r=>{
-    d.querySelector('.bubble').classList.remove('thinking');
-    d.querySelector('.bubble').textContent='Evolve '+(r.ok?'SUCCESS':'FAIL')+'\n'+r.summary+'\nSteps: '+r.steps
-  })
+    g.querySelector('.msg-content').classList.remove('thinking');
+    g.querySelector('.msg-content').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL';
+  });
 }
 
-// Init
 async function init(){
   try{
-    var r=await fetch(A+'/status');st=await r.json();
-    $('ll').textContent='Provider: '+st.llm;$('mc').textContent='Model: '+st.model;
+    const r=await fetch(A+'/status'); st=await r.json();
+    $('ll').textContent='Provider: '+st.llm; $('mc').textContent='Model: '+st.model;
     $('kv').textContent=st.keys_available+'/'+st.keys_total;
     $('kb').style.width=(st.keys_available/st.keys_total*100)+'%';
     $('dv').textContent='MCP: '+st.mcp_count+' servers';
-    $('status-text').textContent=st.llm+' · '+st.model;
-    $('status-dot').classList.add('live')
-  }catch(e){$('status-text').textContent='Offline'}
-  await loadProviders();await loadMarket();
-  setInterval(()=>{
-    $('cv2').textContent=Math.floor(Math.random()*22+6)+'%';
-    $('cb').style.width=Math.floor(Math.random()*24+8)+'%';
-    $('rv').textContent=Math.floor(Math.random()*18+35)+'%';
-    $('rb').style.width=Math.floor(Math.random()*22+38)+'%'
-  },4000);
-  setInterval(loadMarket,30000)
+    $('status-text').textContent=st.llm+' '+st.model;
+    $('status-dot').classList.add('online');
+  }catch(e){}
+  await loadProviders(); await loadMarket();
+  loadSystem(); setInterval(loadSystem,4000);
+  setInterval(loadMarket,30000);
 }
 
 async function loadProviders(){
   try{
-    var r=await fetch(A+'/providers');st.p=await r.json();
-    var s=$('ms'),pl=$('pl');s.innerHTML='';pl.innerHTML='';
-    for(var k in st.p){
-      var v=st.p[k],on=v.status==='available';
-      s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'&#9679; ':'&#9675; ')+v.name+'</option>';
-      pl.innerHTML+='<div class="prov-item"><span class="prov-dot '+(on?'on':'off')+'"></span><span>'+v.name+'</span></div>'
+    const r=await fetch(A+'/providers'); st.p=await r.json();
+    const s=$('ms'), pl=$('pl'); s.innerHTML=''; pl.innerHTML='';
+    for(const k in st.p){
+      const v=st.p[k], on=v.status==='available';
+      s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';
+      pl.innerHTML+='<div class="prov-row"><span class="prov-dot '+(on?'on':'off')+'"></span>'+v.name+'</div>';
     }
-  }catch(e){}
-}
-
-
-async function loadSystem(){
-  try{
-    var r=await fetch(A+'/system');var d=await r.json();
-    $('cv2').textContent=d.cpu+'%';
-    $('cb').style.width=d.cpu+'%';
-    $('rv').textContent=d.memory+'%';
-    $('rb').style.width=d.memory+'%'
   }catch(e){}
 }
 
 async function loadMarket(){
   try{
-    var r=await fetch(A+'/market');var d=await r.json();
-    var mp=$('market-panel');
-    if(!d.updated||!d.indices.length){mp.innerHTML='<div style="font-size:11px;color:var(--text-4)">Market offline</div>';return}
-    var h='';
-    d.indices.forEach(function(i){
-      var dir=i.change>=0?'mkt-up':'mkt-down',arr=i.change>=0?'+':'';
-      h+='<div class="mkt-row"><span class="mkt-name">'+i.name+'</span>'+
-        '<span class="mkt-price '+dir+'">'+i.price.toFixed(2)+'</span>'+
-        '<span class="mkt-chg '+dir+'">'+arr+i.change+'</span>'+
-        '<span class="mkt-chg '+dir+'" style="min-width:44px;font-size:10px">'+arr+i.changePct+'%</span></div>'
+    const r=await fetch(A+'/market'); const d=await r.json();
+    const mp=$('market-panel');
+    if(!d.updated||!d.indices.length){mp.innerHTML='<span style="color:var(--text-muted)">Market offline</span>';return}
+    let h='';
+    d.indices.forEach(i=>{
+      const dir=i.change>=0?'mkt-up':'mkt-down', arr=i.change>=0?'+':'';
+      h+='<div class="mkt-row"><span class="mkt-name">'+i.name+'</span><span class="mkt-price '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkt-chg '+dir+'">'+arr+i.change+'</span><span class="mkt-chg '+dir+'" style="min-width:44px">'+arr+i.changePct+'%</span></div>';
     });
-    mp.innerHTML=h
+    mp.innerHTML=h;
   }catch(e){}
 }
 
-document.addEventListener('keydown',function(e){
-  if((e.metaKey||e.ctrlKey)&&e.key==='1'){e.preventDefault();switchView('chat',document.querySelector('[data-view=chat]'))}
-  if((e.metaKey||e.ctrlKey)&&e.key==='2'){e.preventDefault();switchView('reason',document.querySelector('[data-view=reason]'))}
+async function loadSystem(){
+  try{
+    const r=await fetch(A+'/system'); const d=await r.json();
+    $('cv2').textContent=d.cpu+'%'; $('cb').style.width=d.cpu+'%';
+    $('rv').textContent=d.memory+'%'; $('rb').style.width=d.memory+'%';
+  }catch(e){}
+}
+
+D.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='1'){e.preventDefault();switchView('chat',D.querySelector('[data-view=chat]'));}
+  if(e.ctrlKey&&e.key==='2'){e.preventDefault();switchView('reason',D.querySelector('[data-view=reason]'));}
 });
 
 init();
