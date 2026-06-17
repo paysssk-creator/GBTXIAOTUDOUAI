@@ -53,7 +53,7 @@ else:
 C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
 H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
 J=open(os.path.join(TD,"scripts.js"),encoding="utf-8").read() if os.path.exists(os.path.join(TD,"scripts.js")) else ""
-HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro</title><style>{C}</style></head><body>{H}</body></html>'
+HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><style>{C}</style></head><body>{H}</body></html>'
 
 # ── LLM Manager with failover ──
 class LLMMgr:
@@ -85,6 +85,14 @@ llm=LLMMgr(prov="deepseek")
 
 # ── Flask API ──
 app=Flask(__name__)
+@app.route("/favicon.ico")
+def favicon():
+    import flask
+    ico = os.path.join(os.path.dirname(__file__),"GBT.ico")
+    if os.path.exists(ico):
+        return flask.send_file(ico,mimetype="image/x-icon")
+    return "",204
+
 @app.route("/")
 def home(): return render_template_string(HP)
 
