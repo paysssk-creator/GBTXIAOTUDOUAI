@@ -1,0 +1,13 @@
+{
+  "store": {
+    "test_key": {
+      "key": "test_key",
+      "value": "test_value",
+      "category": "general",
+      "timestamp": "2026-06-17T15:41:31.271143",
+      "importance": 3,
+      "access_count": 1
+    }
+  },
+  "updated": "2026-06-17T15:41:31.271143"
+}
