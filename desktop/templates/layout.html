@@ -126,6 +126,7 @@
             <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--green);color:#fff">▶ 自主交易:开</button>
             <button class="mp" onclick="desktopTrade()"><i class="ph ph-desktop"></i> 电脑操控</button>
             <button class="mp" onclick="traderTech()">📈 技术面</button>
+            <button class="mp" onclick="traderStrategy()">🧠 策略</button>
             <button class="mp" onclick="traderJournal()">📒 日志</button>
           </div>
         </div>
@@ -772,6 +773,31 @@ async function loadRisk(){
       $('dv-daily').textContent=(d.daily||{}).trades_left||10;
     }
   }catch(e){}
+}
+
+// ── 策略分析 ──
+async function traderStrategy(){
+  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>🧠 策略分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/trader/strategy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
+    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
+    var s=d.strategy||{};
+    var h='<div style="border-left:3px solid var(--cyan);padding-left:10px;margin-bottom:6px">';
+    h+='<b style="font-size:16px;color:'+(s.signal=='buy'?'var(--green)':'var(--red)')+'">'+s.signal.toUpperCase()+'</b>';
+    h+=' · 置信度 <b>'+s.confidence+'%</b></div>';
+    h+='<div style="display:flex;gap:6px;margin-bottom:6px">';
+    h+='<div style="flex:1;padding:6px;background:rgba(82,196,26,.08);border-radius:6px;text-align:center"><div style="color:var(--green);font-weight:700">'+s.buy_score+'</div><div style="font-size:9px;color:var(--t4)">买分</div></div>';
+    h+='<div style="flex:1;padding:6px;background:rgba(255,77,79,.08);border-radius:6px;text-align:center"><div style="color:var(--red);font-weight:700">'+s.sell_score+'</div><div style="font-size:9px;color:var(--t4)">卖分</div></div>';
+    h+='</div>';
+    (s.strategies||[]).forEach(function(st){
+      var bg=st.signal=='buy'?'rgba(82,196,26,.05)':st.signal=='sell'?'rgba(255,77,79,.05)':'var(--bg3)';
+      h+='<div style="padding:4px 8px;margin:2px 0;border-radius:4px;background:'+bg+';font-size:11px;color:var(--t3)"><b>'+st.strategy_name+'</b>: '+esc(st.reason||'')+'</div>';
+    });
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
 }
 
 // ── 技术分析 ──

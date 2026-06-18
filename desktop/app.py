@@ -808,6 +808,24 @@ def tr_kline():
         return jsonify({"ok": False, "error": "缺少代码"})
     return jsonify(trader.fetch_kline(code, scale, datalen))
 
+@app.route("/api/trader/strategy", methods=["POST"])
+def tr_strategy():
+    """多策略分析"""
+    d = request.json or {}
+    code = d.get("code", "")
+    if not code:
+        return jsonify({"ok": False, "error": "缺少代码"})
+    try:
+        from gbt.strategies import strategy as se
+        kline = trader.fetch_kline(code, 240, 30)
+        if not kline.get("ok") or len(kline.get("closes",[])) < 10:
+            return jsonify({"ok": False, "error": "K线数据不足"})
+        result = se.analyze(kline["closes"], kline.get("highs"),
+                           kline.get("lows"), kline.get("volumes"))
+        return jsonify({"ok": True, "code": code, "strategy": result})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
 @app.route("/api/trader/tech", methods=["POST"])
 def tr_tech():
     """技术分析"""

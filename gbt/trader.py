@@ -20,6 +20,13 @@ except ImportError:
     HAS_RISK = False
     risk_mgr = None
 
+try:
+    from gbt.strategies import strategy as strategy_engine
+    HAS_STRATEGY = True
+except ImportError:
+    HAS_STRATEGY = False
+    strategy_engine = None
+
 L = logging.getLogger("GBT.Trader")
 
 # ── 交易步骤追踪 ──
@@ -277,6 +284,22 @@ class AShareTrader:
             return sig
 
         try:
+            # ── 策略分析 ──
+            strat_block = ""
+            if HAS_STRATEGY and kline:
+                try:
+                    sr = strategy_engine.analyze(
+                        kline.get("closes", [quote.price]*30),
+                        kline.get("highs"), kline.get("lows"), kline.get("volumes"))
+                    strat_block = f"""
+【策略信号】
+方向:{sr['signal'].upper()} 置信度:{sr['confidence']}%
+买分:{sr['buy_score']} 卖分:{sr['sell_score']}
+{sr['summary']}
+"""
+                except Exception as e:
+                    L.warning(f"策略分析异常 {code}: {e}")
+
             tech_block = ""
             if tech:
                 ind = tech.get("indicators", {})
@@ -298,7 +321,8 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 今开:{quote.open} | 最高:{quote.high} | 最低:{quote.low}
 成交额:{quote.amount}万
 {tech_block}
-以专业交易员视角综合基本面和技术面输出:
+{strat_block}
+以专业交易员视角综合基本面、技术面、策略信号输出:
 1.技术判断(1句话)
 2.操作建议: buy/sell/hold
 3.置信度: 0-100
