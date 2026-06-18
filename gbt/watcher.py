@@ -94,9 +94,9 @@ class NightWatcher:
                             r = subprocess.run(cmd, shell=True, capture_output=True,
                                 text=True, timeout=30, errors='replace')
                             alert.fix_result += f"\n✅ 命令已执行: {cmd}\n输出: {r.stdout[:200]}"
-                        alert.fixed = True
-                    except Exception as e:
-                        alert.fix_result += f"\n❌ 命令执行失败: {e}"
+                            alert.fixed = True
+                        except Exception as e:
+                            alert.fix_result += f"\n❌ 命令执行失败: {e}"
             
             with self._lock:
                 self.fix_log.appendleft({
@@ -394,11 +394,11 @@ class NightWatcher:
                 now = datetime.now().strftime("%H:%M:%S")
                 from gbt.mcp import get_mcp, call_mcp
                 mcp = get_mcp()
-                total = len(mcp._servers)
+                total = len(mcp._s)
                 online = 0
                 down = []
                 
-                for name, srv in mcp._servers.items():
+                for name, srv in mcp._s.items():
                     try:
                         r = call_mcp(name, "status", timeout=5)
                         if r.ok:

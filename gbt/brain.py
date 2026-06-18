@@ -154,7 +154,7 @@ class AutonomousBrain:
             from gbt.mcp import get_mcp
             mcp = get_mcp()
             down_count = 0
-            for name, srv in mcp._servers.items():
+            for name, srv in mcp._s.items():
                 online = getattr(srv, 'status', None)
                 if online and hasattr(online, 'value'):
                     online = online.value
@@ -275,7 +275,7 @@ class AutonomousBrain:
                         from gbt.mcp import get_mcp, call_mcp
                         mcp = get_mcp()
                         total, ok_count = 0, 0
-                        for name in mcp._servers:
+                        for name in mcp._s:
                             try:
                                 total += 1
                                 if call_mcp(name, "status", timeout=3).ok:
