@@ -372,8 +372,11 @@ class AutonomousBrain:
                             try:
                                 q = self.trader.fetch_quote([code])
                                 if code in q:
-                                    result = self.trader.evaluate_strategy(code, q[code])
-                                    evals.append(result)
+                                    signal = self.trader.analyze_with_ai(code, q[code])
+                                    if signal:
+                                        decision = self.trader.decide_trade(signal)
+                                        evals.append({"code": code, "signal": signal.action or "hold",
+                                            "confidence": signal.confidence, "decision": decision[:100] if decision else "no_decision"})
                             except: pass
                         r["detail"] = f"评估{len(evals)}只持仓"
                         r["evaluations"] = evals[:5]
@@ -388,12 +391,19 @@ class AutonomousBrain:
                             try:
                                 q = self.trader.fetch_quote([code])
                                 if code in q:
-                                    sig = self.trader.analyze_with_ai(code, q[code])
-                                    if sig.action == "sell" and sig.confidence >= 70:
-                                        result = self.trader.execute_sell(code, sig)
+                                    signal = self.trader.analyze_with_ai(code, q[code])
+                                    if not signal:
+                                        continue
+                                    decision = self.trader.decide_trade(signal)
+                                    price = q[code].get('price', 0) if isinstance(q[code], dict) else getattr(q[code], 'price', 0)
+                                    pos = self.account.positions.get(code)
+                                    shares = getattr(pos, 'shares', 0) if pos else 0
+                                    if signal.action == "sell" and signal.confidence >= 70 and shares > 0:
+                                        result = self.trader.execute_trade(code, "sell", shares=shares, price=price)
                                         executed.append(f"{code}:SELL")
-                                    elif sig.action == "buy" and sig.confidence >= 75:
-                                        result = self.trader.execute_buy(code, sig)
+                                    elif signal.action == "buy" and signal.confidence >= 75:
+                                        buy_shares = max(100, int(self.account.cash * 0.05 / max(price, 0.01) / 100) * 100)
+                                        result = self.trader.execute_trade(code, "buy", shares=buy_shares, price=price)
                                         executed.append(f"{code}:BUY")
                             except: pass
                         r["detail"] = f"执行{len(executed)}笔" if executed else "无交易"
