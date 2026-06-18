@@ -293,14 +293,17 @@ body {
 }
 
 .ni .kb {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--t4);
   margin-left: auto;
-  background: rgba(255, 255, 255, .03);
-  padding: 2px 6px;
-  border-radius: var(--r1);
+  background: rgba(99,102,241,.12);
+  padding: 1px 5px;
+  border-radius: 3px;
   font-weight: 600;
   letter-spacing: .3px;
+  font-family: 'SF Mono','Consolas','Monaco',monospace;
+  border: 1px solid rgba(99,102,241,.15);
+  white-space: nowrap;
 }
 
 .sb-div {

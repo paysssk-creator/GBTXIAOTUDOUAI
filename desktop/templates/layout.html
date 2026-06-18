@@ -21,8 +21,8 @@
       </div>
     </div>
     <div class="sb-nav">
-      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>对话</span><span class="kb">^1</span></button>
-      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>深度推理</span><span class="kb">^2</span></button>
+      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>对话</span><span class="kb">Ctrl+1</span></button>
+      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>深度推理</span><span class="kb">Ctrl+2</span></button>
       <div class="sb-div"></div>
       <div class="sb-label">工具</div>
       <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>代码扫描</span></button>
@@ -31,7 +31,7 @@
       <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
       <div class="sb-div"></div>
       <div class="sb-label">操盘</div>
-      <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">^3</span></button>
+      <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">Ctrl+3</span></button>
       <button class="ni" onclick="openSettings()"><i class="ph ph-gear"></i><span>设置</span></button>
     </div>
     <div class="sb-foot">
@@ -1055,6 +1055,42 @@ async function desktopHotkey(keys){
   try{await fetch(A+'/desktop/hotkey',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keys:keys})});toast('热键: '+keys.join('+'))}
   catch(e){}
 }
+
+// ── 键盘快捷键 ──
+document.addEventListener('keydown',function(e){
+  // 跳过输入框内快捷键（Ctrl+Enter除外）
+  var tag = (e.target.tagName||'').toLowerCase();
+  var isInput = (tag==='input'||tag==='textarea'||e.target.isContentEditable);
+
+  // Ctrl+1 → Chat
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-v=chat]'));return;}
+  // Ctrl+2 → 深度推理
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-v=reason]'));return;}
+  // Ctrl+3 → A股操盘
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='3'){e.preventDefault();go('trade',D.querySelector('[data-v=trade]'));return;}
+  // Ctrl+S → 设置
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='s'){e.preventDefault();openSettings();return;}
+  // Ctrl+B → 切换面板
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='b'){e.preventDefault();togglePanel();return;}
+  // Ctrl+Enter → 发送消息（在输入框中）
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='Enter'&&isInput){e.preventDefault();sendMsg();return;}
+  // Escape → 关闭设置/面板弹窗
+  if(e.key==='Escape'){
+    var s=D.querySelector('#settings-panel');if(s&&s.style.display!=='none'){openSettings();return;}
+  }
+});
+
+// ── 窗口拖拽 ──
+var _drag={active:false,x:0,y:0};
+document.getElementById('tb').addEventListener('mousedown',function(e){
+  if(e.target.closest('.btns')||e.target.closest('button'))return;
+  _drag.active=true;_drag.x=e.screenX;_drag.y=e.screenY;e.preventDefault();
+});
+document.addEventListener('mousemove',function(e){
+  if(!_drag.active)return;
+  try{w.move?w.move(e.screenX-_drag.x,e.screenY-_drag.y):null;}catch(e){}
+});
+document.addEventListener('mouseup',function(){_drag.active=false;});
 
 init();
 </script>
