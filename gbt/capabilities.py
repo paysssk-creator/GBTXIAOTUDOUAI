@@ -259,6 +259,73 @@ def _handler_trade(text):
     return "\n".join(results)
 
 
+# ═══════════════════════════════════════════════════════
+# 编程/黑客能力
+# ═══════════════════════════════════════════════════════
+
+def _handler_web_search(text):
+    """网络搜索"""
+    import urllib.parse
+    query = text
+    for kw in ["搜索", "查一下", "search", "百度"]:
+        query = query.replace(kw, "")
+    query = query.strip()[:200] or "A股最新消息"
+    url = f"https://www.bing.com/search?q={urllib.parse.quote(query)}"
+    os.startfile(url)
+    return f"已搜索: {query} → 浏览器已打开"
+
+
+def _handler_file_op(text):
+    """文件操作"""
+    import re
+    # 读文件
+    m = re.search(r'(?:读|打开|查看)\s*(?:文件)?\s*["\']?([^"\'\s]+(?:\.[a-zA-Z]+))', text)
+    if m:
+        fpath = m.group(1)
+        if not os.path.isabs(fpath):
+            fpath = os.path.join(os.path.dirname(os.path.dirname(__file__)), fpath)
+        if os.path.exists(fpath):
+            try:
+                with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
+                    content = f.read()[:2000]
+                return f"📄 {os.path.basename(fpath)} ({len(content)}字符):\n{content[:500]}"
+            except:
+                return f"无法读取: {fpath}"
+        return f"文件不存在: {fpath}"
+    return "请指定要读取的文件路径"
+
+
+def _handler_code_exec(text):
+    """执行代码"""
+    import subprocess, re
+    # Extract code block or command
+    code_m = re.search(r'```(?:python)?\s*\n?(.*?)```', text, re.DOTALL)
+    if code_m:
+        code = code_m.group(1).strip()
+        try:
+            r = subprocess.run(["python", "-c", code],
+                              capture_output=True, text=True, timeout=10,
+                              errors='replace')
+            out = (r.stdout + r.stderr)[:1000] or "(执行完成，无输出)"
+            return f"⚡ 代码执行结果:\n{out}"
+        except subprocess.TimeoutExpired:
+            return "⏱ 代码执行超时(>10s)"
+        except Exception as e:
+            return f"❌ 执行失败: {e}"
+    # Shell command
+    cmd_m = re.search(r'(?:执行|运行|cmd|shell)\s*[:：]?\s*(.+)', text, re.IGNORECASE)
+    if cmd_m:
+        cmd = cmd_m.group(1).strip()[:200]
+        try:
+            r = subprocess.run(cmd, shell=True, capture_output=True,
+                              text=True, timeout=10, errors='replace')
+            out = (r.stdout + r.stderr)[:1000] or "(执行完成)"
+            return f"⚡ Shell执行:\n{out}"
+        except Exception as e:
+            return f"❌ Shell失败: {e}"
+    return "请提供要执行的代码或命令 (用 ```python ... ``` 或 执行: ...)"
+
+
 def register_all():
     """注册所有能力到路由器"""
     caps = [
@@ -309,6 +376,19 @@ def register_all():
         Capability("notify", "notification", "发送Windows桌面通知",
                    ["通知", "提醒我", "提醒", "弹窗"],
                    _handler_notify, priority=4),
+
+        # ═══ 编程/黑客 ═══
+        Capability("web_search", "hacker", "网络搜索获取实时信息",
+                   ["搜索", "查一下", "search", "百度", "谷歌"],
+                   _handler_web_search, priority=7),
+
+        Capability("file_operation", "hacker", "文件读写操作",
+                   ["读文件", "写文件", "文件", "代码", "编辑"],
+                   _handler_file_op, priority=6),
+
+        Capability("code_exec", "hacker", "执行Python/Shell代码",
+                   ["执行代码", "运行", "python", "shell", "cmd"],
+                   _handler_code_exec, priority=8, requires=["desktop_ctl"]),
     ]
 
     for cap in caps:
