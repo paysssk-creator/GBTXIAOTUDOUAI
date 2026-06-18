@@ -395,6 +395,11 @@ class NightWatcher:
         while self.running:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
+                self.monitor_status["connections"] = {
+                    "status": "checking", "last_check": now,
+                    "details": "正在检测MCP服务器..."
+                }
+                
                 from gbt.mcp import get_mcp, call_mcp
                 mcp = get_mcp()
                 total = len(mcp._s)
@@ -403,13 +408,19 @@ class NightWatcher:
                 
                 for name, srv in mcp._s.items():
                     try:
-                        r = call_mcp(name, "status", timeout=5)
+                        r = call_mcp(name, "status", timeout=2)
                         if r.ok:
                             online += 1
                         else:
                             down.append(f"{name}(rc={r.error or '?'})")
                     except Exception as e:
                         down.append(f"{name}({str(e)[:30]})")
+                    # 增量更新
+                    self.monitor_status["connections"] = {
+                        "status": "checking",
+                        "last_check": now,
+                        "details": f"检测中... {online+len(down)}/{total}"
+                    }
                 
                 status = "ok" if not down else ("warn" if len(down) <= 2 else "critical")
                 self.monitor_status["connections"] = {
