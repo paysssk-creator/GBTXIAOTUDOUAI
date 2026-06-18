@@ -92,27 +92,26 @@ class DesktopController:
 
     # ── 窗口控制 ──
     def focus_window(self, title_contains):
-        """聚焦窗口"""
+        """聚焦窗口 (partial title match via Get-Process)"""
         try:
             ps = f'''
-            Add-Type @"
-            using System;
-            using System.Runtime.InteropServices;
-            public class Win32 {{
-                [DllImport("user32.dll")] public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-                [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
-                [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-            }}
-"@
-            $hwnd = [Win32]::FindWindow($null, "{title_contains}")
-            if ($hwnd -ne [IntPtr]::Zero) {{
-                [Win32]::ShowWindow($hwnd, 9)
-                [Win32]::SetForegroundWindow($hwnd)
-                Write-Output "OK"
-            }} else {{
-                Write-Output "NOT_FOUND"
-            }}
-            '''
+$procs = Get-Process | Where-Object {{ $_.MainWindowTitle -like "*{title_contains}*" }} | Select-Object -First 1
+if ($procs) {{
+    Add-Type -TypeDefinition @'
+    using System;
+    using System.Runtime.InteropServices;
+    public class Win32 {{
+        [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    }}
+'@
+    [Win32]::ShowWindow($procs.MainWindowHandle, 9)
+    [Win32]::SetForegroundWindow($procs.MainWindowHandle)
+    Write-Output "OK"
+}} else {{
+    Write-Output "NOT_FOUND"
+}}
+'''
             r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
                               capture_output=True, text=True, timeout=8, errors='replace')
             ok = "OK" in r.stdout
