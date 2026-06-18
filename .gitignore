@@ -8,7 +8,6 @@ GBT.spec
 screen.png
 check.py
 run.py
-test_api.py
 test_gbt_app.py
 screen.py
 .env
