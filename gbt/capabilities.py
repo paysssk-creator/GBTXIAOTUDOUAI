@@ -274,7 +274,7 @@ def register_all():
 
         # ═══ 交易/行情 ═══
         Capability("stock_lookup", "trading", "查询股票实时行情",
-                   ["行情", "查询", "股价", "多少钱", "涨跌", "走势"],
+                   ["行情", "查询", "股价", "多少钱", "涨跌", "走势", "分析"],
                    _handler_stock_lookup, priority=8, requires=["trader"]),
 
         Capability("market_scan", "trading", "扫描全市场/自选股",
