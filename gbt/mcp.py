@@ -148,7 +148,7 @@ def get_mcp() -> UniversalMCP:
     if _universal is None: _universal = UniversalMCP()
     return _universal
 
-def call_mcp(server: str, method: str = "", args: str = "") -> MCPResult:
-    return get_mcp().call(server, method, args)
+def call_mcp(server: str, method: str = "", args: str = "", timeout: int = 60) -> MCPResult:
+    return get_mcp().call(server, method, args, timeout=timeout)
 
 
