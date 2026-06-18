@@ -90,9 +90,9 @@ class UniversalMCP:
             print(f"🔌 {server} {' '.join(full[:2])}")
             env = os.environ.copy(); env.update(srv.env)
             r = subprocess.run(cmd, shell=True, capture_output=True,
-                text=True, timeout=timeout,
+                text=True, timeout=timeout, encoding='utf-8', errors='replace',
                 cwd=os.path.expanduser("~/.cline"), env=env)
-            out = r.stdout.strip() or r.stderr.strip()
+            out = (r.stdout or "").strip() or (r.stderr or "").strip()
             srv.status = MCPStatus.ONLINE; srv.last_call = time.time()
             ok = r.returncode == 0
             return MCPResult(ok=ok, server=server, method=method,
