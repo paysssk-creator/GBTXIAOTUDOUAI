@@ -33,6 +33,7 @@
       <div class="sb-div"></div>
       <div class="sb-label">操盘</div>
       <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">^3</span></button>
+      <button class="ni" onclick="openSettings()"><i class="ph ph-gear"></i><span>设置</span></button>
     </div>
     <div class="sb-foot">
       <span class="sb-dot" id="sd"></span><span id="stx">连接中</span>
@@ -75,6 +76,16 @@
             <div class="dash-card"><div class="dash-val" id="dv-profit">--</div><div class="dash-lbl">🎯 止盈%</div></div>
             <div class="dash-card"><div class="dash-val" id="dv-cap">--</div><div class="dash-lbl">💰 仓位%</div></div>
             <div class="dash-card"><div class="dash-val" id="dv-daily">--</div><div class="dash-lbl">📅 今日信号</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-top:8px">
+            <div class="dash-card" style="grid-column:1/3;display:flex;justify-content:space-between;align-items:center">
+              <div style="text-align:left"><div class="dash-val" id="dv-equity" style="font-size:20px">--</div><div class="dash-lbl">💰 总资产</div></div>
+              <div style="text-align:right"><div id="dv-pnl" style="font-size:14px;font-weight:700">--</div><div class="dash-lbl" style="font-size:9px">盈亏</div></div>
+            </div>
+            <div class="dash-card" style="display:flex;justify-content:space-between;align-items:center">
+              <div style="text-align:left"><div class="dash-val" id="dv-cash" style="font-size:16px">--</div><div class="dash-lbl">💵 现金</div></div>
+              <div style="text-align:right"><div id="dv-wr" style="font-size:12px;font-weight:700">--</div><div class="dash-lbl" style="font-size:9px">胜率</div></div>
+            </div>
           </div>
           <div id="dash-detail" style="margin-top:8px;font-size:12px;color:var(--t4);text-align:center">加载中...</div>
         </div>
@@ -591,7 +602,7 @@ async function init(){
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
   }catch(e){$('stx').textContent='离线'}
   await _getConns();
-  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard()]);
+  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard(),loadAccount()]);
   loadProviders();
   loadMarket();
   loadSystem();
@@ -773,6 +784,109 @@ async function loadRisk(){
       $('dv-daily').textContent=(d.daily||{}).trades_left||10;
     }
   }catch(e){}
+}
+
+async function loadAccount(){
+  try{
+    var r=await fetch(A+'/account'),d=await r.json();
+    if(d.ok){
+      var a=d.account||{};
+      $('dv-equity').textContent='¥'+(a.equity||0).toLocaleString();
+      var pnl=a.pnl||0;
+      $('dv-pnl').textContent=(pnl>=0?'+':'')+pnl.toLocaleString();
+      $('dv-pnl').style.color=pnl>=0?'var(--green)':'var(--red)';
+      $('dv-cash').textContent='¥'+(a.cash||0).toLocaleString();
+      $('dv-wr').textContent=(a.win_rate||0)+'%';
+    }
+  }catch(e){}
+}
+
+// ── 设置面板 ──
+async function openSettings(){
+  var g=_tAdd('<b>⚙️ 设置</b>');
+  g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/settings'),d=await r.json();
+    g.querySelector('.mc').classList.remove('thinking');
+    if(!d.ok){g.querySelector('.mc').innerHTML='❌ 加载失败';return}
+    var t=d.trader||{},rk=d.risk||{},ac=d.account||{};
+    var h='<div style="max-height:400px;overflow-y:auto;font-size:12px">';
+    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">📊 交易设置</div>';
+    h+=_sRow('自动交易','auto_trade',t.auto_trade?'开':'关','toggle');
+    h+=_sRow('置信度阈值%','confidence_threshold',t.confidence_threshold||70,'number');
+    h+=_sRow('扫描间隔(秒)','scan_interval',t.scan_interval||300,'number');
+    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">🛡️ 风控设置</div>';
+    h+=_sRow('止损%','stop_loss_pct',rk.stop_loss_pct||7,'number');
+    h+=_sRow('止盈%','stop_profit_pct',rk.stop_profit_pct||15,'number');
+    h+=_sRow('单票上限%','max_single_pct',rk.max_single_pct||20,'number');
+    h+=_sRow('日交易上限','max_daily_trades',rk.max_daily_trades||10,'number');
+    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">💰 账户</div>';
+    h+='<div style="color:var(--t3)">现金: ¥'+(ac.cash||0).toLocaleString()+' · 权益: ¥'+(ac.equity||0).toLocaleString()+'</div>';
+    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">📋 自选股 ('+(t.watchlist||[]).length+'只)</div>';
+    h+='<div style="display:flex;gap:4px;margin-bottom:6px">';
+    h+='<input id="s-add-code" placeholder="代码(sh600519)" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px">';
+    h+='<input id="s-add-name" placeholder="名称" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px">';
+    h+='<button onclick="addWatchlist()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--green);color:#fff;cursor:pointer;font-size:11px">添加</button>';
+    h+='</div>';
+    h+='<div id="wl-list" style="max-height:120px;overflow-y:auto">';
+    (t.watchlist||[]).forEach(function(c){h+='<div style="display:flex;justify-content:space-between;padding:2px 6px;font-size:10px;color:var(--t3)"><span>'+c+'</span><span style="color:var(--red);cursor:pointer" onclick="rmWatchlist(\''+c+'\')">✕</span></div>'});
+    h+='</div>';
+    h+='<button onclick="saveSettings()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700">💾 保存设置</button>';
+    h+='</div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
+}
+
+function _sRow(label,key,val,type){
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span style="color:var(--t3)">'+label+'</span>'+(
+    type==='toggle'?'<button id="sk-'+key+'" onclick="toggleSetting(\''+key+'\')" style="padding:3px 12px;border-radius:6px;border:none;background:'+(val==='开'?'var(--green)':'var(--bg3)')+';color:'+(val==='开'?'#fff':'var(--t4)')+';cursor:pointer;font-size:11px">'+val+'</button>':
+    '<input id="sk-'+key+'" value="'+val+'" style="width:80px;padding:3px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px;text-align:right">'
+  )+'</div>';
+}
+
+function toggleSetting(key){
+  var b=$('sk-'+key);
+  var nv=b.textContent==='开'?'关':'开';
+  b.textContent=nv;
+  b.style.background=nv==='开'?'var(--green)':'var(--bg3)';
+  b.style.color=nv==='开'?'#fff':'var(--t4)';
+}
+
+async function saveSettings(){
+  var payload={trader:{},risk:{}};
+  ['confidence_threshold','scan_interval'].forEach(function(k){
+    var el=$('sk-'+k);var v=parseInt(el.value);if(!isNaN(v))payload.trader[k]=v;
+  });
+  var autoEl=$('sk-auto_trade');
+  payload.trader.auto_trade=autoEl.textContent==='开';
+  ['stop_loss_pct','stop_profit_pct','max_single_pct','max_daily_trades'].forEach(function(k){
+    var el=$('sk-'+k);var v=parseFloat(el.value);if(!isNaN(v))payload.risk[k]=v;
+  });
+  try{
+    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var d=await r.json();if(d.ok){toast('✅ 设置已保存');loadDashboard()}
+    else toast('❌ '+d.error);
+  }catch(e){toast('保存失败')}
+}
+
+async function addWatchlist(){
+  var code=$('s-add-code').value.trim(),name=$('s-add-name').value.trim();
+  if(!code)return toast('请输入代码');
+  try{
+    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchlist_add:[{code:code,name:name||code}]})});
+    var d=await r.json();
+    if(d.ok){toast('✅ 已添加 '+code);openSettings()}
+    else toast('❌ 失败');
+  }catch(e){toast('异常')}
+}
+
+async function rmWatchlist(code){
+  try{
+    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchlist_remove:[code]})});
+    var d=await r.json();
+    if(d.ok){toast('已移除 '+code);openSettings()}
+    else toast('❌ 失败');
+  }catch(e){toast('异常')}
 }
 
 // ── 策略分析 ──

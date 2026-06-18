@@ -54,6 +54,7 @@ from gbt.connectors.registry import get_registry as get_connectors
 from gbt.watcher import NightWatcher
 from gbt.trader import AShareTrader
 from gbt.desktop_ctl import DesktopController
+from gbt.account import account
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -899,6 +900,110 @@ def risk_config():
         }})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
+
+# ── 账户 API ──
+@app.route("/api/account")
+def acct_status():
+    """账户总览"""
+    prices = {}
+    try:
+        for code in account.positions:
+            q = trader.fetch_quote([code])
+            if code in q:
+                prices[code] = q[code].price
+    except: pass
+    pnl = account.get_pnl(prices)
+    positions = account.get_positions_with_value(prices)
+    return jsonify({
+        "ok": True,
+        "account": {
+            "cash": account.cash,
+            "equity": pnl["equity"],
+            "pnl": pnl["pnl"],
+            "pnl_pct": pnl["pnl_pct"],
+            "total_trades": pnl["total_trades"],
+            "win_rate": pnl["win_rate"],
+            "daily_pnl": pnl["daily_pnl"]
+        },
+        "positions": [{"code": c, **p} for c, p in positions.items()],
+        "recent_log": [dict(e) for e in list(account.trade_log)[:10]]
+    })
+
+@app.route("/api/account/buy", methods=["POST"])
+def acct_buy():
+    """模拟买入"""
+    d = request.json or {}
+    return jsonify(account.buy(d.get("code",""), d.get("name",""),
+                                d.get("shares", 100), d.get("price", 0)))
+
+@app.route("/api/account/sell", methods=["POST"])
+def acct_sell():
+    """模拟卖出"""
+    d = request.json or {}
+    return jsonify(account.sell(d.get("code",""), d.get("shares", 100), d.get("price", 0)))
+
+# ── 设置 API ──
+@app.route("/api/settings")
+def get_settings():
+    """获取所有配置"""
+    risk_cfg = {}
+    try:
+        from gbt.risk_ctrl import risk_mgr
+        risk_cfg = {
+            "stop_loss_pct": risk_mgr.stop_loss_pct,
+            "stop_profit_pct": risk_mgr.stop_profit_pct,
+            "trailing_stop_pct": risk_mgr.trailing_stop_pct,
+            "max_single_pct": risk_mgr.max_single_pct,
+            "max_total_pct": risk_mgr.max_total_pct,
+            "max_daily_trades": risk_mgr.max_daily_trades,
+            "max_daily_loss_pct": risk_mgr.max_daily_loss_pct,
+            "total_capital": risk_mgr.total_capital
+        }
+    except: pass
+    return jsonify({
+        "ok": True,
+        "trader": {
+            "auto_trade": trader.auto_trade,
+            "confidence_threshold": trader.confidence_threshold,
+            "scan_interval": trader.scan_interval,
+            "watchlist": list(trader.watchlist.keys())
+        },
+        "risk": risk_cfg,
+        "account": account.get_config()
+    })
+
+@app.route("/api/settings", methods=["POST"])
+def update_settings():
+    """更新配置"""
+    d = request.json or {}
+    ch = []
+    if "trader" in d:
+        td = d["trader"]
+        for k in ["auto_trade", "confidence_threshold", "scan_interval"]:
+            if k in td:
+                setattr(trader, k, td[k])
+                ch.append(f"trader.{k}={td[k]}")
+    if "risk" in d:
+        try:
+            from gbt.risk_ctrl import risk_mgr
+            for k, v in d["risk"].items():
+                if hasattr(risk_mgr, k):
+                    setattr(risk_mgr, k, v)
+                    ch.append(f"risk.{k}={v}")
+        except: pass
+    if "watchlist_add" in d:
+        for item in d["watchlist_add"]:
+            code = item.get("code", "")
+            name = item.get("name", code)
+            if code:
+                trader.watchlist[code] = name
+                ch.append(f"+{code} {name}")
+    if "watchlist_remove" in d:
+        for code in d["watchlist_remove"]:
+            if code in trader.watchlist:
+                del trader.watchlist[code]
+                ch.append(f"-{code}")
+    return jsonify({"ok": True, "changes": ch})
 
 @app.route("/api/trader/journal")
 def tr_journal():
