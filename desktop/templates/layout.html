@@ -28,7 +28,11 @@
       <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>代码扫描</span></button>
       <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>安全审计</span></button>
       <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
+      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
       <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
+      <div class="sb-div"></div>
+      <div class="sb-label">操盘</div>
+      <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">^3</span></button>
     </div>
     <div class="sb-foot">
       <span class="sb-dot" id="sd"></span><span id="stx">连接中</span>
@@ -91,6 +95,33 @@
               <div class="ia-left"></div>
               <div class="ia-right"><button class="send" onclick="reason()"><i class="ph ph-arrow-up"></i></button></div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操盘视图 -->
+      <div class="chat-area" id="tv" style="display:none">
+        <div class="rh">
+          <h3>📊 A股自主操盘</h3>
+          <div class="sub">AI 策略分析 · 实时行情 · 一键交易</div>
+          <div class="mps">
+            <button class="mp" onclick="traderScan()"><i class="ph ph-radar"></i> AI扫描</button>
+            <button class="mp" onclick="traderOpen('东方财富')"><i class="ph ph-browser"></i> 东方财富</button>
+            <button class="mp" onclick="traderOpen('同花顺')"><i class="ph ph-browser"></i> 同花顺</button>
+            <button class="mp" onclick="traderOpen('东方财富交易')"><i class="ph ph-currency-cny"></i> 交易端</button>
+            <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--red);color:#fff">⏸ 自主交易:关</button>
+          </div>
+        </div>
+        <div class="msg-list" id="tl">
+          <div class="welcome"><h1 style="font-size:24px">A股操盘</h1><p>点击 AI扫描 获取交易信号 · 点击平台按钮打开交易终端</p></div>
+        </div>
+        <div class="input-area">
+          <div class="input-card">
+            <div style="display:flex;gap:8px;align-items:center;padding:4px">
+              <input id="tcode" placeholder="股票代码 (如 sh600519)" style="flex:1;background:var(--bg-input);color:var(--t1);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 12px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')traderAnalyze()">
+              <button class="send" onclick="traderAnalyze()" style="flex-shrink:0"><i class="ph ph-magnifying-glass"></i></button>
+            </div>
+            <div id="tquote" style="display:none;padding:6px 12px 0;font-size:12px;color:var(--t2)"></div>
           </div>
         </div>
       </div>
@@ -157,6 +188,7 @@ function go(v,btn){
   $('wc').style.display=(v==='chat'||v==='reason')?'none':'flex';
   $('cv').style.display=v==='chat'?'flex':'none';
   $('rv').style.display=v==='reason'?'flex':'none';
+  $('tv').style.display=v==='trade'?'flex':'none';
   if(v==='chat')setTimeout(function(){$('ci').focus()},50);
   else if(v==='reason')setTimeout(function(){$('ri').focus()},50);
 }
@@ -538,19 +570,121 @@ async function init(){
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
   }catch(e){$('stx').textContent='离线'}
   await _getConns();
-  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher()]);
+  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader()]);
   loadProviders();
   loadMarket();
   loadSystem();
   loadDevices();
   setInterval(function(){loadSystem();loadDevices();loadWatcher()},5000);
   setInterval(loadMarket,30000);
+  // 加载操盘手状态
+  try{var tr=await fetch(A+'/trader/status'),td=await tr.json();
+    if(td.auto_trade){var b=$('tAutoBtn');b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
+  }catch(e){}
 }
 
 D.addEventListener('keydown',function(e){
   if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-v=chat]'))}
   if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-v=reason]'))}
+  if(e.ctrlKey&&e.key==='3'){e.preventDefault();go('trade',D.querySelector('[data-v=trade]'))}
 });
+
+// ── A股操盘 JS ──
+var _TR={autoTrade:false};
+
+function _tAdd(html){
+  var h=$('tl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
+  var g=D.createElement('div');g.className='mg';
+  g.innerHTML='<div class="av a"><i class="ph ph-chart-line-up"></i></div><div class="mb"><div class="mh"><span class="mauth">操盘手</span><span class="mtime">'+tfmt()+'</span></div><div class="mc">'+html+'</div></div>';
+  h.appendChild(g);h.scrollTop=h.scrollHeight;return g;
+}
+
+async function traderScan(){
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>🔍 AI正在扫描全市场...</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/trader/scan',{method:'POST'}),d=await r.json();
+    g.querySelector('.mc').classList.remove('thinking');
+    if(!d.signals||!d.signals.length){g.querySelector('.mc').innerHTML='<b>📊 扫描完成</b><p style="color:var(--t4)">暂无显著交易信号</p>';return}
+    var buy=d.signals.filter(function(s){return s.action==='buy'});
+    var sell=d.signals.filter(function(s){return s.action==='sell'});
+    var h='<div><b style="color:var(--cyan)">📊 AI扫描结果</b> ';
+    h+='<span style="color:var(--green)">买入信号:'+buy.length+'</span> ';
+    h+='<span style="color:var(--red)">卖出信号:'+sell.length+'</span></div>';
+    h+='<div style="max-height:400px;overflow-y:auto;margin-top:8px">';
+    d.signals.slice(0,15).forEach(function(s){
+      var clr=s.action==='buy'?'var(--green)':s.action==='sell'?'var(--red)':'var(--t3)';
+      var emoji=s.action==='buy'?'📈':s.action==='sell'?'📉':'➖';
+      h+='<div style="margin:4px 0;padding:6px 8px;background:var(--bg2);border-radius:6px;border-left:3px solid '+clr+'">';
+      h+='<div style="display:flex;justify-content:space-between"><b>'+s.name+'</b><span style="color:'+clr+';font-weight:700">'+emoji+' '+s.action.toUpperCase()+'</span></div>';
+      h+='<div style="font-size:11px;color:var(--t3)">'+s.code+' | ¥'+s.price+' | 置信度:'+s.confidence+'%</div>';
+      h+='<div style="font-size:11px;color:var(--t4)">策略:'+(s.strategy||'N/A')+' | '+(s.reason||'').substring(0,60)+'</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">扫描异常: '+esc(e.message)+'</span>'}
+}
+
+async function traderAnalyze(){
+  var code=$('tcode').value.trim();if(!code){toast('请输入股票代码');return}
+  go('trade',D.querySelector('[data-v=trade]'));
+  // 显示实时行情
+  try{
+    var qr=await fetch(A+'/trader/quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes:[code]})});
+    var qd=await qr.json();
+    if(qd.quotes&&qd.quotes[code]){
+      var q=qd.quotes[code],dir=q.change>=0?'var(--green)':'var(--red)',arr=q.change>=0?'+':'';
+      $('tquote').style.display='block';
+      $('tquote').innerHTML='<b>'+q.name+'</b> ¥'+q.price+' <span style="color:'+dir+'">'+arr+q.change+' ('+arr+q.change_pct+'%)</span> | 最高'+q.high+' 最低'+q.low+' | 成交额'+q.amount+'万';
+    }
+  }catch(e){}
+  // AI分析
+  var g=_tAdd('<b>🤖 AI分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/trader/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
+    if(!d.ok){g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+d.error+'</span>';return}
+    var s=d.signal,clr=s.action==='buy'?'var(--green)':s.action==='sell'?'var(--red)':'var(--t3)';
+    var emoji=s.action==='buy'?'📈 买入':s.action==='sell'?'📉 卖出':'➖ 观望';
+    var h='<div style="border-left:3px solid '+clr+';padding-left:10px">';
+    h+='<div style="font-weight:700;color:'+clr+'">'+emoji+' | '+s.name+'('+s.code+')</div>';
+    h+='<div style="margin:4px 0">💰 现价: ¥'+s.price+' | 置信度: '+s.confidence+'%</div>';
+    h+='<div style="color:var(--t2)">📋 分析: '+esc(s.reason||'N/A')+'</div>';
+    h+='<div style="color:var(--t4)">🎯 策略: '+(s.strategy||'N/A')+'</div></div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">分析异常: '+esc(e.message)+'</span>'}
+}
+
+async function traderOpen(platform){
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>🌐 正在打开 '+platform+'...</b>');
+  try{
+    var r=await fetch(A+'/trader/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:platform})});
+    var d=await r.json();
+    g.querySelector('.mc').innerHTML=d.ok?('<b style="color:var(--green)">✅ 已打开 '+platform+'</b><br><small style="color:var(--t4)">'+d.url+'</small>'):('<span style="color:var(--red)">打开失败: '+d.error+'</span>');
+  }catch(e){g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'}
+}
+
+async function traderAutoToggle(){
+  _TR.autoTrade=!_TR.autoTrade;
+  var b=$('tAutoBtn');
+  try{
+    var r=await fetch(A+'/trader/autotrade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:_TR.autoTrade})});
+    var d=await r.json();
+    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开';toast('自主交易已开启 — AI将直接执行买卖!')}
+    else{b.style.background='var(--red)';b.innerHTML='⏸ 自主交易:关';toast('自主交易已关闭')}
+  }catch(e){}
+}
+
+async function loadTrader(){
+  try{
+    var r=await fetch(A+'/trader/status'),d=await r.json();
+    _TR.autoTrade=d.auto_trade;
+    var b=$('tAutoBtn');
+    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
+  }catch(e){}
+}
 
 init();
 </script>

@@ -52,6 +52,7 @@ from gbt.mcp import get_mcp,call_mcp
 from gbt.providers import PROVIDERS,AutoKeyConfig
 from gbt.connectors.registry import get_registry as get_connectors
 from gbt.watcher import NightWatcher
+from gbt.trader import AShareTrader
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -92,8 +93,10 @@ class LLMMgr:
 
 llm=LLMMgr(prov="deepseek")
 
-# ── 守夜人 ──
-watcher=NightWatcher(project_root=os.path.dirname(_here) if getattr(sys,'frozen',False) else os.path.dirname(os.path.dirname(__file__)))
+# ── 守夜人 + 操盘手 ──
+_root = os.path.dirname(_here) if getattr(sys,'frozen',False) else os.path.dirname(os.path.dirname(__file__))
+watcher=NightWatcher(project_root=_root)
+trader=AShareTrader(project_root=_root)
 
 # ── Flask API ──
 app=Flask(__name__)
@@ -639,6 +642,111 @@ def wt_alerts():
     ]})
 
 
+# ── A股操盘 API ──
+@app.route("/api/trader/status")
+def trs():
+    """操盘手状态"""
+    return jsonify(trader.get_status())
+
+@app.route("/api/trader/quotes", methods=["POST"])
+def trq():
+    """获取自选池行情"""
+    d = request.json or {}
+    codes = d.get("codes", [])
+    if codes:
+        data = trader.fetch_quote(codes)
+    else:
+        data = trader.fetch_watchlist()
+    quotes = {}
+    for k, v in data.items():
+        quotes[k] = {"code": v.code, "name": v.name, "price": v.price,
+                      "change": v.change, "change_pct": v.change_pct,
+                      "prev_close": v.prev_close, "open": v.open,
+                      "high": v.high, "low": v.low, "volume": v.volume,
+                      "amount": v.amount, "time": v.time}
+    return jsonify({"quotes": quotes})
+
+@app.route("/api/trader/scan", methods=["POST"])
+def tr_scan():
+    """AI全市场扫描生成交易信号"""
+    if not trader.llm and llm.a:
+        trader.llm = llm.a
+    signals = trader.scan_market()
+    return jsonify({"signals": [
+        {"code": s.code, "name": s.name, "action": s.action,
+         "price": s.price, "confidence": s.confidence,
+         "reason": s.reason, "strategy": s.strategy, "time": s.time}
+        for s in signals[:30]
+    ]})
+
+@app.route("/api/trader/analyze", methods=["POST"])
+def tr_analyze():
+    """AI分析单只股票"""
+    d = request.json or {}
+    code = d.get("code", "")
+    if not code:
+        return jsonify({"ok": False, "error": "缺少股票代码"})
+    if not trader.llm and llm.a:
+        trader.llm = llm.a
+    quotes = trader.fetch_quote([code])
+    if code not in quotes:
+        return jsonify({"ok": False, "error": f"无法获取 {code} 行情"})
+    sig = trader.analyze_with_ai(code, quotes[code])
+    return jsonify({"ok": True, "signal": {
+        "code": sig.code, "name": sig.name, "action": sig.action,
+        "price": sig.price, "confidence": sig.confidence,
+        "reason": sig.reason, "strategy": sig.strategy
+    }})
+
+@app.route("/api/trader/search", methods=["POST"])
+def tr_search():
+    """搜索股票"""
+    d = request.json or {}
+    kw = d.get("keyword", "")
+    results = trader.search_stock(kw)
+    return jsonify({"results": results})
+
+@app.route("/api/trader/trade", methods=["POST"])
+def tr_trade():
+    """执行交易"""
+    d = request.json or {}
+    code = d.get("code", "")
+    action = d.get("action", "")
+    shares = d.get("shares", 100)
+    price = d.get("price", None)
+    if not code or action not in ("buy", "sell"):
+        return jsonify({"ok": False, "error": "参数错误: code + buy/sell"})
+    return jsonify(trader.execute_trade(code, action, shares, price))
+
+@app.route("/api/trader/autotrade", methods=["POST"])
+def tr_autotrade():
+    """开关自主交易"""
+    d = request.json or {}
+    trader.auto_trade = d.get("enabled", False)
+    return jsonify({"ok": True, "auto_trade": trader.auto_trade,
+                    "msg": "自主交易已开启 — AI将直接执行买卖!" if trader.auto_trade else "自主交易已关闭"})
+
+@app.route("/api/trader/platform", methods=["POST"])
+def tr_platform():
+    """打开交易平台"""
+    d = request.json or {}
+    name = d.get("platform", "东方财富")
+    return jsonify(trader.open_platform(name))
+
+@app.route("/api/trader/position", methods=["POST"])
+def tr_position():
+    """管理持仓"""
+    d = request.json or {}
+    act = d.get("action", "list")
+    if act == "add":
+        trader.add_position(d.get("code",""), d.get("name",""), d.get("shares",0), d.get("cost",0))
+        return jsonify({"ok": True})
+    elif act == "remove":
+        trader.remove_position(d.get("code",""))
+        return jsonify({"ok": True})
+    return jsonify(trader.get_status())
+
+
 def launch():
     try:
         import webview as wv
@@ -654,11 +762,13 @@ def launch():
             def close(self): wv.windows[0].destroy()
         t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
         t.start();time.sleep(1.0)
-        # 自动启动守夜人
+        # 自动启动守夜人 + 操盘手
         if llm.a:
             watcher.llm = llm.a
+            trader.llm = llm.a
             watcher.start()
             L.info("🛡️ 守夜人已自动启动")
+            L.info("📊 操盘手已就绪")
         time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:
