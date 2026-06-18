@@ -13,3 +13,5 @@ test_gbt_app.py
 screen.py
 .env
 .env.example
+
+data/

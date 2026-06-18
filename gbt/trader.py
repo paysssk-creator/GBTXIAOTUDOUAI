@@ -159,7 +159,19 @@ class AShareTrader:
     # K线数据
     # ═══════════════════════════════════════════════
     def fetch_kline(self, code, scale=240, datalen=30):
-        """获取K线数据 scale: 5/15/30/60/240(日)/1200(周)"""
+        """获取K线数据 scale: 5/15/30/60/240(日)/1200(周) — 优先本地缓存"""
+        # ── 优先查本地SQLite缓存 ──
+        try:
+            from gbt.database import db as _db
+            if not _db.kline_needs_refresh(code, scale):
+                cached = _db.get_kline_arrays(code, scale, limit=max(datalen, 60))
+                if cached.get("ok") and len(cached.get("closes", [])) >= 10:
+                    L.debug(f"📦 K线缓存命中 {code} scale={scale} count={cached['count']}")
+                    return cached
+        except Exception as e:
+            L.debug(f"K线缓存查询跳过: {e}")
+
+        # ── 从新浪拉取 ──
         try:
             url = f"http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={code}&scale={scale}&ma=no&datalen={datalen}"
             req = urllib.request.Request(url, headers={
@@ -173,6 +185,15 @@ class AShareTrader:
             highs = [float(d["high"]) for d in data if d.get("high")]
             lows = [float(d["low"]) for d in data if d.get("low")]
             volumes = [float(d["volume"]) for d in data if d.get("volume")]
+
+            # ── 缓存到本地 ──
+            try:
+                from gbt.database import db as _db2
+                _db2.cache_klines(code, scale, data)
+                L.debug(f"💾 K线已缓存 {code} scale={scale} count={len(data)}")
+            except Exception as e:
+                L.debug(f"K线缓存写入跳过: {e}")
+
             return {
                 "ok": True, "code": code, "count": len(closes),
                 "closes": closes, "highs": highs, "lows": lows, "volumes": volumes,
@@ -180,6 +201,14 @@ class AShareTrader:
                          "high": d.get("high"), "low": d.get("low"), "volume": d.get("volume")} for d in data]
             }
         except Exception as e:
+            # ── 网络失败兜底：从本地缓存加载 ──
+            try:
+                from gbt.database import db as _db3
+                cached = _db3.get_kline_arrays(code, scale, limit=max(datalen, 60))
+                if cached.get("ok") and len(cached.get("closes", [])) >= 10:
+                    L.warning(f"🌐 新浪不可达，使用本地缓存 {code} count={cached['count']}")
+                    return cached
+            except: pass
             return {"ok": False, "error": str(e), "code": code}
 
     # ═══════════════════════════════════════════════

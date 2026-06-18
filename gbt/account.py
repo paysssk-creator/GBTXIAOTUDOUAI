@@ -11,7 +11,7 @@ L = logging.getLogger("GBT.Account")
 class Account:
     """交易账户"""
 
-    def __init__(self, initial_cash=100000):
+    def __init__(self, initial_cash=100000, db=None):
         self.initial_cash = initial_cash
         self.cash = initial_cash
         self.positions = {}       # {code: {shares, avg_cost, name}}
@@ -22,6 +22,7 @@ class Account:
         self.win_trades = 0
         self.loss_trades = 0
         self.created = datetime.now().strftime("%Y-%m-%d %H:%M")
+        self.db = db  # SQLite database reference
 
     def get_equity(self, market_prices=None):
         """
@@ -86,6 +87,20 @@ class Account:
         }
         self.trade_log.appendleft(entry)
         self.total_trades += 1
+
+        # ── SQLite 持久化 ──
+        if self.db:
+            try:
+                self.db.add_trade(
+                    time=entry["time"], action="buy", code=code, name=name,
+                    shares=shares, price=price, amount=round(cost, 2),
+                    cash_after=round(self.cash, 2)
+                )
+                self.db.upsert_position(code, name, self.positions[code]["shares"], self.positions[code]["avg_cost"])
+                self.db.update_account(cash=self.cash, total_trades=self.total_trades, win_trades=self.win_trades, loss_trades=self.loss_trades)
+            except Exception as e:
+                L.warning(f"DB写入失败: {e}")
+
         L.info(f"💰 买入 {name}({code}) {shares}股 @ {price:.2f} = ¥{cost:.0f}")
         return {"ok": True, "entry": entry}
 
@@ -130,6 +145,24 @@ class Account:
         }
         self.trade_log.appendleft(entry)
         self.total_trades += 1
+
+        # ── SQLite 持久化 ──
+        if self.db:
+            try:
+                self.db.add_trade(
+                    time=entry["time"], action="sell", code=code, name=pos.get("name", code),
+                    shares=shares, price=price, amount=round(revenue, 2),
+                    pnl=round(pnl, 2), cash_after=round(self.cash, 2)
+                )
+                if code in self.positions:
+                    self.db.upsert_position(code, pos.get("name", code), self.positions[code]["shares"], self.positions[code]["avg_cost"])
+                else:
+                    self.db.delete_position(code)
+                self.db.update_account(cash=self.cash, total_pnl=self.total_pnl, daily_pnl=self.daily_pnl,
+                                       total_trades=self.total_trades, win_trades=self.win_trades, loss_trades=self.loss_trades)
+            except Exception as e:
+                L.warning(f"DB写入失败: {e}")
+
         L.info(f"💰 卖出 {entry['name']}({code}) {shares}股 @ {price:.2f} = ¥{revenue:.0f} | PnL: ¥{pnl:.0f}")
         return {"ok": True, "entry": entry}
 
@@ -166,4 +199,22 @@ class Account:
 
 
 # 全局账户
-account = Account(initial_cash=100000)
+try:
+    from gbt.database import db as _db
+    account = Account(initial_cash=100000, db=_db)
+    # 从DB恢复账户状态
+    acct_data = _db.get_account()
+    if acct_data:
+        account.cash = acct_data["cash"]
+        account.total_pnl = acct_data["total_pnl"]
+        account.daily_pnl = acct_data["daily_pnl"]
+        account.total_trades = acct_data["total_trades"]
+        account.win_trades = acct_data["win_trades"]
+        account.loss_trades = acct_data["loss_trades"]
+    # 恢复持仓
+    for pos in _db.get_positions():
+        account.positions[pos["code"]] = {
+            "shares": pos["shares"], "avg_cost": pos["avg_cost"], "name": pos["name"]
+        }
+except ImportError:
+    account = Account(initial_cash=100000)

@@ -55,6 +55,7 @@ from gbt.watcher import NightWatcher
 from gbt.trader import AShareTrader
 from gbt.desktop_ctl import DesktopController
 from gbt.account import account
+from gbt.database import db as _db
 from gbt.brain import brain as _brain
 
 # ── Build homepage ──
@@ -1206,9 +1207,18 @@ def launch():
         t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
         t.start();time.sleep(1.0)
         # 自动启动守夜人 + 操盘手
+        # ── 数据库迁移 (内存 → SQLite) ──
+        _db.migrate_account(account)
+        _db.migrate_trader(trader)
+        from gbt.risk_ctrl import risk_mgr
+        _db.migrate_risk(risk_mgr)
+        stats = _db.get_db_stats()
+        L.info(f"🗄️ 数据库: {stats['trades']}笔交易 | {stats['signals']}个信号 | {stats['positions']}持仓 | {stats['kline_cache']}K线缓存")
+
         if llm.a:
             watcher.llm = llm.a
             trader.llm = llm.a
+            trader.db = _db  # 注入数据库引用
             watcher.start()
             trader.start_autonomous()
             L.info("🛡️ 守夜人已自动启动")
