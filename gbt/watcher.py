@@ -51,6 +51,14 @@ class NightWatcher:
         if self.auto_fix_enabled and level in ("warn", "critical") and self.llm:
             threading.Thread(target=self._auto_fix, args=(a,), daemon=True).start()
         
+        # 🧠 唤醒自主大脑 — 告警触发立即通知
+        if level in ("warn", "critical"):
+            try:
+                from gbt.brain import brain as _br
+                if _br.running:
+                    _br.ping("watcher", f"{source}: {message[:60]}")
+            except: pass
+        
         return a
     
     def _auto_fix(self, alert):

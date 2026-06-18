@@ -339,22 +339,22 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 策略:xxx"""
 
             resp = self.llm.invoke([
-                {"role": "system", "content": """你是 GBT Pro v2.1 内置的A股量化交易分析师，运行在专业桌面交易终端内。
+                {"role": "system", "content": """你是 GBT Pro v2.1 内置的A股量化交易分析师,运行在专业桌面交易终端内。
 
-你的专业领域：
-- A股市场机制：T+1交割、涨跌停板(±10%主板/±20%科创创业)、集合竞价(9:15-9:25)、连续竞价(9:30-11:30,13:00-15:00)
-- 技术分析：K线形态、均线系统(MA5/10/20/60/120/250)、MACD/RSI/KDJ/布林带/成交量分析
-- 基本面：PE/PB/ROE/营收增速/现金流/行业地位/政策面
-- 盘口语言：委比委差/大单流向/换手率/量比/内盘外盘
-- 量化策略：趋势跟踪/均值回归/动量突破/波动率套利/网格交易
+你的专业领域:
+- A股市场机制:T+1交割、涨跌停板(±10%主板/±20%科创创业)、集合竞价(9:15-9:25)、连续竞价(9:30-11:30,13:00-15:00)
+- 技术分析:K线形态、均线系统(MA5/10/20/60/120/250)、MACD/RSI/KDJ/布林带/成交量分析
+- 基本面:PE/PB/ROE/营收增速/现金流/行业地位/政策面
+- 盘口语言:委比委差/大单流向/换手率/量比/内盘外盘
+- 量化策略:趋势跟踪/均值回归/动量突破/波动率套利/网格交易
 
-操作规则：
-- T+1制度：当日买入次日才能卖出，必须考虑隔夜风险
-- 涨跌停板：触及涨跌停时流动性枯竭，不可追板
-- 手续费：印花税0.1%(卖出单向)+佣金0.025%+过户费0.001%
-- 最小交易单位：100股(1手)，必须以手为单位
+操作规则:
+- T+1制度:当日买入次日才能卖出,必须考虑隔夜风险
+- 涨跌停板:触及涨跌停时流动性枯竭,不可追板
+- 手续费:印花税0.1%(卖出单向)+佣金0.025%+过户费0.001%
+- 最小交易单位:100股(1手),必须以手为单位
 
-输出要求：基于实时数据和盘面语言，给出简洁明确的交易判断。优先保护本金，控制回撤。"""},
+输出要求:基于实时数据和盘面语言,给出简洁明确的交易判断。优先保护本金,控制回撤。"""},
                 {"role": "user", "content": prompt}
             ])
             action = "hold"; reason = ""; confidence = 0; strategy = ""
@@ -505,7 +505,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                     f"$n = New-Object System.Windows.Forms.NotifyIcon; "
                     f"$n.Icon = [System.Drawing.SystemIcons]::Information; "
                     f"$n.Visible = $true; "
-                    f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{safe_action} {safe_name} {shares}股 @ ￥{trade_price}', 'Info')"
+                    f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{safe_action} {safe_name} {shares}股 @ ¥{trade_price}', 'Info')"
                 ], capture_output=True, timeout=5)
             except: pass
 
@@ -615,13 +615,21 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                             approval = risk_mgr.approve_trade(sig, self.positions)
                             if not approval["approved"]:
                                 L.info(f"🛡️ 风控拦截: {sig.name} {', '.join(approval['issues'])}")
+                                try:
+                                    from gbt.brain import brain as _br
+                                    if _br.running: _br.ping("trader", f"风控拦截: {sig.name}")
+                                except: pass
                                 continue
 
                         last_t = last_trade_time.get(sig.code, 0)
                         if time.time() - last_t < 300: continue
 
                         L.info(f"📊 交易信号: {sig.name} → {sig.action.upper()} (置信度:{sig.confidence}%)")
-
+                        try:
+                            from gbt.brain import brain as _br
+                            if _br.running: _br.ping("trader", f"{sig.action.upper()}: {sig.name} {sig.confidence}%")
+                        except: pass
+                        
                         # 完整流水线
                         ts = self.run_full_pipeline(sig.code, sig.action)
                         last_trade_time[sig.code] = time.time()
