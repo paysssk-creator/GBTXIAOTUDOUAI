@@ -797,6 +797,55 @@ def tr_stockpage():
         return jsonify({"ok": False, "error": "缺少代码"})
     return jsonify(trader.open_stock_page(code))
 
+@app.route("/api/trader/tech", methods=["POST"])
+def tr_tech():
+    """技术分析"""
+    d = request.json or {}
+    code = d.get("code", "")
+    if not code:
+        return jsonify({"ok": False, "error": "缺少代码"})
+    quote = trader.fetch_quote([code])
+    if code not in quote:
+        return jsonify({"ok": False, "error": f"获取行情失败: {code}"})
+    q = quote[code]
+    try:
+        from gbt.tech_analysis import FullAnalysis
+        closes = [q.price] * 20  # 待K线接口
+        ta = FullAnalysis(closes, name=q.name, code=code)
+        return jsonify({"ok": True, "code": code, "name": q.name, "quote": {
+            "price": q.price, "change": q.change, "change_pct": q.change_pct,
+            "open": q.open, "high": q.high, "low": q.low
+        }, "analysis": ta})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+@app.route("/api/trader/journal")
+def tr_journal():
+    """交易日志"""
+    entries = []
+    for sig in list(trader.signals)[:50]:
+        entries.append({
+            "time": sig.time,
+            "code": sig.code,
+            "name": sig.name,
+            "action": sig.action,
+            "price": sig.price,
+            "confidence": sig.confidence,
+            "reason": sig.reason
+        })
+    for sess in list(trader.sessions)[:20]:
+        entries.append({
+            "time": sess.created_at,
+            "code": sess.code,
+            "name": sess.name,
+            "action": sess.executed and ("executed" if sess.status == "done" else sess.status) or "skipped",
+            "session_id": sess.id,
+            "status": sess.status,
+            "steps": len(sess.steps)
+        })
+    entries.sort(key=lambda e: e.get("time", ""), reverse=True)
+    return jsonify({"ok": True, "journal": entries[:50]})
+
 @app.route("/api/trader/notify", methods=["POST"])
 def tr_notify():
     """发送Windows通知"""

@@ -5,6 +5,14 @@ import os, sys, time, threading, json, logging, re, subprocess, urllib.request, 
 from datetime import datetime
 from collections import deque
 
+try:
+    from gbt.tech_analysis import FullAnalysis
+    HAS_TECH = True
+except ImportError:
+    HAS_TECH = False
+    def FullAnalysis(*a, **kw):
+        return {"error": "技术分析未加载"}
+
 L = logging.getLogger("GBT.Trader")
 
 # ── 交易步骤追踪 ──
@@ -201,19 +209,57 @@ class AShareTrader:
             s = session.add_step("analyze", "AI分析", f"分析 {quote.name}({code})")
             s.detail = f"现价:{quote.price} | 涨跌:{quote.change_pct}%"
 
+        # 先做技术分析
+        tech = None
+        tech_sig = {"direction": "hold", "confidence": 0}
+        if HAS_TECH and quote.price > 0:
+            try:
+                # 用伪历史数据做技术分析 (实际需K线接口)
+                fake_closes = [quote.price] * 20  # 简化: 等K线接口就绪
+                tech = FullAnalysis(fake_closes, name=quote.name, code=code)
+                tech_sig = tech.get("signal", {})
+                if session:
+                    s.detail += f" | 技术:{tech.get('trend','N/A')}"
+            except Exception as e:
+                L.warning(f"技术分析失败 {code}: {e}")
+
         if not self.llm:
             if session:
-                s.status = "error"; s.result = "AI引擎未就绪"
-            return TradeSignal(code, quote.name, "hold", quote.price, reason="AI未就绪", confidence=0)
+                if tech:
+                    s.status = "done"
+                    s.result = f"⚙️ 仅技术面 | {tech_sig.get('direction','hold').upper()} | 置信度:{tech_sig.get('confidence',0)}%"
+                else:
+                    s.status = "error"; s.result = "AI引擎未就绪"
+
+            sig = TradeSignal(code, quote.name, tech_sig.get("direction", "hold"), quote.price,
+                              reason=f"[技术面] {tech.get('trend','')}" if tech else "AI未就绪",
+                              confidence=tech_sig.get("confidence", 0))
+            with self._lock: self.signals.appendleft(sig)
+            return sig
 
         try:
+            tech_block = ""
+            if tech:
+                ind = tech.get("indicators", {})
+                ts = tech.get("signal", {})
+                tech_block = f"""
+【技术指标参考】
+趋势:{tech.get('trend','N/A')}
+RSI:{ind.get('rsi',{}).get('rsi','N/A')} ({ind.get('rsi',{}).get('zone','')})
+MACD:{ind.get('macd',{}).get('trend','N/A')}
+布林带:{ind.get('bollinger',{}).get('position','N/A')}
+量能:{ind.get('volume',{}).get('trend','N/A')}
+技术信号:{ts.get('direction','hold').upper()} 置信度:{ts.get('confidence',0)}%
+买信号:{ts.get('buy_signals',0)} 卖信号:{ts.get('sell_signals',0)}
+"""
+
             prompt = f"""分析A股 {quote.name}({code}) 当前行情:
 现价:{quote.price} | 昨收:{quote.prev_close}
 涨跌:{quote.change}({quote.change_pct}%)
 今开:{quote.open} | 最高:{quote.high} | 最低:{quote.low}
 成交额:{quote.amount}万
-
-以专业交易员视角输出:
+{tech_block}
+以专业交易员视角综合基本面和技术面输出:
 1.技术判断(1句话)
 2.操作建议: buy/sell/hold
 3.置信度: 0-100
@@ -238,9 +284,16 @@ class AShareTrader:
                     if nums: confidence = min(int(nums[0]), 100)
                 if "策略" in line: strategy = line.split(":",1)[-1].strip()[:50]
 
+            # AI无结论时用技术面兜底
+            if action == "hold" and confidence < 30 and tech_sig.get("confidence", 0) >= 50:
+                action = tech_sig["direction"]
+                confidence = tech_sig["confidence"]
+                strategy = f"[技术兜底] {tech.get('trend','')}"
+                reason = f"AI未定, 技术面:{tech.get('trend','')}"
+
             signal = TradeSignal(code, quote.name, action, quote.price,
                                  reason=reason or resp[:100], confidence=confidence, strategy=strategy)
-            
+
             if session:
                 s.status = "done"
                 s.result = f"{'📈' if action=='buy' else '📉' if action=='sell' else '➖'} {action.upper()} | 置信度:{confidence}% | {strategy}"
@@ -251,6 +304,13 @@ class AShareTrader:
         except Exception as e:
             if session:
                 s.status = "error"; s.result = f"AI异常: {e}"
+            # AI异常时用技术面兜底
+            if tech_sig.get("confidence", 0) >= 40:
+                sig = TradeSignal(code, quote.name, tech_sig["direction"], quote.price,
+                                  reason=f"[AI异常技术兜底] {tech.get('trend','')}" if tech else f"异常:{e}",
+                                  confidence=tech_sig["confidence"])
+                with self._lock: self.signals.appendleft(sig)
+                return sig
             return TradeSignal(code, quote.name, "hold", quote.price, reason=f"异常:{e}", confidence=0)
 
     # ═══════════════════════════════════════════════

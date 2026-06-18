@@ -158,7 +158,7 @@ class NightWatcher:
                         "details": f"延迟 {latency}ms" if latency else "正常"}
                 
                 # DNS 测试
-                rd = subprocess.run(["nslookup", "google.com"], capture_output=True, text=True, timeout=5)
+                rd = subprocess.run(["nslookup", "google.com"], capture_output=True, text=True, timeout=5, errors='replace')
                 if rd.returncode != 0:
                     self._add_alert("network", "warn", "DNS解析异常", rd.stderr[:200])
                 
@@ -279,7 +279,7 @@ class NightWatcher:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
                 r = subprocess.run(["netsh", "wlan", "show", "interfaces"],
-                    capture_output=True, text=True, timeout=10)
+                    capture_output=True, text=True, timeout=10, errors='replace')
                 
                 if "没有" in r.stdout or "not running" in r.stdout.lower():
                     self.monitor_status["wifi"] = {"status": "ok", "last_check": now,

@@ -289,3 +289,6 @@ body{
 .dash-val{font-size:22px;font-weight:800;color:var(--accent);line-height:1.2}
 .dash-lbl{font-size:10px;color:var(--t4);margin-top:4px}
 #dash-detail{line-height:1.8}
+
+/* ── 技术分析 ── */
+.ta-card{padding:6px 8px;background:var(--bg2);border-radius:6px;font-size:11px;color:var(--t3)}

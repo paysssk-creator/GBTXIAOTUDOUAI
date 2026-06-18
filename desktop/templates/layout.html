@@ -119,6 +119,8 @@
             <button class="mp" onclick="traderOpen('东方财富交易')"><i class="ph ph-currency-cny"></i> 交易端</button>
             <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--green);color:#fff">▶ 自主交易:开</button>
             <button class="mp" onclick="desktopTrade()"><i class="ph ph-desktop"></i> 电脑操控</button>
+            <button class="mp" onclick="traderTech()">📈 技术面</button>
+            <button class="mp" onclick="traderJournal()">📒 日志</button>
           </div>
         </div>
         <div class="msg-list" id="tl">
@@ -749,6 +751,57 @@ async function loadDashboard(){
     h+=' · 📊 操盘手: '+((d.trader||{}).auto_trade?'自主交易开':'关')+' · 持仓:'+((d.trader||{}).positions||0);
     $('dash-detail').textContent=h;
   }catch(e){$('dash-detail').textContent='离线'}
+}
+
+// ── 技术分析 ──
+async function traderTech(){
+  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>📈 技术分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/trader/tech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
+    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
+    var ta=d.analysis,ind=ta.indicators||{},sig=ta.signal||{};
+    var h='<div style="border-left:3px solid var(--cyan);padding-left:10px"><b>'+d.name+'('+code+')</b> ¥'+ta.price+'</div>';
+    h+='<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">';
+    h+='<div class="ta-card">RSI <b style="color:var(--accent)">'+(ind.rsi||{}).rsi||'-'+'</b><br><span style="font-size:10px;color:var(--t4)">'+(ind.rsi||{}).zone||'-'+'</span></div>';
+    h+='<div class="ta-card">MACD<br><span style="font-size:11px">'+(ind.macd||{}).trend||'-'+'</span></div>';
+    h+='<div class="ta-card">布林<br><span style="font-size:11px">'+(ind.bollinger||{}).position||'-'+'</span></div>';
+    h+='<div class="ta-card">量能<br><span style="font-size:11px">'+(ind.volume||{}).trend||'-'+'</span></div>';
+    h+='<div class="ta-card" style="grid-column:1/3;background:rgba(130,170,255,.1)"><b>趋势:</b> '+esc(ta.trend||'-')+'</div>';
+    h+='<div class="ta-card" style="grid-column:1/3;text-align:center;font-size:14px">';
+    h+='<b style="color:'+(sig.direction=='buy'?'var(--green)':'var(--red)')+'">'+(sig.direction||'hold').toUpperCase()+'</b>';
+    h+=' · 置信度 <b>'+sig.confidence+'%</b> · 买'+sig.buy_signals+'/卖'+sig.sell_signals;
+    h+='</div>';
+    h+='</div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
+}
+
+// ── 交易日志 ──
+async function traderJournal(){
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>📒 交易日志</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/trader/journal'),d=await r.json();
+    g.querySelector('.mc').classList.remove('thinking');
+    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
+    var entries=d.journal||[];
+    if(!entries.length){g.querySelector('.mc').innerHTML='尚无交易记录';return}
+    var h='<div style="max-height:320px;overflow-y:auto">';
+    entries.forEach(function(e){
+      var a=e.action||'';var color='var(--t3)';
+      if(a.indexOf('buy')!==-1||a==='买入')color='var(--green)';
+      else if(a.indexOf('sell')!==-1||a==='卖出')color='var(--red)';
+      h+='<div style="padding:4px 8px;border-bottom:1px solid var(--b);font-size:11px;display:flex;justify-content:space-between">';
+      h+='<span><b style="color:'+color+'">'+a.toUpperCase()+'</b> '+esc(e.code||'')+' '+esc(e.name||'')+'</span>';
+      h+='<span style="color:var(--t4);font-size:10px">'+(e.time||'').substring(0,8)+' · '+(e.confidence||'')+'%</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
 }
 
 // ── 桌面操控 ──
