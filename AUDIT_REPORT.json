@@ -9,7 +9,7 @@
   ],
   "warnings": [
     {
-      "name": "无未提交改动 (当前: 2)",
+      "name": "无未提交改动 (当前: 4)",
       "detail": ""
     },
     {
@@ -23,7 +23,7 @@
       "detail": "缺少 Cline 规则文件"
     }
   ],
-  "timestamp": "2026-06-18T09:53:07.773Z",
+  "timestamp": "2026-06-18T09:53:13.299Z",
   "summary": {
     "passed": 6,
     "warnings": 2,
