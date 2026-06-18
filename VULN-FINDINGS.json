@@ -1,5 +1,5 @@
 {
-  "time": "2026-06-18T17:31:05.465Z",
+  "time": "2026-06-18T17:41:20.209Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local",
   "summary": {
     "critical": 0,
@@ -24,7 +24,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 165,
+      "line": 168,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -34,7 +34,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 453,
+      "line": 456,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
       "desc": "硬编码IP",
       "fixable": 0

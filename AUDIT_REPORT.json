@@ -9,24 +9,24 @@
   ],
   "warnings": [
     {
+      "name": "无未提交改动 (当前: 2)",
+      "detail": ""
+    },
+    {
       "name": "测试套件存在",
       "detail": "项目无测试，修改后无法自动验证"
     }
   ],
   "failed": [
     {
-      "name": "无未提交改动 (当前: 6)",
-      "detail": ""
-    },
-    {
       "name": ".clinerules 存在",
       "detail": "缺少 Cline 规则文件"
     }
   ],
-  "timestamp": "2026-06-18T17:31:05.033Z",
+  "timestamp": "2026-06-18T17:41:16.188Z",
   "summary": {
     "passed": 6,
-    "warnings": 1,
-    "failed": 2
+    "warnings": 2,
+    "failed": 1
   }
 }
