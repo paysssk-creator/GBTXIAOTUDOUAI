@@ -419,8 +419,18 @@
           "output": ""
         }
       }
+    },
+    {
+      "summary": "AutoFix: 0 项自动修复",
+      "timestamp": "2026-06-18T09:53:15.948Z",
+      "files": []
+    },
+    {
+      "summary": "Desktop-triggered evolve",
+      "timestamp": "2026-06-18T09:53:16.297Z",
+      "files": []
     }
   ],
-  "lastEvolve": "2026-06-18T09:53:15.676Z",
+  "lastEvolve": "2026-06-18T09:53:16.297Z",
   "totalEvolves": 4
 }
