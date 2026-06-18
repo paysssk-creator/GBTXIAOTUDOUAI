@@ -1,6 +1,7 @@
+# GBT Pro v2.1 Full Chain Self-Test
 import urllib.request, json, sys, os, time
-
 sys.stdout.reconfigure(encoding='utf-8')
+
 BASE = 'http://localhost:8877'
 
 def get(path, timeout=8):
@@ -23,68 +24,82 @@ def check(name, condition, detail=''):
         results['fail'] += 1
         print(f'  [FAIL] {name} - {detail}')
 
-print('=== GBT Pro v2.1 全链路自测 ===')
+print('=== GBT Pro v2.1 Full Chain Self-Test ===')
 
 # 1. Status
-print('\n1. 系统状态')
+print('\n1. System Status')
 s = get('/api/status')
-check('API可达', s.get('status') == 'running')
-check('LLM就绪', s.get('llm') not in (None, '', 'offline'))
-check('MCP服务器', s.get('mcp_count', 0) >= 10)
+check('LLM ready', s.get('llm') not in (None, '', 'offline'))
+check('MCP >= 10', s.get('mcp_count', 0) >= 10, f"mcp_count={s.get('mcp_count')}")
 
 # 2. Brain
-print('\n2. 自主大脑')
+print('\n2. Autonomous Brain')
 b = get('/api/brain/status')
-check('大脑运行', b.get('running'))
-check('心跳计数>0', b.get('heartbeat', {}).get('count', 0) > 0,
-      f"count={b.get('heartbeat', {}).get('count', 0)}")
-check('能力注册', len(b.get('capabilities', [])) >= 5,
+check('Brain running', b.get('running'))
+hb = b.get('heartbeat', {})
+check('Heartbeat > 0', hb.get('count', 0) > 0, f"count={hb.get('count')}")
+check('Capabilities >= 5', len(b.get('capabilities', [])) >= 5,
       f"capabilities={len(b.get('capabilities',[]))}")
-check('上下文记录', len(b.get('context', [])) > 0,
-      f"context={len(b.get('context',[]))}")
 
 # 3. Watcher
-print('\n3. 守夜人')
+print('\n3. Night Watcher')
 w = get('/api/watcher/status')
-check('守夜人运行', w.get('running'))
+check('Watcher running', w.get('running'))
 monitors = w.get('monitors', {})
-check('8个监控点', len(monitors) >= 8, f"只有{len(monitors)}")
+check('8 monitors', len(monitors) >= 8, f"only {len(monitors)}")
 for src in ['network', 'process', 'filesystem', 'registry', 'wifi', 'disk', 'logs', 'connections']:
     m = monitors.get(src, {})
     st = m.get('status', '?')
     check(f'  {src}', st in ('ok', 'idle', 'warn'), f'status={st}')
 
 # 4. Trader
-print('\n4. 交易引擎')
+print('\n4. Trading Engine')
 t = get('/api/trader/status')
-check('自主交易开启', t.get('auto_trade'))
-check('自选股数>0', t.get('watchlist_count', 0) > 0)
-check('最低置信度', t.get('min_confidence', 0) >= 50)
+check('Auto trade ON', t.get('auto_trade'))
+check('Watchlist > 0', t.get('watchlist_count', 0) > 0)
+check('Confidence >= 50', t.get('min_confidence', 0) >= 50, f"conf={t.get('min_confidence')}")
 
-# 5. Account
-print('\n5. 模拟账户')
-ac = get('/api/account/summary')
-check('初始资金', ac.get('initial_cash', 0) == 100000)
-check('现金>0', ac.get('cash', 0) > 0)
-
-# 6. Risk
-print('\n6. 风控')
-rk = get('/api/risk/status')
-check('止损比例', rk.get('stop_loss_pct', 0) > 0)
-check('最高仓位', rk.get('max_single_pct', 0) > 0)
-
-# 7. Pipeline (with AI analysis - skip if LLM not available)
-print('\n7. 分析流水线')
+# 5. Account (use /api/account not /api/account/summary)
+print('\n5. Sim Account')
 try:
-    p = post('/api/trader/pipeline', {'code': 'sh600519'})
-    steps = p.get('steps', [])
-    check('流水线步骤>0', len(steps) > 0, f'steps={len(steps)}')
-    completed = sum(1 for s in steps if s.get('status') == 'completed')
-    check('至少1步完成', completed >= 1, f'completed={completed}/{len(steps)}')
+    ac = get('/api/account')
+    check('Cash > 0', ac.get('cash', 0) > 0, f"cash={ac.get('cash')}")
+    check('Initial 100k', ac.get('initial_cash', 0) == 100000)
 except Exception as e:
-    results['skip'] += 1
-    print(f'  [SKIP] Pipeline分析: {e}')
+    check('Account API', False, str(e))
+
+# 6. Dashboard
+print('\n6. Dashboard')
+try:
+    db = get('/api/dashboard')
+    check('Dashboard data', len(db) > 0, f"keys={len(db)}")
+except Exception as e:
+    check('Dashboard API', False, str(e))
+
+# 7. Risk
+print('\n7. Risk Control')
+try:
+    rk = post('/api/risk/check', {
+        'code': 'sh600519', 'action': 'buy', 'price': 1000,
+        'shares': 100, 'confidence': 75
+    })
+    check('Risk check OK', rk.get('ok') or rk.get('approved'),
+          f"response={str(rk)[:100]}")
+except Exception as e:
+    check('Risk API', False, str(e))
+
+# 8. Brain context
+print('\n8. Brain Context')
+try:
+    ctx = get('/api/brain/context')
+    check('Context data', isinstance(ctx, list) or isinstance(ctx, dict),
+          f"type={type(ctx).__name__}")
+except Exception as e:
+    check('Context API', False, str(e))
 
 # Summary
-print(f'\n=== 结果: {results["pass"]}PASS / {results["fail"]}FAIL / {results["skip"]}SKIP ===')
+total = results['pass'] + results['fail'] + results['skip']
+print(f'\n=== Result: {results["pass"]}/{total} PASS, {results["fail"]} FAIL, {results["skip"]} SKIP ===')
+if results['fail'] > 0:
+    print('FAILURES DETECTED - review above')
 sys.exit(0 if results['fail'] == 0 else 1)

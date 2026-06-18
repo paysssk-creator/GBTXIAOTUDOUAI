@@ -45,10 +45,18 @@ class AutonomousBrain:
         ]
         # 能力 → 依赖前提
         self.cap_prerequisites = {
-            "market_scan": ["connection_health"],
-            "stock_analyze": ["market_scan"],
-            "trade_execute": ["stock_analyze", "strategy_eval"],
+            "stock_analyze": ["trader", "account"],
+            "market_scan": ["trader"],
+            "strategy_eval": ["trader", "account"],
+            "trade_execute": ["trader", "account"],
+            "send_notification": ["trader"],
+            "connection_health": [],
+            "log_analysis": [],
+            "system_monitor": ["watcher"],
         }
+        # Persistent logging
+        self._log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "brain.log")
+        os.makedirs(os.path.dirname(self._log_path), exist_ok=True)
     
     def start(self):
         if self.thread and self.thread.is_alive():
@@ -418,14 +426,20 @@ class AutonomousBrain:
                 results.append({"step": step, "ok": False, "error": str(e)[:100]})
         
         with self._lock:
-            self.context.appendleft({
+            entry = {
                 "time": now.strftime("%H:%M:%S"),
                 "action": action["type"],
                 "priority": action.get("priority", "normal"),
                 "reason": action.get("reason", ""),
                 "results": results
-            })
+            }
+            self.context.appendleft(entry)
             self.decisions.appendleft(action)
+            # Persistent log
+            try:
+                with open(self._log_path, "a", encoding="utf-8") as lf:
+                    lf.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            except: pass
     
     def get_status(self):
         return {
