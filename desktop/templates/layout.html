@@ -28,7 +28,6 @@
       <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>代码扫描</span></button>
       <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>安全审计</span></button>
       <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
-      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
       <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
       <div class="sb-div"></div>
       <div class="sb-label">操盘</div>
@@ -237,17 +236,17 @@ var tfmt=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minu
 
 function togglePanel(){
   pnOpen=!pnOpen;
-  if(pnOpen){$('pn').classList.add('open');$('pt').classList.add('on');$('card').classList.add('narrow')}
-  else{$('pn').classList.remove('open');$('pt').classList.remove('on');$('card').classList.remove('narrow')}
+  if(pnOpen){$('pn').classList.remove('closed');$('pt').classList.add('on');$('card').classList.add('narrow')}
+  else{$('pn').classList.add('closed');$('pt').classList.remove('on');$('card').classList.remove('narrow')}
 }
 function go(v,btn){
   D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
-  $('wc').style.display=(v==='chat'||v==='reason')?'none':'flex';
-  $('cv').style.display=v==='chat'?'flex':'none';
-  $('rv').style.display=v==='reason'?'flex':'none';
-  $('tv').style.display=v==='trade'?'flex':'none';
-  if(v==='chat')setTimeout(function(){$('ci').focus()},50);
-  else if(v==='reason')setTimeout(function(){$('ri').focus()},50);
+  var wc=$('wc');if(wc)wc.style.display=(v==='chat'||v==='reason')?'none':'flex';
+  var cv=$('cv');if(cv)cv.style.display=v==='chat'?'flex':'none';
+  var rv=$('rv');if(rv)rv.style.display=v==='reason'?'flex':'none';
+  var tv=$('tv');if(tv)tv.style.display=v==='trade'?'flex':'none';
+  if(v==='chat'){var ci=$('ci');if(ci)setTimeout(function(){ci.focus()},50);}
+  else if(v==='reason'){var ri=$('ri');if(ri)setTimeout(function(){ri.focus()},50);}
 }
 function setMode(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('on')});btn.classList.add('on')}
 function qchat(t){go('chat',D.querySelector('[data-v=chat]'));$('ci').value=t;chat()}

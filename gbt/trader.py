@@ -609,21 +609,27 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         last_trade_time[sig.code] = time.time()
 
                         # ── 账户实际执行 ──
+                        trade_pnl = 0
                         try:
                             from gbt.account import account
                             q = self.fetch_quote([sig.code])
                             price = q[sig.code].price if sig.code in q else sig.price
-                            shares = min(100, int(account.cash * 0.05 / max(price, 1) / 100) * 100)
-                            if shares <= 0: shares = 100
+                            # 根据股价和可用现金计算合理股数
+                            max_cost = account.cash * 0.05
+                            raw_shares = int(max_cost / max(price, 0.01))
+                            shares = max(100, min(10000, raw_shares // 100 * 100))
                             if sig.action == "buy":
-                                account.buy(sig.code, sig.name, shares, price)
+                                result = account.buy(sig.code, sig.name, shares, price)
                             elif sig.action == "sell" and sig.code in account.positions:
                                 pos = account.positions[sig.code]
-                                account.sell(sig.code, pos["shares"], price)
-                            ts.executed = True
+                                result = account.sell(sig.code, pos["shares"], price)
+                                trade_pnl = result.get("pnl", 0)
+                            else:
+                                result = {"ok": False, "error": f"无仓位执行 {sig.action} {sig.code}"}
+                            ts.executed = result.get("ok", False)
                             ts.status = "executed"
                             with self._lock:
-                                if HAS_RISK: risk_mgr.record_trade()
+                                if HAS_RISK: risk_mgr.record_trade(pnl=trade_pnl)
                         except Exception as e:
                             L.error(f"账户执行异常 {sig.code}: {e}")
 
