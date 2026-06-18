@@ -70,6 +70,12 @@
             <div class="dash-card"><div class="dash-val" id="dv-watch">--</div><div class="dash-lbl">🛡️ 监控点</div></div>
             <div class="dash-card"><div class="dash-val" id="dv-trade">--</div><div class="dash-lbl">📊 自选股</div></div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center;margin-top:8px">
+            <div class="dash-card"><div class="dash-val" id="dv-risk">--</div><div class="dash-lbl">🛡️ 止损%</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-profit">--</div><div class="dash-lbl">🎯 止盈%</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-cap">--</div><div class="dash-lbl">💰 仓位%</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-daily">--</div><div class="dash-lbl">📅 今日信号</div></div>
+          </div>
           <div id="dash-detail" style="margin-top:8px;font-size:12px;color:var(--t4);text-align:center">加载中...</div>
         </div>
         <div class="qs">
@@ -751,6 +757,21 @@ async function loadDashboard(){
     h+=' · 📊 操盘手: '+((d.trader||{}).auto_trade?'自主交易开':'关')+' · 持仓:'+((d.trader||{}).positions||0);
     $('dash-detail').textContent=h;
   }catch(e){$('dash-detail').textContent='离线'}
+  loadRisk();
+}
+
+async function loadRisk(){
+  try{
+    var r=await fetch(A+'/risk/check',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    var d=await r.json();
+    if(d.ok){
+      var c=d.config||{};
+      $('dv-risk').textContent=c.stop_loss_pct||7;
+      $('dv-profit').textContent=c.stop_profit_pct||15;
+      $('dv-cap').textContent=c.max_single_pct||20;
+      $('dv-daily').textContent=(d.daily||{}).trades_left||10;
+    }
+  }catch(e){}
 }
 
 // ── 技术分析 ──

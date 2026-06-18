@@ -797,6 +797,17 @@ def tr_stockpage():
         return jsonify({"ok": False, "error": "缺少代码"})
     return jsonify(trader.open_stock_page(code))
 
+@app.route("/api/trader/kline", methods=["POST"])
+def tr_kline():
+    """获取K线数据"""
+    d = request.json or {}
+    code = d.get("code", "")
+    scale = d.get("scale", 240)
+    datalen = d.get("datalen", 30)
+    if not code:
+        return jsonify({"ok": False, "error": "缺少代码"})
+    return jsonify(trader.fetch_kline(code, scale, datalen))
+
 @app.route("/api/trader/tech", methods=["POST"])
 def tr_tech():
     """技术分析"""
@@ -810,12 +821,64 @@ def tr_tech():
     q = quote[code]
     try:
         from gbt.tech_analysis import FullAnalysis
-        closes = [q.price] * 20  # 待K线接口
-        ta = FullAnalysis(closes, name=q.name, code=code)
+        kline = trader.fetch_kline(code, 240, 30)
+        if kline.get("ok") and len(kline.get("closes",[])) >= 20:
+            ta = FullAnalysis(kline["closes"], kline.get("highs"),
+                             kline.get("lows"), kline.get("volumes"),
+                             name=q.name, code=code)
+        else:
+            ta = FullAnalysis([q.price]*20, name=q.name, code=code)
         return jsonify({"ok": True, "code": code, "name": q.name, "quote": {
             "price": q.price, "change": q.change, "change_pct": q.change_pct,
             "open": q.open, "high": q.high, "low": q.low
         }, "analysis": ta})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+@app.route("/api/risk/check", methods=["POST"])
+def risk_check():
+    """风控审批"""
+    d = request.json or {}
+    try:
+        from gbt.risk_ctrl import risk_mgr
+        sig_type = type("Signal", (), {"action": d.get("action","buy"), "code": d.get("code",""),
+            "price": d.get("price",0), "confidence": d.get("confidence",0), "reason": ""})()
+        approval = risk_mgr.approve_trade(sig_type, trader.positions)
+        pos_check = risk_mgr.check_position_size(d.get("price",0))
+        return jsonify({
+            "ok": True,
+            "approval": approval,
+            "position": pos_check,
+            "daily": risk_mgr.check_daily_limit(),
+            "config": {
+                "total_capital": risk_mgr.total_capital,
+                "stop_loss_pct": risk_mgr.stop_loss_pct,
+                "stop_profit_pct": risk_mgr.stop_profit_pct,
+                "max_single_pct": risk_mgr.max_single_pct,
+                "max_daily_loss_pct": risk_mgr.max_daily_loss_pct
+            }
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+@app.route("/api/risk/config", methods=["POST"])
+def risk_config():
+    """更新风控参数"""
+    d = request.json or {}
+    try:
+        from gbt.risk_ctrl import risk_mgr
+        for k in ["stop_loss_pct", "stop_profit_pct", "trailing_stop_pct",
+                  "max_single_pct", "max_total_pct", "max_daily_trades", "max_daily_loss_pct"]:
+            if k in d:
+                setattr(risk_mgr, k, d[k])
+        if "total_capital" in d:
+            risk_mgr.total_capital = d["total_capital"]
+        return jsonify({"ok": True, "config": {
+            "total_capital": risk_mgr.total_capital,
+            "stop_loss_pct": risk_mgr.stop_loss_pct,
+            "stop_profit_pct": risk_mgr.stop_profit_pct,
+            "max_single_pct": risk_mgr.max_single_pct
+        }})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 

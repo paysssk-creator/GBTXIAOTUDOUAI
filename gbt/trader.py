@@ -13,6 +13,13 @@ except ImportError:
     def FullAnalysis(*a, **kw):
         return {"error": "技术分析未加载"}
 
+try:
+    from gbt.risk_ctrl import risk_mgr
+    HAS_RISK = True
+except ImportError:
+    HAS_RISK = False
+    risk_mgr = None
+
 L = logging.getLogger("GBT.Trader")
 
 # ── 交易步骤追踪 ──
@@ -46,7 +53,7 @@ class TradeSession:
     def to_dict(self):
         return {
             "id": self.id, "code": self.code, "name": self.name,
-            "start_time": self.start_time, "status": self.status,
+            "created_at": self.start_time, "start_time": self.start_time, "status": self.status,
             "steps": [{"stage": s.stage, "action": s.action, "detail": s.detail,
                        "time": s.time, "status": s.status, "result": s.result}
                       for s in self.steps],
@@ -138,6 +145,33 @@ class AShareTrader:
         self.use_browser_automation = True   # 使用浏览器自动化
 
     # ═══════════════════════════════════════════════
+    # K线数据
+    # ═══════════════════════════════════════════════
+    def fetch_kline(self, code, scale=240, datalen=30):
+        """获取K线数据 scale: 5/15/30/60/240(日)/1200(周)"""
+        try:
+            url = f"http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={code}&scale={scale}&ma=no&datalen={datalen}"
+            req = urllib.request.Request(url, headers={
+                "Referer": "https://finance.sina.com.cn",
+                "User-Agent": "Mozilla/5.0"
+            })
+            raw = urllib.request.urlopen(req, timeout=8).read().decode("gbk", errors="replace")
+            import json as _json
+            data = _json.loads(raw)
+            closes = [float(d["close"]) for d in data if d.get("close")]
+            highs = [float(d["high"]) for d in data if d.get("high")]
+            lows = [float(d["low"]) for d in data if d.get("low")]
+            volumes = [float(d["volume"]) for d in data if d.get("volume")]
+            return {
+                "ok": True, "code": code, "count": len(closes),
+                "closes": closes, "highs": highs, "lows": lows, "volumes": volumes,
+                "raw": [{"day": d.get("day",""), "open": d.get("open"), "close": d.get("close"),
+                         "high": d.get("high"), "low": d.get("low"), "volume": d.get("volume")} for d in data]
+            }
+        except Exception as e:
+            return {"ok": False, "error": str(e), "code": code}
+
+    # ═══════════════════════════════════════════════
     # 阶段1: 行情获取
     # ═══════════════════════════════════════════════
     def fetch_quote(self, codes, session=None):
@@ -214,9 +248,14 @@ class AShareTrader:
         tech_sig = {"direction": "hold", "confidence": 0}
         if HAS_TECH and quote.price > 0:
             try:
-                # 用伪历史数据做技术分析 (实际需K线接口)
-                fake_closes = [quote.price] * 20  # 简化: 等K线接口就绪
-                tech = FullAnalysis(fake_closes, name=quote.name, code=code)
+                kline = self.fetch_kline(code, scale=240, datalen=30)
+                if kline.get("ok") and len(kline.get("closes",[])) >= 20:
+                    tech = FullAnalysis(kline["closes"], kline.get("highs"),
+                                       kline.get("lows"), kline.get("volumes"),
+                                       name=quote.name, code=code)
+                else:
+                    fake_closes = [quote.price] * 20
+                    tech = FullAnalysis(fake_closes, name=quote.name, code=code)
                 tech_sig = tech.get("signal", {})
                 if session:
                     s.detail += f" | 技术:{tech.get('trend','N/A')}"
@@ -520,6 +559,13 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                     for sig in signals:
                         if sig.action == "hold": continue
                         if sig.confidence < self.confidence_threshold: continue
+                        
+                        # ── 风控审批 ──
+                        if HAS_RISK:
+                            approval = risk_mgr.approve_trade(sig, self.positions)
+                            if not approval["approved"]:
+                                L.info(f"🛡️ 风控拦截: {sig.name} {', '.join(approval['issues'])}")
+                                continue
                         
                         last_t = last_trade_time.get(sig.code, 0)
                         if time.time() - last_t < 300: continue
