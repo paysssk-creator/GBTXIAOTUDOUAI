@@ -199,14 +199,17 @@ def _handler_trade(text):
                 closes = []
             
             if len(closes) >= 10:
-                rsi_v = RSI(closes)
+                rsi_result = RSI(closes)
+                rsi_v = rsi_result.get('rsi', 50) if isinstance(rsi_result, dict) else float(rsi_result)
+                rsi_zone = rsi_result.get('zone', '') if isinstance(rsi_result, dict) else ''
                 macd_d = MACD(closes)
                 boll_d = BollingerBands(closes)
                 last_close = closes[-1]
-                bb_upper = boll_d.get('upper', [0])[-1] if boll_d.get('upper') else 0
-                bb_lower = boll_d.get('lower', [0])[-1] if boll_d.get('lower') else 0
+                bb_upper = boll_d.get('upper', 0) or 0
+                bb_lower = boll_d.get('lower', 0) or 0
                 bb_pos = '上轨' if last_close >= bb_upper else ('下轨' if last_close <= bb_lower else '中轨')
-                mc = '金叉' if macd_d.get('golden_cross') else ('死叉' if macd_d.get('death_cross') else '震荡')
+                macd_trend = macd_d.get('trend', '')
+                mc = '金叉' if '金叉' in str(macd_trend) else ('死叉' if '死叉' in str(macd_trend) else '震荡')
                 results.append(f"📈 RSI={rsi_v:.1f} | MACD={mc} | 布林={bb_pos}")
             else:
                 results.append(f"📈 K线数据不足({len(closes)}根)，需要至少10根")
