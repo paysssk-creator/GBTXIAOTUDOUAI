@@ -69,14 +69,23 @@ class NightWatcher:
             alert.fix_result = resp[:500]
             alert.fixed = "修复建议" in resp
             
-            # 尝试执行修复命令
+            # 尝试执行修复命令 — 安全白名单制
             cmd_match = re.search(r'命令:\s*(.+)', resp)
             if cmd_match:
                 cmd = cmd_match.group(1).strip()
                 if cmd.upper() != "NONE":
-                    try:
-                        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30, errors='replace')
-                        alert.fix_result += f"\n✅ 命令已执行: {cmd}\n输出: {r.stdout[:200]}"
+                    # 白名单：只允许安全的系统诊断命令
+                    safe_cmds = ["ping", "ipconfig", "netstat", "tasklist", "sc", "netsh",
+                                "chkdsk", "sfc", "dism", "cleanmgr", "reg", "wmic",
+                                "systeminfo", "whoami", "net", "dir", "del", "mkdir"]
+                    first_word = cmd.split()[0].lower() if cmd.split() else ""
+                    if first_word not in safe_cmds:
+                        alert.fix_result += f"\n⚠️ 命令被拦截(安全策略): {cmd}"
+                    else:
+                        try:
+                            r = subprocess.run(cmd, shell=True, capture_output=True,
+                                text=True, timeout=30, errors='replace')
+                            alert.fix_result += f"\n✅ 命令已执行: {cmd}\n输出: {r.stdout[:200]}"
                         alert.fixed = True
                     except Exception as e:
                         alert.fix_result += f"\n❌ 命令执行失败: {e}"
@@ -314,6 +323,10 @@ class NightWatcher:
                 
                 free_gb = round(free.value / (1024**3), 1)
                 total_gb = round(total.value / (1024**3), 1)
+                if total_gb <= 0:
+                    self.monitor_status["disk"] = {"status": "error", "last_check": now, "details": "无法获取磁盘信息"}
+                    time.sleep(300)
+                    continue
                 pct = round((total_gb - free_gb) / total_gb * 100, 1)
                 
                 if free_gb < 5:

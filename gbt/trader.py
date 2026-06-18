@@ -1,5 +1,5 @@
 """
-A股自主操盘引擎 v2 — 精细化步骤 + 电脑操控 + 浏览器自动化
+A股自主操盘引擎 v2 - 精细化步骤 + 电脑操控 + 浏览器自动化
 """
 import os, sys, time, threading, json, logging, re, subprocess, urllib.request, urllib.parse
 from datetime import datetime
@@ -150,7 +150,7 @@ class AShareTrader:
         self.scan_interval = 300
         self.current_session = None          # 当前交易会话
         self.step_mode = True                # 逐步模式
-        
+
         # 电脑操控能力
         self.browser_profile = None          # Chrome profile
         self.use_browser_automation = True   # 使用浏览器自动化
@@ -387,14 +387,14 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
     def decide_trade(self, signal, session=None):
         if session:
             s = session.add_step("decide", "交易决策", f"判断: {signal.name}")
-        
+
         reasons = []
 
         # 检查1: 置信度
         if signal.confidence < self.confidence_threshold:
             reasons.append(f"置信度不足 ({signal.confidence}% < {self.confidence_threshold}%)")
             if session:
-                s.status = "done"; s.result = f"⏭ 跳过 — " + "; ".join(reasons)
+                s.status = "done"; s.result = f"⏭ 跳过 - " + "; ".join(reasons)
             return {"trade": False, "reasons": reasons}
 
         # 检查2: 是否交易时段
@@ -403,7 +403,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
         if not ((9.5 <= hour <= 11.5) or (13.0 <= hour <= 15.0)):
             reasons.append(f"非交易时段 ({now.strftime('%H:%M')})")
             if session:
-                s.status = "done"; s.result = f"⏭ 跳过 — " + "; ".join(reasons)
+                s.status = "done"; s.result = f"⏭ 跳过 - " + "; ".join(reasons)
             return {"trade": False, "reasons": reasons}
 
         # 检查3: 自选池
@@ -419,14 +419,14 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 
         if reasons:
             if session:
-                s.status = "done"; s.result = f"⏭ 跳过 — " + "; ".join(reasons)
+                s.status = "done"; s.result = f"⏭ 跳过 - " + "; ".join(reasons)
             return {"trade": False, "reasons": reasons}
 
         if session:
             s.status = "done"
             s.result = f"✅ 决策: {signal.action.upper()} {signal.name} | 置信度:{signal.confidence}% | 策略:{signal.strategy}"
-        
-        return {"trade": True, "reasons": [f"通过 — {signal.strategy}"]}
+
+        return {"trade": True, "reasons": [f"通过 - {signal.strategy}"]}
 
     # ═══════════════════════════════════════════════
     # 阶段5: 执行交易 (电脑操控)
@@ -477,23 +477,23 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
             time.sleep(0.5)
             if session: s2.status = "done"; s2.result = f"交易平台已打开: {platform}"
 
-            # Step 5.3: 发送桌面通知
+            # Step 5.3: 发送桌面通知 (安全转义)
             try:
-                from gbt.winctl import WinCtl
-                # 尝试发送系统通知
+                safe_name = name.replace("'", "''")
+                safe_action = action.upper().replace("'", "''")
                 subprocess.run([
                     "powershell", "-NoProfile", "-Command",
                     f"Add-Type -AssemblyName System.Windows.Forms; "
                     f"$n = New-Object System.Windows.Forms.NotifyIcon; "
                     f"$n.Icon = [System.Drawing.SystemIcons]::Information; "
                     f"$n.Visible = $true; "
-                    f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{action.upper()} {name} {shares}股 @ ¥{trade_price}', 'Info')"
+                    f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{safe_action} {safe_name} {shares}股 @ ￥{trade_price}', 'Info')"
                 ], capture_output=True, timeout=5)
             except: pass
 
             log_entry["status"] = "opened"
             log_entry["msg"] = f"已打开: {platform} | {action.upper()} {name}"
-            
+
             if session:
                 session.executed = True
                 session.status = "executed"
@@ -522,7 +522,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
     def run_full_pipeline(self, code, action=None):
         """运行完整的6阶段交易流程"""
         session = TradeSession(code, self.watchlist.get(code, code))
-        
+
         with self._lock: self.sessions.appendleft(session)
         self.current_session = session
 
@@ -559,7 +559,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
         self.running = True
         self.scan_thread = threading.Thread(target=self._autonomous_loop, daemon=True)
         self.scan_thread.start()
-        L.info(f"📊 自主交易已启动 — 每{self.scan_interval}秒扫描, 最低置信度{self.confidence_threshold}%")
+        L.info(f"📊 自主交易已启动 - 每{self.scan_interval}秒扫描, 最低置信度{self.confidence_threshold}%")
         return {"ok": True, "msg": f"自主交易已启动 (扫描间隔{self.scan_interval}秒)"}
 
     def stop_autonomous(self):
@@ -573,41 +573,41 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
         except Exception as e:
             L.warning(f"初始行情加载失败: {e}")
         last_trade_time = {}
-        
+
         while self.running and self.auto_trade:
             try:
                 now = datetime.now()
                 hour = now.hour + now.minute / 60.0
                 is_trading = (9.5 <= hour <= 11.5) or (13.0 <= hour <= 15.0)
-                
+
                 if is_trading:
-                    L.info(f"📊 [{now.strftime('%H:%M')}] 交易时段 — 开始扫描...")
+                    L.info(f"📊 [{now.strftime('%H:%M')}] 交易时段 - 开始扫描...")
                     session = TradeSession("market", "全市场扫描")
                     session.add_step("fetch", "开始扫描", f"扫描 {len(self.watchlist)} 只自选股")
                     self.current_session = session
-                    
+
                     signals = self.scan_market()
-                    
+
                     for sig in signals:
                         if sig.action == "hold": continue
                         if sig.confidence < self.confidence_threshold: continue
-                        
+
                         # ── 风控审批 ──
                         if HAS_RISK:
                             approval = risk_mgr.approve_trade(sig, self.positions)
                             if not approval["approved"]:
                                 L.info(f"🛡️ 风控拦截: {sig.name} {', '.join(approval['issues'])}")
                                 continue
-                        
+
                         last_t = last_trade_time.get(sig.code, 0)
                         if time.time() - last_t < 300: continue
-                        
+
                         L.info(f"📊 交易信号: {sig.name} → {sig.action.upper()} (置信度:{sig.confidence}%)")
-                        
+
                         # 完整流水线
                         ts = self.run_full_pipeline(sig.code, sig.action)
                         last_trade_time[sig.code] = time.time()
-                        
+
                         # ── 账户实际执行 ──
                         try:
                             from gbt.account import account
@@ -626,17 +626,17 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                                 if HAS_RISK: risk_mgr.record_trade()
                         except Exception as e:
                             L.error(f"账户执行异常 {sig.code}: {e}")
-                        
+
                         with self._lock: self.sessions.appendleft(ts)
                 else:
                     # 非交易时间降低频率
                     time.sleep(60)  # 每分钟心跳一次
                     continue
-                
+
             except Exception as e:
                 L.error(f"自主交易异常: {e}")
                 time.sleep(30)  # 异常后等30秒再试
-            
+
             time.sleep(self.scan_interval)
 
     def scan_market(self):
@@ -661,7 +661,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
             except Exception as e:
                 return {"ok": False, "error": str(e)}
         return {"ok": False, "error": f"未知: {platform_name}"}
-    
+
     def open_stock_page(self, code):
         """打开股票详情页"""
         market = "sh" if code.startswith("sh") else "sz"
@@ -674,14 +674,16 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
             return {"ok": False, "error": str(e)}
 
     def send_notification(self, title, message):
-        """发送Windows通知"""
+        """发送Windows通知 (安全转义)"""
         try:
+            safe_title = title.replace('"', '""').replace('$', '`$')
+            safe_message = message.replace('"', '""').replace('$', '`$')
             ps = f'''
             Add-Type -AssemblyName System.Windows.Forms
             $n = New-Object System.Windows.Forms.NotifyIcon
             $n.Icon = [System.Drawing.SystemIcons]::Information
             $n.Visible = $true
-            $n.ShowBalloonTip(5000, "{title}", "{message}", "Info")
+            $n.ShowBalloonTip(5000, "{safe_title}", "{safe_message}", "Info")
             Start-Sleep -Seconds 5
             $n.Dispose()
             '''

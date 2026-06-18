@@ -65,8 +65,14 @@ if getattr(sys,'frozen',False):
         TD = os.path.join(_base,"templates")
 else:
     TD = os.path.join(os.path.dirname(__file__),"templates")
-C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
-H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
+try:
+    with open(os.path.join(TD,"styles.css"),encoding="utf-8") as f:
+        C=f.read()
+    with open(os.path.join(TD,"layout.html"),encoding="utf-8") as f:
+        H=f.read()
+except FileNotFoundError:
+    C="/* styles.css not found */"
+    H="<html><body><h1>模板文件缺失 — 请重新构建</h1></body></html>"
 HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><title>GBT Pro v2.1</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><style>{C}</style><script>fetch("/api/access_log?ping=HEAD_JS");console.log("HEAD_SCRIPT_RAN")</script></head><body><div id="ver-badge" style="position:fixed;bottom:4px;right:4px;font-size:8px;color:var(--t4);z-index:9999;pointer-events:none">v2.1.0618</div>{H}</body></html>'
 
 # ── LLM Manager with failover ──
@@ -821,7 +827,7 @@ def tr_strategy():
         kline = trader.fetch_kline(code, 240, 30)
         if not kline.get("ok") or len(kline.get("closes",[])) < 10:
             return jsonify({"ok": False, "error": "K线数据不足"})
-        result = se.analyze(kline["closes"], kline.get("highs"),
+        result = se.analyze(kline.get("closes", []), kline.get("highs"),
                            kline.get("lows"), kline.get("volumes"))
         return jsonify({"ok": True, "code": code, "strategy": result})
     except Exception as e:
@@ -842,7 +848,7 @@ def tr_tech():
         from gbt.tech_analysis import FullAnalysis
         kline = trader.fetch_kline(code, 240, 30)
         if kline.get("ok") and len(kline.get("closes",[])) >= 20:
-            ta = FullAnalysis(kline["closes"], kline.get("highs"),
+            ta = FullAnalysis(kline.get("closes", [q.price]*20), kline.get("highs"),
                              kline.get("lows"), kline.get("volumes"),
                              name=q.name, code=code)
         else:

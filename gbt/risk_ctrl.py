@@ -24,8 +24,10 @@ class RiskManager:
 
     def check_position_size(self, price, current_holdings=0):
         """检查仓位大小是否合规"""
-        max_shares = int(self.total_capital * self.max_single_pct / 100 / price / 100) * 100
-        max_total_shares = int(self.total_capital * self.max_total_pct / 100 / price / 100) * 100 - current_holdings
+        if not price or price <= 0:
+            return {"ok": False, "max_shares": 0, "reason": "价格无效"}
+        max_shares = max(0, int(self.total_capital * self.max_single_pct / 100 / price / 100) * 100)
+        max_total_shares = max(0, int(self.total_capital * self.max_total_pct / 100 / price / 100) * 100 - current_holdings)
         allowed = min(max_shares, max_total_shares)
         return {
             "ok": allowed > 0,
@@ -35,6 +37,8 @@ class RiskManager:
 
     def check_stop_loss(self, code, entry_price, current_price):
         """检查止损"""
+        if not entry_price or entry_price <= 0:
+            return {"triggered": False, "loss_pct": 0, "action": "hold", "reason": "成本价无效"}
         loss_pct = round((entry_price - current_price) / entry_price * 100, 2)
         triggered = loss_pct >= self.stop_loss_pct
         return {
@@ -46,12 +50,17 @@ class RiskManager:
 
     def check_stop_profit(self, code, entry_price, current_price, high_price=None):
         """检查止盈 + 移动止损"""
+        if not entry_price or entry_price <= 0:
+            return {"triggered": False, "gain_pct": 0, "trailing_pct": 0, "action": "hold", "reason": "成本价无效"}
         gain_pct = round((current_price - entry_price) / entry_price * 100, 2)
 
         # 移动止损
         if high_price is None or high_price < current_price:
             high_price = current_price
-        trailing_pct = round((high_price - current_price) / high_price * 100, 2)
+        if not high_price or high_price <= 0:
+            trailing_pct = 0
+        else:
+            trailing_pct = round((high_price - current_price) / high_price * 100, 2)
 
         if gain_pct >= self.stop_profit_pct:
             return {"triggered": True, "gain_pct": gain_pct, "action": "sell",
