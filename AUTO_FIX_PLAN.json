@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-18T15:08:10.943Z",
+  "timestamp": "2026-06-18T17:31:05.275Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local",
   "issues": [
     {
@@ -7,7 +7,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 559,
+      "line": 590,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -17,7 +17,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 145,
+      "line": 165,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -27,7 +27,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 386,
+      "line": 453,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
       "desc": "硬编码IP",
       "fixable": 0
@@ -36,27 +36,32 @@
   "actions": [
     {
       "type": "audit_fix",
+      "item": "无未提交改动 (当前: 6)",
+      "detail": ""
+    },
+    {
+      "type": "audit_fix",
       "item": ".clinerules 存在",
       "detail": "缺少 Cline 规则文件"
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 559,
+      "line": 590,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 145,
+      "line": 165,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 386,
+      "line": 453,
       "severity": "medium",
       "autoFixable": false
     }

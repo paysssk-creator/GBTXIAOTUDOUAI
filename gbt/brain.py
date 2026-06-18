@@ -204,14 +204,17 @@ class AutonomousBrain:
                 "triggered_by": alert["source"]
             }
         
-        # 规则2: MCP连接断连
+        # 规则2: MCP连接断连（冷却60秒防止死循环）
         if p.get("connections_down", 0) > 0:
-            return {
-                "type": "connection_recovery",
-                "priority": "high",
-                "reason": f"🔌 {p['connections_down']}个MCP服务断连",
-                "chain": ["connection_health", "log_analysis", "send_notification"],
-            }
+            last_conn_fix = self.last_check.get("connections", 0)
+            if time.time() - last_conn_fix > 60:
+                self.last_check["connections"] = time.time()
+                return {
+                    "type": "connection_recovery",
+                    "priority": "high",
+                    "reason": f"🔌 {p['connections_down']}个MCP服务断连",
+                    "chain": ["connection_health", "log_analysis", "send_notification"],
+                }
         
         # 规则3: 交易时段市场异动
         if is_trading:
@@ -274,17 +277,57 @@ class AutonomousBrain:
                     try:
                         from gbt.mcp import get_mcp, call_mcp
                         mcp = get_mcp()
-                        total, ok_count = 0, 0
-                        for name in mcp._s:
+                        total, ok_count, down_list = 0, 0, []
+                        for name in list(mcp._s.keys()):
                             try:
                                 total += 1
-                                if call_mcp(name, "status", timeout=3).ok:
+                                result = call_mcp(name, "status", timeout=5)
+                                if result.ok:
                                     ok_count += 1
+                                else:
+                                    down_list.append(name)
                             except: pass
                         r["detail"] = f"{ok_count}/{total} 在线"
+                        r["down"] = down_list
                         if ok_count < total:
                             L.warning(f"🧠 连接健康: {ok_count}/{total}")
+                            # 尝试自动恢复: 刷新MCP配置
+                            if down_list:
+                                try:
+                                    mcp.refresh()
+                                    L.info(f"🧠 MCP配置已刷新，尝试恢复 {len(down_list)} 个断连")
+                                    r["recovery"] = "mcp.refresh() 已执行"
+                                except Exception as re:
+                                    r["recovery"] = f"刷新失败: {re}"
+                            # 唤醒守夜人自动修复
+                            if self.watcher:
+                                try:
+                                    self.watcher._add_alert("connections", "warn",
+                                        f"大脑检测到{len(down_list)}个MCP断连需要修复",
+                                        "; ".join(down_list[:5]))
+                                except: pass
                     except: r["ok"] = False
+                
+                elif step == "log_analysis":
+                    try:
+                        import os
+                        log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+                        issues = []
+                        if os.path.isdir(log_dir):
+                            for f in os.listdir(log_dir)[:5]:
+                                if f.endswith((".log", ".txt")):
+                                    fp = os.path.join(log_dir, f)
+                                    try:
+                                        with open(fp, "r", encoding="utf-8", errors="replace") as lf:
+                                            tail = "".join(lf.readlines()[-10:])
+                                        if "ERROR" in tail or "error" in tail or "CRITICAL" in tail:
+                                            issues.append(f"{f}: 发现异常")
+                                    except: pass
+                        r["detail"] = f"扫描{len(issues)}个异常日志" if issues else "日志正常"
+                        r["issues"] = issues
+                    except Exception as e:
+                        r["ok"] = False
+                        r["error"] = str(e)[:80]
                 
                 elif step == "system_monitor" and self.watcher:
                     ws = self.watcher.get_status()

@@ -82,10 +82,13 @@ class NightWatcher:
             if cmd_match:
                 cmd = cmd_match.group(1).strip()
                 if cmd.upper() != "NONE":
-                    # 白名单：只允许安全的系统诊断命令
+                    # 白名单：系统诊断命令 + MCP恢复操作
                     safe_cmds = ["ping", "ipconfig", "netstat", "tasklist", "sc", "netsh",
                                 "chkdsk", "sfc", "dism", "cleanmgr", "reg", "wmic",
-                                "systeminfo", "whoami", "net", "dir", "del", "mkdir"]
+                                "systeminfo", "whoami", "net", "dir", "del", "mkdir",
+                                # MCP恢复命令
+                                "node", "npm", "npx", "python", "python3",
+                                "git", "cls", "echo", "type", "where"]
                     first_word = cmd.split()[0].lower() if cmd.split() else ""
                     if first_word not in safe_cmds:
                         alert.fix_result += f"\n⚠️ 命令被拦截(安全策略): {cmd}"
