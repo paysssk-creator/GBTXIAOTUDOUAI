@@ -850,7 +850,7 @@ def tr_tech():
         return jsonify({"ok": True, "code": code, "name": q.name, "quote": {
             "price": q.price, "change": q.change, "change_pct": q.change_pct,
             "open": q.open, "high": q.high, "low": q.low
-        }, "analysis": ta})
+        }, "analysis": ta, "kline": {"closes": kline.get("closes", [])}})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 

@@ -103,6 +103,10 @@ class AShareTrader:
         "sh600887": "伊利股份", "sz000725": "京东方A", "sh600585": "海螺水泥",
         "sh601857": "中国石油", "sz002475": "立讯精密", "sh601012": "隆基绿能",
         "sz300124": "汇川技术", "sh600809": "山西汾酒", "sz000001": "平安银行",
+        "sh600028": "中国石化", "sh601088": "中国神华", "sh600050": "中国联通",
+        "sz300498": "温氏股份", "sh603259": "药明康德", "sh601888": "中国中免",
+        "sh600031": "三一重工", "sz300014": "亿纬锂能", "sh600196": "复星医药",
+        "sz000568": "泸州老窖", "sh600690": "海尔智家", "sz300760": "迈瑞医疗",
     }
 
     TRADING_PLATFORMS = {
@@ -600,6 +604,25 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         ts = self.run_full_pipeline(sig.code, sig.action)
                         last_trade_time[sig.code] = time.time()
                         
+                        # ── 账户实际执行 ──
+                        try:
+                            from gbt.account import account
+                            q = self.fetch_quote([sig.code])
+                            price = q[sig.code].price if sig.code in q else sig.price
+                            shares = min(100, int(account.cash * 0.05 / max(price, 1) / 100) * 100)
+                            if shares <= 0: shares = 100
+                            if sig.action == "buy":
+                                account.buy(sig.code, sig.name, shares, price)
+                            elif sig.action == "sell" and sig.code in account.positions:
+                                pos = account.positions[sig.code]
+                                account.sell(sig.code, pos["shares"], price)
+                            ts.executed = True
+                            ts.status = "executed"
+                            with self._lock:
+                                if HAS_RISK: risk_mgr.record_trade()
+                        except Exception as e:
+                            L.error(f"账户执行异常 {sig.code}: {e}")
+                        
                         with self._lock: self.sessions.appendleft(ts)
                 else:
                     # 非交易时间，降低频率但保持心跳
@@ -607,6 +630,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                 
             except Exception as e:
                 L.error(f"自主交易异常: {e}")
+                time.sleep(30)  # 异常后等30秒再试
             
             time.sleep(self.scan_interval)
 

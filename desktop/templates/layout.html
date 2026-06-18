@@ -154,6 +154,12 @@
             <div id="tquote" style="display:none;padding:6px 12px 0;font-size:12px;color:var(--t2)"></div>
             <!-- 交易步骤面板 -->
             <div id="tsteps" style="display:none;padding:8px 12px;max-height:300px;overflow-y:auto"></div>
+            <!-- 持仓面板 -->
+            <div id="tpf" style="display:none;padding:8px 12px">
+              <div style="padding:6px 0;border-bottom:1px solid var(--b);margin-bottom:6px;display:flex;justify-content:space-between"><b style="color:var(--accent)">📦 持仓</b><span id="tp-count" style="font-size:10px;color:var(--t4)"></span></div>
+              <div id="tpf-list" style="max-height:200px;overflow-y:auto;font-size:11px"></div>
+              <div id="tpf-sum" style="margin-top:8px;padding-top:6px;border-top:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;justify-content:space-between"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -203,6 +209,20 @@
 </div>
 
 <script>
+// ── K线迷你图渲染 ──
+function renderMiniChart(closes,width,height){
+  if(!closes||closes.length<3)return'<div style="text-align:center;padding:8px;color:var(--t4);font-size:10px">数据不足</div>';
+  var min=Math.min.apply(null,closes),max=Math.max.apply(null,closes),range=max-min||1;
+  var h='<svg width="'+width+'" height="'+height+'" style="display:block;overflow:visible">';
+  var stepX=width/(closes.length-1);
+  closes.forEach(function(v,i){
+    var x=i*stepX,y=height-(v-min)/range*height,barH=Math.max(1,(v-min)/range*height);
+    var color=v>=closes[Math.max(0,i-1)]?'#52c41a':'#ff4d4f';
+    h+='<rect x="'+(x-stepX*0.4)+'" y="'+y+'" width="'+Math.max(1,stepX*0.7)+'" height="'+Math.max(1,barH)+'" fill="'+color+'" opacity="0.65" rx="1"/>';
+  });
+  h+='</svg>';
+  return h;
+}
 var A='/api',D=document;
 var w={min:function(){try{window.pywebview.api.min()}catch(e){}},max:function(){try{window.pywebview.api.max()}catch(e){}},close:function(){try{window.pywebview.api.close()}catch(e){window.close()}}};
 var RM='CHAIN',ST={},pnOpen=true;
@@ -753,6 +773,33 @@ async function loadTrader(){
     var b=$('tAutoBtn');
     if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
   }catch(e){}
+  loadPortfolio();
+}
+
+// 仪表盘+持仓30秒自动刷新
+setInterval(function(){
+  if(D.querySelector('[data-v="trade"].active'))loadPortfolio();
+  if(!D.querySelector('.welcome[style*="display:none"]')||D.querySelector('.welcome:not([style*="display:none"])')){loadDashboard();loadAccount();}
+},30000);
+
+// ── 持仓 ──
+async function loadPortfolio(){
+  try{
+    var r=await fetch(A+'/account'),d=await r.json();
+    if(!d.ok)return;
+    var pos=d.positions||[],a=d.account||{};
+    $('tp-count').textContent=pos.length+'只 · ¥'+(a.equity||0).toLocaleString();
+    var h='';pos.forEach(function(p){
+      color=p.pnl>=0?'var(--green)':'var(--red)';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dashed var(--b3)">';
+      h+='<span><b>'+esc(p.name||p.code)+'</b> <span style="font-size:10px;color:var(--t4)">'+esc(p.code)+'</span></span>';
+      h+='<span style="text-align:right"><b>¥'+(p.current_price||0).toFixed(2)+'</b><br><span style="font-size:9px;color:'+color+'">'+(p.pnl>=0?'+':'')+(p.pnl||0).toFixed(0)+'</span></span>';
+      h+='</div>';
+    });
+    $('tpf-list').innerHTML=h||'<div style="color:var(--t4);text-align:center;padding:12px">尚无持仓</div>';
+    $('tpf-sum').innerHTML='<span>💰 现金 ¥'+(a.cash||0).toLocaleString()+'</span><span style="color:'+(a.pnl>=0?'var(--green)':'var(--red)')+'">盈亏 '+(a.pnl>=0?'+':'')+(a.pnl||0).toLocaleString()+' ('+(a.pnl_pct||0)+'%)</span>';
+    $('tpf').style.display='block';
+  }catch(e){}
 }
 
 // ── 仪表盘 ──
@@ -925,6 +972,7 @@ async function traderTech(){
     if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
     var ta=d.analysis,ind=ta.indicators||{},sig=ta.signal||{};
     var h='<div style="border-left:3px solid var(--cyan);padding-left:10px"><b>'+d.name+'('+code+')</b> ¥'+ta.price+'</div>';
+    var kcl=d.kline||{};if(kcl.closes&&kcl.closes.length)h+='<div style="margin:6px 0;border-radius:6px;background:var(--bg2);padding:4px;overflow:hidden">'+renderMiniChart(kcl.closes,280,56)+'</div>';
     h+='<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">';
     h+='<div class="ta-card">RSI <b style="color:var(--accent)">'+(ind.rsi||{}).rsi||'-'+'</b><br><span style="font-size:10px;color:var(--t4)">'+(ind.rsi||{}).zone||'-'+'</span></div>';
     h+='<div class="ta-card">MACD<br><span style="font-size:11px">'+(ind.macd||{}).trend||'-'+'</span></div>';
