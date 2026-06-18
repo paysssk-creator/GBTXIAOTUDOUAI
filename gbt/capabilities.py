@@ -265,7 +265,7 @@ def register_all():
                    _handler_browser_open, priority=9),
 
         Capability("window_maximize", "desktop", "最大化/全屏窗口",
-                   ["最大化", "全屏", "最大化窗口"],
+                   ["最大化", "全屏", "最大化窗口", "放大", "窗口放大", "窗口最大化"],
                    _handler_maximize, priority=7),
 
         Capability("screenshot", "desktop", "屏幕截图",
@@ -286,20 +286,20 @@ def register_all():
                    _handler_watchlist, priority=5, requires=["trader"]),
 
         Capability("auto_trade", "trading", "触发自主交易分析",
-                   ["买入", "卖出", "交易", "操盘", "下单"],
-                   _handler_trade, priority=8, requires=["trader", "brain"]),
+                   ["买入", "卖出", "买股", "卖股", "买进", "卖掉", "交易", "操盘", "下单", "买", "卖", "buy", "sell"],
+                   _handler_trade, priority=9, requires=["trader", "brain"]),
 
         # ═══ 系统 ═══
         Capability("system_status", "system", "查看GBT系统状态",
-                   ["系统状态", "运行状态", "GBT状态", "服务状态"],
+                   ["系统状态", "运行状态", "GBT状态", "服务状态", "状态"],
                    _handler_system_status, priority=6, requires=["brain"]),
 
         Capability("watcher_check", "system", "守夜人安全监控",
-                   ["监控状态", "安全监控", "守夜人", "安全检查", "watcher"],
+                   ["监控状态", "安全监控", "守夜人", "安全检查", "watcher", "监控"],
                    _handler_watcher_check, priority=6, requires=["watcher"]),
 
         Capability("account_query", "system", "查看模拟账户",
-                   ["账户", "资金", "余额", "盈亏", "持仓", "仓位"],
+                   ["账户", "资金", "余额", "盈亏", "持仓", "仓位", "钱"],
                    _handler_account, priority=6, requires=["account"]),
 
         # ═══ 通知 ═══

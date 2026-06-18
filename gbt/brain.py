@@ -443,7 +443,8 @@ class AutonomousBrain:
             try:
                 with open(self._log_path, "a", encoding="utf-8") as lf:
                     lf.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            except: pass
+            except Exception as le:
+                L.warning(f"无法写入决策日志: {le}")
     
     def get_status(self):
         return {
