@@ -217,8 +217,210 @@
       "summary": "Desktop-triggered evolve",
       "timestamp": "2026-06-18T09:53:08.069Z",
       "files": []
+    },
+    {
+      "timestamp": "2026-06-18T09:53:15.676Z",
+      "stats": {
+        "files": 977,
+        "git": {
+          "isRepo": true,
+          "branch": "main",
+          "lastCommit": "1abc38e",
+          "uncommitted": 4
+        },
+        "tests": {
+          "exists": false,
+          "count": 0,
+          "framework": ""
+        }
+      },
+      "problemsFound": 28,
+      "problemsBySeverity": {
+        "critical": 1,
+        "high": 1,
+        "medium": 23,
+        "low": 3
+      },
+      "problems": [
+        {
+          "severity": "critical",
+          "category": "self-evolution",
+          "file": ".clinerules (缺失)",
+          "desc": "项目缺少 .clinerules 规则文件"
+        },
+        {
+          "severity": "medium",
+          "category": "quality",
+          "file": "tests/ (缺失)",
+          "desc": "无测试套件，修改后无法验证"
+        },
+        {
+          "severity": "high",
+          "category": "version-control",
+          "file": "4 个未提交文件",
+          "desc": "存在未提交改动，Cline修改将无法回溯"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:107",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:175",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:181",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:182",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:207",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:549",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:121",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:523",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agent.py:55",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agent.py:58",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\registry.py:177",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\registry.py:189",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\guard.py:147",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\llm.py:82",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\llm.py:93",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\mcp.py:72",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\memory.py:81",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\memory.py:105",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tool.py:58",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tool.py:90",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "start_demo.py:17",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "tools\\mcp_tools.py:15",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "low",
+          "category": "console",
+          "file": "desktop\\app.py:66",
+          "desc": "console残留"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:55",
+          "desc": "待办标记"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:56",
+          "desc": "待办标记"
+        }
+      ],
+      "audit": {
+        "tests": {
+          "ran": false,
+          "passed": 0,
+          "failed": 0,
+          "output": ""
+        }
+      }
     }
   ],
-  "lastEvolve": "2026-06-18T09:53:08.070Z",
-  "totalEvolves": 1
+  "lastEvolve": "2026-06-18T09:53:15.676Z",
+  "totalEvolves": 4
 }
