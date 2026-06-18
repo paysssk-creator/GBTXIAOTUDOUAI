@@ -60,10 +60,18 @@
         </div>
       </div>
 
-      <!-- 欢迎页 -->
+      <!-- 仪表盘 -->
       <div class="welcome" id="wc">
-        <h1>今天搞点什么？</h1>
-        <p>Powered by <b>DeepSeek v4-pro</b><br>7大监控守护 · 代码分析 · 深度推理 · 安全攻防</p>
+        <h1 style="margin-bottom:4px">🛡️ GBT Pro 仪表盘</h1>
+        <div id="dash" style="margin:8px 0">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div class="dash-card"><div class="dash-val" id="dv-llm">--</div><div class="dash-lbl">🤖 AI引擎</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-mcp">--</div><div class="dash-lbl">🔌 MCP服务</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-watch">--</div><div class="dash-lbl">🛡️ 监控点</div></div>
+            <div class="dash-card"><div class="dash-val" id="dv-trade">--</div><div class="dash-lbl">📊 自选股</div></div>
+          </div>
+          <div id="dash-detail" style="margin-top:8px;font-size:12px;color:var(--t4);text-align:center">加载中...</div>
+        </div>
         <div class="qs">
           <div class="qs-l">快速开始</div>
           <button class="qs-r" onclick="qchat('分析我的项目结构')"><i class="ph ph-folder-open"></i> 项目分析<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
@@ -110,6 +118,7 @@
             <button class="mp" onclick="traderOpen('同花顺')"><i class="ph ph-browser"></i> 同花顺</button>
             <button class="mp" onclick="traderOpen('东方财富交易')"><i class="ph ph-currency-cny"></i> 交易端</button>
             <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--green);color:#fff">▶ 自主交易:开</button>
+            <button class="mp" onclick="desktopTrade()"><i class="ph ph-desktop"></i> 电脑操控</button>
           </div>
         </div>
         <div class="msg-list" id="tl">
@@ -573,7 +582,7 @@ async function init(){
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
   }catch(e){$('stx').textContent='离线'}
   await _getConns();
-  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader()]);
+  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard()]);
   loadProviders();
   loadMarket();
   loadSystem();
@@ -724,6 +733,52 @@ async function loadTrader(){
     var b=$('tAutoBtn');
     if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
   }catch(e){}
+}
+
+// ── 仪表盘 ──
+async function loadDashboard(){
+  try{
+    var r=await fetch(A+'/dashboard'),d=await r.json();
+    $('dv-llm').textContent=d.llm||'--';
+    $('dv-mcp').textContent=d.mcp_servers||0;
+    var w=d.watcher||{};
+    $('dv-watch').textContent=(w.monitors_ok||0)+'/'+(w.monitors_total||0);
+    $('dv-trade').textContent=(d.trader||{}).watchlist||0;
+    var h='🛡️ 守夜人: '+(w.running?'运行中':'已停止');
+    h+=' · 告警:'+(w.alerts||0)+' · 自动修复:'+(w.auto_fix?'开':'关');
+    h+=' · 📊 操盘手: '+((d.trader||{}).auto_trade?'自主交易开':'关')+' · 持仓:'+((d.trader||{}).positions||0);
+    $('dash-detail').textContent=h;
+  }catch(e){$('dash-detail').textContent='离线'}
+}
+
+// ── 桌面操控 ──
+async function desktopTrade(){
+  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
+  go('trade',D.querySelector('[data-v=trade]'));
+  var g=_tAdd('<b>💻 正在操控电脑执行交易...</b>');g.querySelector('.mc').classList.add('thinking');
+  try{
+    var r=await fetch(A+'/desktop/trade-flow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,action:'buy',shares:100,price:0})});
+    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
+    var h='<b style="color:var(--green)">💻 电脑操控流程</b><div style="margin-top:6px">';
+    (d.steps||[]).forEach(function(s){h+='<div style="padding:3px 0;font-size:11px;color:var(--t3)">'+s.step+'. '+s.action+' — '+((s.result||'').substring(0,50))+'</div>'});
+    h+='</div>';
+    g.querySelector('.mc').innerHTML=h;
+  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">操控异常: '+esc(e.message)+'</span>'}
+}
+
+async function desktopType(text){
+  try{await fetch(A+'/desktop/type',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text})});toast('已输入: '+text)}
+  catch(e){toast('输入失败: '+e.message)}
+}
+
+async function desktopClick(){
+  try{await fetch(A+'/desktop/click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({button:'left'})});toast('已点击')}
+  catch(e){toast('点击失败')}
+}
+
+async function desktopHotkey(keys){
+  try{await fetch(A+'/desktop/hotkey',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keys:keys})});toast('热键: '+keys.join('+'))}
+  catch(e){}
 }
 
 init();

@@ -53,6 +53,7 @@ from gbt.providers import PROVIDERS,AutoKeyConfig
 from gbt.connectors.registry import get_registry as get_connectors
 from gbt.watcher import NightWatcher
 from gbt.trader import AShareTrader
+from gbt.desktop_ctl import DesktopController
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -97,6 +98,7 @@ llm=LLMMgr(prov="deepseek")
 _root = os.path.dirname(_here) if getattr(sys,'frozen',False) else os.path.dirname(os.path.dirname(__file__))
 watcher=NightWatcher(project_root=_root)
 trader=AShareTrader(project_root=_root)
+desktop_ctl=DesktopController()
 
 # ── Flask API ──
 app=Flask(__name__)
@@ -809,6 +811,95 @@ def tr_steps():
     """获取浏览器自动化步骤模板"""
     platform = request.args.get("platform", "东方财富交易")
     return jsonify({"platform": platform, "steps": trader.BROWSER_STEPS.get(platform, [])})
+
+
+# ── 桌面操控 API ──
+@app.route("/api/desktop/type", methods=["POST"])
+def dc_type():
+    d = request.json or {}
+    return jsonify(desktop_ctl.type_text(d.get("text", ""), d.get("interval", 0.05)))
+
+@app.route("/api/desktop/click", methods=["POST"])
+def dc_click():
+    d = request.json or {}
+    return jsonify(desktop_ctl.click(d.get("x"), d.get("y"), d.get("button", "left")))
+
+@app.route("/api/desktop/hotkey", methods=["POST"])
+def dc_hotkey():
+    d = request.json or {}
+    return jsonify(desktop_ctl.hotkey(*d.get("keys", ["ctrl", "v"])))
+
+@app.route("/api/desktop/paste", methods=["POST"])
+def dc_paste():
+    d = request.json or {}
+    return jsonify(desktop_ctl.paste_text(d.get("text", "")))
+
+@app.route("/api/desktop/focus", methods=["POST"])
+def dc_focus():
+    d = request.json or {}
+    return jsonify(desktop_ctl.focus_window(d.get("title", "")))
+
+@app.route("/api/desktop/trade-flow", methods=["POST"])
+def dc_trade_flow():
+    """完整交易平台操作流程"""
+    d = request.json or {}
+    return jsonify(desktop_ctl.trade_platform_flow(
+        platform=d.get("platform", "东方财富交易"),
+        code=d.get("code", ""),
+        action=d.get("action", "buy"),
+        shares=d.get("shares", 100),
+        price=d.get("price", 0)
+    ))
+
+# ── 仪表盘 API ──
+@app.route("/api/dashboard")
+def dashboard():
+    """首页仪表盘总览"""
+    # 系统状态
+    import ctypes
+    free = ctypes.c_uint64(); total = ctypes.c_uint64(); tfree = ctypes.c_uint64()
+    ctypes.windll.kernel32.GetDiskFreeSpaceExW("C:\\", ctypes.byref(free), ctypes.byref(total), ctypes.byref(tfree))
+    disk_pct = round((total.value - free.value) / total.value * 100, 1)
+    
+    # 守夜人
+    ws = watcher.get_status()
+    monitors_ok = sum(1 for v in ws.get("monitors", {}).values() if v.get("status") == "ok")
+    monitors_total = len(ws.get("monitors", {}))
+    alerts_count = len(ws.get("recent_alerts", []))
+    
+    # 操盘手
+    ts = trader.get_status()
+    
+    # MCP
+    mcp_count = len(get_mcp().list_servers())
+    
+    # 连接器
+    reg = get_connectors()
+    all_conns = reg.list_all()
+    connected = sum(1 for c in all_conns if c.get("status") == "connected")
+    
+    return jsonify({
+        "llm": llm.prov.upper() if llm.prov else "Demo",
+        "model": llm.model or "N/A",
+        "mcp_servers": mcp_count,
+        "connectors": {"connected": connected, "total": len(all_conns)},
+        "watcher": {
+            "running": ws["running"],
+            "monitors_ok": monitors_ok,
+            "monitors_total": monitors_total,
+            "alerts": alerts_count,
+            "auto_fix": ws["auto_fix"]
+        },
+        "trader": {
+            "auto_trade": ts["auto_trade"],
+            "running": ts.get("running", False),
+            "watchlist": ts["watchlist_count"],
+            "positions": len(ts["positions"]),
+            "signals": len(ts["recent_signals"]),
+            "pnl": ts["pnl"]
+        },
+        "system": {"disk_free_pct": round(100 - disk_pct, 1)}
+    })
 
 
 def launch():

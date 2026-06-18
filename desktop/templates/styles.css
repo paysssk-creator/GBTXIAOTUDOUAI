@@ -283,3 +283,9 @@ body{
 #tv{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #tquote{display:flex;flex-wrap:wrap;gap:8px}
 #tcode:focus{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(96,165,250,.15)}
+
+/* ── 仪表盘 ── */
+.dash-card{padding:10px 6px;background:var(--bg2);border-radius:var(--r2)}
+.dash-val{font-size:22px;font-weight:800;color:var(--accent);line-height:1.2}
+.dash-lbl{font-size:10px;color:var(--t4);margin-top:4px}
+#dash-detail{line-height:1.8}
