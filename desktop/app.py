@@ -1190,6 +1190,59 @@ def dashboard():
         "system": {"disk_free_pct": round(100 - disk_pct, 1)}
     })
 
+# ── 回测API ──
+from gbt.backtest import BacktestEngine
+_backtester = BacktestEngine()
+
+@app.route("/api/backtest", methods=["POST"])
+def run_backtest():
+    """运行回测: {code, scale(默认240), datalen(默认120)}"""
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "sh600519")
+    scale = data.get("scale", 240)
+    datalen = data.get("datalen", 120)
+    start_date = data.get("start_date")
+    end_date = data.get("end_date")
+    params = data.get("params", {})
+    
+    kline = trader.fetch_kline(code, scale=scale, datalen=datalen)
+    if not kline.get("ok") or kline.get("count", 0) < 30:
+        return jsonify({"ok": False, "error": f"K线数据不足 ({kline.get('count',0)}条)"})
+    
+    engine = BacktestEngine()
+    for k, v in params.items():
+        if hasattr(engine, k): setattr(engine, k, v)
+    
+    result = engine.run_with_gbt_strategies(code, kline, start_date, end_date)
+    return jsonify({"ok": True, "result": result.to_dict() if result else {}})
+
+@app.route("/api/backtest/scan", methods=["POST"])
+def scan_backtest():
+    """参数扫描: {code, param_grid: {key:[vals]}, datalen}"""
+    data = request.get_json(silent=True) or {}
+    code = data.get("code", "sh600519")
+    param_grid = data.get("param_grid", {"confidence_threshold": [40, 50, 60, 70]})
+    datalen = data.get("datalen", 120)
+    
+    kline = trader.fetch_kline(code, scale=240, datalen=datalen)
+    if not kline.get("ok") or kline.get("count", 0) < 30:
+        return jsonify({"ok": False, "error": "K线数据不足"})
+    
+    engine = BacktestEngine()
+    scan = engine.run_parameter_scan(code, kline, param_grid)
+    return jsonify({"ok": True, **scan})
+
+@app.route("/api/backtest/codes")
+def backtest_codes():
+    """可回测的股票列表(有K线缓存的)"""
+    try:
+        from gbt.database import db as _db
+        with _db.conn() as c:
+            rows = c.execute("SELECT DISTINCT code FROM kline_cache ORDER BY code").fetchall()
+            return jsonify({"ok": True, "codes": [r[0] for r in rows]})
+    except:
+        return jsonify({"ok": True, "codes": list(trader.watchlist.keys())})
+
 
 def launch():
     try:
