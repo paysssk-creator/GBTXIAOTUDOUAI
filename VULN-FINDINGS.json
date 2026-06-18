@@ -1,14 +1,64 @@
 {
-  "time": "2026-06-18T18:40:04.414Z",
+  "time": "2026-06-18T18:40:05.979Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local",
   "summary": {
     "critical": 0,
     "high": 0,
-    "medium": 3,
+    "medium": 44,
     "low": 3,
     "info": 0
   },
   "findings": [
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 107,
+      "snippet": "return (\"GBT全能开发者工具:\\n\"",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 175,
+      "snippet": "reports = mirror_run(project, fix_in_mirror)",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 181,
+      "snippet": "return f\"❌ 仍有{count}个虚假代码，禁止部署\"",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 182,
+      "snippet": "return f\"未知操作: {action}\"",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 207,
+      "snippet": "kw = {}",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
     {
       "ruleId": "SEC-008",
       "name": "hard-ip",
@@ -20,58 +70,13 @@
       "fixable": 0
     },
     {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
       "severity": "medium",
-      "file": "gbt\\watcher.py",
-      "line": 168,
-      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "gbt\\watcher.py",
-      "line": 456,
-      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "QUAL-001",
-      "name": "console",
-      "severity": "low",
       "file": "desktop\\app.py",
-      "line": 77,
-      "snippet": "HP=f'<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,ini",
-      "desc": "console残留",
-      "fixable": 1
-    },
-    {
-      "ruleId": "QUAL-006",
-      "name": "todo",
-      "severity": "low",
-      "file": "gbt\\mirror.py",
-      "line": 55,
-      "snippet": "(r\"//\\s*TODO.*\", IssueType.PLACEHOLDER, \"TODO占位\"),",
-      "desc": "待办标记",
-      "fixable": 0
-    },
-    {
-      "ruleId": "QUAL-006",
-      "name": "todo",
-      "severity": "low",
-      "file": "gbt\\mirror.py",
-      "line": 56,
-      "snippet": "(r\"//\\s*FIXME.*\", IssueType.PLACEHOLDER, \"FIXME占位\"),",
-      "desc": "待办标记",
-      "fixable": 0
-    }
-  ],
-  "fixes": 0
-}c": "return后死代码",
+      "line": 162,
+      "snippet": "return \"\",204",
+      "desc": "return后死代码",
       "fixable": 0
     },
     {
