@@ -35,7 +35,7 @@ class NightWatcher:
         self.auto_fix_enabled = True
         
         # 初始化所有监控状态
-        for src in ["network", "process", "filesystem", "registry", "wifi", "logs", "disk"]:
+        for src in ["network", "process", "filesystem", "registry", "wifi", "logs", "disk", "connections"]:
             self.monitor_status[src] = {"status": "idle", "last_check": "", "details": "", "alerts": 0}
     
     def _add_alert(self, source, level, message, detail=""):
@@ -135,8 +135,11 @@ class NightWatcher:
         # 日志监控 - 每20秒
         self.threads["logs"] = threading.Thread(target=self._watch_logs, daemon=True)
         self.threads["logs"].start()
+        # MCP连接监控
+        self.threads["connections"] = threading.Thread(target=self._watch_connections, daemon=True)
+        self.threads["connections"].start()
         
-        L.info("🛡️ 守夜人已启动 — 7个监控点就绪")
+        L.info(f"🛡️ 守夜人已启动 — {len(self.threads)}个监控点就绪")
         return {"ok": True, "monitors": len(self.threads)}
     
     def stop(self):
@@ -373,6 +376,49 @@ class NightWatcher:
                 self.monitor_status["logs"]["details"] = "等待日志"
             
             time.sleep(20)
+    
+    # ── MCP连接监控 ──
+    def _watch_connections(self):
+        """实时监控所有MCP服务器连接状态，自动检测断连和恢复"""
+        time.sleep(10)  # 等MCP初始化
+        while self.running:
+            try:
+                now = datetime.now().strftime("%H:%M:%S")
+                from gbt.mcp import get_mcp, call_mcp
+                mcp = get_mcp()
+                total = len(mcp._servers)
+                online = 0
+                down = []
+                
+                for name, srv in mcp._servers.items():
+                    try:
+                        r = call_mcp(name, "status", timeout=5)
+                        if r.ok:
+                            online += 1
+                        else:
+                            down.append(f"{name}(rc={r.error or '?'})")
+                    except Exception as e:
+                        down.append(f"{name}({str(e)[:30]})")
+                
+                status = "ok" if not down else ("warn" if len(down) <= 2 else "critical")
+                self.monitor_status["connections"] = {
+                    "status": status,
+                    "last_check": now,
+                    "details": f"{online}/{total} 在线" + (f", 断连: {'; '.join(down[:5])}" if down else "")
+                }
+                
+                # 断连告警
+                if down:
+                    L.warning(f"🔌 连接断连: {len(down)}/{total} — {'; '.join(down[:3])}")
+                    self._add_alert("connections",
+                        "critical" if len(down) > 3 else "warn",
+                        f"{len(down)}个MCP服务断连",
+                        "; ".join(down[:5]))
+                
+            except Exception as e:
+                self.monitor_status["connections"] = {"status": "error", "last_check": now, "details": str(e)[:100]}
+            
+            time.sleep(30)
     
     def get_status(self):
         """获取完整监控状态"""

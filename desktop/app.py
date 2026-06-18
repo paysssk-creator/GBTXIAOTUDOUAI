@@ -55,6 +55,7 @@ from gbt.watcher import NightWatcher
 from gbt.trader import AShareTrader
 from gbt.desktop_ctl import DesktopController
 from gbt.account import account
+from gbt.brain import brain as _brain
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -674,6 +675,28 @@ def wt_alerts():
         for a in list(watcher.alerts)[:50]
     ]})
 
+# ── 自主AI大脑 ──
+@app.route("/api/brain/status")
+def br_status():
+    return jsonify(_brain.get_status())
+
+@app.route("/api/brain/start", methods=["POST"])
+def br_start():
+    _brain.trader = trader
+    _brain.watcher = watcher
+    _brain.llm = llm.a
+    _brain.account = account
+    _brain.desktop_ctl = desktop_ctl
+    return jsonify(_brain.start())
+
+@app.route("/api/brain/stop", methods=["POST"])
+def br_stop():
+    return jsonify(_brain.stop())
+
+@app.route("/api/brain/context")
+def br_context():
+    return jsonify(list(_brain.context)[:20])
+
 
 # ── A股操盘 API ──
 @app.route("/api/trader/status")
@@ -1190,6 +1213,13 @@ def launch():
             trader.start_autonomous()
             L.info("🛡️ 守夜人已自动启动")
             L.info("📊 自主交易已启动")
+            # 启动自主AI大脑
+            _brain.trader = trader
+            _brain.watcher = watcher
+            _brain.llm = llm.a
+            _brain.account = account
+            _brain.desktop_ctl = desktop_ctl
+            _brain.start()
         time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:
