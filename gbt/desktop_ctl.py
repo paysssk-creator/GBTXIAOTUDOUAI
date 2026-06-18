@@ -55,7 +55,7 @@ class DesktopController:
             # PowerShell 设置剪贴板
             ps = f'Set-Clipboard -Value "{text}"'
             subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                          capture_output=True, timeout=5)
+                          capture_output=True, timeout=5, text=True, errors='replace')
             # 粘贴
             if HAS_PYAUTOGUI:
                 pyautogui.hotkey("ctrl", "v")
@@ -114,7 +114,7 @@ class DesktopController:
             }}
             '''
             r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                              capture_output=True, text=True, timeout=8)
+                              capture_output=True, text=True, timeout=8, errors='replace')
             ok = "OK" in r.stdout
             return {"ok": ok, "found": ok}
         except Exception as e:
@@ -202,7 +202,7 @@ class DesktopController:
             $n.ShowBalloonTip(5000, "GBT 操盘手", "{action.upper()} {code} {shares}股 @ {price}", "Info")
             '''
             subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                          capture_output=True, timeout=5)
+                          capture_output=True, timeout=5, text=True, errors='replace')
         except: pass
         
         return {"ok": True, "steps": steps, "platform": platform}
@@ -214,7 +214,7 @@ class DesktopController:
         [System.Windows.Forms.SendKeys]::SendWait("{text}")
         '''
         subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                      capture_output=True, timeout=5)
+                      capture_output=True, timeout=5, text=True, errors='replace')
 
     def _ps_sendkey(self, key):
         key_map = {"enter": "{ENTER}", "tab": "{TAB}", "escape": "{ESC}",
@@ -222,14 +222,14 @@ class DesktopController:
         k = key_map.get(key.lower(), "{" + key.upper() + "}")
         ps = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{k}")'
         subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                      capture_output=True, timeout=5)
+                      capture_output=True, timeout=5, text=True, errors='replace')
 
     def _ps_hotkey(self, keys):
         mods = {"ctrl": "^", "alt": "%", "shift": "+", "win": "#"}
         combo = "".join(mods.get(k.lower(), k) for k in keys)
         ps = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{combo}")'
         subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                      capture_output=True, timeout=5)
+                      capture_output=True, timeout=5, text=True, errors='replace')
 
 
 # 全局实例

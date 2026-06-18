@@ -253,7 +253,7 @@ def dv():
     import subprocess
     def _ps(cmd):
         try:
-            r=subprocess.run(["powershell","-NoProfile","-Command",cmd],capture_output=True,text=True,timeout=8)
+            r=subprocess.run(["powershell","-NoProfile","-Command",cmd],capture_output=True,text=True,timeout=8,errors='replace')
             return r.stdout.strip()
         except:return ""
     gpus=[]
@@ -357,7 +357,7 @@ def cn_action(cid):
         cmd = args.get("cmd","")
         if act == "exec" and cmd:
             try:
-                res = subprocess.run(cmd,shell=True,capture_output=True,text=True,timeout=30,cwd=args.get("cwd") or os.path.expanduser("~"))
+                res = subprocess.run(cmd,shell=True,capture_output=True,text=True,timeout=30,errors='replace',cwd=args.get("cwd") or os.path.expanduser("~"))
                 r = {"ok":True,"stdout":res.stdout[:3000],"stderr":res.stderr[:1000],"code":res.returncode}
             except subprocess.TimeoutExpired: r = {"ok":False,"error":"Timeout (30s)"}
             except Exception as e: r = {"ok":False,"error":str(e)}
@@ -366,19 +366,19 @@ def cn_action(cid):
         repo = args.get("repo",os.path.dirname(os.path.dirname(__file__)))
         if act == "status":
             try:
-                res = subprocess.run("git status --short",shell=True,capture_output=True,text=True,timeout=10,cwd=repo)
-                r = {"ok":True,"output":res.stdout,"branch":subprocess.run("git branch --show-current",shell=True,capture_output=True,text=True,cwd=repo).stdout.strip()}
+                res = subprocess.run("git status --short",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
+                r = {"ok":True,"output":res.stdout,"branch":subprocess.run("git branch --show-current",shell=True,capture_output=True,text=True,errors='replace',cwd=repo).stdout.strip()}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "log":
             try:
-                res = subprocess.run("git log --oneline -10",shell=True,capture_output=True,text=True,timeout=10,cwd=repo)
+                res = subprocess.run("git log --oneline -10",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
                 r = {"ok":True,"commits":res.stdout.strip().split("\n") if res.stdout else []}
             except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Process Manager ──
     elif cid == "process":
         if act == "list":
             try:
-                res = subprocess.run("tasklist /fo csv /nh",shell=True,capture_output=True,text=True,timeout=10)
+                res = subprocess.run("tasklist /fo csv /nh",shell=True,capture_output=True,text=True,timeout=10,errors='replace')
                 procs = []
                 for line in res.stdout.strip().split("\n")[:30]:
                     parts = line.replace('"','').split(",")
@@ -400,7 +400,7 @@ def cn_action(cid):
                 except ImportError:
                     # Fallback to PowerShell
                     ps = f"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds | ConvertTo-Json"
-                    res = subprocess.run(["powershell","-NoProfile","-Command",ps],capture_output=True,text=True,timeout=10)
+                    res = subprocess.run(["powershell","-NoProfile","-Command",ps],capture_output=True,text=True,timeout=10,errors='replace')
                     r = {"ok":True,"display_info":res.stdout.strip()[:500]}
             except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Market ──
@@ -479,17 +479,17 @@ def cn_action(cid):
         target = args.get("target","127.0.0.1")
         if act == "ping":
             try:
-                res = subprocess.run(["ping","-n","2","-w","2000",target],capture_output=True,text=True,timeout=10)
+                res = subprocess.run(["ping","-n","2","-w","2000",target],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"target":target,"reachable":res.returncode==0,"output":res.stdout[:500]}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "dns":
             try:
-                res = subprocess.run(["nslookup",target],capture_output=True,text=True,timeout=10)
+                res = subprocess.run(["nslookup",target],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"target":target,"output":res.stdout[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "traceroute":
             try:
-                res = subprocess.run(["tracert","-h","10","-w","2000",target],capture_output=True,text=True,timeout=30)
+                res = subprocess.run(["tracert","-h","10","-w","2000",target],capture_output=True,text=True,timeout=30,errors='replace')
                 r = {"ok":True,"target":target,"output":res.stdout[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Registry Editor ──
@@ -497,19 +497,19 @@ def cn_action(cid):
         key = args.get("key","")
         if act == "read" and key:
             try:
-                res = subprocess.run(["reg","query",key],capture_output=True,text=True,timeout=10)
+                res = subprocess.run(["reg","query",key],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"key":key,"output":res.stdout[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
     # ── WiFi ──
     elif cid == "wifi":
         if act == "scan":
             try:
-                res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=True)
+                res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=True,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:3000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "info":
             try:
-                res = subprocess.run("netsh wlan show interfaces",capture_output=True,text=True,timeout=10,shell=True)
+                res = subprocess.run("netsh wlan show interfaces",capture_output=True,text=True,timeout=10,shell=True,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
     return jsonify(r)
@@ -557,12 +557,12 @@ def np():
     output = []
     try:
         p = subprocess.run(["ping", "-n", "3", "8.8.8.8"] if platform.system()=="Windows" else ["ping","-c","3","8.8.8.8"],
-            capture_output=True, text=True, timeout=10)
+            capture_output=True, text=True, timeout=10, errors='replace')
         output.append("--- Ping 8.8.8.8 ---")
         output.append(p.stdout[-800:] if p.stdout else "No output")
         
         p2 = subprocess.run(["ping", "-n", "2", "google.com"] if platform.system()=="Windows" else ["ping","-c","2","google.com"],
-            capture_output=True, text=True, timeout=8)
+            capture_output=True, text=True, timeout=8, errors='replace')
         output.append("\n--- Ping google.com ---")
         output.append(p2.stdout[-500:] if p2.stdout else "No output")
         
@@ -576,7 +576,7 @@ def wfs():
     import subprocess
     try:
         p = subprocess.run(["netsh", "wlan", "show", "networks", "mode=bssid"],
-            capture_output=True, text=True, timeout=10)
+            capture_output=True, text=True, timeout=10, errors='replace')
         out = p.stdout
         if not out:
             out = p.stderr
