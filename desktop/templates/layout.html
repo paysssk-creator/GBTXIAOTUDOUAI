@@ -109,7 +109,7 @@
             <button class="mp" onclick="traderOpen('东方财富')"><i class="ph ph-browser"></i> 东方财富</button>
             <button class="mp" onclick="traderOpen('同花顺')"><i class="ph ph-browser"></i> 同花顺</button>
             <button class="mp" onclick="traderOpen('东方财富交易')"><i class="ph ph-currency-cny"></i> 交易端</button>
-            <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--red);color:#fff">⏸ 自主交易:关</button>
+            <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--green);color:#fff">▶ 自主交易:开</button>
           </div>
         </div>
         <div class="msg-list" id="tl">
@@ -590,7 +590,7 @@ D.addEventListener('keydown',function(e){
 });
 
 // ── A股操盘 JS ──
-var _TR={autoTrade:false};
+var _TR={autoTrade:true};
 
 function _tAdd(html){
   var h=$('tl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
@@ -670,11 +670,11 @@ async function traderAutoToggle(){
   _TR.autoTrade=!_TR.autoTrade;
   var b=$('tAutoBtn');
   try{
-    var r=await fetch(A+'/trader/autotrade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:_TR.autoTrade})});
-    var d=await r.json();
-    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开';toast('自主交易已开启 — AI将直接执行买卖!')}
-    else{b.style.background='var(--red)';b.innerHTML='⏸ 自主交易:关';toast('自主交易已关闭')}
-  }catch(e){}
+    var ep=_TR.autoTrade?'/api/trader/autonomous/start':'/api/trader/autonomous/stop';
+    var r=await fetch(ep,{method:'POST'}),d=await r.json();
+    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开';toast('📊 自主交易已启动 — AI自动扫描+执行!')}
+    else{b.style.background='var(--red)';b.innerHTML='⏸ 自主交易:关';toast('自主交易已停止')}
+  }catch(e){toast('切换失败: '+e.message)}
 }
 
 async function loadTrader(){

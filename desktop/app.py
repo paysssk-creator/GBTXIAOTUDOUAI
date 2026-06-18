@@ -722,9 +722,24 @@ def tr_trade():
 def tr_autotrade():
     """开关自主交易"""
     d = request.json or {}
-    trader.auto_trade = d.get("enabled", False)
+    enabled = d.get("enabled", True)
+    trader.auto_trade = enabled
+    if enabled:
+        trader.start_autonomous()
+    else:
+        trader.stop_autonomous()
     return jsonify({"ok": True, "auto_trade": trader.auto_trade,
-                    "msg": "自主交易已开启 — AI将直接执行买卖!" if trader.auto_trade else "自主交易已关闭"})
+                    "msg": "自主交易已开启 — AI自动扫描+执行!" if trader.auto_trade else "自主交易已停止"})
+
+@app.route("/api/trader/autonomous/start", methods=["POST"])
+def tr_auto_start():
+    """启动自主交易循环"""
+    return jsonify(trader.start_autonomous())
+
+@app.route("/api/trader/autonomous/stop", methods=["POST"])
+def tr_auto_stop():
+    """停止自主交易循环"""
+    return jsonify(trader.stop_autonomous())
 
 @app.route("/api/trader/platform", methods=["POST"])
 def tr_platform():
@@ -767,8 +782,9 @@ def launch():
             watcher.llm = llm.a
             trader.llm = llm.a
             watcher.start()
+            trader.start_autonomous()
             L.info("🛡️ 守夜人已自动启动")
-            L.info("📊 操盘手已就绪")
+            L.info("📊 自主交易已启动")
         time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:

@@ -79,9 +79,12 @@ class AShareTrader:
         self.signals = deque(maxlen=100)
         self.trade_log = deque(maxlen=200)
         self._lock = threading.Lock()
-        self.auto_trade = False  # 安全锁：默认关闭自主交易
+        self.auto_trade = True  # 自主交易开关
         self.max_position_pct = 30  # 单只股票最大仓位30%
         self.market_data = {}  # code -> StockQuote
+        self.confidence_threshold = 70  # 最低置信度阈值
+        self.scan_thread = None
+        self.scan_interval = 300  # 扫描间隔(秒)
 
     # ── 行情获取 ──
     def fetch_quote(self, codes):
@@ -129,7 +132,7 @@ class AShareTrader:
                 else:
                     # 个股格式: name,open,prev_close,price,high,low,...,date,time,...
                     name = parts[0]
-                    open_ = float(parts[1]) if parts[1] else 0
+                    open_price = float(parts[1]) if parts[1] else 0
                     prev_close = float(parts[2]) if parts[2] else 0
                     price = float(parts[3]) if parts[3] else 0
                     high = float(parts[4]) if parts[4] else 0
@@ -139,7 +142,7 @@ class AShareTrader:
 
                     results[code] = StockQuote(
                         code=code, name=name, price=price, prev_close=prev_close,
-                        open=open_, high=high, low=low,
+                        open_=open_price, high=high, low=low,
                         volume=volume, amount=amount,
                         change=round(price - prev_close, 2) if prev_close else 0,
                         change_pct=round((price - prev_close) / prev_close * 100, 2) if prev_close else 0,
@@ -256,7 +259,7 @@ class AShareTrader:
         name = quote.name if quote else code
 
         if not self.auto_trade:
-            return {"ok": False, "msg": "⚠️ 自主交易已关闭。请在设置中开启 auto_trade。"}
+            return {"ok": False, "msg": "自主交易已关闭。请在设置中开启 auto_trade。"}
 
         trade_price = price or (quote.price if quote else 0)
 
@@ -272,7 +275,6 @@ class AShareTrader:
         platform_url = self.TRADING_PLATFORMS.get("东方财富交易", "https://jywg.eastmoney.com/")
         
         try:
-            # 用系统默认浏览器打开交易页面
             os.startfile(platform_url)
             log_entry["status"] = "opened"
             log_entry["msg"] = f"已打开交易平台: {platform_url}"
@@ -284,6 +286,74 @@ class AShareTrader:
             self.trade_log.appendleft(log_entry)
 
         return {"ok": True, "log": log_entry}
+
+    # ── 自主交易循环 ──
+    def start_autonomous(self):
+        """启动自主交易后台循环"""
+        if self.scan_thread and self.scan_thread.is_alive():
+            return {"ok": False, "msg": "自主交易已在运行"}
+        self.running = True
+        self.scan_thread = threading.Thread(target=self._autonomous_loop, daemon=True)
+        self.scan_thread.start()
+        L.info(f"📊 自主交易已启动 — 每{self.scan_interval}秒扫描, 最低置信度{self.confidence_threshold}%")
+        return {"ok": True, "msg": f"自主交易已启动 (扫描间隔{self.scan_interval}秒)"}
+
+    def stop_autonomous(self):
+        """停止自主交易"""
+        self.running = False
+        self.auto_trade = False
+        L.info("自主交易已停止")
+        return {"ok": True, "msg": "自主交易已停止"}
+
+    def _autonomous_loop(self):
+        """自主交易主循环"""
+        L.info("📊 自主交易循环启动...")
+        # 先获取一次行情
+        self.fetch_watchlist()
+        last_trade_time = {}
+        
+        while self.running and self.auto_trade:
+            try:
+                now = datetime.now()
+                # A股交易时间: 9:30-11:30, 13:00-15:00 (工作日)
+                hour = now.hour + now.minute / 60.0
+                is_trading = (9.5 <= hour <= 11.5) or (13.0 <= hour <= 15.0)
+                
+                if is_trading:
+                    signals = self.scan_market()
+                    
+                    for sig in signals:
+                        if sig.action == "hold":
+                            continue
+                        if sig.confidence < self.confidence_threshold:
+                            continue
+                        
+                        # 防止重复交易 (同一只股票5分钟内不重复)
+                        last_t = last_trade_time.get(sig.code, 0)
+                        if time.time() - last_t < 300:
+                            continue
+                        
+                        # 计算仓位
+                        cost, market = self.get_portfolio_value()
+                        shares = 100  # 默认1手
+                        
+                        L.info(f"📊 自主交易: {sig.name} → {sig.action.upper()} "
+                               f"@{sig.price} (置信度:{sig.confidence}%)")
+                        
+                        result = self.execute_trade(sig.code, sig.action, shares, sig.price)
+                        last_trade_time[sig.code] = time.time()
+                        
+                        if result.get("ok"):
+                            log = result.get("log", {})
+                            L.info(f"  交易结果: {log.get('status')} — {log.get('msg', '')}")
+                else:
+                    # 非交易时间，降低扫描频率
+                    pass
+                
+            except Exception as e:
+                L.error(f"自主交易循环异常: {e}")
+            
+            time.sleep(self.scan_interval)
 
     # ── 仓位管理 ──
     def add_position(self, code, name, shares, cost):
