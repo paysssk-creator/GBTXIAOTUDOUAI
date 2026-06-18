@@ -411,12 +411,20 @@ class AutonomousBrain:
                                     pos = self.account.positions.get(code)
                                     shares = getattr(pos, 'shares', 0) if pos else 0
                                     if signal.action == "sell" and signal.confidence >= 70 and shares > 0:
-                                        result = self.trader.execute_trade(code, "sell", shares=shares, price=price)
-                                        executed.append(f"{code}:SELL")
+                                        self.trader.execute_trade(code, "sell", shares=shares, price=price)
+                                        # 同步更新模拟账户
+                                        acct_result = self.account.sell(code, shares, price)
+                                        trade_pnl = acct_result.get("pnl", 0) if isinstance(acct_result, dict) else 0
+                                        executed.append(f"{code}:SELL PnL={trade_pnl}")
                                     elif signal.action == "buy" and signal.confidence >= 75:
                                         buy_shares = max(100, int(self.account.cash * 0.05 / max(price, 0.01) / 100) * 100)
-                                        result = self.trader.execute_trade(code, "buy", shares=buy_shares, price=price)
-                                        executed.append(f"{code}:BUY")
+                                        if buy_shares * price <= self.account.cash:
+                                            self.trader.execute_trade(code, "buy", shares=buy_shares, price=price)
+                                            # 同步更新模拟账户
+                                            self.account.buy(code, signal.name if hasattr(signal, 'name') else code, buy_shares, price)
+                                            executed.append(f"{code}:BUY {buy_shares}股 @ {price}")
+                                        else:
+                                            executed.append(f"{code}:SKIP 资金不足")
                             except: pass
                         r["detail"] = f"执行{len(executed)}笔" if executed else "无交易"
                         r["executed"] = executed
