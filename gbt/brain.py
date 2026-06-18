@@ -345,6 +345,63 @@ class AutonomousBrain:
                                 r[f"signal_{code}"] = f"{sig.action} {sig.confidence}%"
                         except: pass
                 
+                elif step == "market_scan" and self.trader:
+                    try:
+                        wl = getattr(self.trader, 'watchlist', []) or []
+                        scanned = []
+                        for item in wl[:10]:
+                            try:
+                                code = item.get('code','') or item if isinstance(item,str) else ''
+                                if code:
+                                    q = self.trader.fetch_quote([code])
+                                    if code in q:
+                                        chg = q[code].get('pct_change', 0) or 0
+                                        if abs(chg) > 2:
+                                            scanned.append(f"{code}({chg:+.1f}%)")
+                            except: pass
+                        r["detail"] = f"扫描{len(wl)}只, 异动{len(scanned)}只"
+                        r["anomalies"] = scanned
+                    except Exception as e:
+                        r["ok"] = False
+                        r["error"] = str(e)[:80]
+                
+                elif step == "strategy_eval" and self.trader and self.account:
+                    try:
+                        evals = []
+                        for code in list(self.account.positions.keys())[:3]:
+                            try:
+                                q = self.trader.fetch_quote([code])
+                                if code in q:
+                                    result = self.trader.evaluate_strategy(code, q[code])
+                                    evals.append(result)
+                            except: pass
+                        r["detail"] = f"评估{len(evals)}只持仓"
+                        r["evaluations"] = evals[:5]
+                    except Exception as e:
+                        r["ok"] = False
+                        r["error"] = str(e)[:80]
+                
+                elif step == "trade_execute" and self.trader and self.account:
+                    try:
+                        executed = []
+                        for code in list(self.account.positions.keys())[:2]:
+                            try:
+                                q = self.trader.fetch_quote([code])
+                                if code in q:
+                                    sig = self.trader.analyze_with_ai(code, q[code])
+                                    if sig.action == "sell" and sig.confidence >= 70:
+                                        result = self.trader.execute_sell(code, sig)
+                                        executed.append(f"{code}:SELL")
+                                    elif sig.action == "buy" and sig.confidence >= 75:
+                                        result = self.trader.execute_buy(code, sig)
+                                        executed.append(f"{code}:BUY")
+                            except: pass
+                        r["detail"] = f"执行{len(executed)}笔" if executed else "无交易"
+                        r["executed"] = executed
+                    except Exception as e:
+                        r["ok"] = False
+                        r["error"] = str(e)[:80]
+                
                 results.append(r)
             except Exception as e:
                 L.error(f"🧠 执行失败 [{step}]: {e}")

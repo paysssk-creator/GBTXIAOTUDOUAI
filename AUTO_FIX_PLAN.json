@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-18T17:31:05.275Z",
+  "timestamp": "2026-06-18T17:41:53.869Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local",
   "issues": [
     {
@@ -17,7 +17,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 165,
+      "line": 168,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -27,18 +27,13 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 453,
+      "line": 456,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
       "desc": "硬编码IP",
       "fixable": 0
     }
   ],
   "actions": [
-    {
-      "type": "audit_fix",
-      "item": "无未提交改动 (当前: 6)",
-      "detail": ""
-    },
     {
       "type": "audit_fix",
       "item": ".clinerules 存在",
@@ -54,14 +49,14 @@
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 165,
+      "line": 168,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 453,
+      "line": 456,
       "severity": "medium",
       "autoFixable": false
     }
