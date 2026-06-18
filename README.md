@@ -1,10 +1,11 @@
-# ⚕ GBT小土豆全能开发者 — AI原生Agent框架
+# 🛠️ GBT Pro — AI驱动A股自主交易终端
 
-[![Version](https://img.shields.io/badge/version-1.5.1-blue)](https://github.com/paysssk-creator/GBT)
-[![Python](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://github.com/paysssk-creator/GBT)
+[![Version](https://img.shields.io/badge/version-v2.1-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
+[![Python](https://img.shields.io/badge/python-3.12-green)](https://python.org)
+[![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
+[![Developer](https://img.shields.io/badge/开发者-自由的风-orange)](https://github.com/paysssk-creator)
 
-> 一个AI原生的全能开发Agent框架，集成13大模型、18个MCP Server、8种深度推理模式、16类Windows原生操控能力。
+> 桌面AI自主交易终端 — 实时A股行情 + 事件驱动AI大脑 + 4策略引擎 + 7×24守夜人安全监控
 
 ## 🏗️ 架构
 
@@ -122,4 +123,4 @@ agent.winctl("ocr", "screen")
 
 ## 📄 License
 
-MIT © GBTxiaotudou
+MIT © 2026 自由的风 (paysssk-creator)

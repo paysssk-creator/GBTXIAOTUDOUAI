@@ -55,7 +55,8 @@ pyinstaller_args = [
 ]
 
 print("=" * 60)
-print("  GBT v2.0 — 专业桌面客户端打包")
+print("  GBT Pro v2.1 — AI驱动A股自主交易终端")
+print("  开发者: 自由的风")
 print("=" * 60)
 print(f"  源目录: {PROJECT}")
 print(f"  输出: {OUTPUT}.exe")
