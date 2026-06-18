@@ -4,7 +4,7 @@ reasoner.py — 深度推理引擎
 分析 → 拆解 → 计算 → 评估 → 规划
 """
 
-import json, time, re
+import time, re
 from typing import List, Dict, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
