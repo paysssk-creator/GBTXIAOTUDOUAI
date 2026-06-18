@@ -100,30 +100,43 @@
   <!-- Right Panel -->
   <aside id="pn">
     <div class="ps">
-      <div class="ps-h">Connections & Plugins</div>
-      <div id="cn"></div>
+      <div class="ps-h">AI 核心能力</div>
+      <div id="ai"></div>
     </div>
     <div class="ps">
-      <div class="ps-h">A-Shares Market</div>
+      <div class="ps-h">电脑操控</div>
+      <div id="ctrl"></div>
+    </div>
+    <div class="ps">
+      <div class="ps-h">安全攻防</div>
+      <div id="hack"></div>
+    </div>
+    <div class="ps">
+      <div class="ps-h">A股行情</div>
       <div id="mk"></div>
     </div>
     <div class="ps">
-      <div class="ps-h">System Monitor</div>
+      <div class="ps-h">系统监控</div>
       <div id="sy"></div>
     </div>
     <div class="ps">
-      <div class="ps-h">Device Status</div>
+      <div class="ps-h">连接状态</div>
+      <div id="cn"></div>
+    </div>
+    <div class="ps">
+      <div class="ps-h">设备状态</div>
       <div id="dv"></div>
     </div>
     <div class="ps">
-      <div class="ps-h">LLM Engine</div>
+      <div class="ps-h">引擎信息</div>
       <div id="ll"></div>
     </div>
   </aside>
 </div>
 
 <script>
-var A='/api',D=document,w=function(){};
+var A='/api',D=document;
+var w={min:function(){try{window.pywebview.api.min()}catch(e){console.log('min:',e)}},max:function(){try{window.pywebview.api.max()}catch(e){console.log('max:',e)}},close:function(){try{window.pywebview.api.close()}catch(e){window.close()}}};
 var RM='CHAIN',ST={},pnOpen=true;
 var $=function(id){return D.getElementById(id)};
 var esc=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
@@ -136,7 +149,7 @@ function togglePanel(){
 }
 function go(v,btn){
   D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
-  $('wc').style.display=v==='chat'?'none':'flex';
+  $('wc').style.display=(v==='chat'||v==='reason')?'none':'flex';
   $('cv').style.display=v==='chat'?'flex':'none';
   $('rv').style.display=v==='reason'?'flex':'none';
   if(v==='chat')setTimeout(function(){$('ci').focus()},50);
@@ -197,32 +210,122 @@ function evo(){
 }
 
 // ── Panel Data ──
+var _CONN=null;
+
+async function _getConns(){
+  if(_CONN)return _CONN;
+  try{var r=await fetch(A+'/connectors'),d=await r.json();_CONN=d.connectors||[];return _CONN}catch(e){return[]}
+}
+
+function _cDot(s){return s==='connected'?'<span class="cp-dot on"></span>':'<span class="cp-dot"></span>'}
+
+async function loadAI(){
+  try{
+    var items=[
+      {id:'chat',icon:'ph-chat-circle-dots',name:'LLM Chat',desc:'Dialogue',act:'go',arg:'chat'},
+      {id:'reason',icon:'ph-brain',name:'Deep Reason',desc:'CoT Tree SWOT 5Why',act:'go',arg:'reason'},
+      {id:'scanner',icon:'ph-scan',name:'Scanner',desc:'Code Analysis',act:'mcp',arg:'scanner'},
+      {id:'audit',icon:'ph-shield-check',name:'Audit',desc:'Security Audit',act:'mcp',arg:'audit'},
+      {id:'auto-fix',icon:'ph-wrench',name:'Auto Fix',desc:'Vuln Patching',act:'mcp',arg:'auto-fix'},
+      {id:'evolve',icon:'ph-arrows-clockwise',name:'6-Step Evolve',desc:'Self-evolution',act:'evolve'},
+      {id:'websearch',icon:'ph-globe',name:'Web Search',desc:'Real-time',act:'webSearch'}
+    ];
+    var h='<div class="cp-list">';
+    items.forEach(function(it){
+      h+='<div class="cp-item" onclick="aiAction(\''+it.id+'\',\''+it.act+'\',\''+it.arg+'\')" title="'+it.desc+'">';
+      h+='<i class="ph '+it.icon+' cp-icon ai"></i>';
+      h+='<span class="cp-name">'+it.name+'</span>';
+      h+='<span class="cp-sub">'+it.desc+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+    $('ai').innerHTML=h;
+  }catch(e){$('ai').innerHTML='<span class="cp-err">'+esc(e.message)+'</span>'}
+}
+
+async function loadControl(){
+  try{
+    var items=[
+      {id:'filesystem',icon:'ph-folder-open',name:'Filesystem',tools:'Read/Write/Search'},
+      {id:'terminal',icon:'ph-terminal-window',name:'Terminal',tools:'Shell Exec'},
+      {id:'process',icon:'ph-cpu',name:'Process Mgr',tools:'List/Kill/Info'},
+      {id:'registry',icon:'ph-database',name:'Registry',tools:'Read/Write'},
+      {id:'git',icon:'ph-git-branch',name:'Git',tools:'Status/Log/Diff'},
+      {id:'display',icon:'ph-monitor',name:'Display',tools:'Screenshot'}
+    ];
+    var h='<div class="cp-list">';
+    items.forEach(function(it){
+      var c=_CONN?_CONN.filter(function(x){return x.id===it.id})[0]:null;
+      var st=c?c.status:'off';
+      h+='<div class="cp-item" onclick="cnAction(\''+it.id+'\',\'toggle\')" title="'+it.tools+'">';
+      h+=_cDot(st);
+      h+='<i class="ph '+it.icon+' cp-icon ctrl"></i>';
+      h+='<span class="cp-name">'+it.name+'</span>';
+      h+='<span class="cp-sub">'+it.tools+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+    $('ctrl').innerHTML=h;
+  }catch(e){$('ctrl').innerHTML='<span class="cp-err">-</span>'}
+}
+
+async function loadHack(){
+  try{
+    var items=[
+      {id:'scanner',icon:'ph-scan',name:'Scanner',desc:'Vuln Detection',level:'high'},
+      {id:'audit',icon:'ph-shield-check',name:'Audit',desc:'Full Assessment',level:'high'},
+      {id:'auto-fix',icon:'ph-wrench',name:'Auto Fix',desc:'Auto Patching',level:'mid'},
+      {id:'network',icon:'ph-radar',name:'Network',desc:'Ping/DNS/Trace',level:'mid'},
+      {id:'wifi',icon:'ph-wifi-high',name:'WiFi',desc:'Signal Scan',level:'low'}
+    ];
+    var h='<div class="cp-list">';
+    items.forEach(function(it){
+      var act=(it.id==='network'||it.id==='wifi')?'netTool':'mcp';
+      h+='<div class="cp-item hack-'+it.level+'" onclick="cnAction(\''+it.id+'\',\''+act+'\')" title="'+it.desc+'">';
+      h+='<i class="ph '+it.icon+' cp-icon hack"></i>';
+      h+='<span class="cp-name">'+it.name+'</span>';
+      h+='<span class="cp-sub">'+it.desc+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+    $('hack').innerHTML=h;
+  }catch(e){$('hack').innerHTML='<span class="cp-err">-</span>'}
+}
+
+function cnAction(id,act){
+  if(act==='mcp'){mcp(id);return}
+  if(act==='netTool'){netTool(id);return}
+  if(act==='toggle'){
+    var c=_CONN?_CONN.filter(function(x){return x.id===id})[0]:null;
+    if(!c)return;
+    cnToggle(id,c.status)
+  }
+}
 
 async function loadConnectors(){
-  try{var r=await fetch(A+'/connectors'),d=await r.json(),c=$('cn'),h='';
-    var cats=d.by_category||{};
-    var labels={code:'Code & Dev',data:'Data & Web',security:'Security',communication:'Communication',device:'Device Ctrl'};
+  try{var cs=await _getConns();var on=cs.filter(function(c){return c.status==='connected'}).length;
+    var off=cs.filter(function(c){return c.status==='disconnected'}).length;
+    var h='<div class="cn-summary">';
+    h+='<div class="cn-stat"><span class="cn-num on">'+on+'</span> Active</div>';
+    h+='<div class="cn-stat"><span class="cn-num">'+off+'</span> Off</div>';
+    h+='</div>';
+    h+='<div class="cn-quick">';
+    var cats={code:'Code',device:'Device',data:'Data',security:'Security',communication:'Comm'};
     for(var cat in cats){
-      h+='<div class="cn-cat">'+(labels[cat]||cat)+'</div>';
-      cats[cat].forEach(function(c){
-        var st=c.status;var sc=st==='connected'?'on':(st==='error'?'err':'off');
-        var stx=st==='connected'?'Active':(st==='error'?'Error':'Off');
-        var toolCount = c.tools ? c.tools.length : 0;
-        var toolHint = toolCount > 0 ? (toolCount+' tools') : '';
-        h+='<div class="cn-item '+sc+'" onclick="cnToggle(\''+c.id+'\',\''+st+'\')" title="'+c.description+'\n'+toolHint+'">';
-        h+='<i class="cn-icon '+c.icon+'"></i>';
-        h+='<span class="cn-name">'+c.name+(toolCount>0?'<span class="cn-tools">'+toolCount+'</span>':'')+'</span>';
-        h+='<span class="cn-badge '+sc+'">'+stx+'</span></div>';
-      });
+      var items=cs.filter(function(c){return c.category===cat});
+      var act=items.filter(function(c){return c.status==='connected'}).length;
+      h+='<div class="cn-cat-row">'+cats[cat]+': '+act+'/'+items.length+'</div>';
     }
-    c.innerHTML=h||'<span style="color:var(--t4);font-size:11px">No connectors</span>';
-  }catch(e){$('cn').innerHTML='<span style="color:var(--red);font-size:11px">Failed to load</span>'}
+    h+='</div>';
+    $('cn').innerHTML=h;
+  }catch(e){$('cn').innerHTML='Offline'}
 }
 
 function cnToggle(id,status){
   var ep=status==='connected'?'disconnect':'connect';
   fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    toast(j.ok?('Connected: '+j.status):(j.error||'Failed'));loadConnectors();
+    toast(j.ok?('OK: '+j.status):(j.error||'Failed'));
+    _CONN=null;loadControl();loadConnectors();
   });
 }
 
@@ -233,7 +336,8 @@ async function loadMarket(){
       var dir=i.change>=0?'mk-up':'mk-dn',arr=i.change>=0?'+':'';
       h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';
     });
-    mk.innerHTML=h;}catch(e){}
+    mk.innerHTML=h;
+  }catch(e){}
 }
 
 async function loadSystem(){
@@ -241,7 +345,6 @@ async function loadSystem(){
     var h='<div class="sys-r"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>';
     h+='<div class="sys-r"><div class="sr"><span>RAM '+d.memory_used_gb+'/'+d.memory_total_gb+' GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>';
     sy.innerHTML=h;
-    // Also load disk
     try{var rd=await fetch(A+'/devices'),dd=await rd.json();
       if(dd.disk_c&&dd.disk_c.total_gb){
         var du=dd.disk_c,pct=Math.round(du.used_gb/du.total_gb*100);
@@ -255,29 +358,99 @@ async function loadDevices(){
   try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
     if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+g.name+'</div><div class="dv-i">'+(g.ram_mb?'VRAM '+g.ram_mb+' MB':'')+'</div></div>'})}
     if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> Audio</div><div class="dv-i">'+ac+'/'+d.audio.length+' devices</div></div>'}
-    if(d.disks&&d.disks.length){d.disks.forEach(function(dk){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+dk.model+'</div><div class="dv-i">'+dk.size_gb+' GB</div></div>'})}
-    if(d.network&&d.network.length){d.network.forEach(function(n){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+n.name+'</div><div class="dv-i">'+(n.speed_mbps?n.speed_mbps+' Mbps':'Connected')+'</div></div>'})}
-    dv.innerHTML=h||'<span style="color:var(--t4);font-size:11px">No device data</span>';
+    dv.innerHTML=h||'No device data';
   }catch(e){}
 }
 
 async function loadProviders(){
   try{var r=await fetch(A+'/providers');ST.p=await r.json();var s=$('ms'),ll=$('ll');s.innerHTML='';var h='';
   for(var k in ST.p){var v=ST.p[k],on=v.status==='available';
-    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'● ':'○ ')+v.name+'</option>';
-    var dots=on?'<span style="color:var(--green)">●</span>':'<span style="color:var(--t4)">○</span>';
-    h+=dots+' '+v.name+'<br>';}
+    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'OK ':'-- ')+v.name+'</option>';
+    var dots=on?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--t4)">--</span>';
+    h+=dots+' '+v.name+'<br>';
+  }
   ll.innerHTML=h||'No providers';
-}catch(e){}
+}catch(e){}}
+
+function aiAction(id,act,arg){
+  if(act==='go'){go(id,D.querySelector('[data-v='+id+']'));return}
+  if(act==='mcp'){mcp(arg);return}
+  if(act==='evolve'){runEvolve();return}
+  if(act==='webSearch'){runWebSearch();return}
+}
+
+function runEvolve(){
+  go('chat',D.querySelector('[data-v=chat]'));
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  g.querySelector('.mc').innerHTML='<b>Running 6-Step Evolution...</b>';
+  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(j){
+    g.querySelector('.mc').classList.remove('thinking');
+    var c=j.ok?'#52c41a':'#ff4d4f';
+    g.querySelector('.mc').innerHTML='<div style="font-weight:600;color:'+c+'">'+(j.ok?'SUCCESS':'FAILED')+'</div>'
+      +'<p style="margin:4px 0;color:var(--t2)">Summary: '+(j.summary||'No summary')+'</p>'
+      +'<p style="margin:0;color:var(--t4)">Steps: '+(j.steps||0)+' | Rollback: '+(j.rollback||'No')+'</p>';
+  }).catch(function(e){
+    g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  });
+}
+
+function runWebSearch(){
+  var q=prompt('Search query:');
+  if(!q||!q.trim())return;
+  go('chat',D.querySelector('[data-v=chat]'));
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  g.querySelector('.mc').innerHTML='<b>Searching: '+esc(q)+'...</b>';
+  fetch(A+'/websearch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})})
+  .then(function(r){return r.json()}).then(function(j){
+    g.querySelector('.mc').classList.remove('thinking');
+    if(j.ok){
+      var h='<div><b style="color:var(--cyan)">Results: '+esc(q)+'</b></div>';
+      h+='<div style="max-height:400px;overflow-y:auto;margin-top:8px">';
+      (j.results||[]).forEach(function(r){h+='<div style="margin:6px 0;padding:6px;background:var(--bg2);border-radius:6px"><a href="'+r.url+'" target="_blank" style="color:var(--cyan)">'+r.title+'</a><br><small style="color:var(--t3)">'+r.snippet+'</small></div>'});
+      h+='</div>';
+      g.querySelector('.mc').innerHTML=h;
+    }else{
+      g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+j.error+'</span>';
+    }
+  }).catch(function(e){
+    g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  });
+}
+
+function netTool(id){
+  go('chat',D.querySelector('[data-v=chat]'));
+  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  var labels={network:'Network Diagnostics',wifi:'WiFi Scan'};
+  g.querySelector('.mc').innerHTML='<b>Running '+labels[id]+'...</b>';
+  var ep=id==='wifi'?'wifi-scan':'network-ping';
+  fetch(A+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
+    g.querySelector('.mc').classList.remove('thinking');
+    if(j.ok){
+      var h='<div style="font-weight:600;color:var(--green)">'+labels[id]+' Results</div>';
+      h+='<pre style="margin:8px 0;padding:10px;background:var(--bg2);border-radius:6px;font-size:11px;max-height:300px;overflow:auto;white-space:pre-wrap">'+esc(j.output||'')+'</pre>';
+      g.querySelector('.mc').innerHTML=h;
+    }else{
+      g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+j.error+'</span>';
+    }
+  }).catch(function(e){
+    g.querySelector('.mc').classList.remove('thinking');
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+  });
+}
 
 async function init(){
-  // Auto-open panel to show all capabilities
-  $('pn').classList.add('open');$('pt').classList.add('on');$('card').classList.add('narrow');
+  $('pn').classList.remove('closed');$('pt').classList.add('on');$('card').classList.add('narrow');
   try{var r=await fetch(A+'/status');ST=await r.json();
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
-    $('ll').innerHTML='<div class="p-info">'+ST.llm+' · '+ST.model+'<br>'+ST.mcp_count+' MCP servers · '+ST.keys_available+'/'+ST.keys_total+' keys</div>';
   }catch(e){$('stx').textContent='Offline'}
-  await Promise.all([loadProviders(),loadConnectors(),loadMarket(),loadSystem(),loadDevices()]);
+  await _getConns();
+  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors()]);
+  loadProviders();
+  loadMarket();
+  loadSystem();
+  loadDevices();
   setInterval(function(){loadSystem();loadDevices()},5000);
   setInterval(loadMarket,30000);
 }

@@ -46,6 +46,8 @@ _load_env_force()
 
 logging.basicConfig(level=logging.INFO,format="%(message)s");L=logging.getLogger("GBT")
 from flask import Flask,jsonify,request,render_template_string
+import time as _time
+_req_log=[]
 from gbt.mcp import get_mcp,call_mcp
 from gbt.providers import PROVIDERS,AutoKeyConfig
 from gbt.connectors.registry import get_registry as get_connectors
@@ -61,7 +63,7 @@ else:
     TD = os.path.join(os.path.dirname(__file__),"templates")
 C=open(os.path.join(TD,"styles.css"),encoding="utf-8").read()
 H=open(os.path.join(TD,"layout.html"),encoding="utf-8").read()
-HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><style>{C}</style></head><body>{H}</body></html>'
+HP=f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><title>GBT Pro v2.1</title><link rel="icon" href="/favicon.ico" type="image/x-icon"><style>{C}</style><script>fetch("/api/access_log?ping=HEAD_JS");console.log("HEAD_SCRIPT_RAN")</script></head><body><div id="ver-badge" style="position:fixed;bottom:4px;right:4px;font-size:8px;color:var(--t4);z-index:9999;pointer-events:none">v2.1.0618</div>{H}</body></html>'
 
 # ── LLM Manager with failover ──
 class LLMMgr:
@@ -91,6 +93,17 @@ llm=LLMMgr(prov="deepseek")
 
 # ── Flask API ──
 app=Flask(__name__)
+
+@app.before_request
+def _log_req():
+    p=request.path
+    if p!='/favicon.ico':
+        _req_log.append(f"{_time.strftime('%H:%M:%S')} {request.method} {request.full_path if request.query_string else request.path}")
+
+@app.route("/api/access_log")
+def _show_log():
+    return jsonify({"log":_req_log[-50:]})
+
 import logging as _logging
 _logging.getLogger("werkzeug").setLevel(_logging.WARNING)  # suppress dev server warnings
 @app.route("/favicon.ico")
@@ -107,8 +120,24 @@ def favicon():
             return flask.send_file(ico,mimetype="image/x-icon")
     return "",204
 
+_error_log = []
+@app.route("/api/log_error", methods=["POST"])
+def log_error():
+    err = request.get_json(silent=True) or {}
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"_GBT_JSERR.log"),"a") as f:
+        f.write(f"{time.strftime('%H:%M:%S')} {err.get('msg','')[:200]} @ {err.get('src','')}:{err.get('line','')}\n")
+    return "",204
+
 @app.route("/")
-def home(): return render_template_string(HP)
+def home():
+    from flask import make_response
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"_GBT_ACCESS.log"),"a") as f:
+        f.write(f"ACCESS {time.strftime('%H:%M:%S')} v2.1\n")
+    resp = make_response(render_template_string(HP))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @app.route("/api/status")
 def st():
@@ -484,6 +513,72 @@ def rs():
     r=dr.reason(d.get("text",""),mode)
     return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,"confidence":r.confidence,"steps":len(r.nodes)})
 
+@app.route("/api/websearch", methods=["POST"])
+def ws():
+    """Web search via DuckDuckGo HTML (no API key needed)."""
+    d = request.json or {}
+    q = d.get("query", "").strip()
+    if not q or len(q) > 500:
+        return jsonify({"ok": False, "error": "Query required (max 500 chars)"})
+    import urllib.request, urllib.parse
+    try:
+        req = urllib.request.Request(
+            "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(q),
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        )
+        html = urllib.request.urlopen(req, timeout=10).read().decode("utf-8", errors="replace")
+        import re
+        results = []
+        for m in re.finditer(r'<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.+?)</a>', html):
+            url = m.group(1)
+            title = re.sub(r'<[^>]+>', '', m.group(2))
+            results.append({"title": title.strip(), "url": url, "snippet": ""})
+        for i, m in enumerate(re.finditer(r'<a[^>]*class="result__snippet"[^>]*>(.+?)</a>', html)):
+            if i < len(results):
+                results[i]["snippet"] = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+        return jsonify({"ok": True, "query": q, "results": results[:8]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+@app.route("/api/network-ping", methods=["POST"])
+def np():
+    """Network diagnostics: ping google.com, DNS test."""
+    import subprocess, platform
+    output = []
+    try:
+        p = subprocess.run(["ping", "-n", "3", "8.8.8.8"] if platform.system()=="Windows" else ["ping","-c","3","8.8.8.8"],
+            capture_output=True, text=True, timeout=10)
+        output.append("--- Ping 8.8.8.8 ---")
+        output.append(p.stdout[-800:] if p.stdout else "No output")
+        
+        p2 = subprocess.run(["ping", "-n", "2", "google.com"] if platform.system()=="Windows" else ["ping","-c","2","google.com"],
+            capture_output=True, text=True, timeout=8)
+        output.append("\n--- Ping google.com ---")
+        output.append(p2.stdout[-500:] if p2.stdout else "No output")
+        
+        return jsonify({"ok": True, "output": "\n".join(output)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+@app.route("/api/wifi-scan", methods=["POST"])
+def wfs():
+    """Scan nearby WiFi networks via netsh."""
+    import subprocess
+    try:
+        p = subprocess.run(["netsh", "wlan", "show", "networks", "mode=bssid"],
+            capture_output=True, text=True, timeout=10)
+        out = p.stdout
+        if not out:
+            out = p.stderr
+        lines = []
+        for line in out.split('\n'):
+            line = line.strip()
+            if line and (line.startswith('SSID') or 'Signal' in line or 'Band' in line or 'Channel' in line):
+                lines.append(line)
+        return jsonify({"ok": True, "output": "\n".join(lines[:30]) if lines else out[-1000:]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
 @app.route("/api/evolve",methods=["POST"])
 def ev():
     """Real 6-step evolution loop"""
@@ -500,9 +595,19 @@ def ev():
 def launch():
     try:
         import webview as wv
-        t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8766,debug=False,use_reloader=False),daemon=True)
+        class GBTWindowApi:
+            def min(self): wv.windows[0].minimize()
+            def max(self):
+                win=wv.windows[0]
+                try:
+                    if win.fullscreen: win.fullscreen=False
+                    else: win.toggle_fullscreen()
+                except Exception:
+                    win.toggle_fullscreen()
+            def close(self): wv.windows[0].destroy()
+        t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
         t.start();time.sleep(1.5)
-        L.info("Desktop window opening...");wv.create_window("GBT","http://127.0.0.1:8766",width=1100,height=720,min_size=(900,600));wv.start()
+        L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:
         L.warning("Browser mode");L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
 
