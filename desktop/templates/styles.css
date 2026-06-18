@@ -154,6 +154,13 @@ body {
   letter-spacing: .3px;
 }
 
+#tb .logo-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
 #tb .btns {
   display: flex;
   -webkit-app-region: no-drag;

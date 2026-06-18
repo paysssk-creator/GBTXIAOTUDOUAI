@@ -9,6 +9,8 @@ from collections import deque
 
 L = logging.getLogger("GBT.Brain")
 
+from gbt.router import router as _router
+
 class AutonomousBrain:
     """主动AI大脑 — 事件驱动，自主决策"""
     
@@ -54,6 +56,8 @@ class AutonomousBrain:
             "log_analysis": [],
             "system_monitor": ["watcher"],
         }
+        # 智能路由器引用
+        self.router = None  # 由外部注入
         # Persistent logging
         self._log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "brain.log")
         os.makedirs(os.path.dirname(self._log_path), exist_ok=True)
@@ -453,8 +457,24 @@ class AutonomousBrain:
             "decisions": list(self.decisions)[:20],
             "context": list(self.context)[:10],
             "last_checks": self.last_check,
-            "capabilities": self.capabilities
+            "capabilities": self.capabilities,
+            "router_caps": len(self.router.capabilities) if self.router else 0
         }
+    
+    def route_intent(self, text: str) -> dict:
+        """智能路由用户意图 → 匹配能力并执行"""
+        if not self.router:
+            return {"routed": False, "error": "路由器未注入"}
+        return self.router.route(text)
+    
+    def get_capability_context(self) -> str:
+        """获取能力上下文文本 (供LLM推理使用)"""
+        if not self.router:
+            return ""
+        ctx = self.router.get_capability_context()
+        ctx += "\n\n**重要**: 当用户请求匹配以上任一能力时，请直接使用该能力。"
+        ctx += "\n你是GBT的AI大脑，你拥有上述工具，可以实际执行操作，不仅仅是建议。"
+        return ctx
 
 
 brain = AutonomousBrain()

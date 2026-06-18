@@ -162,6 +162,20 @@ def favicon():
             return flask.send_file(ico,mimetype="image/x-icon")
     return "",204
 
+@app.route("/api/logo")
+def logo_png():
+    """Serve GBT logo PNG for the title bar"""
+    import flask
+    candidates=[
+        os.path.join(os.path.dirname(__file__),"GBT_logo.png"),
+        os.path.join(os.path.dirname(sys.executable),"GBT_logo.png") if getattr(sys,'frozen',False) else "",
+        os.path.join(sys._MEIPASS,"GBT_logo.png") if getattr(sys,'frozen',False) else "",
+    ]
+    for png in candidates:
+        if png and os.path.exists(png):
+            return flask.send_file(png, mimetype="image/png")
+    return "", 204
+
 _error_log = []
 @app.route("/api/log_error", methods=["POST"])
 def log_error():
@@ -550,10 +564,38 @@ def cn_action(cid):
 def rs():
     d=request.json or {};
     if not llm.a:return jsonify({"mode":"demo","conclusion":"No LLM available.","confidence":0})
+    text = d.get("text","")
+    
+    # ── 智能路由: 先尝试匹配已注册能力, 命中则直接执行 ──
+    route_result = _brain.route_intent(text) if hasattr(_brain, 'route_intent') else None
+    if route_result and route_result.get("routed"):
+        # 能力直接执行成功
+        exec_info = route_result.get("execution", {})
+        return jsonify({
+            "mode": "action",
+            "conclusion": str(exec_info.get("result", "执行完成")),
+            "confidence": route_result["classification"]["confidence"],
+            "capability": route_result["classification"]["capability"].name if route_result["classification"].get("capability") else "unknown",
+            "routed": True
+        })
+    
+    # ── 未命中能力 → 带能力上下文的LLM推理 ──
     from gbt.reasoner import DeepReasoner,ReasonMode as RM
     dr=DeepReasoner(llm.a);mode=getattr(RM,d.get("mode","CHAIN").upper(),RM.CHAIN)
-    r=dr.reason(d.get("text",""),mode)
-    return jsonify({"mode":r.mode.value,"conclusion":r.conclusion,"confidence":r.confidence,"steps":len(r.nodes)})
+    
+    # 注入能力上下文, 让LLM知道能做什么
+    cap_ctx = ""
+    if hasattr(_brain, 'get_capability_context'):
+        cap_ctx = _brain.get_capability_context()
+    
+    r=dr.reason(text,mode,context=cap_ctx)
+    return jsonify({
+        "mode":r.mode.value,
+        "conclusion":r.conclusion,
+        "confidence":r.confidence,
+        "steps":len(r.nodes),
+        "capabilities_aware": True
+    })
 
 @app.route("/api/websearch", methods=["POST"])
 def ws():
@@ -1282,6 +1324,19 @@ def launch():
             _brain.llm = llm.a
             _brain.account = account
             _brain.desktop_ctl = desktop_ctl
+            
+            # ── 智能路由器注入 ──
+            import gbt.capabilities as _caps  # 触发能力注册
+            from gbt.router import router as _router
+            _router.set_dependency("trader", trader)
+            _router.set_dependency("watcher", watcher)
+            _router.set_dependency("account", account)
+            _router.set_dependency("brain", _brain)
+            _router.set_dependency("desktop_ctl", desktop_ctl)
+            _router.set_dependency("llm", llm.a)
+            _brain.router = _router
+            L.info(f"🧭 智能路由器已注入: {len(_router.capabilities)} 项能力")
+            
             _brain.start()
         time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()

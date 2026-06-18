@@ -44,6 +44,7 @@ pyinstaller_args = [
     # 添加数据文件 — templates 和图标
     "--add-data=desktop/templates;desktop/templates",
     "--add-data=desktop/GBT.ico;.",
+    "--add-data=desktop/GBT_logo.png;.",
     # 路径注入 - 确保代码能找到同级 .env 和模块
     "--collect-all=gbt",
     "--collect-all=agents",
