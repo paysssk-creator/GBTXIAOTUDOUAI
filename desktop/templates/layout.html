@@ -160,6 +160,11 @@
               <div id="tpf-list" style="max-height:200px;overflow-y:auto;font-size:11px"></div>
               <div id="tpf-sum" style="margin-top:8px;padding-top:6px;border-top:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;justify-content:space-between"></div>
             </div>
+            <!-- 快讯 -->
+            <div id="talert" style="display:none;padding:8px 12px;margin-top:4px;border-radius:8px;background:var(--bg2);font-size:11px">
+              <b style="color:var(--yellow)">🔔 交易快讯</b>
+              <div id="talerts" style="margin-top:4px;max-height:120px;overflow-y:auto;font-size:10px;color:var(--t3)"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -799,6 +804,15 @@ async function loadPortfolio(){
     $('tpf-list').innerHTML=h||'<div style="color:var(--t4);text-align:center;padding:12px">尚无持仓</div>';
     $('tpf-sum').innerHTML='<span>💰 现金 ¥'+(a.cash||0).toLocaleString()+'</span><span style="color:'+(a.pnl>=0?'var(--green)':'var(--red)')+'">盈亏 '+(a.pnl>=0?'+':'')+(a.pnl||0).toLocaleString()+' ('+(a.pnl_pct||0)+'%)</span>';
     $('tpf').style.display='block';
+    // 加载快讯
+    if(d.recent_log&&d.recent_log.length){
+      $('talert').style.display='block';
+      var ah='';d.recent_log.slice(0,5).forEach(function(l){
+        var c=l.action==='buy'?'var(--green)':'var(--red)';
+        ah+='<div style="padding:2px 0;border-bottom:1px dashed var(--b3)"><span style="color:'+c+'">'+l.action.toUpperCase()+'</span> '+esc(l.name||l.code)+' '+l.shares+'股 @ ¥'+(l.price||0).toFixed(2)+' <span style="float:right;font-size:9px;color:var(--t4)">'+((l.time||'').substring(5,16))+'</span></div>';
+      });
+      $('talerts').innerHTML=ah;
+    }
   }catch(e){}
 }
 

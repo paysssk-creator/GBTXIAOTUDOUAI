@@ -625,8 +625,9 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         
                         with self._lock: self.sessions.appendleft(ts)
                 else:
-                    # 非交易时间，降低频率但保持心跳
-                    pass
+                    # 非交易时间降低频率
+                    time.sleep(60)  # 每分钟心跳一次
+                    continue
                 
             except Exception as e:
                 L.error(f"自主交易异常: {e}")
