@@ -58,6 +58,7 @@ class AutonomousBrain:
         }
         # 智能路由器引用
         self.router = None  # 由外部注入
+        self.protocol = None  # 执行协议(由外部注入)
         # Persistent logging
         self._log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "brain.log")
         os.makedirs(os.path.dirname(self._log_path), exist_ok=True)
@@ -471,9 +472,12 @@ class AutonomousBrain:
         }
     
     def route_intent(self, text: str) -> dict:
-        """智能路由用户意图 → 匹配能力并执行"""
+        """智能路由用户意图 → 协议链路执行 (7阶段)"""
         if not self.router:
             return {"routed": False, "error": "路由器未注入"}
+        # 优先走协议链路 (含预检+验证+错误分级)
+        if self.protocol:
+            return self.router.route_protocol(text, source="user")
         return self.router.route(text)
     
     def get_capability_context(self) -> str:

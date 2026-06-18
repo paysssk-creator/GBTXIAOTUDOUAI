@@ -56,6 +56,48 @@ class SmartRouter:
     def get_dep(self, name):
         return self._deps.get(name)
 
+    def set_protocol(self, protocol):
+        """注入执行协议"""
+        self._protocol = protocol
+        protocol.router = self
+
+    def route_protocol(self, text: str, source: str = "user", priority: int = 5) -> dict:
+        """协议链路执行: 意图→路由→确认→预检→执行→验证→响应"""
+        from gbt.protocol import ExecutionRequest
+        req = ExecutionRequest(intent=text, source=source, priority=priority)
+        result = self._protocol.execute(req) if hasattr(self, '_protocol') and self._protocol else None
+        if not result:
+            return self.route(text)  # fallback to legacy
+        # 构造兼容旧格式的 result
+        cap = self.capabilities.get(result.capability)
+        return {
+            # 旧格式兼容
+            "routed": result.ok or result.capability != "",
+            "classification": {
+                "intent": text[:50],
+                "confidence": cap.priority * 10 if cap else 50,
+                "capability": cap,
+                "alternatives": []
+            },
+            "execution": {
+                "ok": result.ok,
+                "result": result.data.get("conclusion", ""),
+                "capability": result.capability,
+                "executed": result.ok
+            },
+            "action": "executed" if result.ok else "protocol_error",
+            # 新增协议字段
+            "protocol": {
+                "ok": result.ok,
+                "capability": result.capability,
+                "phases": result.phase_results,
+                "errors": result.errors,
+                "elapsed_ms": result.elapsed_ms,
+                "error_level": result.error_level.value if result.error_level else None,
+                "trace_id": result.trace_id,
+            }
+        }
+
     def classify(self, text: str) -> dict:
         """分类用户意图 → 返回最佳匹配能力 + 置信度"""
         if not text or not text.strip():

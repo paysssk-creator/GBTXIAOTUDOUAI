@@ -571,12 +571,14 @@ def rs():
     if route_result and route_result.get("routed"):
         # 能力直接执行成功
         exec_info = route_result.get("execution", {})
+        proto_info = route_result.get("protocol", {})
         return jsonify({
             "mode": "action",
             "conclusion": str(exec_info.get("result", "执行完成")),
             "confidence": route_result["classification"]["confidence"],
             "capability": route_result["classification"]["capability"].name if route_result["classification"].get("capability") else "unknown",
-            "routed": True
+            "routed": True,
+            "protocol": proto_info  # 7阶段协议跟踪
         })
     
     # ── 未命中能力 → 带能力上下文的LLM推理 ──
@@ -1335,7 +1337,11 @@ def launch():
             _router.set_dependency("desktop_ctl", desktop_ctl)
             _router.set_dependency("llm", llm.a)
             _brain.router = _router
-            L.info(f"🧭 智能路由器已注入: {len(_router.capabilities)} 项能力")
+            # 注入执行协议 (7阶段)
+            from gbt.protocol import protocol as _protocol
+            _router.set_protocol(_protocol)
+            _brain.protocol = _protocol
+            L.info(f"🧭 智能路由器已注入: {len(_router.capabilities)} 项能力 + 7阶段协议")
             
             _brain.start()
         time.sleep(0.5)
