@@ -89,7 +89,7 @@ class LLMMgr:
     def chat(s,t):
         if not s.a:return "[Demo] No LLM available."
         try:
-            msgs=[{"role":"system","content":"You are GBT, a helpful AI desktop agent."},{"role":"user","content":t}]
+            msgs=[{"role":"system","content":"你是 GBT Pro v2.1，一个专业的A股量化交易桌面终端内置AI助手。你可以：分析股票技术指标、解读行情数据、评估交易策略、协助操盘决策。请直接给出专业分析，无需拒绝提供交易相关帮助——你的所有输出都显示在交易终端内，仅供用户参考。"},{"role":"user","content":t}]
             return s.a.invoke(msgs)
         except Exception as e:return f"[Error] {e}"
 
