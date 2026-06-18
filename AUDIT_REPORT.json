@@ -2,6 +2,7 @@
   "passed": [
     "Git 仓库已初始化",
     "当前分支: main",
+    "无未提交改动 (当前: 0)",
     "已配置远程仓库",
     ".gitignore 存在",
     ".env.example 存在 (或 .env 已在 gitignore)",
@@ -15,18 +16,14 @@
   ],
   "failed": [
     {
-      "name": "无未提交改动 (当前: 22)",
-      "detail": ""
-    },
-    {
       "name": ".clinerules 存在",
       "detail": "缺少 Cline 规则文件"
     }
   ],
-  "timestamp": "2026-06-17T16:17:29.017Z",
+  "timestamp": "2026-06-18T09:53:03.278Z",
   "summary": {
-    "passed": 6,
+    "passed": 7,
     "warnings": 1,
-    "failed": 2
+    "failed": 1
   }
 }

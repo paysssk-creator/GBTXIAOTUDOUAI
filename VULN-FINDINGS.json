@@ -1,222 +1,32 @@
 {
-  "time": "2026-06-17T16:17:29.045Z",
+  "time": "2026-06-18T09:53:05.729Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local",
   "summary": {
     "critical": 0,
-    "high": 3,
-    "medium": 2,
-    "low": 18,
+    "high": 0,
+    "medium": 1,
+    "low": 3,
     "info": 0
   },
   "findings": [
     {
-      "ruleId": "SEC-003",
-      "name": "xss",
-      "severity": "high",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 16,
-      "snippet": "var s=document.getElementById('ms');s.innerHTML='';var pl=document.getElementById('pl');pl.innerHTML='';",
-      "desc": "innerHTML XSS",
-      "fixable": 1
-    },
-    {
-      "ruleId": "SEC-003",
-      "name": "xss",
-      "severity": "high",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 22,
-      "snippet": "d.innerHTML='<div class=\"b\">'+he(t)+'</div>';document.getElementById('cms').appendChild(d);",
-      "desc": "innerHTML XSS",
-      "fixable": 1
-    },
-    {
-      "ruleId": "SEC-003",
-      "name": "xss",
-      "severity": "high",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 33,
-      "snippet": "d.querySelector('.b').innerHTML='<b>'+r.mode+'</b> ('+Math.round(r.confidence*100)+'%) Steps:'+r.steps+'<br><br>'+he(r.c",
-      "desc": "innerHTML XSS",
-      "fixable": 1
-    },
-    {
-      "ruleId": "QUAL-004",
-      "name": "empty-catch",
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
       "severity": "medium",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 9,
-      "snippet": "}catch(e){}",
-      "desc": "空catch",
-      "fixable": 1
+      "file": "desktop\\app.py",
+      "line": 549,
+      "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
     },
     {
-      "ruleId": "QUAL-004",
-      "name": "empty-catch",
-      "severity": "medium",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 19,
-      "snippet": "pl.innerHTML+='<div class=\"pv\"><span class=\"pd '+(on?'on':'off')+'\"></span>'+v.name+'</div>';}}catch(e){}}",
-      "desc": "空catch",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
+      "ruleId": "QUAL-001",
+      "name": "console",
       "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 1,
-      "snippet": "var A='/api',st={};",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 2,
-      "snippet": "var win={min:function(){},max:function(){},close:function(){}};",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 3,
-      "snippet": "async function init(){try{var r=await fetch(A+'/status');st=await r.json();",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 15,
-      "snippet": "async function loadProviders(){try{var r=await fetch(A+'/providers');st.p=await r.json();",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 16,
-      "snippet": "var s=document.getElementById('ms');s.innerHTML='';var pl=document.getElementById('pl');pl.innerHTML='';",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 17,
-      "snippet": "for(var k in st.p){var v=st.p[k];var on=v.status=='available';",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 20,
-      "snippet": "function rm(){var e=document.querySelector('.em');if(e)e.remove()}",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 21,
-      "snippet": "function add(r,t){rm();var d=document.createElement('div');d.className='msg '+(r=='user'?'usr':'ai');",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 24,
-      "snippet": "function he(t){var d=document.createElement('span');d.textContent=t;return d.innerHTML}",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 25,
-      "snippet": "function send(){var t=document.getElementById('ci').value.trim();if(!t)return;",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 27,
-      "snippet": "var d=add('ai','Thinking...');fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 30,
-      "snippet": "function qr(){var t=prompt('Deep Reason - enter question:');if(!t)return;add('user','[Reason] '+t);",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 31,
-      "snippet": "var d=add('ai','Analyzing...');fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 38,
-      "snippet": "function ev(){rm();var d=add('ai','[Evolve] Starting 6-step self-evolution loop...');",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 41,
-      "snippet": "async function sm(){var p=document.getElementById('ms').value;if(!p||!st.p||!st.p[p]||st.p[p].status!='available')return",
-      "desc": "var改用let",
-      "fixable": 1
-    },
-    {
-      "ruleId": "DEP-002",
-      "name": "var",
-      "severity": "low",
-      "file": "desktop\\templates\\scripts.js",
-      "line": 42,
-      "snippet": "var d=add('ai','Switching to '+st.p[p].name+'...');try{var r=await fetch(A+'/switch',{method:'POST',headers:{'Content-Ty",
-      "desc": "var改用let",
+      "file": "desktop\\app.py",
+      "line": 66,
+      "snippet": "HP=f'<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,ini",
+      "desc": "console残留",
       "fixable": 1
     },
     {
