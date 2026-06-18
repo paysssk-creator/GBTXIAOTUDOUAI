@@ -75,7 +75,7 @@ class NightWatcher:
                 cmd = cmd_match.group(1).strip()
                 if cmd.upper() != "NONE":
                     try:
-                        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+                        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30, errors='replace')
                         alert.fix_result += f"\n✅ 命令已执行: {cmd}\n输出: {r.stdout[:200]}"
                         alert.fixed = True
                     except Exception as e:
@@ -143,7 +143,7 @@ class NightWatcher:
                 now = datetime.now().strftime("%H:%M:%S")
                 # Ping 外网
                 r = subprocess.run(["ping", "-n", "1", "-w", "2000", "8.8.8.8"],
-                    capture_output=True, text=True, timeout=5)
+                    capture_output=True, text=True, timeout=5, errors='replace')
                 if r.returncode != 0:
                     self._add_alert("network", "critical", "网络中断 — 无法连接 8.8.8.8",
                                     f"ping 返回码: {r.returncode}")
@@ -175,7 +175,7 @@ class NightWatcher:
         while self.running:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
-                r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10)
+                r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10, errors='replace')
                 found = []
                 for line in r.stdout.lower().split("\n"):
                     for s in suspicious:
@@ -256,7 +256,7 @@ class NightWatcher:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
                 for key in keys:
-                    r = subprocess.run(["reg", "query", key], capture_output=True, text=True, timeout=10, shell=True)
+                    r = subprocess.run(["reg", "query", key], capture_output=True, text=True, timeout=10, shell=True, errors='replace')
                     entries = [l.strip() for l in r.stdout.split("\n") if l.strip() and "REG_" in l]
                     suspicious = [e for e in entries if any(s in e.lower() for s in
                         ["temp", "appdata", "unknown", "crack", "hack"])]
@@ -383,13 +383,13 @@ class NightWatcher:
         
         if target == "network" or target == "all":
             try:
-                r = subprocess.run(["ping", "-n", "2", "8.8.8.8"], capture_output=True, text=True, timeout=6)
+                r = subprocess.run(["ping", "-n", "2", "8.8.8.8"], capture_output=True, text=True, timeout=6, errors='replace')
                 results["network"] = {"ok": r.returncode == 0, "output": r.stdout[-200:]}
             except: results["network"] = {"ok": False, "output": "扫描超时"}
         
         if target == "process" or target == "all":
             try:
-                r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10)
+                r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10, errors='replace')
                 count = len([l for l in r.stdout.split("\n") if l.strip()])
                 results["process"] = {"ok": True, "output": f"活跃进程: {count}"}
             except: results["process"] = {"ok": False, "output": "扫描失败"}

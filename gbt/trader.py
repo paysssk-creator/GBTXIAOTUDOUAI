@@ -255,6 +255,7 @@ class AShareTrader:
             s.detail = f"现价:{quote.price} | 涨跌:{quote.change_pct}%"
 
         # 先做技术分析
+        kline = None
         tech = None
         tech_sig = {"direction": "hold", "confidence": 0}
         if HAS_TECH and quote.price > 0:
@@ -567,7 +568,10 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 
     def _autonomous_loop(self):
         L.info("📊 自主交易循环启动...")
-        self.fetch_watchlist()
+        try:
+            self.fetch_watchlist()
+        except Exception as e:
+            L.warning(f"初始行情加载失败: {e}")
         last_trade_time = {}
         
         while self.running and self.auto_trade:
