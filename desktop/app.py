@@ -761,6 +761,55 @@ def tr_position():
         return jsonify({"ok": True})
     return jsonify(trader.get_status())
 
+@app.route("/api/trader/pipeline", methods=["POST"])
+def tr_pipeline():
+    """运行完整6阶段交易流水线"""
+    d = request.json or {}
+    code = d.get("code", "")
+    if not code:
+        return jsonify({"ok": False, "error": "缺少股票代码"})
+    if not trader.llm and llm.a:
+        trader.llm = llm.a
+    session = trader.run_full_pipeline(code)
+    return jsonify({"ok": True, "session": session.to_dict()})
+
+@app.route("/api/trader/sessions")
+def tr_sessions():
+    """获取交易会话历史"""
+    return jsonify({"sessions": [s.to_dict() for s in list(trader.sessions)[:20]]})
+
+@app.route("/api/trader/session/<sid>")
+def tr_session(sid):
+    """获取单个交易会话详情"""
+    for s in trader.sessions:
+        if s.id == sid:
+            return jsonify({"ok": True, "session": s.to_dict()})
+    return jsonify({"ok": False, "error": "会话不存在"})
+
+@app.route("/api/trader/stockpage", methods=["POST"])
+def tr_stockpage():
+    """打开股票详情页"""
+    d = request.json or {}
+    code = d.get("code", "")
+    if not code:
+        return jsonify({"ok": False, "error": "缺少代码"})
+    return jsonify(trader.open_stock_page(code))
+
+@app.route("/api/trader/notify", methods=["POST"])
+def tr_notify():
+    """发送Windows通知"""
+    d = request.json or {}
+    return jsonify(trader.send_notification(
+        d.get("title", "GBT操盘手"),
+        d.get("message", "")
+    ))
+
+@app.route("/api/trader/steps")
+def tr_steps():
+    """获取浏览器自动化步骤模板"""
+    platform = request.args.get("platform", "东方财富交易")
+    return jsonify({"platform": platform, "steps": trader.BROWSER_STEPS.get(platform, [])})
+
 
 def launch():
     try:

@@ -118,10 +118,13 @@
         <div class="input-area">
           <div class="input-card">
             <div style="display:flex;gap:8px;align-items:center;padding:4px">
-              <input id="tcode" placeholder="股票代码 (如 sh600519)" style="flex:1;background:var(--bg-input);color:var(--t1);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 12px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')traderAnalyze()">
-              <button class="send" onclick="traderAnalyze()" style="flex-shrink:0"><i class="ph ph-magnifying-glass"></i></button>
+              <input id="tcode" placeholder="股票代码 (如 sh600519)" style="flex:1;background:var(--bg-input);color:var(--t1);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 12px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')traderDetailed()">
+              <button class="send" onclick="traderDetailed()" style="flex-shrink:0" title="6阶段精细分析"><i class="ph ph-steps"></i></button>
+              <button class="send" onclick="traderAnalyze()" style="flex-shrink:0;background:var(--bg3)" title="快速AI分析"><i class="ph ph-magnifying-glass"></i></button>
             </div>
             <div id="tquote" style="display:none;padding:6px 12px 0;font-size:12px;color:var(--t2)"></div>
+            <!-- 交易步骤面板 -->
+            <div id="tsteps" style="display:none;padding:8px 12px;max-height:300px;overflow-y:auto"></div>
           </div>
         </div>
       </div>
@@ -675,6 +678,43 @@ async function traderAutoToggle(){
     if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开';toast('📊 自主交易已启动 — AI自动扫描+执行!')}
     else{b.style.background='var(--red)';b.innerHTML='⏸ 自主交易:关';toast('自主交易已停止')}
   }catch(e){toast('切换失败: '+e.message)}
+}
+
+async function traderDetailed(){
+  var code=$('tcode').value.trim();if(!code){toast('请输入股票代码');return}
+  go('trade',D.querySelector('[data-v=trade]'));
+  $('tsteps').style.display='block';
+  var stageNames={fetch:'📡 行情获取',analyze:'🤖 AI分析',signal:'📊 信号生成',decide:'🎯 交易决策',execute:'💻 电脑操控',confirm:'✅ 交易确认'};
+  var h='<div style="padding:8px;margin-top:4px;border-radius:8px;background:var(--bg2)">';
+  h+='<div style="font-weight:700;color:var(--cyan);margin-bottom:4px">⏳ 6阶段交易流水线: '+code+'</div>';
+  h+='<div id="tstep-list" style="display:flex;flex-direction:column;gap:2px">';
+  for(var s in stageNames){h+='<div class="ts-row" id="ts-'+s+'" style="padding:4px 8px;border-radius:4px;font-size:11px;color:var(--t4);background:var(--bg3)">'+stageNames[s]+'<span style="float:right;font-size:10px">等待</span></div>'}
+  h+='</div></div>';
+  $('tsteps').innerHTML=h;
+
+  function updateStep(stage,status,detail){
+    var el=D.getElementById('ts-'+stage);if(!el)return;
+    var icon=status==='done'?'✅':status==='error'?'❌':status==='running'?'⏳':'🕐';
+    var bg=status==='done'?'rgba(82,196,26,.1)':status==='error'?'rgba(255,77,79,.1)':status==='running'?'rgba(96,165,250,.1)':'var(--bg3)';
+    el.style.background=bg;el.style.color=status==='running'?'var(--cyan)':'var(--t2)';
+    el.innerHTML=stageNames[stage]+' <span style="float:right;font-size:10px">'+icon+' '+(detail||status)+'</span>';
+  }
+
+  try{
+    var r=await fetch(A+'/trader/pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
+    var d=await r.json();
+    if(!d.ok){toast(d.error);return}
+    var sess=d.session;
+    (sess.steps||[]).forEach(function(s){
+      updateStep(s.stage,s.status,s.result||s.action);
+      if(s.stage==='execute'&&s.status==='done'){
+        toast('💻 已打开交易平台 — 请确认订单');
+      }
+    });
+    var g=_tAdd('<b>✅ 6阶段流程完成</b>');
+    g.querySelector('.mc').innerHTML='<div style="border-left:3px solid var(--green);padding-left:10px"><b>'+sess.name+'('+sess.code+')</b><br><span style="color:var(--t4)">状态: '+sess.status+' | 执行: '+(sess.executed?'已执行':'跳过')+'</span></div>';
+  }catch(e){toast('流水线异常: '+e.message)}
+  loadTrader();
 }
 
 async function loadTrader(){
