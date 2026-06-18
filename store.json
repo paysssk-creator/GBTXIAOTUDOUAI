@@ -1989,8 +1989,18 @@
           "output": ""
         }
       }
+    },
+    {
+      "summary": "AutoFix: 0 项自动修复",
+      "timestamp": "2026-06-18T15:08:12.213Z",
+      "files": []
+    },
+    {
+      "summary": "Desktop-triggered evolve",
+      "timestamp": "2026-06-18T15:08:12.605Z",
+      "files": []
     }
   ],
-  "lastEvolve": "2026-06-18T15:08:11.861Z",
+  "lastEvolve": "2026-06-18T15:08:12.606Z",
   "totalEvolves": 13
 }
