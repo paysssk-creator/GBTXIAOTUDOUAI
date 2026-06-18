@@ -87,14 +87,14 @@ class RiskManager:
 
         # 2. 仓位检查
         if signal.action == "buy":
-            current_val = sum(p.get("value", 0) for p in positions.values())
+            current_val = sum((p.shares * (p.avg_cost or 0)) for p in positions.values())
             pos_check = self.check_position_size(signal.price, current_val // (signal.price or 1))
             if not pos_check["ok"]:
                 issues.append("仓位已达上限")
 
         # 3. 持仓风控检查
         if signal.action == "sell" and signal.code in positions:
-            entry = positions[signal.code].get("avg_cost", signal.price)
+            entry = positions[signal.code].avg_cost if hasattr(positions[signal.code], 'avg_cost') else signal.price
             sl = self.check_stop_loss(signal.code, entry, signal.price)
             sp = self.check_stop_profit(signal.code, entry, signal.price)
             # 卖出信号 + 触发止损  = 强制平仓
