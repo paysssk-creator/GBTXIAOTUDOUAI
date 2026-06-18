@@ -51,6 +51,7 @@ _req_log=[]
 from gbt.mcp import get_mcp,call_mcp
 from gbt.providers import PROVIDERS,AutoKeyConfig
 from gbt.connectors.registry import get_registry as get_connectors
+from gbt.watcher import NightWatcher
 
 # ── Build homepage ──
 # ── 模板路径 (兼容打包模式) ──
@@ -90,6 +91,9 @@ class LLMMgr:
         except Exception as e:return f"[Error] {e}"
 
 llm=LLMMgr(prov="deepseek")
+
+# ── 守夜人 ──
+watcher=NightWatcher(project_root=os.path.dirname(_here) if getattr(sys,'frozen',False) else os.path.dirname(os.path.dirname(__file__)))
 
 # ── Flask API ──
 app=Flask(__name__)
@@ -591,6 +595,49 @@ def ev():
         return jsonify({"ok":rpt.success,"summary":rpt.summary or "Completed","steps":len(rpt.steps),"rollback":rpt.rollback})
     except Exception as e:return jsonify({"ok":False,"error":str(e)[:500]})
 
+# ── 守夜人 API ──
+@app.route("/api/watcher/status")
+def wts():
+    """获取守夜人完整状态"""
+    return jsonify(watcher.get_status())
+
+@app.route("/api/watcher/start",methods=["POST"])
+def wt_start():
+    """启动守夜人"""
+    if not watcher.llm and llm.a:
+        watcher.llm = llm.a
+    return jsonify(watcher.start())
+
+@app.route("/api/watcher/stop",methods=["POST"])
+def wt_stop():
+    """停止守夜人"""
+    watcher.stop()
+    return jsonify({"ok":True,"msg":"守夜人已停止"})
+
+@app.route("/api/watcher/scan",methods=["POST"])
+def wt_scan():
+    """手动触发扫描"""
+    d = request.json or {}
+    target = d.get("target","all")
+    return jsonify(watcher.run_scan(target))
+
+@app.route("/api/watcher/autofix",methods=["POST"])
+def wt_autofix():
+    """开关自动修复"""
+    d = request.json or {}
+    watcher.auto_fix_enabled = d.get("enabled", True)
+    return jsonify({"ok":True,"auto_fix":watcher.auto_fix_enabled})
+
+@app.route("/api/watcher/alerts")
+def wt_alerts():
+    """获取最近告警"""
+    return jsonify({"alerts": [
+        {"id": a.id, "source": a.source, "level": a.level,
+         "message": a.message, "time": a.time, "fixed": a.fixed,
+         "fix_result": a.fix_result[:200]}
+        for a in list(watcher.alerts)[:50]
+    ]})
+
 
 def launch():
     try:
@@ -606,7 +653,13 @@ def launch():
                     win.toggle_fullscreen()
             def close(self): wv.windows[0].destroy()
         t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
-        t.start();time.sleep(1.5)
+        t.start();time.sleep(1.0)
+        # 自动启动守夜人
+        if llm.a:
+            watcher.llm = llm.a
+            watcher.start()
+            L.info("🛡️ 守夜人已自动启动")
+        time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:
         L.warning("Browser mode");L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)

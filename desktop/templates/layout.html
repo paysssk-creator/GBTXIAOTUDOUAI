@@ -21,34 +21,34 @@
       </div>
     </div>
     <div class="sb-nav">
-      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>Chat</span><span class="kb">^1</span></button>
-      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>Deep Reason</span><span class="kb">^2</span></button>
+      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>对话</span><span class="kb">^1</span></button>
+      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>深度推理</span><span class="kb">^2</span></button>
       <div class="sb-div"></div>
-      <div class="sb-label">Tools</div>
-      <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>Code Scanner</span></button>
-      <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>Security Audit</span></button>
-      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>Auto Fix</span></button>
-      <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>6-Step Evolve</span></button>
+      <div class="sb-label">工具</div>
+      <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>代码扫描</span></button>
+      <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>安全审计</span></button>
+      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
+      <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
     </div>
     <div class="sb-foot">
-      <span class="sb-dot" id="sd"></span><span id="stx">Connecting</span>
+      <span class="sb-dot" id="sd"></span><span id="stx">连接中</span>
     </div>
   </nav>
 
   <div id="mn">
-    <button class="pt" id="pt" onclick="togglePanel()" title="Toggle Panel"><i class="ph ph-sidebar-simple"></i></button>
+    <button class="pt" id="pt" onclick="togglePanel()" title="切换面板"><i class="ph ph-sidebar-simple"></i></button>
 
     <div class="card" id="card">
-      <!-- Chat View -->
+      <!-- 对话视图 -->
       <div class="chat-area" id="cv" style="display:none">
         <div class="msg-list" id="ml"></div>
         <div class="input-area">
           <div class="input-card">
-            <textarea id="ci" placeholder="Message GBT…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
+            <textarea id="ci" placeholder="给 GBT 发消息…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
             <div class="input-actions">
               <div class="ia-left"><button class="ia-btn"><i class="ph ph-paperclip"></i></button></div>
               <div class="ia-right">
-                <select class="mdl" id="ms" onchange="switchProv()"><option>Loading…</option></select>
+                <select class="mdl" id="ms" onchange="switchProv()"><option>加载中…</option></select>
                 <button class="send" onclick="chat()"><i class="ph ph-arrow-up"></i></button>
               </div>
             </div>
@@ -56,37 +56,37 @@
         </div>
       </div>
 
-      <!-- Welcome -->
+      <!-- 欢迎页 -->
       <div class="welcome" id="wc">
-        <h1>我们该做什么？</h1>
-        <p>Powered by <b>DeepSeek v4-pro</b><br>19 MCP services · 代码分析 · 深度推理 · 安全扫描</p>
+        <h1>今天搞点什么？</h1>
+        <p>Powered by <b>DeepSeek v4-pro</b><br>7大监控守护 · 代码分析 · 深度推理 · 安全攻防</p>
         <div class="qs">
-          <div class="qs-l">Quick Start</div>
-          <button class="qs-r" onclick="qchat('Analyze my project structure')"><i class="ph ph-folder-open"></i> Analyze Project<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="qchat('Scan for security vulnerabilities')"><i class="ph ph-shield"></i> Security Scan<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="qchat('Help me plan implementation')"><i class="ph ph-git-branch"></i> Plan Implementation<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="mcp('audit')"><i class="ph ph-squares-four"></i> Connect Tools<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <div class="qs-l">快速开始</div>
+          <button class="qs-r" onclick="qchat('分析我的项目结构')"><i class="ph ph-folder-open"></i> 项目分析<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="qchat('扫描安全漏洞')"><i class="ph ph-shield"></i> 安全扫描<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="qchat('帮我规划实现方案')"><i class="ph ph-git-branch"></i> 方案规划<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
+          <button class="qs-r" onclick="mcp('audit')"><i class="ph ph-squares-four"></i> 连接工具<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
         </div>
       </div>
 
-      <!-- Reason View -->
+      <!-- 推理视图 -->
       <div class="chat-area" id="rv" style="display:none">
         <div class="rh">
-          <h3>Deep Reasoning Engine</h3>
-          <div class="sub">Step-by-step logical decomposition for complex decisions</div>
+          <h3>深度推理引擎</h3>
+          <div class="sub">将复杂问题逐步分解，逻辑推导</div>
           <div class="mps">
-            <button class="mp on" data-m="CHAIN" onclick="setMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> CoT</button>
-            <button class="mp" data-m="TREE" onclick="setMode('TREE',this)"><i class="ph ph-tree-structure"></i> Tree</button>
-            <button class="mp" data-m="SWOT" onclick="setMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT</button>
-            <button class="mp" data-m="ROOT_CAUSE" onclick="setMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 5-Why</button>
+            <button class="mp on" data-m="CHAIN" onclick="setMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> 链式推理</button>
+            <button class="mp" data-m="TREE" onclick="setMode('TREE',this)"><i class="ph ph-tree-structure"></i> 树形推理</button>
+            <button class="mp" data-m="SWOT" onclick="setMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT分析</button>
+            <button class="mp" data-m="ROOT_CAUSE" onclick="setMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 根因分析</button>
           </div>
         </div>
         <div class="msg-list" id="rl">
-          <div class="welcome"><h1 style="font-size:24px">Deep Reasoning</h1><p>Enter a complex question — the engine breaks it down step by step.</p></div>
+          <div class="welcome"><h1 style="font-size:24px">深度推理</h1><p>输入复杂问题 — 引擎会逐步分析推导</p></div>
         </div>
         <div class="input-area">
           <div class="input-card">
-            <textarea id="ri" placeholder="Ask a reasoning question…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
+            <textarea id="ri" placeholder="提出推理问题…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
             <div class="input-actions">
               <div class="ia-left"></div>
               <div class="ia-right"><button class="send" onclick="reason()"><i class="ph ph-arrow-up"></i></button></div>
@@ -97,8 +97,13 @@
     </div>
   </div>
 
-  <!-- Right Panel -->
+  <!-- 右侧面板 -->
   <aside id="pn">
+    <!-- 守夜人 (放最上面) -->
+    <div class="ps">
+      <div class="ps-h">🛡️ 守夜人</div>
+      <div id="wt"></div>
+    </div>
     <div class="ps">
       <div class="ps-h">AI 核心能力</div>
       <div id="ai"></div>
@@ -136,7 +141,7 @@
 
 <script>
 var A='/api',D=document;
-var w={min:function(){try{window.pywebview.api.min()}catch(e){console.log('min:',e)}},max:function(){try{window.pywebview.api.max()}catch(e){console.log('max:',e)}},close:function(){try{window.pywebview.api.close()}catch(e){window.close()}}};
+var w={min:function(){try{window.pywebview.api.min()}catch(e){}},max:function(){try{window.pywebview.api.max()}catch(e){}},close:function(){try{window.pywebview.api.close()}catch(e){window.close()}}};
 var RM='CHAIN',ST={},pnOpen=true;
 var $=function(id){return D.getElementById(id)};
 var esc=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
@@ -162,17 +167,17 @@ function toast(t){var d=D.createElement('div');d.className='toast';d.textContent
 function addMsg(role,txt,cid){
   var c=$(cid||'ml'),g=D.createElement('div');g.className='mg';var u=role==='user';
   g.innerHTML='<div class="av '+(u?'u':'a')+'">'+(u?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
-    '<div class="mb"><div class="mh"><span class="mauth">'+(u?'You':'GBT')+'</span><span class="mtime">'+tfmt()+'</span></div>'+
+    '<div class="mb"><div class="mh"><span class="mauth">'+(u?'你':'GBT')+'</span><span class="mtime">'+tfmt()+'</span></div>'+
     '<div class="mc">'+esc(txt)+'</div></div>';
   c.appendChild(g);c.scrollTop=c.scrollHeight;return g;
 }
 
 function chat(){
   var t=$('ci').value.trim();if(!t)return;$('ci').value='';
-  addMsg('user',t);var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
+  $('wc').style.display='none';addMsg('user',t);var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
   .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').textContent=r.response||r.error})
-  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>'});
+  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'});
 }
 
 function reason(){
@@ -182,9 +187,9 @@ function reason(){
   fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
   .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
     g.querySelector('.mc').innerHTML='<div class="rc"><div class="rmt"><span class="rb">'+(r.mode||RM)+
-      '</span><span>'+(r.steps||0)+' steps</span><span>Confidence: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
-      '<div class="rbo">'+esc(r.conclusion||'No conclusion')+'</div></div>';h.scrollTop=h.scrollHeight})
-  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>'});
+      '</span><span>'+(r.steps||0)+' 步</span><span>置信度: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
+      '<div class="rbo">'+esc(r.conclusion||'无结论')+'</div></div>';h.scrollTop=h.scrollHeight})
+  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'});
 }
 
 function switchProv(){
@@ -192,24 +197,111 @@ function switchProv(){
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
   .then(function(r){return r.json()}).then(function(j){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').textContent=j.name?('Switched to '+j.name+' ('+j.model+')'):'Switch failed'});
+    g.querySelector('.mc').textContent=j.name?('已切换至 '+j.name+' ('+j.model+')'):'切换失败'});
 }
 
 function mcp(s){
   go('chat',D.querySelector('[data-v=chat]'));
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--red)">FAIL</span>')+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});
+    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">成功</span>':'<span style="color:var(--red)">失败</span>')+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});
 }
 
 function evo(){
   go('chat',D.querySelector('[data-v=chat]'));
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
   fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').textContent=r.ok?('Evolve SUCCESS\n'+r.summary+'\nSteps: '+r.steps):'Evolve FAIL'});
+    g.querySelector('.mc').textContent=r.ok?('进化成功\n'+r.summary+'\n步骤: '+r.steps):'进化失败'});
 }
 
-// ── Panel Data ──
+// ── 守夜人 ──
+var _WT={running:false,alerts:[],autoFix:true};
+
+function wtDot(s){
+  var cls='idle';if(s==='ok')cls='ok';else if(s==='warn')cls='warn';else if(s==='error')cls='err';
+  return '<span class="wt-dot '+cls+'"></span>';
+}
+
+function wtLevel(l){if(l==='critical')return'crit';if(l==='warn')return'warn';return'info'}
+
+async function loadWatcher(){
+  try{
+    var r=await fetch(A+'/watcher/status'),d=await r.json();
+    _WT.running=d.running;
+    var h='<div class="wt-header">';
+    h+='<span class="wt-badge '+(d.running?'on':'off')+'">'+(d.running?'运行中':'已停止')+'</span>';
+    h+='<span style="font-size:10px;color:var(--t4)">自动修复: '+(d.auto_fix?'开':'关')+'</span>';
+    h+='</div>';
+
+    // 监控网格
+    if(d.monitors){
+      var order=['network','process','filesystem','wifi','registry','disk','logs'];
+      var labels={network:'网络',process:'进程',filesystem:'文件',wifi:'WiFi',registry:'注册表',disk:'磁盘',logs:'日志'};
+      h+='<div class="wt-grid">';
+      order.forEach(function(k){
+        var m=d.monitors[k]||{status:'idle'};
+        h+='<div class="wt-item" title="'+(m.details||'')+'">'+wtDot(m.status)+labels[k]+'</div>';
+      });
+      h+='</div>';
+    }
+
+    // 最近告警
+    if(d.recent_alerts&&d.recent_alerts.length){
+      h+='<div style="margin-top:6px;font-size:10px;color:var(--t4);font-weight:600">最近告警</div>';
+      d.recent_alerts.slice(0,5).forEach(function(a){
+        h+='<div class="wt-alert '+wtLevel(a.level)+(a.fixed?' fixed':'')+'" title="'+(a.message||'')+'">';
+        h+='<div class="wa-h"><span class="wa-src">'+a.source+'</span><span style="font-size:9px;color:var(--t4)">'+a.time+'</span></div>';
+        h+='<div class="wa-msg">'+esc(a.message||'').substring(0,60)+'</div>';
+        if(a.fixed)h+='<div class="wa-fix">✅ 已自动修复</div>';
+        h+='</div>';
+      });
+    }
+
+    // 按钮
+    h+='<div class="wt-btn-row">';
+    if(d.running){
+      h+='<button class="wt-btn stop" onclick="wtStop()">⏹ 停止</button>';
+    }else{
+      h+='<button class="wt-btn start" onclick="wtStart()">▶ 启动</button>';
+    }
+    h+='<button class="wt-btn scan" onclick="wtScan()">🔍 扫描</button>';
+    h+='</div>';
+
+    $('wt').innerHTML=h;
+  }catch(e){$('wt').innerHTML='<span style="color:var(--t4);font-size:10px">守夜人离线</span>'}
+}
+
+async function wtStart(){
+  try{
+    var r=await fetch(A+'/watcher/start',{method:'POST'}),d=await r.json();
+    if(d.ok)toast('🛡️ 守夜人已启动 — '+d.monitors+'个监控点');
+    loadWatcher();
+  }catch(e){toast('启动失败: '+e.message)}
+}
+
+async function wtStop(){
+  try{
+    var r=await fetch(A+'/watcher/stop',{method:'POST'}),d=await r.json();
+    toast('守夜人已停止');
+    loadWatcher();
+  }catch(e){}
+}
+
+async function wtScan(){
+  toast('🛡️ 正在扫描...');
+  try{
+    var r=await fetch(A+'/watcher/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:'all'})}),
+        d=await r.json();
+    go('chat',D.querySelector('[data-v=chat]'));
+    var g=addMsg('ai','');g.querySelector('.mc').innerHTML='<b>🛡️ 守夜人扫描结果</b>';
+    for(var k in d){
+      var v=d[k];g.querySelector('.mc').innerHTML+='<div style="margin:4px 0;font-size:12px"><b>'+k+':</b> '+(v.ok?'<span style="color:var(--green)">正常</span>':'<span style="color:var(--red)">异常</span>')+' — '+esc(v.output||'')+'</div>';
+    }
+    loadWatcher();
+  }catch(e){}
+}
+
+// ── 面板数据 ──
 var _CONN=null;
 
 async function _getConns(){
@@ -222,13 +314,13 @@ function _cDot(s){return s==='connected'?'<span class="cp-dot on"></span>':'<spa
 async function loadAI(){
   try{
     var items=[
-      {id:'chat',icon:'ph-chat-circle-dots',name:'LLM Chat',desc:'Dialogue',act:'go',arg:'chat'},
-      {id:'reason',icon:'ph-brain',name:'Deep Reason',desc:'CoT Tree SWOT 5Why',act:'go',arg:'reason'},
-      {id:'scanner',icon:'ph-scan',name:'Scanner',desc:'Code Analysis',act:'mcp',arg:'scanner'},
-      {id:'audit',icon:'ph-shield-check',name:'Audit',desc:'Security Audit',act:'mcp',arg:'audit'},
-      {id:'auto-fix',icon:'ph-wrench',name:'Auto Fix',desc:'Vuln Patching',act:'mcp',arg:'auto-fix'},
-      {id:'evolve',icon:'ph-arrows-clockwise',name:'6-Step Evolve',desc:'Self-evolution',act:'evolve'},
-      {id:'websearch',icon:'ph-globe',name:'Web Search',desc:'Real-time',act:'webSearch'}
+      {id:'chat',icon:'ph-chat-circle-dots',name:'LLM 对话',desc:'智能问答',act:'go',arg:'chat'},
+      {id:'reason',icon:'ph-brain',name:'深度推理',desc:'CoT/树形/SWOT/根因',act:'go',arg:'reason'},
+      {id:'scanner',icon:'ph-scan',name:'代码扫描',desc:'代码分析',act:'mcp',arg:'scanner'},
+      {id:'audit',icon:'ph-shield-check',name:'安全审计',desc:'全面评估',act:'mcp',arg:'audit'},
+      {id:'auto-fix',icon:'ph-wrench',name:'自动修复',desc:'漏洞修补',act:'mcp',arg:'auto-fix'},
+      {id:'evolve',icon:'ph-arrows-clockwise',name:'自我进化',desc:'自进化',act:'evolve'},
+      {id:'websearch',icon:'ph-globe',name:'网页搜索',desc:'实时搜索',act:'webSearch'}
     ];
     var h='<div class="cp-list">';
     items.forEach(function(it){
@@ -240,18 +332,18 @@ async function loadAI(){
     });
     h+='</div>';
     $('ai').innerHTML=h;
-  }catch(e){$('ai').innerHTML='<span class="cp-err">'+esc(e.message)+'</span>'}
+  }catch(e){$('ai').innerHTML='<span class="cp-err">-</span>'}
 }
 
 async function loadControl(){
   try{
     var items=[
-      {id:'filesystem',icon:'ph-folder-open',name:'Filesystem',tools:'Read/Write/Search'},
-      {id:'terminal',icon:'ph-terminal-window',name:'Terminal',tools:'Shell Exec'},
-      {id:'process',icon:'ph-cpu',name:'Process Mgr',tools:'List/Kill/Info'},
-      {id:'registry',icon:'ph-database',name:'Registry',tools:'Read/Write'},
-      {id:'git',icon:'ph-git-branch',name:'Git',tools:'Status/Log/Diff'},
-      {id:'display',icon:'ph-monitor',name:'Display',tools:'Screenshot'}
+      {id:'filesystem',icon:'ph-folder-open',name:'文件系统',tools:'读写搜索'},
+      {id:'terminal',icon:'ph-terminal-window',name:'终端',tools:'命令执行'},
+      {id:'process',icon:'ph-cpu',name:'进程管理',tools:'列表/终止'},
+      {id:'registry',icon:'ph-database',name:'注册表',tools:'读写'},
+      {id:'git',icon:'ph-git-branch',name:'Git',tools:'状态/日志'},
+      {id:'display',icon:'ph-monitor',name:'显示',tools:'截图'}
     ];
     var h='<div class="cp-list">';
     items.forEach(function(it){
@@ -272,11 +364,11 @@ async function loadControl(){
 async function loadHack(){
   try{
     var items=[
-      {id:'scanner',icon:'ph-scan',name:'Scanner',desc:'Vuln Detection',level:'high'},
-      {id:'audit',icon:'ph-shield-check',name:'Audit',desc:'Full Assessment',level:'high'},
-      {id:'auto-fix',icon:'ph-wrench',name:'Auto Fix',desc:'Auto Patching',level:'mid'},
-      {id:'network',icon:'ph-radar',name:'Network',desc:'Ping/DNS/Trace',level:'mid'},
-      {id:'wifi',icon:'ph-wifi-high',name:'WiFi',desc:'Signal Scan',level:'low'}
+      {id:'scanner',icon:'ph-scan',name:'漏洞扫描',desc:'漏洞检测',level:'high'},
+      {id:'audit',icon:'ph-shield-check',name:'安全审计',desc:'全面评估',level:'high'},
+      {id:'auto-fix',icon:'ph-wrench',name:'自动修复',desc:'自动打补丁',level:'mid'},
+      {id:'network',icon:'ph-radar',name:'网络安全',desc:'Ping/DNS/Trace',level:'mid'},
+      {id:'wifi',icon:'ph-wifi-high',name:'WiFi扫描',desc:'信号扫描',level:'low'}
     ];
     var h='<div class="cp-list">';
     items.forEach(function(it){
@@ -306,11 +398,11 @@ async function loadConnectors(){
   try{var cs=await _getConns();var on=cs.filter(function(c){return c.status==='connected'}).length;
     var off=cs.filter(function(c){return c.status==='disconnected'}).length;
     var h='<div class="cn-summary">';
-    h+='<div class="cn-stat"><span class="cn-num on">'+on+'</span> Active</div>';
-    h+='<div class="cn-stat"><span class="cn-num">'+off+'</span> Off</div>';
+    h+='<div class="cn-stat"><span class="cn-num on">'+on+'</span> 活跃</div>';
+    h+='<div class="cn-stat"><span class="cn-num">'+off+'</span> 离线</div>';
     h+='</div>';
     h+='<div class="cn-quick">';
-    var cats={code:'Code',device:'Device',data:'Data',security:'Security',communication:'Comm'};
+    var cats={code:'代码',device:'设备',data:'数据',security:'安全',communication:'通信'};
     for(var cat in cats){
       var items=cs.filter(function(c){return c.category===cat});
       var act=items.filter(function(c){return c.status==='connected'}).length;
@@ -318,20 +410,20 @@ async function loadConnectors(){
     }
     h+='</div>';
     $('cn').innerHTML=h;
-  }catch(e){$('cn').innerHTML='Offline'}
+  }catch(e){$('cn').innerHTML='离线'}
 }
 
 function cnToggle(id,status){
   var ep=status==='connected'?'disconnect':'connect';
   fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    toast(j.ok?('OK: '+j.status):(j.error||'Failed'));
+    toast(j.ok?('成功: '+j.status):(j.error||'失败'));
     _CONN=null;loadControl();loadConnectors();
   });
 }
 
 async function loadMarket(){
   try{var r=await fetch(A+'/market'),d=await r.json(),mk=$('mk');
-    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">Market closed</span>';return}
+    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">休市中</span>';return}
     var h='';d.indices.forEach(function(i){
       var dir=i.change>=0?'mk-up':'mk-dn',arr=i.change>=0?'+':'';
       h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';
@@ -343,12 +435,12 @@ async function loadMarket(){
 async function loadSystem(){
   try{var r=await fetch(A+'/system'),d=await r.json(),sy=$('sy');
     var h='<div class="sys-r"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>';
-    h+='<div class="sys-r"><div class="sr"><span>RAM '+d.memory_used_gb+'/'+d.memory_total_gb+' GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>';
+    h+='<div class="sys-r"><div class="sr"><span>内存 '+d.memory_used_gb+'/'+d.memory_total_gb+' GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>';
     sy.innerHTML=h;
     try{var rd=await fetch(A+'/devices'),dd=await rd.json();
       if(dd.disk_c&&dd.disk_c.total_gb){
         var du=dd.disk_c,pct=Math.round(du.used_gb/du.total_gb*100);
-        sy.innerHTML+='<div class="sys-r"><div class="sr"><span>C: '+du.used_gb+'/'+du.total_gb+' GB</span><span class="sv">'+pct+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+pct+'%"></div></div></div>';
+        sy.innerHTML+='<div class="sys-r"><div class="sr"><span>C盘 '+du.used_gb+'/'+du.total_gb+' GB</span><span class="sv">'+pct+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+pct+'%"></div></div></div>';
       }
     }catch(e){}
   }catch(e){}
@@ -356,20 +448,20 @@ async function loadSystem(){
 
 async function loadDevices(){
   try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
-    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+g.name+'</div><div class="dv-i">'+(g.ram_mb?'VRAM '+g.ram_mb+' MB':'')+'</div></div>'})}
-    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> Audio</div><div class="dv-i">'+ac+'/'+d.audio.length+' devices</div></div>'}
-    dv.innerHTML=h||'No device data';
+    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+g.name+'</div><div class="dv-i">'+(g.ram_mb?'显存 '+g.ram_mb+' MB':'')+'</div></div>'})}
+    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> 音频设备</div><div class="dv-i">'+ac+'/'+d.audio.length+' 设备</div></div>'}
+    dv.innerHTML=h||'无设备数据';
   }catch(e){}
 }
 
 async function loadProviders(){
   try{var r=await fetch(A+'/providers');ST.p=await r.json();var s=$('ms'),ll=$('ll');s.innerHTML='';var h='';
   for(var k in ST.p){var v=ST.p[k],on=v.status==='available';
-    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'OK ':'-- ')+v.name+'</option>';
-    var dots=on?'<span style="color:var(--green)">OK</span>':'<span style="color:var(--t4)">--</span>';
+    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'可用 ':'-- ')+v.name+'</option>';
+    var dots=on?'<span style="color:var(--green)">可用</span>':'<span style="color:var(--t4)">不可用</span>';
     h+=dots+' '+v.name+'<br>';
   }
-  ll.innerHTML=h||'No providers';
+  ll.innerHTML=h||'无可用引擎';
 }catch(e){}}
 
 function aiAction(id,act,arg){
@@ -382,30 +474,30 @@ function aiAction(id,act,arg){
 function runEvolve(){
   go('chat',D.querySelector('[data-v=chat]'));
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  g.querySelector('.mc').innerHTML='<b>Running 6-Step Evolution...</b>';
+  g.querySelector('.mc').innerHTML='<b>正在运行自我进化...</b>';
   fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(j){
     g.querySelector('.mc').classList.remove('thinking');
     var c=j.ok?'#52c41a':'#ff4d4f';
-    g.querySelector('.mc').innerHTML='<div style="font-weight:600;color:'+c+'">'+(j.ok?'SUCCESS':'FAILED')+'</div>'
-      +'<p style="margin:4px 0;color:var(--t2)">Summary: '+(j.summary||'No summary')+'</p>'
-      +'<p style="margin:0;color:var(--t4)">Steps: '+(j.steps||0)+' | Rollback: '+(j.rollback||'No')+'</p>';
+    g.querySelector('.mc').innerHTML='<div style="font-weight:600;color:'+c+'">'+(j.ok?'进化成功':'进化失败')+'</div>'
+      +'<p style="margin:4px 0;color:var(--t2)">摘要: '+(j.summary||'无')+'</p>'
+      +'<p style="margin:0;color:var(--t4)">步骤: '+(j.steps||0)+' | 回滚: '+(j.rollback||'否')+'</p>';
   }).catch(function(e){
     g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
   });
 }
 
 function runWebSearch(){
-  var q=prompt('Search query:');
+  var q=prompt('搜索关键词:');
   if(!q||!q.trim())return;
   go('chat',D.querySelector('[data-v=chat]'));
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  g.querySelector('.mc').innerHTML='<b>Searching: '+esc(q)+'...</b>';
+  g.querySelector('.mc').innerHTML='<b>搜索中: '+esc(q)+'...</b>';
   fetch(A+'/websearch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})})
   .then(function(r){return r.json()}).then(function(j){
     g.querySelector('.mc').classList.remove('thinking');
     if(j.ok){
-      var h='<div><b style="color:var(--cyan)">Results: '+esc(q)+'</b></div>';
+      var h='<div><b style="color:var(--cyan)">搜索结果: '+esc(q)+'</b></div>';
       h+='<div style="max-height:400px;overflow-y:auto;margin-top:8px">';
       (j.results||[]).forEach(function(r){h+='<div style="margin:6px 0;padding:6px;background:var(--bg2);border-radius:6px"><a href="'+r.url+'" target="_blank" style="color:var(--cyan)">'+r.title+'</a><br><small style="color:var(--t3)">'+r.snippet+'</small></div>'});
       h+='</div>';
@@ -415,20 +507,20 @@ function runWebSearch(){
     }
   }).catch(function(e){
     g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
   });
 }
 
 function netTool(id){
   go('chat',D.querySelector('[data-v=chat]'));
   var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  var labels={network:'Network Diagnostics',wifi:'WiFi Scan'};
-  g.querySelector('.mc').innerHTML='<b>Running '+labels[id]+'...</b>';
+  var labels={network:'网络诊断',wifi:'WiFi扫描'};
+  g.querySelector('.mc').innerHTML='<b>正在运行 '+labels[id]+'...</b>';
   var ep=id==='wifi'?'wifi-scan':'network-ping';
   fetch(A+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
     g.querySelector('.mc').classList.remove('thinking');
     if(j.ok){
-      var h='<div style="font-weight:600;color:var(--green)">'+labels[id]+' Results</div>';
+      var h='<div style="font-weight:600;color:var(--green)">'+labels[id]+' 结果</div>';
       h+='<pre style="margin:8px 0;padding:10px;background:var(--bg2);border-radius:6px;font-size:11px;max-height:300px;overflow:auto;white-space:pre-wrap">'+esc(j.output||'')+'</pre>';
       g.querySelector('.mc').innerHTML=h;
     }else{
@@ -436,7 +528,7 @@ function netTool(id){
     }
   }).catch(function(e){
     g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">Error: '+esc(e.message)+'</span>';
+    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
   });
 }
 
@@ -444,14 +536,14 @@ async function init(){
   $('pn').classList.remove('closed');$('pt').classList.add('on');$('card').classList.add('narrow');
   try{var r=await fetch(A+'/status');ST=await r.json();
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
-  }catch(e){$('stx').textContent='Offline'}
+  }catch(e){$('stx').textContent='离线'}
   await _getConns();
-  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors()]);
+  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher()]);
   loadProviders();
   loadMarket();
   loadSystem();
   loadDevices();
-  setInterval(function(){loadSystem();loadDevices()},5000);
+  setInterval(function(){loadSystem();loadDevices();loadWatcher()},5000);
   setInterval(loadMarket,30000);
 }
 

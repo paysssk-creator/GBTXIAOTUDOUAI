@@ -244,3 +244,37 @@ body{
 .rh .sub{font-size:13px;color:var(--t3);margin-top:var(--s1);margin-bottom:var(--s4)}
 .mps{display:flex;gap:var(--s1);flex-wrap:wrap}
 .mp{padding:5px 14px;background:var(--bg-input);color:var(--t2);border:1px solid var(--b-def);border-radius:var(--r-full);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .1s var(--e-out);display:flex;align-items:center;gap:var(--s2)}.mp i{font-size:14px}.mp:hover{background:var(--bg-hover);border-color:var(--b-strong)}.mp.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── 守夜人面板 ── */
+.wt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.wt-badge{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.wt-badge.on{background:rgba(82,196,26,.15);color:var(--green)}
+.wt-badge.off{background:rgba(255,77,79,.15);color:var(--red)}
+.wt-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.wt-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;flex-shrink:0}
+.wt-dot.ok{background:var(--green)}
+.wt-dot.warn{background:#faad14}
+.wt-dot.err{background:var(--red)}
+.wt-dot.idle{background:var(--t4)}
+.wt-item{display:flex;align-items:center;padding:3px 4px;border-radius:var(--r1);font-size:10px;color:var(--t3);gap:3px}
+.wt-item:hover{background:var(--bg-hover)}
+.wt-alert{display:flex;flex-direction:column;padding:6px 8px;margin:2px 0;background:var(--bg2);border-radius:var(--r2);border-left:3px solid transparent;cursor:pointer;transition:all .15s var(--e-out)}
+.wt-alert.warn{border-color:#faad14}
+.wt-alert.crit{border-color:var(--red);background:rgba(255,77,79,.06)}
+.wt-alert.info{border-color:var(--cyan)}
+.wt-alert.fixed{border-color:var(--green)}
+.wt-alert .wa-h{display:flex;justify-content:space-between;align-items:center}
+.wt-alert .wa-src{font-size:9px;text-transform:uppercase;color:var(--t4);letter-spacing:.5px}
+.wt-alert .wa-msg{font-size:11px;color:var(--t2);margin-top:2px;line-height:1.3}
+.wt-alert .wa-fix{font-size:10px;color:var(--green);margin-top:3px;font-style:italic}
+.wt-bar-wrap{margin-top:4px}
+.wt-bar{height:4px;border-radius:2px;background:var(--bg-input);overflow:hidden}
+.wt-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s var(--e-out)}
+.wt-bar-fill.warn{background:#faad14}
+.wt-bar-fill.crit{background:var(--red)}
+.wt-btn-row{display:flex;gap:4px;margin-top:6px}
+.wt-btn{padding:3px 10px;border-radius:var(--r2);font-size:10px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .1s var(--e-out)}
+.wt-btn.start{background:var(--green);color:#fff}
+.wt-btn.stop{background:var(--red);color:#fff}
+.wt-btn.scan{background:var(--accent);color:#fff}
+.wt-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
