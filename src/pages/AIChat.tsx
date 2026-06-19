@@ -4,7 +4,6 @@ import MarketTickerBar from "@/components/dashboard/MarketTickerBar";
 import ChatMsg from "@/components/dashboard/ChatMessage";
 import { initialChatMessages, mockResponses, type ChatMessage } from "@/data/mockData";
 
-let n = 0;
 const ts = () => new Date().toLocaleTimeString("zh-CN", { hour12: false });
 
 export default function AIChat() {
@@ -13,21 +12,33 @@ export default function AIChat() {
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const msgCount = useRef(0);               // reset on each mount
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
+  // Cleanup timeout on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   const send = () => {
     const text = input.trim();
     if (!text || typing) return;
-    n++;
-    setMessages(prev => [...prev, { id: `u${n}`, role: "user", content: text, timestamp: ts() }]);
+    msgCount.current += 1;
+    const uid = `u${msgCount.current}`;
+    setMessages(prev => [...prev, { id: uid, role: "user", content: text, timestamp: ts() }]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      n++;
-      setMessages(prev => [...prev, { id: `a${n}`, role: "ai", content: mockResponses[n % mockResponses.length], timestamp: ts() }]);
+    timerRef.current = setTimeout(() => {
+      msgCount.current += 1;
+      const aid = `a${msgCount.current}`;
+      const response = mockResponses[msgCount.current % mockResponses.length];
+      setMessages(prev => [...prev, { id: aid, role: "ai", content: response, timestamp: ts() }]);
       setTyping(false);
     }, 1400);
   };
