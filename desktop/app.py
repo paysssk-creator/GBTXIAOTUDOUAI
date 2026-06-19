@@ -574,6 +574,8 @@ def rs():
             agent, cap = match
             result = agent.execute(cap.name, text)
             fw.router.history.append(result)
+            # 🔄 发布到共享上下文
+            agent.publish(cap.name, result.ok, result.data)
             return jsonify({
                 "mode": "agent",
                 "agent": result.agent,
@@ -766,6 +768,14 @@ def fw_agents():
         for name, agent in fw.router.agents.items():
             agents[name] = agent.get_context()
         return jsonify({"router": fw.router.name, "agents": agents, "total_caps": sum(len(a.capabilities) for a in fw.router.agents.values())})
+    return jsonify({"error": "多Agent框架未初始化"}), 503
+
+@app.route("/api/framework/context")
+def fw_context():
+    """共享上下文 — 所有Agent全局状态"""
+    if hasattr(_brain, 'framework') and _brain.framework:
+        ctx = _brain.framework.get_shared_context()
+        return jsonify(ctx)
     return jsonify({"error": "多Agent框架未初始化"}), 503
 
 # ── 自主AI大脑 ──

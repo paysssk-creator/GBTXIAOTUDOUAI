@@ -63,10 +63,12 @@ class BaseAgent(ABC):
         self.name = name
         self.description = description
         self.brain = brain  # 大脑引用（用于ping）
+        self.framework = None  # 框架引用（由MultiAgentFramework注入）
         self.capabilities: list[AgentCapability] = []
         self.running = True
         self._lock = threading.Lock()
         self.stats = {"calls": 0, "errors": 0, "last_call": None}
+        self._local_context = {}  # Agent本地上下文
         
     def register(self, name: str, desc: str, keywords: list[str],
                  handler: Callable, priority: int = 5, requires: list[str] = None):
@@ -102,7 +104,16 @@ class BaseAgent(ABC):
                 for c in self.capabilities
             ],
             "stats": dict(self.stats),
+            "local_context_keys": list(self._local_context.keys()),
         }
+    
+    def publish(self, capability: str, ok: bool, data: str = ""):
+        """向共享上下文发布执行结果（不影响主Agent）"""
+        if self.framework:
+            try:
+                self.framework._on_agent_executed(self.name, capability, ok, data)
+            except:
+                pass  # 静默失败，不影响主执行流
     
     def ping_brain(self, source: str, reason: str):
         """通知大脑"""
@@ -673,13 +684,26 @@ class RouterAgent(BaseAgent):
 # ═══════════════════════════════════════════════════════
 
 class MultiAgentFramework:
-    """多Agent框架 — 组装 + 启动 + 协调"""
+    """多Agent框架 — 组装 + 启动 + 协调 + 共享上下文"""
     
     def __init__(self, brain=None, trader=None, account=None, watcher=None):
         self.brain = brain
         self.trader = trader
         self.account = account
         self.watcher = watcher
+        
+        # 🔄 共享上下文 — 所有Agent可读写的全局状态
+        self.shared_context = {
+            "framework_version": "v1.0",
+            "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_action": None,
+            "last_agent": None,
+            "action_history": [],  # 最近20条全局动作记录
+            "alerts": [],          # 全局告警(守夜人注入)
+            "market_status": {},   # 行情快照
+            "system_health": {},   # 系统健康
+        }
+        self._ctx_lock = threading.Lock()
         
         # 初始化所有Agent
         self.router = RouterAgent(brain)
@@ -689,6 +713,11 @@ class MultiAgentFramework:
         self.system = SystemAgent(brain, watcher, account)
         self.notify = NotifyAgent(brain)
         
+        # 注入共享上下文到所有Agent
+        for agent in [self.router, self.desktop, self.trading,
+                      self.hacker, self.system, self.notify]:
+            agent.framework = self  # 反向引用
+        
         # 注册到路由器
         self.router.register_agent(self.desktop)
         self.router.register_agent(self.trading)
@@ -696,7 +725,78 @@ class MultiAgentFramework:
         self.router.register_agent(self.system)
         self.router.register_agent(self.notify)
         
-        L.info(f"🚀 多Agent框架就绪: {len(self.router.agents)} 领域Agent + 路由器Agent")
+        L.info(f"🚀 多Agent框架就绪: {len(self.router.agents)} 领域Agent + 共享上下文")
+    
+    # ═══════════════════════════════════════════════════════
+    # 共享上下文管理
+    # ═══════════════════════════════════════════════════════
+    
+    def update_context(self, agent_name: str, action: str, detail: dict = None):
+        """Agent执行后更新共享上下文"""
+        with self._ctx_lock:
+            self.shared_context["last_agent"] = agent_name
+            self.shared_context["last_action"] = {
+                "agent": agent_name,
+                "action": action,
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "detail": detail or {}
+            }
+            self.shared_context["action_history"].append(self.shared_context["last_action"])
+            if len(self.shared_context["action_history"]) > 20:
+                self.shared_context["action_history"] = self.shared_context["action_history"][-20:]
+    
+    def sync_with_watcher(self):
+        """同步守夜人Agent的发现到共享上下文"""
+        try:
+            from gbt.watcher_agent import get_watcher_agent
+            wa = get_watcher_agent()
+            if wa and wa.running:
+                status = wa.get_status()
+                with self._ctx_lock:
+                    # 注入守夜人发现
+                    findings = status.get("recent_findings", [])
+                    if findings:
+                        self.shared_context["alerts"] = findings[-10:]
+                    # 同步系统健康
+                    self.shared_context["system_health"] = {
+                        "watcher_agent": status.get("running", False),
+                        "heartbeats": status.get("heartbeat_count", 0),
+                        "hallucination_count": status.get("stats", {}).get("hallucination", 0),
+                        "connection_alerts": status.get("stats", {}).get("connection_alerts", 0),
+                    }
+        except Exception as e:
+            L.debug(f"守夜人同步: {e}")
+    
+    def notify_all_agents(self, message: str, level: str = "info"):
+        """向所有Agent广播消息（不干扰主Agent）"""
+        with self._ctx_lock:
+            self.shared_context.setdefault("broadcasts", []).append({
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "level": level,
+                "message": message
+            })
+            # 保留最近10条广播
+            if len(self.shared_context["broadcasts"]) > 10:
+                self.shared_context["broadcasts"] = self.shared_context["broadcasts"][-10:]
+    
+    def get_shared_context(self) -> dict:
+        """获取共享上下文快照"""
+        with self._ctx_lock:
+            ctx = dict(self.shared_context)
+            # 截断历史避免过大
+            ctx["action_history"] = ctx["action_history"][-10:]
+            return ctx
+    
+    def _on_agent_executed(self, agent_name: str, capability: str, ok: bool, data: str = ""):
+        """Agent执行完成钩子 — 更新上下文 + 检查冲突"""
+        self.update_context(agent_name, capability, {
+            "ok": ok,
+            "data_preview": data[:100] if data else ""
+        })
+        # 每5次执行同步一次守夜人
+        total_calls = sum(a.stats.get("calls", 0) for a in self.router.agents.values())
+        if total_calls % 5 == 0:
+            self.sync_with_watcher()
     
     def get_system_status(self) -> dict:
         """获取全系统状态"""
