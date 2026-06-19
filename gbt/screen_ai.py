@@ -441,10 +441,14 @@ class AutoPipeline:
     
     def voice_trade_announce(self, code, name, action, price, shares):
         """语音播报交易"""
-        action_cn = "买入" if action == "buy" else "卖出"
-        msg = f"{action_cn} {name}，{shares}股，价格{price}元"
-        L.info(f"🗣 播报: {msg}")
-        return self.voice.speak(msg)
+        try:
+            action_cn = "买入" if action == "buy" else "卖出"
+            msg = f"{action_cn} {name}，{shares}股，价格{price}元"
+            L.info(f"🗣 播报: {msg}")
+            return self.voice.speak(msg)
+        except Exception as e:
+            L.error(f"voice_trade_announce FAILED: {e}")
+            return {"ok": False, "error": str(e)}
     
     def screen_watch(self, interval=10, duration=300):
         """屏幕监视 — 定期 OCR 桌面，追踪操盘状态
