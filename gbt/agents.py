@@ -200,7 +200,7 @@ class TradingAgent(BaseAgent):
     
     def _setup_capabilities(self):
         self.register("stock_lookup", "查询股票实时行情",
-                     ["行情", "分析", "查询", "查询股票", "股票", "600", "000", "300", "688"],
+                     ["行情", "分析", "查询股票", "股票", "600", "000", "300", "688"],
                      self._stock_lookup, priority=8)
         self.register("market_scan", "扫描全市场/自选股",
                      ["全市场", "市场扫描", "扫一遍", "扫描市场"],
@@ -353,7 +353,7 @@ class HackerAgent(BaseAgent):
                 if not os.path.exists(python_exe):
                     python_exe = 'python'  # 降级
                 r = subprocess.run([python_exe, "-c", code],
-                                  capture_output=True, text=True, timeout=10,
+                                  capture_output=True, text=True, timeout=15,
                                   errors='replace')
             
             out = (r.stdout.rstrip() + ('\n' + r.stderr.rstrip() if r.stderr else ''))[:1000]
@@ -361,7 +361,7 @@ class HackerAgent(BaseAgent):
                 out = "(执行完成，无输出)"
             return f"⚡ 执行结果:\n{out}"
         except subprocess.TimeoutExpired:
-            return "⏱ 代码执行超时(>10s)"
+            return "⏱ 代码执行超时(>15s)"
         except Exception as e:
             return f"❌ 执行失败: {e}"
     
