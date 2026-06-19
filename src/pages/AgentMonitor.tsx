@@ -1,7 +1,7 @@
 import { Bot, RefreshCw } from "lucide-react";
 import MarketTickerBar from "@/components/dashboard/MarketTickerBar";
 import AgentCard from "@/components/dashboard/AgentCard";
-import { agents } from "@/data/mockData";
+import { useAgents } from "@/hooks/useSupabaseData";
 
 const logs = [
   { t: "15:42:33", a: "brain", msg: "策略评估完成 — 创业板指突破信号", c: "text-gain" },
@@ -14,6 +14,7 @@ const logs = [
 ];
 
 export default function AgentMonitor() {
+  const { data: agents, loading } = useAgents();
   const online = agents.filter(a => a.status === "online").length;
   const idle = agents.filter(a => a.status === "idle").length;
 
@@ -46,13 +47,25 @@ export default function AgentMonitor() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {agents.map((agent, i) => (
-            <div key={agent.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}>
-              <AgentCard {...agent} />
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-sm text-muted-foreground">加载中...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {agents.map((agent, i) => (
+              <div key={agent.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}>
+                <AgentCard
+                  name={agent.name}
+                  role={agent.role}
+                  status={agent.status as "online" | "idle" | "offline"}
+                  tasks={agent.tasks}
+                  lastActive={agent.last_active}
+                  memory={agent.memory}
+                  model={agent.model}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           <div className="px-5 py-3 border-b border-border">
