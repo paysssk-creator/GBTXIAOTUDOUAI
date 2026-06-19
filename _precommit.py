@@ -21,7 +21,7 @@ def check(name, ok, detail=""):
     return ok
 
 print("=" * 55)
-print("  GBT PRE-COMMIT CHECKLIST")
+print("  GBT PRE-COMMIT CHECKLIST (7 steps)")
 print("=" * 55)
 
 # ── 1. py_compile ──
@@ -41,8 +41,20 @@ except py_compile.PyCompileError as e:
 print("\n[2/6] 路由回归测试")
 r = subprocess.run([PY312, os.path.join(ROOT, 'tests', 'test_router.py')],
                    capture_output=True, text=True, timeout=120, errors='replace')
-output = r.stdout + r.stderr
-check("router", r.returncode == 0, f"{output.strip().split(chr(10))[-1] if output.strip() else 'no output'}")
+output1 = r.stdout + r.stderr
+ok1 = r.returncode == 0
+
+r2 = subprocess.run([PY312, os.path.join(ROOT, 'tests', 'test_router_keywords.py')],
+                    capture_output=True, text=True, timeout=120, errors='replace')
+output2 = r2.stdout + r2.stderr
+ok2 = r2.returncode == 0
+
+if ok1 and ok2:
+    check("router", True, f"regression + keywords: {output1.strip().split(chr(10))[-1] if output1.strip() else '?'} / {output2.strip().split(chr(10))[-1] if output2.strip() else '?'}")
+elif not ok1:
+    check("router", False, f"regression FAIL: {output1[:120]}")
+else:
+    check("router", False, f"keywords FAIL: {output2[:120]}")
 
 # ── 3. API smoke test ──
 print("\n[3/6] API 冒烟测试")
