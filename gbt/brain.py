@@ -152,7 +152,7 @@ class AutonomousBrain:
                 self._heartbeat_event.wait(timeout=10)
     
     def _sense(self, now, is_trading, triggered):
-        """感知环境"""
+        """感知环境 — 全部非阻塞读取，不直接轮询 MCP/API"""
         p = {
             "time": now.strftime("%H:%M:%S"),
             "is_trading": is_trading,
@@ -163,33 +163,23 @@ class AutonomousBrain:
             "account_status": {},
         }
         
-        # 1. 守夜人告警
+        # 1. 守夜人告警 — 读缓存（不用 get_status 避免锁竞争阻塞主循环）
         if self.watcher:
             try:
-                ws = self.watcher.get_status()
-                for name, st in ws.get("monitors", {}).items():
+                for name, st in self.watcher.monitor_status.items():
                     if st.get("status") in ("critical", "error"):
                         p["alerts"].append({
                             "source": name, "level": "critical",
                             "detail": st.get("details", ""),
                             "last": st.get("last_check", "")
                         })
+                # 连接状态从 watcher 缓存读（watcher 每 30s 刷新）
+                conn_cache = self.watcher.monitor_status.get("connections", {})
+                if isinstance(conn_cache, dict) and conn_cache.get("status"):
+                    p["connections"] = conn_cache.get("details", {})
+                    if isinstance(p["connections"], list):
+                        p["connections_down"] = len(p["connections"])
             except: pass
-        
-        # 2. MCP连接
-        try:
-            from gbt.mcp import get_mcp
-            mcp = get_mcp()
-            down_count = 0
-            for name, srv in mcp._s.items():
-                online = getattr(srv, 'status', None)
-                if online and hasattr(online, 'value'):
-                    online = online.value
-                p["connections"][name] = online or "unknown"
-                if online not in ("online", "connected"):
-                    down_count += 1
-            p["connections_down"] = down_count
-        except: pass
         
         # 3. 市场快照
         if is_trading and self.trader:
@@ -301,38 +291,28 @@ class AutonomousBrain:
                     self.trader.send_notification("GBT大脑", action.get("reason", ""))
                 
                 elif step == "connection_health":
+                    # ⚡ 从 watcher 缓存读连接状态，不直接轮询 MCP（避免阻塞主循环）
                     try:
-                        from gbt.mcp import get_mcp, call_mcp
-                        mcp = get_mcp()
-                        total, ok_count, down_list = 0, 0, []
-                        for name in list(mcp._s.keys()):
-                            try:
-                                total += 1
-                                result = call_mcp(name, "status", timeout=5)
-                                if result.ok:
-                                    ok_count += 1
-                                else:
-                                    down_list.append(name)
-                            except: pass
-                        r["detail"] = f"{ok_count}/{total} 在线"
-                        r["down"] = down_list
+                        from gbt.mcp import get_mcp
+                        conn_cache = {}
+                        if self.watcher:
+                            conn_cache = self.watcher.monitor_status.get("connections", {})
+                        down_list = conn_cache.get("details", []) if isinstance(conn_cache, dict) else []
+                        total = 19  # MCP 服务器总数（硬编码，watcher 也使用此值）
+                        ok_count = total - len(down_list) if isinstance(down_list, list) else total
+                        r["detail"] = f"{ok_count}/{total} 在线" if ok_count == total else f"{ok_count}/{total} 断连: {', '.join(down_list[:3])}"
+                        r["down"] = down_list if isinstance(down_list, list) else []
                         if ok_count < total:
-                            L.warning(f"🧠 连接健康: {ok_count}/{total}")
-                            # 尝试自动恢复: 刷新MCP配置
-                            if down_list:
-                                try:
+                            L.warning(f"🧠 连接健康(缓存): {ok_count}/{total}")
+                            # MCP 配置刷新（非阻塞）
+                            try:
+                                if down_list:
+                                    mcp = get_mcp()
                                     mcp.refresh()
-                                    L.info(f"🧠 MCP配置已刷新，尝试恢复 {len(down_list)} 个断连")
+                                    L.info(f"🧠 MCP配置已刷新")
                                     r["recovery"] = "mcp.refresh() 已执行"
-                                except Exception as re:
-                                    r["recovery"] = f"刷新失败: {re}"
-                            # 唤醒守夜人自动修复
-                            if self.watcher:
-                                try:
-                                    self.watcher._add_alert("connections", "warn",
-                                        f"大脑检测到{len(down_list)}个MCP断连需要修复",
-                                        "; ".join(down_list[:5]))
-                                except: pass
+                            except Exception as re:
+                                r["recovery"] = f"刷新失败: {re}"
                     except: r["ok"] = False
                 
                 elif step == "log_analysis":
