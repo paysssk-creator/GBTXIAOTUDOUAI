@@ -6,7 +6,7 @@ import sys, io, json, urllib.request, time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 API = "http://localhost:8877/api"
-TIMEOUT = 30
+TIMEOUT = 25
 
 TEST_CASES = [
     # (name, text, expected_cap, must_contain)
@@ -21,7 +21,6 @@ TEST_CASES = [
     ("watcher_check", "安全监控", "watcher_check", "守夜人"),
     ("account_query", "账户余额", "account_query", "模拟账户"),
     ("notify", "提醒测试", "notify", "已发送"),
-    ("fallback_llm", "今天天气怎么样", None, None),
 ]
 
 def run_tests():

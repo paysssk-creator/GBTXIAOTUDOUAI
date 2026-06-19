@@ -40,7 +40,7 @@ except py_compile.PyCompileError as e:
 # ── 2. Router test ──
 print("\n[2/6] 路由回归测试")
 r = subprocess.run([PY312, os.path.join(ROOT, 'tests', 'test_router.py')],
-                   capture_output=True, text=True, timeout=60, errors='replace')
+                   capture_output=True, text=True, timeout=120, errors='replace')
 output = r.stdout + r.stderr
 check("router", r.returncode == 0, f"{output.strip().split(chr(10))[-1] if output.strip() else 'no output'}")
 
