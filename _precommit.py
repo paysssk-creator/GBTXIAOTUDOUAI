@@ -48,12 +48,13 @@ check("router", r.returncode == 0, f"{output.strip().split(chr(10))[-1] if outpu
 print("\n[3/6] API 冒烟测试")
 try:
     eps = ["/api/status", "/api/brain/status", "/api/trader/status", 
-           "/api/watcher/status", "/api/trader/journal", "/api/trader/sessions"]
+           "/api/watcher/status", "/api/trader/journal", "/api/trader/sessions",
+           "/api/framework/status", "/api/framework/agents", "/api/framework/context"]
     ok_count = 0
     for ep in eps:
         urllib.request.urlopen(f'{API}{ep}', timeout=5)
         ok_count += 1
-    check("api", ok_count == 6, f"{ok_count}/6 endpoints reachable")
+    check("api", ok_count == len(eps), f"{ok_count}/{len(eps)} endpoints reachable")
 except Exception as e:
     check("api", False, str(e)[:60])
 
@@ -81,6 +82,15 @@ try:
         print(f"    watcher only {len(monitors)} monitors")
     offline = [n for n,m in monitors.items() if m.get('status') != 'ok']
     check("data", data_ok, f"watcher: {len(offline)} alerts")
+    
+    # framework (new)
+    try:
+        fw = json.loads(urllib.request.urlopen(f'{API}/api/framework/status', timeout=5).read())
+        agents = fw.get('agents', {})
+        if len(agents) < 5:
+            print(f"    framework only {len(agents)} agents (expected 5)")
+    except:
+        pass
 except Exception as e:
     check("data", False, str(e)[:60])
 

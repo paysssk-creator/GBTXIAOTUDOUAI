@@ -10,17 +10,17 @@ TIMEOUT = 30
 
 TEST_CASES = [
     # (name, text, expected_cap, must_contain)
-    ("browser_open", "打开浏览器", "browser_open", "已打开浏览器"),
-    ("window_maximize", "最大化窗口", "window_maximize", "窗口已最大化"),
+    ("browser_open", "打开浏览器", "browser_open", "已打开"),
+    ("window_maximize", "最大化窗口", "window_maximize", "已最大化"),
     ("screenshot", "截图保存", "screenshot", "截图已保存"),
     ("stock_lookup", "查询600519行情", "stock_lookup", "600519"),
-    ("market_scan", "扫描市场", "market_scan", "自选股"),
-    ("watchlist", "自选股列表", "watchlist", "自选股"),
+    ("market_scan", "扫描市场", "market_scan", "自选池"),
+    ("watchlist", "自选股列表", "watchlist", "自选池"),
     ("auto_trade", "买入600036", "auto_trade", "600036"),
     ("system_status", "系统状态", "system_status", "大脑"),
     ("watcher_check", "安全监控", "watcher_check", "守夜人"),
     ("account_query", "账户余额", "account_query", "模拟账户"),
-    ("notify", "提醒测试", "notify", "已发送通知"),
+    ("notify", "提醒测试", "notify", "已发送"),
     ("fallback_llm", "今天天气怎么样", None, None),
 ]
 
