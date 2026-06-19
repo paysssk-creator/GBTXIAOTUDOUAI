@@ -353,7 +353,7 @@ class HackerAgent(BaseAgent):
                 if not os.path.exists(python_exe):
                     python_exe = 'python'  # 降级
                 r = subprocess.run([python_exe, "-c", code],
-                                  capture_output=True, text=True, timeout=15,
+                                  capture_output=True, text=True, timeout=20,
                                   errors='replace')
             
             out = (r.stdout.rstrip() + ('\n' + r.stderr.rstrip() if r.stderr else ''))[:1000]
@@ -361,7 +361,7 @@ class HackerAgent(BaseAgent):
                 out = "(执行完成，无输出)"
             return f"⚡ 执行结果:\n{out}"
         except subprocess.TimeoutExpired:
-            return "⏱ 代码执行超时(>15s)"
+            return "⏱ 代码执行超时(>20s)"
         except Exception as e:
             return f"❌ 执行失败: {e}"
     
@@ -809,8 +809,8 @@ class MultiAgentFramework:
         """获取共享上下文快照"""
         with self._ctx_lock:
             ctx = dict(self.shared_context)
-            # 截断历史避免过大
-            ctx["action_history"] = ctx["action_history"][-10:]
+            # 返回全部历史（最多20条），不截断
+            ctx["action_history"] = list(ctx["action_history"])
             return ctx
     
     def _on_agent_executed(self, agent_name: str, capability: str, ok: bool, data: str = ""):
