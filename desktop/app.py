@@ -566,10 +566,39 @@ def rs():
     if not llm.a:return jsonify({"mode":"demo","conclusion":"No LLM available.","confidence":0})
     text = d.get("text","")
     
-    # ── 智能路由: 先尝试匹配已注册能力, 命中则直接执行 ──
+    # ── 多Agent智能路由: 优先走Agent框架 ──
+    if hasattr(_brain, 'framework') and _brain.framework:
+        fw = _brain.framework
+        match = fw.router.classify(text)
+        if match:
+            agent, cap = match
+            result = agent.execute(cap.name, text)
+            fw.router.history.append(result)
+            return jsonify({
+                "mode": "agent",
+                "agent": result.agent,
+                "capability": result.capability,
+                "conclusion": result.data,
+                "confidence": 0.95,
+                "routed": True,
+                "protocol": {
+                    "ok": result.ok,
+                    "trace_id": result.trace_id or f"gex-{int(time.time()*1000)}",
+                    "agent": result.agent,
+                    "capability": result.capability,
+                    "elapsed_ms": result.elapsed_ms,
+                    "phases": {
+                        "intent": {"ok": True, "source": "user"},
+                        "route": {"ok": True, "agent": result.agent},
+                        "execute": {"ok": result.ok},
+                        "respond": {"ok": True}
+                    }
+                }
+            })
+    
+    # ── 降级: 旧路由器 + LLM推理 ──
     route_result = _brain.route_intent(text) if hasattr(_brain, 'route_intent') else None
     if route_result and route_result.get("routed"):
-        # 能力直接执行成功
         exec_info = route_result.get("execution", {})
         proto_info = route_result.get("protocol", {})
         return jsonify({
@@ -578,7 +607,7 @@ def rs():
             "confidence": route_result["classification"]["confidence"],
             "capability": route_result["classification"]["capability"].name if route_result["classification"].get("capability") else "unknown",
             "routed": True,
-            "protocol": proto_info  # 7阶段协议跟踪
+            "protocol": proto_info
         })
     
     # ── 未命中能力 → 带能力上下文的LLM推理 ──
@@ -719,6 +748,25 @@ def wt_alerts():
          "fix_result": a.fix_result[:200]}
         for a in list(watcher.alerts)[:50]
     ]})
+
+# ── 多Agent框架 ──
+@app.route("/api/framework/status")
+def fw_status():
+    """多Agent框架状态"""
+    if hasattr(_brain, 'framework') and _brain.framework:
+        return jsonify(_brain.framework.get_system_status())
+    return jsonify({"error": "多Agent框架未初始化"}), 503
+
+@app.route("/api/framework/agents")
+def fw_agents():
+    """列出所有Agent"""
+    if hasattr(_brain, 'framework') and _brain.framework:
+        fw = _brain.framework
+        agents = {}
+        for name, agent in fw.router.agents.items():
+            agents[name] = agent.get_context()
+        return jsonify({"router": fw.router.name, "agents": agents, "total_caps": sum(len(a.capabilities) for a in fw.router.agents.values())})
+    return jsonify({"error": "多Agent框架未初始化"}), 503
 
 # ── 自主AI大脑 ──
 @app.route("/api/brain/status")
@@ -1364,6 +1412,12 @@ def launch():
             _router.set_protocol(_protocol)
             _brain.protocol = _protocol
             L.info(f"🧭 智能路由器已注入: {len(_router.capabilities)} 项能力 + 7阶段协议")
+            
+            # 🚀 初始化多Agent框架 (RouterAgent + 5领域Agent)
+            from gbt.agents import init_framework
+            framework = init_framework(brain=_brain, trader=trader, account=account, watcher=watcher)
+            _brain.framework = framework
+            L.info(f"🚀 多Agent框架就绪: {len(framework.router.agents)}领域Agent + RouterAgent")
             
             _brain.start()
         time.sleep(0.5)
