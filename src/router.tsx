@@ -1,24 +1,22 @@
-import Index from "./pages/Index";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import Overview from "./pages/Overview";
+import AgentMonitor from "./pages/AgentMonitor";
+import MarketData from "./pages/MarketData";
+import AuditReport from "./pages/AuditReport";
+import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 
 export const routers = [
   {
     path: "/",
-    name: "home",
-    element: <Index />,
+    element: <DashboardLayout />,
+    children: [
+      { index: true, element: <Overview /> },
+      { path: "agents", element: <AgentMonitor /> },
+      { path: "market", element: <MarketData /> },
+      { path: "audit", element: <AuditReport /> },
+      { path: "chat", element: <AIChat /> },
+    ],
   },
-  /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
-  {
-    path: "*",
-    name: "404",
-    element: <NotFound />,
-  },
+  { path: "*", element: <NotFound /> },
 ];
-
-declare global {
-  interface Window {
-    __routers__: typeof routers;
-  }
-}
-
-window.__routers__ = routers;
