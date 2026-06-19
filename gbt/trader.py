@@ -476,7 +476,7 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
         return {"trade": True, "reasons": [f"通过 - {signal.strategy}"]}
 
     # ═══════════════════════════════════════════════
-    # 阶段5: 执行交易 (电脑操控)
+    # 阶段5: 执行交易 (电脑操控) — 先风控，再开浏览器
     # ═══════════════════════════════════════════════
     def execute_trade(self, code, action, shares=100, price=None, session=None):
         quote = self.market_data.get(code)
@@ -497,26 +497,47 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                      "shares": shares, "price": trade_price,
                      "amount": round(shares * trade_price, 2), "status": "pending"}
 
+        # ═══ 风控先行 — 不通过则绝不开浏览器 ═══
+        if self.risk_ctrl:
+            try:
+                rc_result = self.risk_ctrl.check_trade(code, action, shares, trade_price)
+                if not rc_result.get("approved", True):
+                    reason = rc_result.get("reason", "风控拦截")
+                    L.warning(f"🛑 风控拦截: {name}({code}) — {reason}")
+                    if session:
+                        session.result = f"⛔ 风控拦截: {reason}"
+                    self._record_trade(code, name, action, shares, trade_price, "rejected", reason)
+                    return {"ok": False, "msg": f"风控拦截: {reason}", "risk": rc_result}
+            except Exception as e:
+                L.error(f"风控检查异常: {e}")
+
         # ── 电脑操控步骤 ──
         platform = "东方财富交易"
         platform_url = self.TRADING_PLATFORMS.get(platform)
-
-        try:
-            # Step 5.1: 打开浏览器
-            if session:
-                s1 = session.add_step("execute", "打开浏览器", f"启动系统默认浏览器")
+        
+        # 防重复开关: 30分钟内不重复打开同一URL
+        now_ts = time.time()
+        last_open = getattr(self, '_last_browser_open', 0)
+        if now_ts - last_open < 1800:  # 30分钟冷却
+            L.info(f"⏭ 浏览器冷却中 ({(now_ts - last_open)/60:.0f}分钟前已打开)")
+        else:
+            self._last_browser_open = now_ts
             try:
+                # Step 5.1: 打开浏览器
+                if session:
+                    s1 = session.add_step("execute", "打开浏览器", f"启动系统默认浏览器")
                 os.startfile(platform_url)
-                if session: s1.status = "done"; s1.result = f"✅ 浏览器已打开"
+                if session: s1.status = "done"; s1.result = "✅ 浏览器已打开"
             except Exception as e:
                 if session: s1.status = "error"; s1.result = f"❌ {e}"
-                # 尝试备用方案: 用start命令
+                # 尝试备用方案
                 try:
                     subprocess.run(f'start {platform_url}', shell=True, timeout=5)
                     if session: s1.status = "done"; s1.result = "✅ (备用方式)"
                 except:
                     pass
 
+        try:
             # Step 5.2: 模拟键盘输入股票代码 (如果浏览器已激活)
             if session:
                 s2 = session.add_step("execute", "定位交易界面",
