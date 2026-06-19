@@ -339,7 +339,7 @@ def register_all():
                    _handler_maximize, priority=7),
 
         Capability("screenshot", "desktop", "屏幕截图",
-                   ["截图", "截屏", "屏幕截图", "拍屏"],
+                   ["截图", "截屏", "屏幕截图", "拍屏", "截个图", "拍个"],
                    _handler_screenshot, priority=6),
 
         # ═══ 交易/行情 ═══
@@ -380,14 +380,14 @@ def register_all():
         # ═══ 编程/黑客 ═══
         Capability("web_search", "hacker", "网络搜索获取实时信息",
                    ["搜索", "查一下", "search", "百度", "谷歌"],
-                   _handler_web_search, priority=7),
+                   _handler_web_search, priority=9),
 
         Capability("file_operation", "hacker", "文件读写操作",
                    ["读文件", "写文件", "文件", "代码", "编辑"],
                    _handler_file_op, priority=6),
 
         Capability("code_exec", "hacker", "执行Python/Shell代码",
-                   ["执行代码", "运行", "python", "shell", "cmd"],
+                   ["执行代码", "运行代码", "```", "shell", "cmd"],
                    _handler_code_exec, priority=8, requires=["desktop_ctl"]),
     ]
 
