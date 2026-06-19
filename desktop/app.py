@@ -743,6 +743,28 @@ def br_context():
     return jsonify(list(_brain.context)[:20])
 
 
+# ── 守夜人Agent API ──
+@app.route("/api/watcher_agent/status")
+def wa_status():
+    """守夜人Agent状态 — 独立第二Agent"""
+    try:
+        from gbt.watcher_agent import get_watcher_agent
+        wa = get_watcher_agent()
+        return jsonify(wa.get_status())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/watcher_agent/heartbeat", methods=["POST"])
+def wa_heartbeat():
+    """手动触发守夜人心跳"""
+    try:
+        from gbt.watcher_agent import get_watcher_agent
+        wa = get_watcher_agent()
+        result = wa.heartbeat()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ── A股操盘 API ──
 @app.route("/api/trader/status")
 def trs():

@@ -70,6 +70,20 @@ class AutonomousBrain:
         self._heartbeat_event.clear()
         self.thread = threading.Thread(target=self._brain_loop, daemon=True)
         self.thread.start()
+        
+        # 🦉 启动守夜人Agent（独立第二Agent，只读监控不参与改动）
+        try:
+            from gbt.watcher_agent import get_watcher_agent
+            self.watcher_agent = get_watcher_agent(main_brain=self)
+            if not self.watcher_agent.running:
+                self.watcher_agent.start(main_brain=self)
+            self._wa_thread = threading.Thread(target=self._watcher_agent_loop, daemon=True)
+            self._wa_thread.start()
+            L.info("🦉 守夜人Agent已同步启动")
+        except Exception as e:
+            L.warning(f"守夜人Agent启动失败: {e}")
+            self.watcher_agent = None
+        
         L.info("🧠 自主AI大脑已启动 — 事件驱动心跳 + 外部触发唤醒")
         return {"ok": True, "msg": "大脑已启动"}
     
@@ -455,6 +469,18 @@ class AutonomousBrain:
             except Exception as le:
                 L.warning(f"无法写入决策日志: {le}")
     
+    def _watcher_agent_loop(self):
+        """守夜人Agent独立心跳循环"""
+        time.sleep(15)  # 等大脑先稳定
+        while self.running and self.watcher_agent:
+            try:
+                result = self.watcher_agent.heartbeat()
+                if result.get('findings', 0) > 0:
+                    L.info(f"🦉 守夜人心跳#{result['heartbeat']}: {result['findings']}项发现")
+            except Exception as e:
+                L.warning(f"守夜人Agent心跳异常: {e}")
+            time.sleep(30)  # 每30秒心跳
+    
     def get_status(self):
         return {
             "running": self.running,
@@ -468,7 +494,8 @@ class AutonomousBrain:
             "context": list(self.context)[:10],
             "last_checks": self.last_check,
             "capabilities": self.capabilities,
-            "router_caps": len(self.router.capabilities) if self.router else 0
+            "router_caps": len(self.router.capabilities) if self.router else 0,
+            "watcher_agent": self.watcher_agent.get_status() if self.watcher_agent else None
         }
     
     def route_intent(self, text: str) -> dict:
