@@ -217,7 +217,6 @@ class TradingAgent(BaseAgent):
         # Python 3 \w 包含中文 → \b 在"600519行情"中失效(数字和中文同为\w)
         # 用 ASCII-only lookbehind/lookahead 替代
         m = re.search(r'(?<![a-zA-Z0-9])(6\d{5}|0\d{5}|3\d{5}|68\d{4})(?![a-zA-Z0-9])', text)
-        cmd = text
         if not m:
             return "未找到有效股票代码"
         code = m.group(1)
@@ -331,20 +330,40 @@ class HackerAgent(BaseAgent):
     
     def _code_exec(self, text):
         import subprocess, re
-        code_m = re.search(r'```(?:python)?\s*\n?(.*?)```', text, re.DOTALL)
-        if code_m:
-            code = code_m.group(1).strip()
-            try:
-                r = subprocess.run(["python", "-c", code],
+        # 提取代码块: ```python ... ``` 或 ``` ... ```
+        code_m = re.search(r'```(?:python|py|bash|sh|shell|cmd|ps1)?\s*\n?(.*?)```', text, re.DOTALL | re.IGNORECASE)
+        if not code_m:
+            return "请用 ```python ... ``` 格式提供代码"
+        
+        code = code_m.group(1).strip()
+        if not code:
+            return "代码块为空"
+        
+        # 确定执行器: bash/sh → shell; 其他 → python
+        fence = code_m.group(0)[:30]
+        is_shell = any(tag in fence.lower() for tag in ('sh', 'bash', 'shell', 'cmd', 'ps1'))
+        
+        try:
+            if is_shell:
+                r = subprocess.run(code, shell=True, capture_output=True,
+                                  text=True, timeout=10, errors='replace')
+            else:
+                # 用 Python312 执行
+                python_exe = r'C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe'
+                if not os.path.exists(python_exe):
+                    python_exe = 'python'  # 降级
+                r = subprocess.run([python_exe, "-c", code],
                                   capture_output=True, text=True, timeout=10,
                                   errors='replace')
-                out = (r.stdout + r.stderr)[:1000] or "(执行完成，无输出)"
-                return f"⚡ 执行结果:\n{out}"
-            except subprocess.TimeoutExpired:
-                return "⏱ 代码执行超时"
-            except Exception as e:
-                return f"❌ 执行失败: {e}"
-        return "请用 ```python ... ``` 格式提供代码"
+            
+            out = (r.stdout.rstrip() + ('\n' + r.stderr.rstrip() if r.stderr else ''))[:1000]
+            if not out:
+                out = "(执行完成，无输出)"
+            return f"⚡ 执行结果:\n{out}"
+        except subprocess.TimeoutExpired:
+            return "⏱ 代码执行超时(>10s)"
+        except Exception as e:
+            return f"❌ 执行失败: {e}"
     
     def execute(self, capability_name: str, text: str) -> AgentResult:
         t0 = time.time()
