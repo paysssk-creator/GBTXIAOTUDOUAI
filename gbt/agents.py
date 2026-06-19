@@ -241,11 +241,16 @@ class TradingAgent(BaseAgent):
     def _market_scan(self, text):
         if self.trader:
             ws = self.trader.watchlist
-            return f"自选池共 {len(ws)} 只股票: {', '.join(ws[:10])}"
+            codes = list(ws.keys())[:10] if isinstance(ws, dict) else list(ws)[:10]
+            return f"自选池共 {len(ws)} 只股票: {', '.join(codes)}"
         return "交易引擎未就绪"
     
     def _watchlist(self, text):
-        return self._market_scan(text) if self.trader else "交易引擎未就绪"
+        if self.trader:
+            ws = self.trader.watchlist
+            codes = list(ws.keys()) if isinstance(ws, dict) else list(ws)
+            return f"自选池共 {len(ws)} 只: {', '.join(codes[:20])}"
+        return "交易引擎未就绪"
     
     def _auto_trade(self, text):
         import re
