@@ -1,6 +1,7 @@
 """
 capabilities.py — GBT 能力注册表
-统一注册所有 18 项能力到智能路由器
+统一注册所有能力到智能路由器
+v3.0: +屏幕OCR +语音 +精准抓取 +操盘流水线
 """
 import os, sys, re, logging
 from gbt.router import Capability, router
@@ -326,6 +327,142 @@ def _handler_code_exec(text):
     return "请提供要执行的代码或命令 (用 ```python ... ``` 或 执行: ...)"
 
 
+# ═══════════════════════════════════════════════════
+# New v3.0: 屏幕AI + 语音 + 精准抓取 + 操盘流水线
+# ═══════════════════════════════════════════════════
+
+def _handler_screen_ocr(text):
+    """屏幕OCR — 识别桌面文字"""
+    try:
+        from gbt.screen_ai import ScreenOCR
+        import re
+        # 可选区域: OCR 左上角 100,50 右下角 500,300
+        region = None
+        m = re.search(r'(\d+)\s*[,，]\s*(\d+)\s*[,，]\s*(\d+)\s*[,，]\s*(\d+)', text)
+        if m:
+            l, t, w, h = map(int, m.groups())
+            region = (l, t, w, h)
+        ocr = ScreenOCR()
+        r = ocr.read_text(region=region)
+        if r["ok"]:
+            lines = r.get("lines", [])
+            preview = "\n".join(lines[:15])
+            if not preview.strip():
+                preview = r["text"][:500]
+            return f"👁 屏幕OCR识别 ({r['word_count']}词):\n{preview}"
+        return f"OCR失败: {r.get('error', '未知错误')}"
+    except Exception as e:
+        return f"OCR异常: {e}"
+
+
+def _handler_voice_speak(text):
+    """语音朗读"""
+    try:
+        from gbt.screen_ai import Voice
+        import re
+        # 提取要朗读的文字
+        speak_text = text
+        m = re.search(r'(?:说|朗读|语音|讲话|speak)\s*[:：]?\s*(.+)', text, re.IGNORECASE)
+        if m:
+            speak_text = m.group(1).strip()[:200]
+        elif any(kw in text for kw in ["说", "朗读", "语音"]):
+            speak_text = text.split("说")[-1].split("朗读")[-1].strip()[:200]
+        r = Voice.speak(speak_text)
+        return f"🗣 已朗读: {speak_text[:60]}" if r["ok"] else f"语音失败: {r.get('error','')}"
+    except Exception as e:
+        return f"语音异常: {e}"
+
+
+def _handler_login_detect(text):
+    """检测券商登录状态"""
+    try:
+        from gbt.screen_ai import ScreenOCR, Voice
+        ocr = ScreenOCR()
+        r = ocr.detect_login_state()
+        if r["logged_in"]:
+            Voice.speak("登录已确认，GBT 接手自主操盘")
+            return f"✅ 已登录 (置信度 {r['confidence']}) | 关键词: {r['found_keywords']}"
+        return f"⚠ 未检测到登录 (置信度 {r['confidence']}) | 找到: {r.get('found_keywords', [])} | 屏幕: {r.get('screen_text', '')[:100]}"
+    except Exception as e:
+        return f"登录检测异常: {e}"
+
+
+def _handler_precision_scrape(text):
+    """精准资讯抓取 — 多源交叉验证"""
+    import urllib.request, json
+    results = {}
+    try:
+        # 提取搜索目标
+        target = text
+        m = re.search(r'(?:抓取|资讯|新闻|scrape)\s*[:：]?\s*(.+)', text, re.IGNORECASE)
+        if m:
+            target = m.group(1).strip()
+        
+        # Source 1: 新浪财经快讯
+        try:
+            url = "https://hq.sinajs.cn/list=sh000001"
+            req = urllib.request.Request(url, headers={
+                "Referer": "https://finance.sina.com.cn",
+                "User-Agent": "Mozilla/5.0"
+            })
+            raw = urllib.request.urlopen(req, timeout=8).read().decode("gbk", errors="replace")
+            parts = raw.split(",")
+            if len(parts) > 3:
+                results["上证指数"] = f"{parts[0]}: {parts[1]} ({parts[3]}%)"
+        except:
+            results["上证指数"] = "获取失败"
+        
+        # Source 2: Web search (use DDG/bing fallback)
+        try:
+            import ssl
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+            search_url = f"https://api.duckduckgo.com/?q={urllib.request.quote(target)}&format=json&no_html=1"
+            req = urllib.request.Request(search_url, headers={"User-Agent": "Mozilla/5.0"})
+            resp = urllib.request.urlopen(req, context=ssl_ctx, timeout=10)
+            ddg = json.loads(resp.read().decode())
+            abstract = ddg.get("AbstractText", "") or ddg.get("Abstract", "")
+            if abstract:
+                results["DDG摘要"] = abstract[:300]
+            topics = ddg.get("RelatedTopics", [])
+            if topics:
+                results["相关条目"] = len(topics)
+                results["首条"] = topics[0].get("Text", "")[:200] if topics else ""
+        except Exception as e:
+            results["DDG"] = f"搜索受限: {str(e)[:60]}"
+        
+        summary = "\n".join(f"  [{k}] {v}" for k, v in results.items())
+        return f"🎯 精准抓取 [{target}]:\n{summary}"
+    except Exception as e:
+        return f"抓取异常: {e}"
+
+
+def _handler_auto_pipeline(text):
+    """自主操盘流水线"""
+    try:
+        from gbt.screen_ai import AutoPipeline
+        import re
+        # 提取平台URL
+        url = "https://trade.eastmoney.com"  # 默认东方财富
+        m = re.search(r'(https?://[^\s]+)', text)
+        if m:
+            url = m.group(1)
+        # 提取平台名
+        platform = "券商平台"
+        m2 = re.search(r'(?:平台|用)\s*[:：]?\s*(.{2,10})', text)
+        if m2:
+            platform = m2.group(1).strip()
+        
+        pipeline = AutoPipeline()
+        r = pipeline.run_login_flow(url, platform)
+        if r["ok"]:
+            return f"🚀 操盘流水线启动: {r['phase']} | {r['message']}"
+        return f"⚠ 流水线: {r['phase']} — {r.get('message', r.get('error', ''))}"
+    except Exception as e:
+        return f"流水线异常: {e}"
+
+
 def register_all():
     """注册所有能力到路由器"""
     caps = [
@@ -389,6 +526,27 @@ def register_all():
         Capability("code_exec", "hacker", "执行Python/Shell代码",
                    ["执行代码", "运行代码", "```", "shell", "cmd"],
                    _handler_code_exec, priority=8, requires=["desktop_ctl"]),
+
+        # ═══ v3.0: 屏幕AI + 语音 + 精准抓取 + 操盘流水线 ═══
+        Capability("screen_ocr", "desktop", "屏幕OCR识别桌面文字",
+                   ["OCR", "识别屏幕", "看屏幕", "读屏幕", "屏幕文字", "识图"],
+                   _handler_screen_ocr, priority=7),
+
+        Capability("voice_speak", "notification", "Windows语音朗读输出",
+                   ["说", "朗读", "语音", "讲话", "speak", "播报"],
+                   _handler_voice_speak, priority=5),
+
+        Capability("login_detect", "desktop", "OCR检测券商登录状态",
+                   ["检测登录", "登录检测", "登录状态", "是否登录"],
+                   _handler_login_detect, priority=8, requires=["desktop_ctl"]),
+
+        Capability("precision_scrape", "hacker", "多源精准资讯抓取交叉验证",
+                   ["抓取", "资讯", "新闻", "scrape", "行情快讯", "精准"],
+                   _handler_precision_scrape, priority=10),
+
+        Capability("auto_pipeline", "trading", "自主操盘流水线(开浏览器→检测登录→接手)",
+                   ["操盘流水线", "自动操盘", "开始操盘", "自主交易", "自动交易"],
+                   _handler_auto_pipeline, priority=10, requires=["trader", "brain"]),
     ]
 
     for cap in caps:
