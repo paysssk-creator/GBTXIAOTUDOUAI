@@ -214,7 +214,9 @@ class TradingAgent(BaseAgent):
     
     def _stock_lookup(self, text):
         import re
-        m = re.search(r'\b(6\d{5}|0\d{5}|3\d{5}|68\d{4})\b', text)
+        # Python 3 \w 包含中文 → \b 在"600519行情"中失效(数字和中文同为\w)
+        # 用 ASCII-only lookbehind/lookahead 替代
+        m = re.search(r'(?<![a-zA-Z0-9])(6\d{5}|0\d{5}|3\d{5}|68\d{4})(?![a-zA-Z0-9])', text)
         cmd = text
         if not m:
             return "未找到有效股票代码"
@@ -254,7 +256,7 @@ class TradingAgent(BaseAgent):
     
     def _auto_trade(self, text):
         import re
-        m = re.search(r'\b(6\d{5}|0\d{5}|3\d{5})\b', text)
+        m = re.search(r'(?<![a-zA-Z0-9])(6\d{5}|0\d{5}|3\d{5})(?![a-zA-Z0-9])', text)
         code = m.group(1) if m else ""
         parts = []
         parts.append(f"📊 交易引擎: auto_trade={'ON' if (self.trader and self.trader.auto_trade) else 'OFF'}")
