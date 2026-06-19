@@ -516,20 +516,20 @@ def register_all():
 
         # ═══ 编程/黑客 ═══
         Capability("web_search", "hacker", "网络搜索获取实时信息",
-                   ["搜索", "查一下", "search", "百度", "谷歌"],
-                   _handler_web_search, priority=9),
+                   ["搜索", "查一下", "search", "百度", "谷歌", "搜索新闻"],
+                   _handler_web_search, priority=11),
 
         Capability("file_operation", "hacker", "文件读写操作",
                    ["读文件", "写文件", "文件", "代码", "编辑"],
                    _handler_file_op, priority=6),
 
         Capability("code_exec", "hacker", "执行Python/Shell代码",
-                   ["执行代码", "运行代码", "```", "shell", "cmd"],
+                   ["执行代码", "运行代码", "python", "```", "shell", "cmd"],
                    _handler_code_exec, priority=8, requires=["desktop_ctl"]),
 
         # ═══ v3.0: 屏幕AI + 语音 + 精准抓取 + 操盘流水线 ═══
         Capability("screen_ocr", "desktop", "屏幕OCR识别桌面文字",
-                   ["OCR", "识别屏幕", "看屏幕", "读屏幕", "屏幕文字", "识图"],
+                   ["ocr", "识别屏幕", "看屏幕", "读屏幕", "屏幕文字", "识图", "OCR识别"],
                    _handler_screen_ocr, priority=7),
 
         Capability("voice_speak", "notification", "Windows语音朗读输出",
@@ -545,7 +545,7 @@ def register_all():
                    _handler_precision_scrape, priority=10),
 
         Capability("auto_pipeline", "trading", "自主操盘流水线(开浏览器→检测登录→接手)",
-                   ["操盘流水线", "自动操盘", "开始操盘", "自主交易", "自动交易"],
+                   ["操盘流水线", "操盘", "自动操盘", "开始操盘", "自主交易", "自动交易"],
                    _handler_auto_pipeline, priority=10, requires=["trader", "brain"]),
     ]
 
