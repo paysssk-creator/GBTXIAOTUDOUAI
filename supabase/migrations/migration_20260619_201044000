@@ -1,0 +1,77 @@
+
+-- System status table (single row, upserted)
+CREATE TABLE IF NOT EXISTS system_status (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  llm text NOT NULL DEFAULT 'DeepSeek v3',
+  provider text NOT NULL DEFAULT 'deepseek',
+  model text NOT NULL DEFAULT 'deepseek-chat',
+  mcp_count int NOT NULL DEFAULT 0,
+  keys_available int NOT NULL DEFAULT 0,
+  keys_total int NOT NULL DEFAULT 0,
+  uptime text NOT NULL DEFAULT '0s',
+  version text NOT NULL DEFAULT 'v2.1.0619',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE system_status ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_system_status" ON system_status FOR SELECT USING (true);
+
+-- Agents table
+CREATE TABLE IF NOT EXISTS agents (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  role text NOT NULL,
+  status text NOT NULL DEFAULT 'offline',
+  tasks int NOT NULL DEFAULT 0,
+  last_active text NOT NULL DEFAULT '0s',
+  memory text NOT NULL DEFAULT '0 MB',
+  model text NOT NULL DEFAULT 'N/A',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_agents" ON agents FOR SELECT USING (true);
+
+-- Market indices table
+CREATE TABLE IF NOT EXISTS market_indices (
+  code text PRIMARY KEY,
+  name text NOT NULL,
+  price numeric NOT NULL DEFAULT 0,
+  change numeric NOT NULL DEFAULT 0,
+  change_pct numeric NOT NULL DEFAULT 0,
+  volume text NOT NULL DEFAULT '0',
+  high numeric NOT NULL DEFAULT 0,
+  low numeric NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE market_indices ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_market" ON market_indices FOR SELECT USING (true);
+
+-- Audit reports table
+CREATE TABLE IF NOT EXISTS audit_reports (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  timestamp timestamptz NOT NULL DEFAULT now(),
+  passed_count int NOT NULL DEFAULT 0,
+  warnings_count int NOT NULL DEFAULT 0,
+  failed_count int NOT NULL DEFAULT 0,
+  passed_items jsonb NOT NULL DEFAULT '[]',
+  warning_items jsonb NOT NULL DEFAULT '[]',
+  failed_items jsonb NOT NULL DEFAULT '[]',
+  v12_details jsonb NOT NULL DEFAULT '{}'
+);
+ALTER TABLE audit_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_audit" ON audit_reports FOR SELECT USING (true);
+
+-- Chat messages table
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  role text NOT NULL CHECK (role IN ('system', 'user', 'ai')),
+  content text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_read_chat" ON chat_messages FOR SELECT USING (true);
+CREATE POLICY "public_insert_chat" ON chat_messages FOR INSERT WITH CHECK (true);
+
+-- Enable realtime for live updates
+ALTER PUBLICATION supabase_realtime ADD TABLE agents;
+ALTER PUBLICATION supabase_realtime ADD TABLE market_indices;
+ALTER PUBLICATION supabase_realtime ADD TABLE system_status;

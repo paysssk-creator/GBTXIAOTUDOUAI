@@ -3360,7 +3360,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          id: string
+          last_active: string
+          memory: string
+          model: string
+          name: string
+          role: string
+          status: string
+          tasks: number
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          last_active?: string
+          memory?: string
+          model?: string
+          name: string
+          role: string
+          status?: string
+          tasks?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          last_active?: string
+          memory?: string
+          model?: string
+          name?: string
+          role?: string
+          status?: string
+          tasks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_reports: {
+        Row: {
+          failed_count: number
+          failed_items: Json
+          id: string
+          passed_count: number
+          passed_items: Json
+          timestamp: string
+          v12_details: Json
+          warning_items: Json
+          warnings_count: number
+        }
+        Insert: {
+          failed_count?: number
+          failed_items?: Json
+          id?: string
+          passed_count?: number
+          passed_items?: Json
+          timestamp?: string
+          v12_details?: Json
+          warning_items?: Json
+          warnings_count?: number
+        }
+        Update: {
+          failed_count?: number
+          failed_items?: Json
+          id?: string
+          passed_count?: number
+          passed_items?: Json
+          timestamp?: string
+          v12_details?: Json
+          warning_items?: Json
+          warnings_count?: number
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      market_indices: {
+        Row: {
+          change: number
+          change_pct: number
+          code: string
+          high: number
+          low: number
+          name: string
+          price: number
+          updated_at: string
+          volume: string
+        }
+        Insert: {
+          change?: number
+          change_pct?: number
+          code: string
+          high?: number
+          low?: number
+          name: string
+          price?: number
+          updated_at?: string
+          volume?: string
+        }
+        Update: {
+          change?: number
+          change_pct?: number
+          code?: string
+          high?: number
+          low?: number
+          name?: string
+          price?: number
+          updated_at?: string
+          volume?: string
+        }
+        Relationships: []
+      }
+      system_status: {
+        Row: {
+          id: string
+          keys_available: number
+          keys_total: number
+          llm: string
+          mcp_count: number
+          model: string
+          provider: string
+          updated_at: string
+          uptime: string
+          version: string
+        }
+        Insert: {
+          id?: string
+          keys_available?: number
+          keys_total?: number
+          llm?: string
+          mcp_count?: number
+          model?: string
+          provider?: string
+          updated_at?: string
+          uptime?: string
+          version?: string
+        }
+        Update: {
+          id?: string
+          keys_available?: number
+          keys_total?: number
+          llm?: string
+          mcp_count?: number
+          model?: string
+          provider?: string
+          updated_at?: string
+          uptime?: string
+          version?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
