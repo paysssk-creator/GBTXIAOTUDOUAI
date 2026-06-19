@@ -378,6 +378,74 @@ class AutoPipeline:
             "message": f"{platform_name} 登录已确认，GBT 自主操盘就绪"
         }
     
+    def monitor_trade_screen(self, code, action, expected_text=None, timeout=60):
+        """监视交易屏幕 — OCR 验证交易执行结果
+        
+        在交易提交后，定期 OCR 扫描屏幕，检测：
+        1. 订单确认弹窗
+        2. 成交结果
+        3. 持仓变化
+        
+        Args:
+            code: 股票代码
+            action: 'buy'/'sell'
+            expected_text: 期望在屏幕上看到的文字（如"委托已提交"）
+            timeout: 最长等待时间（秒）
+        
+        Returns:
+            dict: {"ok", "found", "screen_text", "elapsed"}
+        """
+        action_cn = "买入" if action == "buy" else "卖出"
+        L.info(f"👁 开始监视屏幕 — {action_cn} {code}")
+        
+        keywords = [
+            "委托已提交", "委托成功", "已申报", "已成", "部分成",
+            "已成交", "委托失败", "废单", "撤单",
+            action_cn, code[-4:]  # 后4位代码
+        ]
+        if expected_text:
+            keywords.insert(0, expected_text)
+        
+        start = time.time()
+        check_interval = 3  # 每3秒扫一次
+        
+        while time.time() - start < timeout:
+            result = self.screen.read_text()
+            if not result["ok"]:
+                time.sleep(check_interval)
+                continue
+            
+            screen_text = result.get("text", "")
+            found = [kw for kw in keywords if kw in screen_text]
+            
+            if found:
+                elapsed = round(time.time() - start, 1)
+                L.info(f"👁 屏幕检测到: {found} (用时{elapsed}s)")
+                return {
+                    "ok": True,
+                    "found": True,
+                    "keywords": found,
+                    "screen_text": screen_text[:300],
+                    "elapsed": elapsed
+                }
+            
+            time.sleep(check_interval)
+        
+        return {
+            "ok": True,
+            "found": False,
+            "screen_text": "",
+            "elapsed": round(time.time() - start, 1),
+            "message": f"{timeout}s内未检测到交易确认"
+        }
+    
+    def voice_trade_announce(self, code, name, action, price, shares):
+        """语音播报交易"""
+        action_cn = "买入" if action == "buy" else "卖出"
+        msg = f"{action_cn} {name}，{shares}股，价格{price}元"
+        L.info(f"🗣 播报: {msg}")
+        return self.voice.speak(msg)
+    
     def screen_watch(self, interval=10, duration=300):
         """屏幕监视 — 定期 OCR 桌面，追踪操盘状态
         

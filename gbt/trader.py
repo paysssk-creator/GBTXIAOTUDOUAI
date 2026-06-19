@@ -154,6 +154,10 @@ class AShareTrader:
         # 电脑操控能力
         self.browser_profile = None          # Chrome profile
         self.use_browser_automation = True   # 使用浏览器自动化
+        
+        # 风控冷却 — 被拦截的股票 N 分钟内不重复分析
+        self.blocked_cooldown = {}  # {code: timestamp}
+        self.cooldown_minutes = 120  # 冷却时长(分钟)
 
     # ═══════════════════════════════════════════════
     # K线数据
@@ -504,10 +508,14 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                 if not rc_result.get("approved", True):
                     reason = rc_result.get("reason", "风控拦截")
                     L.warning(f"🛑 风控拦截: {name}({code}) — {reason}")
+                    # 加入冷却名单
+                    self.blocked_cooldown[code] = time.time() + self.cooldown_minutes * 60
                     if session:
                         session.result = f"⛔ 风控拦截: {reason}"
                     self._record_trade(code, name, action, shares, trade_price, "rejected", reason)
                     return {"ok": False, "msg": f"风控拦截: {reason}", "risk": rc_result}
+                # 通过 — 清除冷却
+                self.blocked_cooldown.pop(code, None)
             except Exception as e:
                 L.error(f"风控检查异常: {e}")
 
@@ -660,16 +668,28 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         if sig.action == "hold": continue
                         if sig.confidence < self.confidence_threshold: continue
 
+                        # ── 冷却检查: 被风控拦截过的股票 N 分钟内跳过 ──
+                        cooldown_until = self.blocked_cooldown.get(sig.code, 0)
+                        if time.time() < cooldown_until:
+                            remaining = int((cooldown_until - time.time()) / 60)
+                            L.debug(f"⏳ {sig.name}({sig.code}) 冷却中 ({remaining}分钟后重试)")
+                            continue
+
                         # ── 风控审批 ──
                         if HAS_RISK:
                             approval = risk_mgr.approve_trade(sig, self.positions)
                             if not approval["approved"]:
                                 L.info(f"🛡️ 风控拦截: {sig.name} {', '.join(approval['issues'])}")
+                                # 加入冷却名单
+                                self.blocked_cooldown[sig.code] = time.time() + self.cooldown_minutes * 60
                                 try:
                                     from gbt.brain import brain as _br
                                     if _br.running: _br.ping("trader", f"风控拦截: {sig.name}")
                                 except: pass
                                 continue
+
+                        # 通过了 — 从冷却名单清除
+                        self.blocked_cooldown.pop(sig.code, None)
 
                         last_t = last_trade_time.get(sig.code, 0)
                         if time.time() - last_t < 300: continue
