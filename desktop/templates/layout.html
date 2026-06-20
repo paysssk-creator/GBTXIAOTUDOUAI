@@ -29,6 +29,7 @@
       <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>安全审计</span></button>
       <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
       <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
+      <button class="ni" data-v="hacker" onclick="go('hacker',this)"><i class="ph ph-skull"></i><span>黑客全能力</span><span class="kb">Ctrl+4</span></button>
       <div class="sb-div"></div>
       <div class="sb-label">操盘</div>
       <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">Ctrl+3</span></button>
@@ -167,6 +168,25 @@
             </div>
           </div>
         </div>
+
+      <!-- 黑客全能力视图 -->
+      <div class="hacker-area" id="hv" style="display:none">
+        <div class="hacker-header">
+          <h1 style="margin:0"><i class="ph ph-skull" style="color:var(--accent)"></i> 黑客全能力面板</h1>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="hack-status" style="font-size:11px;color:var(--t3)"></span>
+            <button class="send" onclick="loadHackerCapabilities()" style="font-size:11px;padding:4px 10px"><i class="ph ph-arrow-clockwise"></i> 刷新</button>
+          </div>
+        </div>
+        <div id="hack-cat-tabs" style="display:flex;gap:4px;padding:8px 0;flex-wrap:wrap;border-bottom:1px solid var(--b);margin-bottom:8px"></div>
+        <div id="hack-grid" class="hack-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;overflow-y:auto;flex:1"></div>
+        <div id="hack-output" style="display:none;margin-top:8px;padding:12px;background:var(--bg-input);border-radius:8px;border:1px solid var(--b-def);max-height:300px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <b style="color:var(--accent)" id="hack-out-title">输出</b>
+            <button onclick="document.getElementById('hack-output').style.display='none'" style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:16px">&times;</button>
+          </div>
+          <pre id="hack-out-content" style="font-size:11px;color:var(--t2);white-space:pre-wrap;word-break:break-all;margin:0"></pre>
+        </div>
       </div>
     </div>
   </div>
@@ -245,7 +265,7 @@ function go(v,btn){
   var wc=$('wc');if(wc)wc.style.display=(v==='chat'||v==='reason')?'none':'flex';
   var cv=$('cv');if(cv)cv.style.display=v==='chat'?'flex':'none';
   var rv=$('rv');if(rv)rv.style.display=v==='reason'?'flex':'none';
-  var tv=$('tv');if(tv)tv.style.display=v==='trade'?'flex':'none';
+  var tv=$('tv');if(tv)tv.style.display=v==='trade'?'flex':'none';var hv=$('hv');if(hv)hv.style.display=v==='hacker'?'flex':'none';if(v==='hacker')loadHackerCapabilities();
   if(v==='chat'){var ci=$('ci');if(ci)setTimeout(function(){ci.focus()},50);}
   else if(v==='reason'){var ri=$('ri');if(ri)setTimeout(function(){ri.focus()},50);}
 }
@@ -452,25 +472,91 @@ async function loadControl(){
 
 async function loadHack(){
   try{
-    var items=[
-      {id:'scanner',icon:'ph-scan',name:'漏洞扫描',desc:'漏洞检测',level:'high'},
-      {id:'audit',icon:'ph-shield-check',name:'安全审计',desc:'全面评估',level:'high'},
-      {id:'auto-fix',icon:'ph-wrench',name:'自动修复',desc:'自动打补丁',level:'mid'},
-      {id:'network',icon:'ph-radar',name:'网络安全',desc:'Ping/DNS/Trace',level:'mid'},
-      {id:'wifi',icon:'ph-wifi-high',name:'WiFi扫描',desc:'信号扫描',level:'low'}
-    ];
-    var h='<div class="cp-list">';
-    items.forEach(function(it){
-      var act=(it.id==='network'||it.id==='wifi')?'netTool':'mcp';
-      h+='<div class="cp-item hack-'+it.level+'" onclick="cnAction(\''+it.id+'\',\''+act+'\')" title="'+it.desc+'">';
-      h+='<i class="ph '+it.icon+' cp-icon hack"></i>';
-      h+='<span class="cp-name">'+it.name+'</span>';
-      h+='<span class="cp-sub">'+it.desc+'</span>';
+    var r=await fetch(A+'/hacker/capabilities'),d=await r.json();
+    var caps=d.capabilities||[];
+    var h='<div class="cp-list" style="max-height:360px;overflow-y:auto">';
+    caps.forEach(function(c){
+      var lvl=c.cat==='security'?'high':c.cat==='core'?'mid':'low';
+      h+='<div class="cp-item hack-'+lvl+'" onclick="execCapability(''+c.id+'')" title="'+c.desc+'">';
+      h+='<i class="ph '+c.icon+' cp-icon hack"></i>';
+      h+='<span class="cp-name">'+c.name+'</span>';
+      h+='<span class="cp-sub">'+c.desc+'</span>';
       h+='</div>';
     });
     h+='</div>';
     $('hack').innerHTML=h;
-  }catch(e){$('hack').innerHTML='<span class="cp-err">-</span>'}
+  }catch(e){$('hack').innerHTML='<span class="cp-err">?</span>'}
+}
+
+var _HCATS={security:'',core:'',ai:'',devops:'',control:'',monitor:''};
+var _HCAPS=[];
+
+async function loadHackerCapabilities(){
+  try{
+    var r=await fetch(A+'/hacker/capabilities'),d=await r.json();
+    _HCAPS=d.capabilities||[];
+    $('hack-status').textContent=_HCAPS.length+'/'+d.total+' online';
+    var cats={};
+    _HCAPS.forEach(function(c){cats[c.cat]=(cats[c.cat]||0)+1});
+    var tabs='<button class="hack-tab active" onclick="filterHackCaps('all')">All ('+_HCAPS.length+')</button>';
+    for(var cat in cats){
+      tabs+='<button class="hack-tab" onclick="filterHackCaps(''+cat+'')">'+cat.toUpperCase()+' ('+cats[cat]+')</button>';
+    }
+    $('hack-cat-tabs').innerHTML=tabs;
+    renderHackGrid(_HCAPS);
+  }catch(e){$('hack-status').textContent='offline'}
+}
+
+function filterHackCaps(cat){
+  D.querySelectorAll('.hack-tab').forEach(function(b){b.classList.remove('active')});
+  var tabs=D.querySelectorAll('.hack-tab');
+  for(var i=0;i<tabs.length;i++){
+    if(tabs[i].textContent.toLowerCase().startsWith(cat.toLowerCase()))tabs[i].classList.add('active');
+  }
+  renderHackGrid(cat==='all'?_HCAPS:_HCAPS.filter(function(c){return c.cat===cat}));
+}
+
+function renderHackGrid(caps){
+  var g=$('hack-grid');
+  if(!caps.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--t4);padding:20px">???</div>';return}
+  var h='';
+  caps.forEach(function(c){
+    var catColors={security:'var(--red)',core:'var(--accent)',ai:'var(--purple)',devops:'var(--cyan)',control:'var(--blue)',monitor:'var(--amber)'};
+    var cc=catColors[c.cat]||'var(--t3)';
+    h+='<div class="hack-card" onclick="execCapability(''+c.id+'')" style="border-left:3px solid '+cc+'">';
+    h+='<div style="display:flex;align-items:center;gap:8px"><i class="ph '+c.icon+'" style="font-size:20px;color:'+cc+'"></i>';
+    h+='<div><div style="font-weight:600;font-size:13px">'+c.name+'</div>';
+    h+='<div style="font-size:10px;color:var(--t4);text-transform:uppercase">'+c.cat+'</div></div></div>';
+    h+='<div style="font-size:11px;color:var(--t3);margin-top:6px">'+c.desc+'</div>';
+    h+='<div style="margin-top:8px;display:flex;gap:4px">';
+    h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(''+c.id+'')">Run</button>';
+    if(c.mcp)h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(''+c.id+'','info')" style="background:var(--bg3)">Info</button>';
+    h+='</div></div>';
+  });
+  g.innerHTML=h;
+}
+
+async function execCapability(cid,act){
+  act=act||'run';
+  var out=$('hack-output'),con=$('hack-out-content'),tit=$('hack-out-title');
+  out.style.display='block';con.textContent='Running '+cid+'...';tit.textContent=cid;
+  try{
+    var r=await fetch(A+'/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:act})});
+    var d=await r.json();
+    if(d.ok){
+      con.textContent=d.data||d.output||JSON.stringify(d,null,2);
+      con.style.color='var(--green)';
+    }else{
+      con.textContent='FAIL: '+(d.error||'unknown');
+      con.style.color='var(--red)';
+    }
+  }catch(e){
+    con.textContent='Error: '+e.message;
+    con.style.color='var(--red)';
+  }
+}
+
+
 }
 
 function cnAction(id,act){

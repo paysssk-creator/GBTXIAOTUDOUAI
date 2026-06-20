@@ -136,6 +136,70 @@ desktop_ctl=DesktopController()
 # ── Flask API ──
 app=Flask(__name__)
 
+# ═══════════════════════════════════════════════
+# 黑客全能力 API
+# ═══════════════════════════════════════════════
+@app.route("/api/hacker/capabilities")
+def hacker_all_caps():
+    caps=[
+        {"id":"scanner","name":"代码扫描","icon":"ph-scan","cat":"security","desc":"全项目安全漏洞扫描","mcp":True},
+        {"id":"audit","name":"安全审计","icon":"ph-shield-check","cat":"security","desc":"10维度地毯式审计","mcp":True},
+        {"id":"auto-fix","name":"自动修复","icon":"ph-wrench","cat":"security","desc":"一键修复Bug","mcp":True},
+        {"id":"self-evolve","name":"自我进化","icon":"ph-arrows-clockwise","cat":"core","desc":"6步自进化闭环","mcp":True},
+        {"id":"bounty-hunter","name":"漏洞赏金","icon":"ph-bug-beetle","cat":"security","desc":"CVSS评分赏金报告","mcp":True},
+        {"id":"stress-test","name":"压力测试","icon":"ph-gauge","cat":"security","desc":"API负载压力测试","mcp":True},
+        {"id":"mirror-deploy","name":"镜像部署","icon":"ph-stack","cat":"devops","desc":"沙盒验证一键部署","mcp":True},
+        {"id":"deepseek-analyzer","name":"DeepSeek","icon":"ph-brain","cat":"ai","desc":"深度推理分析引擎","mcp":True},
+        {"id":"intelligent-scheduler","name":"智能调度","icon":"ph-clock-countdown","cat":"core","desc":"事件驱动自动调度","mcp":True},
+        {"id":"email-watcher","name":"邮箱监控","icon":"ph-envelope","cat":"monitor","desc":"邮件实时监控告警","mcp":True},
+        {"id":"rustdesk","name":"远程控制","icon":"ph-desktop-tower","cat":"control","desc":"RustDesk远程桌面","mcp":True},
+        {"id":"halo-cms","name":"Halo建站","icon":"ph-globe","cat":"devops","desc":"CMS博客快速建站","mcp":True},
+        {"id":"desktop-control","name":"桌面全控","icon":"ph-monitor","cat":"control","desc":"截图键鼠语音蓝牙","mcp":True},
+        {"id":"cloud-llm","name":"云端LLM","icon":"ph-cloud","cat":"ai","desc":"多模型云端调度","mcp":True},
+        {"id":"memory","name":"记忆系统","icon":"ph-cards","cat":"core","desc":"工作情景持久记忆","mcp":True},
+        {"id":"guard","name":"行动守卫","icon":"ph-shield","cat":"core","desc":"行动前强制扫描","mcp":False},
+        {"id":"reasoner","name":"深度推理","icon":"ph-graph","cat":"ai","desc":"8模式推理引擎","mcp":False},
+        {"id":"winctl","name":"Windows操控","icon":"ph-windows-logo","cat":"control","desc":"16类原生API","mcp":False},
+    ]
+    return jsonify({"capabilities":caps,"total":len(caps)})
+
+@app.route("/api/hacker/exec",methods=["POST"])
+def hacker_exec_cap():
+    d=request.json or {};cid=d.get("id","");act=d.get("action","run")
+    mcp_caps=["scanner","audit","auto-fix","self-evolve","bounty-hunter","stress-test",
+              "mirror-deploy","deepseek-analyzer","intelligent-scheduler","email-watcher",
+              "rustdesk","halo-cms","desktop-control","cloud-llm","memory"]
+    if cid in mcp_caps:
+        try:r=call_mcp(cid);return jsonify({"ok":r.ok,"data":str(r.data)[:3000],"error":r.error})
+        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+    if cid=="network":
+        cmds={"ping":["ping","-n","4","8.8.8.8"],"dns":["nslookup","google.com"],
+              "tracert":["tracert","-h","5","8.8.8.8"],"netstat":["netstat","-an"]}
+        cmd=cmds.get(act,cmds["ping"])
+        try:r=subprocess.run(cmd,capture_output=True,text=True,timeout=15,errors='replace');return jsonify({"ok":True,"output":(r.stdout or r.stderr)[:3000]})
+        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+    if cid=="wifi":
+        try:r=subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,errors='replace');return jsonify({"ok":True,"output":(r.stdout or "no wifi")[:3000]})
+        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+    if cid=="process":
+        try:
+            r=subprocess.run(["tasklist","/fo","csv","/nh"],capture_output=True,text=True,timeout=10,errors='replace')
+            procs=[]
+            for line in (r.stdout or "").split("\n")[:50]:
+                if line.strip():
+                    parts=line.replace('"',"").split(",")
+                    if len(parts)>=2:procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
+            return jsonify({"ok":True,"processes":procs})
+        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+    return jsonify({"ok":False,"error":f"unknown: {cid}"})
+
+@app.route("/api/hacker/status")
+def hacker_status():
+    return jsonify({"mcp":get_mcp().list_servers(),"mcp_count":len(get_mcp().list_servers()),
+        "llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Demo",
+        "watcher":watcher.get_status() if watcher else {}})
+
+
 @app.before_request
 def _log_req():
     p=request.path
@@ -1366,6 +1430,8 @@ def backtest_codes():
             return jsonify({"ok": True, "codes": [r[0] for r in rows]})
     except:
         return jsonify({"ok": True, "codes": list(trader.watchlist.keys())})
+
+
 
 
 def launch():

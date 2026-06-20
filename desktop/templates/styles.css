@@ -1631,3 +1631,17 @@ body {
   border-color: var(--b-def);
   background: var(--bg3);
 }
+
+/* ═══════════════════════════════════════════════════════
+   黑客全能力面板
+   ═══════════════════════════════════════════════════════ */
+.hacker-area { flex:1; display:flex; flex-direction:column; padding:var(--s4); overflow-y:auto; }
+.hacker-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.hack-card { background:var(--bg-card); border-radius:var(--r3); padding:var(--s3); cursor:pointer; transition:all .15s var(--e-out); border:1px solid var(--b-sub); }
+.hack-card:hover { border-color:var(--accent-dim); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.25); }
+.hack-tab { padding:4px 10px; border-radius:var(--r-full); border:1px solid var(--b-def); background:var(--bg-subtle); color:var(--t2); font-size:11px; cursor:pointer; transition:all .15s; }
+.hack-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.hack-tab:hover:not(.active) { border-color:var(--t4); color:var(--t1); }
+.hack-act-btn { padding:3px 10px; border-radius:var(--r1); border:none; background:var(--accent); color:#fff; font-size:10px; cursor:pointer; transition:all .15s; }
+.hack-act-btn:hover { opacity:.85; }
+.hack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; overflow-y:auto; flex:1; }
