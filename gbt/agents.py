@@ -307,6 +307,10 @@ class TradingAgent(BaseAgent):
         self.register("auto_trade", "触发自主交易分析",
                      ["交易", "买", "卖", "买入", "卖出", "下单", "操盘", "自主交易"],
                      self._auto_trade, priority=9, requires=["trader", "account"])
+        # AI操盘 (融合Cradle GCC)
+        self.register("ai_trade", "AI视觉操盘: 截图→分析→决策→下单→自省",
+                     ["AI操盘", "视觉交易", "截图下单", "自动操盘", "智能交易"],
+                     self._ai_trade, priority=10, requires=["trader", "account"])
     
     def _stock_lookup(self, text):
         import re
@@ -363,6 +367,45 @@ class TradingAgent(BaseAgent):
         self.ping_brain("trader", f"交易分析请求: {code or '全池扫描'}")
         return "\n".join(parts)
     
+    def _ai_trade(self, text):
+        """AI视觉操盘: 截图交易软件→分析→决策→下单"""
+        try:
+            from gbt.gcc.ai_trader import AITrader
+            from gbt.desktop_ctl import DesktopController
+            import re
+
+            # 提取股票代码
+            m = re.search(r'(?<![a-zA-Z0-9])(6\d{5}|0\d{5}|3\d{5}|68\d{4})(?![a-zA-Z0-9])', text)
+            focus = m.group(1) if m else ""
+
+            # 获取LLM和桌面控制器
+            llm = self.trader.llm if hasattr(self.trader, 'llm') and self.trader.llm else None
+            desk = DesktopController()
+            account_info = ""
+            if self.account:
+                account_info = f"可用资金:{self.account.cash:,.0f} 持仓:{len(self.account.positions)}"
+
+            trader = AITrader(llm=llm, desk=desk)
+            result = trader.run(text, focus=focus, account_info=account_info)
+
+            parts = [f"🤖 AI操盘结果: {'✅ 成交' if result.get('ok') else '⚠️ 未成交'}"]
+            for r in result.get("results", []):
+                if r.get("decision"):
+                    parts.append(f"  Step{r['step']}: {r['decision']} {r.get('code','')} "
+                               f"@{r.get('price','')} x{r.get('volume','')} "
+                               f"{'✅' if r.get('filled') else '❌'} "
+                               f"{r.get('reasoning','')[:60]}")
+                elif r.get("action") == "hold":
+                    parts.append(f"  Step{r['step']}: 观望 — {r.get('reasoning','')[:80]}")
+                else:
+                    parts.append(f"  Step{r['step']}: {r.get('error','?')}")
+
+            self.ping_brain("trader", f"ai_trade: {result.get('summary','')}")
+            return "\n".join(parts)
+        except ImportError as e:
+            return f"AI操盘模块未安装: pip install Pillow mss\n{e}"
+        except Exception as e:
+            return f"AI操盘异常: {e}"
     def execute(self, capability_name: str, text: str) -> AgentResult:
         t0 = time.time()
         self.stats["calls"] += 1

@@ -1,0 +1,1 @@
+let f=require('fs');let c='#!/usr/bin/env python3';c+='\n'+'"""';c+='\ngcc_runner.py — GCC Runner';c+='\n"""';c+='\nimport os,time,json';f.writeFileSync('C:/Users/ADMIN/Desktop/GBT-local-new/gbt/gcc/gcc_runner.py',c);console.log('ok')
