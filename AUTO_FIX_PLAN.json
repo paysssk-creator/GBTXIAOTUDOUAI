@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-06-20T17:03:57.794Z",
+  "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local-new",
+  "issues": [
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 186,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 187,
+      "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 766,
+      "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 547,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netst",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 168,
+      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 467,
+      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
+      "desc": "硬编码IP",
+      "fixable": 0
+    }
+  ],
+  "actions": [
+    {
+      "type": "audit_fix",
+      "item": "无未提交改动 (当前: 6)",
+      "detail": ""
+    },
+    {
+      "type": "code_fix",
+      "file": "desktop\\app.py",
+      "line": 186,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "desktop\\app.py",
+      "line": 187,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "desktop\\app.py",
+      "line": 766,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "gbt\\agents.py",
+      "line": 547,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "gbt\\watcher.py",
+      "line": 168,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "gbt\\watcher.py",
+      "line": 467,
+      "severity": "medium",
+      "autoFixable": false
+    }
+  ]
+}
