@@ -12,7 +12,7 @@ try:
     HAS_PYAUTOGUI = True
 except ImportError:
     HAS_PYAUTOGUI = False
-    L.warning("pyautogui 未安装, 使用 PowerShell 替代")
+    L.debug("pyautogui 未安装, 使用 PowerShell 替代")
 
 
 class DesktopController:

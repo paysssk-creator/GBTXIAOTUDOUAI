@@ -1,10 +1,10 @@
 {
-  "time": "2026-06-20T10:29:16.608Z",
+  "time": "2026-06-20T12:43:08.479Z",
   "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local-new",
   "summary": {
     "critical": 0,
     "high": 0,
-    "medium": 3,
+    "medium": 6,
     "low": 3,
     "info": 0
   },
@@ -14,8 +14,38 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 666,
+      "line": 185,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 186,
+      "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 765,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 547,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netst",
       "desc": "硬编码IP",
       "fixable": 0
     },

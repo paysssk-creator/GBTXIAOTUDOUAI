@@ -136,6 +136,15 @@ desktop_ctl=DesktopController()
 # ── Flask API ──
 app=Flask(__name__)
 
+# ── Agent框架 (模块级初始化) ──
+_framework = None
+try:
+    from gbt.agents import init_framework
+    _framework = init_framework(brain=_brain, trader=trader, account=account, watcher=watcher)
+    _brain.framework = _framework
+except Exception as e:
+    pass  # 非致命: API端点会自动回退
+
 # ═══════════════════════════════════════════════
 # 黑客全能力 API
 # ═══════════════════════════════════════════════
@@ -1529,7 +1538,27 @@ def launch():
 
 def main():
     import argparse;p=argparse.ArgumentParser();p.add_argument("--browser",action="store_true");a=p.parse_args()
-    if a.browser:L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
+    if a.browser:
+        try:
+            trader.start_autonomous()
+            watcher.start()
+            _brain.trader=trader;_brain.watcher=watcher;_brain.llm=llm.a;_brain.account=account;_brain.desktop_ctl=desktop_ctl
+            import gbt.capabilities as _caps
+            from gbt.router import router as _router
+            _router.set_dependency("trader",trader);_router.set_dependency("watcher",watcher)
+            _router.set_dependency("account",account);_router.set_dependency("brain",_brain)
+            _router.set_dependency("desktop_ctl",desktop_ctl);_router.set_dependency("llm",llm.a)
+            _brain.router=_router
+            from gbt.protocol import protocol as _protocol
+            _router.set_protocol(_protocol);_brain.protocol=_protocol
+            from gbt.agents import init_framework
+            framework=init_framework(brain=_brain,trader=trader,account=account,watcher=watcher)
+            _brain.framework=framework
+            _brain.start()
+            L.info("Browser mode initialized")
+        except Exception as e:
+            L.warning(f"Init partial: {e}")
+        L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
     else:launch()
 
 if __name__=="__main__":main()
