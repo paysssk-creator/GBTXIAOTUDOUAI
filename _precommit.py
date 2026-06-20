@@ -7,7 +7,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PY312 = sys.executable  # 使用当前Python解释器
-API = 'http://localhost:8765'  # 对齐 app.py 默认端口
+API = 'http://localhost:8877'  # 对齐 app.py webview模式端口
 PASS, FAIL = 0, 0
 
 def check(name, ok, detail=""):
