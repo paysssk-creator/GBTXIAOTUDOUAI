@@ -205,8 +205,47 @@ def hacker_exec_cap():
                     parts=line.replace('"',"").split(",")
                     if len(parts)>=2:procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
             return jsonify({"ok":True,"processes":procs})
-        except Exception as e:return jsonify({"ok":False,"error":str(e)})
-        # 非MCP本地能力
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    # v3.0 能力
+    if cid == "screen_ocr":
+        try:
+            from gbt.ocr import screenshot_to_text
+            text, b64 = screenshot_to_text()
+            return jsonify({"ok":True,"text":text[:2000]})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "voice_speak":
+        try:
+            import pyttsx3
+            engine = pyttsx3.init()
+            text = d.get("text","GBT就绪")[:500]
+            engine.say(text); engine.runAndWait()
+            return jsonify({"ok":True,"spoken":text[:80]})
+        except: return jsonify({"ok":False,"error":"pip install pyttsx3"})
+    if cid == "login_detect":
+        try:
+            from gbt.ocr import screenshot_to_text
+            text, b64 = screenshot_to_text()
+            keywords = ["登录成功","已登录","账户","持仓","资金","可用"]
+            found = [kw for kw in keywords if kw in (text or "")]
+            return jsonify({"ok":True,"logged_in":bool(found),"found":found})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "precision_scrape":
+        try:
+            import re, urllib.request, json as _j
+            m = re.search(r'(6\d{5}|0\d{5}|3\d{5}|68\d{4})', d.get("text",""))
+            code = m.group(1) if m else "000001"
+            prefix = "sh" if code.startswith(("6","68")) else "sz"
+            url = f"https://push2.eastmoney.com/api/qt/stock/trends2/get?fields1=f1&fields2=f1&secid=1.{prefix}{code}"
+            r = urllib.request.urlopen(url, timeout=5).read().decode()
+            return jsonify({"ok":True,"code":code,"source":"eastmoney","data":_j.loads(r)})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "auto_pipeline":
+        try:
+            import os
+            os.startfile("https://www.bing.com")
+            return jsonify({"ok":True,"step":"browser_opened","next":"login_required"})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    # 非MCP本地能力
     if cid == "winctl":
         try:
             from gbt.winctl import get_winctl
