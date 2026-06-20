@@ -1,8 +1,8 @@
-# 🏴 Bug Bounty Report — GBT-MQMDS167
+# 🏴 Bug Bounty Report — GBT-MQMGHSKQ
 
 **猎人**: GBT小土豆全能开发者  
 **目标**: C:\Users\ADMIN\Desktop\GBT-local-new  
-**时间**: 2026-06-20T13:15:49.624Z  
+**时间**: 2026-06-20T14:31:50.762Z  
 
 ## 摘要
 | 严重度 | 数量 |

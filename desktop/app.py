@@ -126,6 +126,7 @@ class LLMMgr:
         except Exception as e:return f"[Error] {e}"
 
 llm=LLMMgr(prov="deepseek")
+free_llm=LLMMgr(prov="ollama")  # free local model for background loops
 
 # ── 守夜人 + 操盘手 ──
 _root = os.path.dirname(_here) if getattr(sys,'frozen',False) else os.path.dirname(os.path.dirname(__file__))
@@ -817,7 +818,7 @@ def wts():
 def wt_start():
     """启动守夜人"""
     if not watcher.llm and llm.a:
-        watcher.llm = llm.a
+        watcher.llm = free_llm.a
     return jsonify(watcher.start())
 
 @app.route("/api/watcher/stop",methods=["POST"])
@@ -886,7 +887,7 @@ def br_status():
 def br_start():
     _brain.trader = trader
     _brain.watcher = watcher
-    _brain.llm = llm.a
+    _brain.llm = free_llm.a
     _brain.account = account
     _brain.desktop_ctl = desktop_ctl
     return jsonify(_brain.start())
@@ -950,7 +951,7 @@ def trq():
 def tr_scan():
     """AI全市场扫描生成交易信号"""
     if not trader.llm and llm.a:
-        trader.llm = llm.a
+        trader.llm = free_llm.a
     signals = trader.scan_market()
     return jsonify({"signals": [
         {"code": s.code, "name": s.name, "action": s.action,
@@ -967,7 +968,7 @@ def tr_analyze():
     if not code:
         return jsonify({"ok": False, "error": "缺少股票代码"})
     if not trader.llm and llm.a:
-        trader.llm = llm.a
+        trader.llm = free_llm.a
     quotes = trader.fetch_quote([code])
     if code not in quotes:
         return jsonify({"ok": False, "error": f"无法获取 {code} 行情"})
@@ -1049,7 +1050,7 @@ def tr_pipeline():
     if not code:
         return jsonify({"ok": False, "error": "缺少股票代码"})
     if not trader.llm and llm.a:
-        trader.llm = llm.a
+        trader.llm = free_llm.a
     session = trader.run_full_pipeline(code)
     return jsonify({"ok": True, "session": session.to_dict()})
 
@@ -1495,8 +1496,8 @@ def launch():
         L.info(f"🗄️ 数据库: {stats['trades']}笔交易 | {stats['signals']}个信号 | {stats['positions']}持仓 | {stats['kline_cache']}K线缓存")
 
         if llm.a:
-            watcher.llm = llm.a
-            trader.llm = llm.a
+            watcher.llm = free_llm.a
+            trader.llm = free_llm.a
             trader.db = _db  # 注入数据库引用
             watcher.start()
             trader.start_autonomous()
@@ -1505,7 +1506,7 @@ def launch():
             # 启动自主AI大脑
             _brain.trader = trader
             _brain.watcher = watcher
-            _brain.llm = llm.a
+            _brain.llm = free_llm.a
             _brain.account = account
             _brain.desktop_ctl = desktop_ctl
             

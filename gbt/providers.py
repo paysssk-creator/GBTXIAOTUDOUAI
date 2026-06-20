@@ -67,7 +67,7 @@ PROVIDERS: Dict[str, dict] = {
         "auth_mode":"bearer","guide_url":"https://platform.minimax.chat","pricing":"免费","tier":12,
         "description":"MiniMax"},
     "ollama": {"name":"Ollama(本地)","base_url":"http://localhost:11434/v1/",
-        "env_keys":[],"default_model":"qwen2.5:7b",
+        "env_keys":[],"default_model":"qwen2.5-coder:7b",
         "models":["qwen2.5:7b","qwen2.5:14b","llama3.1:8b","deepseek-r1:7b"],
         "auth_mode":"none","guide_url":"https://ollama.com/download","pricing":"免费本地","tier":13,
         "description":"本地运行，隐私安全"},
