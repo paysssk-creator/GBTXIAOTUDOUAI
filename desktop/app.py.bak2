@@ -89,7 +89,8 @@ class LLMMgr:
             s.a=None;s.prov=None;L.warning("No keys - demo mode");return False
         last_err=None
         for p in valid:
-            try:s.a=GBTLLM(provider=p,timeout=120);s.prov=p;s.model=s.a.model;L.info(f"LLM: {PROVIDERS[p]['name']} | {s.model}");return True
+            try:
+                s.a=GBTLLM(provider=p,timeout=120);s.prov=p;s.model=s.a.model;L.info(f"LLM: {PROVIDERS[p]['name']} | {s.model}");return True
             except Exception as e:
                 last_err=e
                 L.warning(f"LLM {p}: {e} - trying next...")
@@ -185,16 +186,16 @@ def hacker_exec_cap():
               "rustdesk","halo-cms","desktop-control","cloud-llm","memory"]
     if cid in mcp_caps:
         try:r=call_mcp(cid);return jsonify({"ok":r.ok,"data":str(r.data)[:3000],"error":r.error})
-        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+            except Exception as e:return jsonify({"ok":False,"error":str(e)})
     if cid=="network":
         cmds={"ping":["ping","-n","4","8.8.8.8"],"dns":["nslookup","google.com"],
               "tracert":["tracert","-h","5","8.8.8.8"],"netstat":["netstat","-an"]}
         cmd=cmds.get(act,cmds["ping"])
         try:r=subprocess.run(cmd,capture_output=True,text=True,timeout=15,errors='replace');return jsonify({"ok":True,"output":(r.stdout or r.stderr)[:3000]})
-        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+            except Exception as e:return jsonify({"ok":False,"error":str(e)})
     if cid=="wifi":
         try:r=subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,errors='replace');return jsonify({"ok":True,"output":(r.stdout or "no wifi")[:3000]})
-        except Exception as e:return jsonify({"ok":False,"error":str(e)})
+            except Exception as e:return jsonify({"ok":False,"error":str(e)})
     if cid=="process":
         try:
             r=subprocess.run(["tasklist","/fo","csv","/nh"],capture_output=True,text=True,timeout=10,errors='replace')
@@ -203,7 +204,7 @@ def hacker_exec_cap():
                 if line.strip():
                     parts=line.replace('"',"").split(",")
                     if len(parts)>=2:procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
-            return jsonify({"ok":True,"processes":procs})
+            pass
         except Exception as e:return jsonify({"ok":False,"error":str(e)})
     return jsonify({"ok":False,"error":f"unknown: {cid}"})
 
@@ -491,17 +492,17 @@ def cn_action(cid):
                     fp = os.path.join(p,f)
                     items.append({"name":f,"is_dir":os.path.isdir(fp),"size":os.path.getsize(fp) if os.path.isfile(fp) else 0})
                 r = {"ok":True,"path":p,"items":items[:50]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "read" and p:
             try:
                 with open(p,"r",encoding="utf-8",errors="replace") as f:
                     r = {"ok":True,"content":f.read()[:5000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "write" and p:
             try:
                 with open(p,"w",encoding="utf-8") as f: f.write(args.get("content",""))
                 r = {"ok":True,"written":len(args.get("content",""))}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Terminal ──
     elif cid == "terminal":
         cmd = args.get("cmd","")
@@ -510,7 +511,7 @@ def cn_action(cid):
                 res = subprocess.run(cmd,shell=True,capture_output=True,text=True,timeout=30,errors='replace',cwd=args.get("cwd") or os.path.expanduser("~"))
                 r = {"ok":True,"stdout":res.stdout[:3000],"stderr":res.stderr[:1000],"code":res.returncode}
             except subprocess.TimeoutExpired: r = {"ok":False,"error":"Timeout (30s)"}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Git ──
     elif cid == "git":
         repo = args.get("repo",os.path.dirname(os.path.dirname(__file__)))
@@ -518,12 +519,12 @@ def cn_action(cid):
             try:
                 res = subprocess.run("git status --short",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
                 r = {"ok":True,"output":res.stdout,"branch":subprocess.run("git branch --show-current",shell=True,capture_output=True,text=True,errors='replace',cwd=repo).stdout.strip()}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "log":
             try:
                 res = subprocess.run("git log --oneline -10",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
                 r = {"ok":True,"commits":res.stdout.strip().split("\n") if res.stdout else []}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Process Manager ──
     elif cid == "process":
         if act == "list":
@@ -534,7 +535,7 @@ def cn_action(cid):
                     parts = line.replace('"','').split(",")
                     if len(parts)>=2: procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
                 r = {"ok":True,"processes":procs}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Display / Screenshot ──
     elif cid == "display":
         if act == "screenshot":
@@ -552,7 +553,7 @@ def cn_action(cid):
                     ps = f"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds | ConvertTo-Json"
                     res = subprocess.run(["powershell","-NoProfile","-Command",ps],capture_output=True,text=True,timeout=10,errors='replace')
                     r = {"ok":True,"display_info":res.stdout.strip()[:500]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Market ──
     elif cid == "market":
         if act == "get_indices":
@@ -572,7 +573,7 @@ def cn_action(cid):
                     if len(parts)<4: continue
                     result.append({"code":m.group(0),"name":indices.get(m.group(0),parts[0]),"price":float(parts[3] or 0),"change":round(float(parts[3] or 0)-float(parts[2] or 0),2)})
                 r = {"ok":True,"indices":result}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Web Search ──
     elif cid == "web_search":
         q = args.get("query","")
@@ -589,7 +590,7 @@ def cn_action(cid):
                 for m in re.finditer(r'<a[^>]*class="result__a"[^>]*>(.*?)</a>', raw, re.DOTALL):
                     results.append({"title":re.sub(r'<[^>]+>','',m.group(1)).strip()})
                 r = {"ok":True,"query":q,"results":results[:10]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "fetch":
             url = args.get("url","")
             if url:
@@ -597,7 +598,7 @@ def cn_action(cid):
                     req = urllib.request.Request(url, headers={"User-Agent":"GBT/1.0"})
                     raw = urllib.request.urlopen(req, timeout=10).read().decode("utf-8",errors="replace")[:5000]
                     r = {"ok":True,"url":url,"content":raw}
-                except Exception as e: r = {"ok":False,"error":str(e)}
+                    except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Weather ──
     elif cid == "weather":
         city = args.get("city","Bangkok")
@@ -610,7 +611,7 @@ def cn_action(cid):
                 data = json.loads(raw)
                 cc = data.get("current_condition",[{}])[0]
                 r = {"ok":True,"city":city,"temp_c":cc.get("temp_C","?"),"humidity":cc.get("humidity","?"),"desc":cc.get("weatherDesc",[{}])[0].get("value","?")}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── PyPI ──
     elif cid == "pypi":
         pkg = args.get("package","")
@@ -623,7 +624,7 @@ def cn_action(cid):
                 data = json.loads(raw)
                 info = data.get("info",{})
                 r = {"ok":True,"name":info.get("name",pkg),"version":info.get("version","?"),"summary":(info.get("summary","") or "")[:200]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Network Scanner (Security) ──
     elif cid == "network":
         target = args.get("target","127.0.0.1")
@@ -631,17 +632,17 @@ def cn_action(cid):
             try:
                 res = subprocess.run(["ping","-n","2","-w","2000",target],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"target":target,"reachable":res.returncode==0,"output":res.stdout[:500]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "dns":
             try:
                 res = subprocess.run(["nslookup",target],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"target":target,"output":res.stdout[:2000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "traceroute":
             try:
                 res = subprocess.run(["tracert","-h","10","-w","2000",target],capture_output=True,text=True,timeout=30,errors='replace')
                 r = {"ok":True,"target":target,"output":res.stdout[:2000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Registry Editor ──
     elif cid == "registry":
         key = args.get("key","")
@@ -649,19 +650,19 @@ def cn_action(cid):
             try:
                 res = subprocess.run(["reg","query",key],capture_output=True,text=True,timeout=10,errors='replace')
                 r = {"ok":True,"key":key,"output":res.stdout[:2000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     # ── WiFi ──
     elif cid == "wifi":
         if act == "scan":
             try:
                 res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=True,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:3000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "info":
             try:
                 res = subprocess.run("netsh wlan show interfaces",capture_output=True,text=True,timeout=10,shell=True,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:2000]}
-            except Exception as e: r = {"ok":False,"error":str(e)}
+                except Exception as e: r = {"ok":False,"error":str(e)}
     return jsonify(r)
 
 @app.route("/api/reason",methods=["POST"])
@@ -1562,7 +1563,7 @@ def main():
             _brain.framework=framework
             _brain.start()
             L.info("Browser mode initialized")
-        except Exception as e:
+            except Exception as e:
             L.warning(f"Init partial: {e}")
         L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
     else:launch()
