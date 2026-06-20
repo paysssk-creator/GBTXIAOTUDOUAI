@@ -204,7 +204,7 @@ def hacker_exec_cap():
 
 @app.route("/api/hacker/status")
 def hacker_status():
-    return jsonify({"mcp":get_mcp().list_servers(),"mcp_count":len(get_mcp().list_servers()),
+    return jsonify({"ok":True,"mcp":get_mcp().list_servers(),"mcp_count":len(get_mcp().list_servers()),
         "llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Demo",
         "watcher":watcher.get_status() if watcher else {}})
 
