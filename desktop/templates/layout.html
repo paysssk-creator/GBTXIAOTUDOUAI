@@ -488,7 +488,6 @@ async function loadHack(){
   }catch(e){$('hack').innerHTML='<span class="cp-err">?</span>'}
 }
 
-var _HCATS={security:'',core:'',ai:'',devops:'',control:'',monitor:''};
 var _HCAPS=[];
 
 async function loadHackerCapabilities(){
@@ -1157,7 +1156,7 @@ document.addEventListener('keydown',function(e){
   // Ctrl+B → 切换面板
   if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='b'){e.preventDefault();togglePanel();return;}
   // Ctrl+Enter → 发送消息（在输入框中）
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='Enter'&&isInput){e.preventDefault();sendMsg();return;}
+  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='Enter'&&isInput){e.preventDefault();chat();return;}
   // Escape → 关闭设置/面板弹窗
   if(e.key==='Escape'){
     var s=D.querySelector('#settings-panel');if(s&&s.style.display!=='none'){openSettings();return;}
