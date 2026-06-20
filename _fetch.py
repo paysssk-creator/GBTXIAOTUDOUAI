@@ -1,0 +1,1 @@
+import urllib.request; data=urllib.request.urlopen("https://raw.githubusercontent.com/paysssk-creator/GBTXIAOTUDOUAI/main/gbt/capabilities.py",timeout=10).read().decode("utf-8"); print(data[data.index("_handler_screen_ocr"):][:3000])
