@@ -1543,8 +1543,10 @@ def launch():
         L.warning("Browser mode");L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
 
 def main():
-    import argparse;p=argparse.ArgumentParser();p.add_argument("--browser",action="store_true");a=p.parse_args()
-    if a.browser:
+    import argparse;p=argparse.ArgumentParser();p.add_argument("--browser",action="store_true");p.add_argument("--server",action="store_true");a=p.parse_args()
+    if a.server:
+        L.info("Flask server mode - http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
+    elif a.browser:
         try:
             trader.start_autonomous()
             watcher.start()
