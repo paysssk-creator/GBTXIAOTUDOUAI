@@ -83,25 +83,91 @@ class AITrader:
                 reasoning=d.get("reasoning",""),confidence=float(d.get("confidence",0)),
                 stop_loss=float(d.get("stop_loss",0)),take_profit=float(d.get("take_profit",0)))
         except: return TradeDecision(action="hold",reasoning="解析失败")
-    def execute_trade(self, decision):
-        """执行交易: 快捷键操作交易软件"""
+    def observe(self, b64, task=""):
+        """先看再动: 截图分析当前状态, 确认是否已打开目标窗口"""
+        msgs = [{"role":"system","content":'''你是电脑状态检查员。分析截图回答:
+1. 当前前台窗口是什么应用?
+2. 这是交易软件吗(东方财富/同花顺/券商)?
+3. 如果任务已经完成, 返回 {"done":true,"reason":"..."}
+4. 如果需要切窗口, 返回 {"need_switch":true,"target":"应用名"}
+
+只返回JSON: {"app":"当前应用","is_trading":true/false,"done":false,"need_switch":false}'''}]
+        content = [{"type":"text","text":f"检查当前状态: {task}"}]
+        if b64: content.append({"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64}"}})
+        msgs.append({"role":"user","content":content})
+        raw = self._call(msgs)
+        try:
+            s=raw.find("{"); e=raw.rfind("}")+1
+            return json.loads(raw[s:e]) if s>=0 and e>s else {"app":"未知","is_trading":False,"done":False}
+        except: return {"app":"未知","is_trading":False,"done":False}
+
+    def _ensure_trading_window(self, b64):
+        """确保交易软件窗口在前台, 不盲目Alt+Tab"""
+        state = self.observe(b64, "确认交易软件在前台")
+        if state.get("done"):
+            return "already_done"
+        if state.get("is_trading"):
+            return "ok"  # 已经在交易软件, 不切窗
+        if state.get("need_switch"):
+            # 精确切到目标窗口, 最多2次
+            for _ in range(2):
+                self.desk.keyboard_hotkey(["alt","tab"])
+                time.sleep(0.4)
+                b64 = self.capture()
+                check = self.observe(b64, "确认已切换到交易软件")
+                if check.get("is_trading"):
+                    return "ok"
+            return "switch_failed"
+        return "ok"  # 看不出就继续, 不重复切
+
+    def execute_trade(self, decision, b64_before=None):
+        """执行交易: 先看再动, 不盲切窗口"""
         if not self.desk or decision.action == "hold":
             return {"ok":True,"action":"hold"}
+
+        # 去重: 不重复执行相同操作
+        key = f"{decision.action}:{decision.code}:{decision.price}"
+        if hasattr(self, '_last_trade_key') and self._last_trade_key == key:
+            return {"ok":True,"action":"hold","reason":"去重: 已执行过相同操作"}
+        self._last_trade_key = key
+
         try:
-            self.desk.keyboard_hotkey(["alt","tab"])
-            time.sleep(0.3)
+            # 1. 先确认交易窗口状态
+            if b64_before:
+                state = self.observe(b64_before, "确认交易窗口")
+                if state.get("done"):
+                    return {"ok":True,"action":"hold","reason":"任务已完成"}
+
+            # 2. 只在需要时切换窗口
+            if b64_before and not b64_before:
+                pass
+            elif b64_before:
+                window_ok = self._ensure_trading_window(b64_before)
+                if window_ok == "already_done":
+                    return {"ok":True,"action":"done","reason":"任务已完成, 不重复操作"}
+                elif window_ok == "switch_failed":
+                    pass  # 继续尝试, 不放弃
+
+            # 3. 输入股票代码
             self.desk.keyboard_type(str(decision.code))
             time.sleep(0.2)
+
+            # 4. 按买入/卖出快捷键
             if decision.action == "buy":
                 self.desk.keyboard_hotkey(["f1"])
             elif decision.action == "sell":
                 self.desk.keyboard_hotkey(["f2"])
             time.sleep(0.3)
+
+            # 5. 输入价格
             self.desk.keyboard_type(str(decision.price))
             time.sleep(0.1)
+
+            # 6. Tab跳到数量, 输入数量
             self.desk.keyboard_hotkey(["tab"])
             self.desk.keyboard_type(str(decision.volume))
             time.sleep(0.1)
+
             return {"ok":True,"action":decision.action,"code":decision.code,
                     "price":decision.price,"volume":decision.volume}
         except Exception as e:
@@ -115,6 +181,11 @@ class AITrader:
         if b64a: content.append({"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64a}"}})
         msgs.append({"role":"user","content":content})
         raw = self._call(msgs)
+        try:
+            s=raw.find("{"); e=raw.rfind("}")+1
+            return json.loads(raw[s:e]) if s>=0 and e>s else {"filled":False,"reason":raw[:100]}
+        except: return {"filled":False,"reason":raw[:100]}
+
     def run(self, task, focus="", account_info="", max_attempts=3):
         """完整AI操盘流程"""
         results = []
@@ -126,7 +197,7 @@ class AITrader:
             decision = self.decide(analysis, account_info)
             if decision.action in ("hold","watch"):
                 results.append({"step":i+1,"action":"hold","reasoning":decision.reasoning}); break
-            exec_result = self.execute_trade(decision)
+            exec_result = self.execute_trade(decision, b64b)
             time.sleep(1)
             b64a = self.capture()
             reflection = self.reflect(b64b, b64a, decision)

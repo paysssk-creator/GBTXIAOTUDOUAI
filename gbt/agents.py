@@ -389,6 +389,7 @@ class TradingAgent(BaseAgent):
             result = trader.run(text, focus=focus, account_info=account_info)
 
             parts = [f"🤖 AI操盘结果: {'✅ 成交' if result.get('ok') else '⚠️ 未成交'}"]
+            parts.append("📋 原则: 先看再动 — 截图分析→确认状态→精准操作")
             for r in result.get("results", []):
                 if r.get("decision"):
                     parts.append(f"  Step{r['step']}: {r['decision']} {r.get('code','')} "
