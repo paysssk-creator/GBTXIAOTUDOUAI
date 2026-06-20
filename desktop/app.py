@@ -174,6 +174,7 @@ def hacker_all_caps():
         {"id":"guard","name":"行动守卫","icon":"ph-shield","cat":"core","desc":"行动前强制扫描","mcp":False},
         {"id":"reasoner","name":"深度推理","icon":"ph-graph","cat":"ai","desc":"8模式推理引擎","mcp":False},
         {"id":"winctl","name":"Windows操控","icon":"ph-windows-logo","cat":"control","desc":"16类原生API","mcp":False},
+        {"id":"ai_trade","name":"AI操盘手","icon":"ph-robot","cat":"trade","desc":"截图→分析→决策→下单→自省","mcp":False},
     ]
     return jsonify({"capabilities":caps,"total":len(caps)})
 
@@ -205,6 +206,42 @@ def hacker_exec_cap():
                     if len(parts)>=2:procs.append({"name":parts[0].strip(),"pid":parts[1].strip()})
             return jsonify({"ok":True,"processes":procs})
         except Exception as e:return jsonify({"ok":False,"error":str(e)})
+        # 非MCP本地能力
+    if cid == "winctl":
+        try:
+            from gbt.winctl import get_winctl
+            wctl = get_winctl()
+            r = wctl.call(d.get("feature","screen"), act, **{k:v for k,v in d.items() if k not in ("id","action","feature")})
+            return jsonify({"ok":r.ok,"feature":r.feature,"action":r.action,"data":r.data[:3000],"error":r.error})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "guard":
+        try:
+            text = d.get("text",act)
+            r = subprocess.run(["node","C:/Users/ADMIN/.cline/scanner.js","--project",os.path.dirname(os.path.dirname(__file__))],capture_output=True,text=True,timeout=30,errors='replace')
+            return jsonify({"ok":True,"data":r.stdout[:3000] or r.stderr[:3000]})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "reasoner":
+        try:
+            from gbt.reasoner import DeepReasoner, ReasonMode
+            rd = DeepReasoner(llm.a if llm.a else None)
+            mode = ReasonMode(d.get("mode","chain"))
+            result = rd.reason(d.get("text",act), mode)
+            return jsonify({"ok":True,"mode":result.mode.value,"conclusion":result.conclusion[:2000],"confidence":result.confidence,"plan":result.plan[:10]})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "ai_trade":
+        try:
+            from gbt.gcc.ai_trader import ai_trade
+            from gbt.desktop_ctl import DesktopController
+            result = ai_trade(d.get("text",act), llm=llm.a if llm.a else None, desk=DesktopController())
+            return jsonify({"ok":result.get("ok",False),"data":json.dumps(result,ensure_ascii=False)[:3000]})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
+    if cid == "screenshot_reason":
+        try:
+            from gbt.gcc.screenshot_reasoner import ScreenshotReasoner
+            sr = ScreenshotReasoner(llm=llm.a if llm.a else None)
+            result = sr.reason(d.get("text",act), d.get("text",""))
+            return jsonify({"ok":True,"data":json.dumps(result,ensure_ascii=False)[:3000]})
+        except Exception as e: return jsonify({"ok":False,"error":str(e)})
     return jsonify({"ok":False,"error":f"unknown: {cid}"})
 
 @app.route("/api/hacker/status")

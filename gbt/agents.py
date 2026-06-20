@@ -173,6 +173,12 @@ class DesktopAgent(BaseAgent):
         self.register("system_lock", "锁定Windows系统",
                      ["锁定", "锁屏", "lock"],
                      self._system_lock, priority=4)
+        self.register("gcc_run", "通用电脑控制(GCC)",
+                     ["操控电脑", "GCC", "帮我操作", "自动操作", "代替我操作", "屏幕操作"],
+                     self._gcc_run, priority=9)
+        self.register("screenshot_reason", "截图视觉推理",
+                     ["分析屏幕", "看屏幕", "屏幕分析", "截图分析", "视觉分析"],
+                     self._screenshot_reason, priority=8)
     
     def _browser_open(self, text):
         import urllib.parse
@@ -267,6 +273,40 @@ class DesktopAgent(BaseAgent):
         import subprocess
         subprocess.run(["rundll32","user32.dll,LockWorkStation"],capture_output=True,timeout=3)
         return "系统已锁定"
+    def _gcc_run(self, text):
+        """通用电脑控制: 截图→VLM分析→规划动作→执行→自省"""
+        try:
+            from gbt.gcc.gcc_runner import GCCRunner
+            runner = GCCRunner(llm=self.trader.llm if hasattr(self,'trader') and self.trader else None)
+            result = runner.run(text, max_steps=10)
+            parts = [f"🤖 GCC任务: {'✅' if result.get('ok') else '⚠️'}"]
+            for s in result.get("steps",[]):
+                parts.append(f"  S{s['id']}: {s['action']} {'OK' if s['success'] else 'FAIL'}")
+            return "\n".join(parts)
+        except ImportError as e:
+            return f"GCC需要: pip install Pillow mss\n{e}"
+        except Exception as e:
+            return f"GCC异常: {e}"
+
+    def _screenshot_reason(self, text):
+        """截图+视觉推理: 分析当前屏幕"""
+        try:
+            from gbt.gcc.screenshot_reasoner import ScreenshotReasoner
+            import base64
+            sr = ScreenshotReasoner(llm=self.trader.llm if hasattr(self,'trader') and self.trader else None)
+            # 先截图
+            try:
+                from PIL import ImageGrab
+                from io import BytesIO
+                buf = BytesIO()
+                ImageGrab.grab().save(buf, format="JPEG", quality=50)
+                b64 = base64.b64encode(buf.getvalue()).decode()
+            except:
+                b64 = None
+            result = sr.reason(b64, text)
+            return json.dumps(result, ensure_ascii=False)[:2000]
+        except Exception as e:
+            return f"截图推理异常: {e}"
     
     def execute(self, capability_name: str, text: str) -> AgentResult:
         t0 = time.time()
