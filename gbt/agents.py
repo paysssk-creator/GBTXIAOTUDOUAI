@@ -112,16 +112,16 @@ class BaseAgent(ABC):
         if self.framework:
             try:
                 self.framework._on_agent_executed(self.name, capability, ok, data)
-            except:
-                pass  # 静默失败，不影响主执行流
+            except Exception as e:
+                L.debug(f"_on_agent_executed 回调失败: {e}")
     
     def ping_brain(self, source: str, reason: str):
         """通知大脑"""
         if self.brain and hasattr(self.brain, 'ping'):
             try:
                 self.brain.ping(source, reason)
-            except:
-                pass
+            except Exception as e:
+                L.debug(f"Brain ping 失败: {e}")
 
 
 # ═══════════════════════════════════════════════════════
@@ -195,7 +195,8 @@ class DesktopAgent(BaseAgent):
             import pyautogui
             pyautogui.hotkey("win", "up")
             return "已最大化当前窗口"
-        except:
+        except Exception as e:
+            L.debug(f"窗口最大化失败: {e}")
             return "窗口最大化完成"
     
     def _screenshot(self, text):
@@ -211,7 +212,9 @@ class DesktopAgent(BaseAgent):
             msg = text.replace("输入","").replace("打字","").replace("键盘","").strip()[:500]
             if msg: pyautogui.typewrite(msg, interval=0.02)
             return f"已输入: {msg[:50]}..." if len(msg)>50 else f"已输入: {msg}"
-        except: return "键盘输入完成(PowerShell降级)"
+        except Exception as e:
+            L.debug(f"键盘输入失败: {e}")
+            return "键盘输入完成(PowerShell降级)"
     def _keyboard_hotkey(self, text):
         try:
             import pyautogui
@@ -220,7 +223,9 @@ class DesktopAgent(BaseAgent):
             filtered = [k for k in keys if k in valid or len(k)==1]
             if filtered: pyautogui.hotkey(*filtered)
             return f"已执行快捷键: {'+'.join(filtered)}"
-        except: return "快捷键已触发"
+        except Exception as e:
+            L.debug(f"快捷键执行失败: {e}")
+            return "快捷键已触发"
     def _mouse_click(self, text):
         try:
             import pyautogui,re
@@ -229,7 +234,9 @@ class DesktopAgent(BaseAgent):
             if x and y: pyautogui.click(x,y)
             else: pyautogui.click()
             return f"已点击 ({x},{y})" if x else "已点击当前位置"
-        except: return "点击完成"
+        except Exception as e:
+            L.debug(f"鼠标点击失败: {e}")
+            return "点击完成"
     def _mouse_move(self, text):
         try:
             import pyautogui,re
@@ -237,7 +244,9 @@ class DesktopAgent(BaseAgent):
             x,y=int(m[0]) if len(m)>0 else 500,int(m[1]) if len(m)>1 else 500
             pyautogui.moveTo(x,y,duration=0.3)
             return f"鼠标已移至 ({x},{y})"
-        except: return "鼠标移动完成"
+        except Exception as e:
+            L.debug(f"鼠标移动失败: {e}")
+            return "鼠标移动完成"
     def _process_kill(self, text):
         import subprocess
         name=text.replace("结束","").replace("杀掉","").replace("终止","").replace("关闭","").strip()[:50]
@@ -261,7 +270,9 @@ class DesktopAgent(BaseAgent):
         import pyautogui
         name=text.replace("切换","").replace("聚焦","").replace("前台","").strip()
         try: pyautogui.hotkey("alt","tab"); return f"已切换窗口→{name or '下一个'}"
-        except: return "窗口已切换"
+        except Exception as e:
+            L.debug(f"窗口切换失败: {e}")
+            return "窗口已切换"
     def _volume_control(self, text):
         import subprocess
         if "静音" in text:
@@ -301,7 +312,8 @@ class DesktopAgent(BaseAgent):
                 buf = BytesIO()
                 ImageGrab.grab().save(buf, format="JPEG", quality=50)
                 b64 = base64.b64encode(buf.getvalue()).decode()
-            except:
+            except Exception as e:
+                L.debug(f"截图失败: {e}")
                 b64 = None
             result = sr.reason(b64, text)
             return json.dumps(result, ensure_ascii=False)[:2000]
@@ -576,7 +588,8 @@ class HackerAgent(BaseAgent):
                     with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
                         content = f.read()[:2000]
                     return f"📄 {os.path.basename(fpath)} ({len(content)}字符):\n{content[:500]}"
-                except:
+                except Exception as e:
+                    L.debug(f"文件读取失败 {fpath}: {e}")
                     return f"无法读取: {fpath}"
             return f"文件不存在: {fpath}"
         return "请指定要读取的文件路径"
@@ -598,11 +611,11 @@ class HackerAgent(BaseAgent):
         
         try:
             if is_shell:
-                r = subprocess.run(code, shell=True, capture_output=True,
+                r = subprocess.run(["cmd", "/c", code], shell=False, capture_output=True,
                                   text=True, timeout=10, errors='replace')
             else:
                 # 用 Python312 执行
-                python_exe = r'C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe'
+                python_exe = sys.executable  # 使用当前Python解释器，避免硬编码路径
                 if not os.path.exists(python_exe):
                     python_exe = 'python'  # 降级
                 r = subprocess.run([python_exe, "-c", code],
@@ -733,11 +746,14 @@ class HackerAgent(BaseAgent):
                     r = urllib.request.urlopen(url, timeout=5).read().decode()
                     data = json.loads(r)
                     results.append(f"东方财富: 数据已获取 (code={code})")
-                except: results.append("东方财富: 抓取中...")
+                except Exception as e:
+                    L.debug(f"东方财富数据抓取失败 {code}: {e}")
+                    results.append("东方财富: 抓取中...")
                 try:
                     url2 = f"https://iwencai.com/unifiedwap/result?w={code}"
                     results.append(f"问财: 搜索 {code}")
-                except: pass
+                except Exception as e:
+                    L.debug(f"问财搜索失败: {e}")
             else:
                 results.append("请指定股票代码")
             return "📊 资讯抓取:\n" + "\n".join(results[:5])
@@ -814,7 +830,8 @@ class SystemAgent(BaseAgent):
         try:
             from gbt.trader import trader as _tr
             parts.append(f"交易: auto_trade={'ON' if _tr.auto_trade else 'OFF'} | {len(_tr.watchlist)} 自选")
-        except: pass
+        except Exception as e:
+            L.debug(f"交易状态获取失败: {e}")
         return "\n".join(parts) if parts else "系统状态正常"
     
     def _watcher_check(self, text):
@@ -882,7 +899,8 @@ class NotifyAgent(BaseAgent):
             notification.notify(title="GBT 通知", message=text[:100],
                               app_name="GBT Pro", timeout=5)
             return "桌面通知已发送"
-        except:
+        except Exception as e:
+            L.debug(f"桌面通知失败: {e}")
             return "已发送（通知可能未显示，plyer可能未安装）"
     
     def execute(self, capability_name: str, text: str) -> AgentResult:
@@ -1022,18 +1040,24 @@ class RouterAgent(BaseAgent):
                 try:
                     from gbt.trader import trader as _t
                     if not _t: missing.append(dep)
-                except: missing.append(dep)
+                except Exception as e:
+                    L.debug(f"依赖检查失败 trader: {e}")
+                    missing.append(dep)
             elif dep == "account":
                 if not hasattr(self, '_account') or not self._account:
                     try:
                         import gbt.account as _a
                         self._account = _a.account if hasattr(_a, 'account') else None
-                    except: missing.append(dep)
+                    except Exception as e:
+                        L.debug(f"依赖检查失败 account: {e}")
+                        missing.append(dep)
             elif dep == "watcher":
                 try:
                     from gbt.watcher import watcher as _w
                     if not _w: missing.append(dep)
-                except: missing.append(dep)
+                except Exception as e:
+                    L.debug(f"依赖检查失败 watcher: {e}")
+                    missing.append(dep)
         
         if missing:
             phases["pre_check"] = {"ok": False, "detail": f"缺失依赖: {missing}"}

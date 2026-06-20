@@ -1,12 +1,20 @@
-"""GBT v2.0 Demo Server - starts immediately, no LLM needed"""
+"""GBT v2.0 Production Server — starts immediately with real LLM when available"""
 import os, sys, json, platform
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, request
 from gbt.mcp import get_mcp
 from gbt.providers import PROVIDERS, AutoKeyConfig
 
 app = Flask(__name__)
+
+# Real LLM initialization
+_llm = None
+try:
+    from gbt.llm import GBTLLM
+    _llm = GBTLLM(provider="auto")
+except Exception:
+    pass
 
 @app.route("/")
 def home():
@@ -22,7 +30,7 @@ def status():
     return jsonify({
         "mcp_servers": mcp.list_servers(),
         "mcp_count": len(mcp.list_servers()),
-        "llm": "Demo", "model": "N/A",
+        "llm": _llm.provider_name if _llm else "Not configured", "model": _llm.model if _llm else "N/A",
         "keys_available": sum(1 for v in disc.values() if v["status"]=="available"),
         "keys_total": len(PROVIDERS),
         "platform": platform.system(), "python": platform.python_version(),
@@ -48,16 +56,35 @@ def mcp_call(s):
 
 @app.route("/api/reason", methods=["POST"])
 def reason():
-    return jsonify({"mode":"demo","conclusion":"Demo mode - set API keys for full reasoning","confidence":1.0})
+    if not _llm:
+        return jsonify({"ok": False, "error": "LLM not configured", "help": "Set API keys via .env for full reasoning"})
+    try:
+        from gbt.reasoner import DeepReasoner, ReasonMode as RM
+        d = request.json or {}
+        mode = RM(d.get("mode", "chain"))
+        dr = DeepReasoner(_llm)
+        result = dr.reason(d.get("text", d.get("question", "")), mode)
+        return jsonify({"ok": True, "mode": result.mode.value, "conclusion": result.conclusion[:2000],
+                        "confidence": result.confidence, "plan": result.plan[:10]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    from flask import request
-    return jsonify({"response":"[Demo Mode] GBT v2.0 is running! Set API keys in .env for full AI capabilities."})
+    if not _llm:
+        return jsonify({"ok": False, "error": "LLM not configured. Set API keys in .env file.",
+                        "help": "See /api/providers for available providers"})
+    try:
+        d = request.json or {}
+        msgs = [{"role": "user", "content": d.get("text", d.get("message", "Hello"))}]
+        resp = _llm.invoke(msgs)
+        return jsonify({"ok": True, "response": resp})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 print("\n" + "=" * 60)
-print("  GBT v2.0 Demo Server - RUNNING!")
-print("  http://localhost:8765")
+print("  GBT v2.0 Production Server - RUNNING!")
+print(f"  http://localhost:8765  |  LLM: {_llm.provider_name if _llm else 'Not configured'}")
 print("  API: /api/status | /api/providers | /api/mcp | /api/chat | /api/reason")
 print("=" * 60 + "\n")
 

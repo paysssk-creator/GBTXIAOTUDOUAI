@@ -107,7 +107,8 @@ def _handler_account(text):
         return (f"💰 模拟账户: ¥{account.cash:,.0f}\n"
                 f"📊 持仓: {pos_count} 只\n"
                 f"📈 总盈亏: ¥{account.total_pnl:+,.0f}")
-    except:
+    except Exception as e:
+        L.warning(f"账户查询异常: {e}")
         return f"账户查询异常"
 
 
@@ -290,7 +291,8 @@ def _handler_file_op(text):
                 with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
                     content = f.read()[:2000]
                 return f"📄 {os.path.basename(fpath)} ({len(content)}字符):\n{content[:500]}"
-            except:
+            except Exception as e:
+                L.debug(f"文件读取失败 {fpath}: {e}")
                 return f"无法读取: {fpath}"
         return f"文件不存在: {fpath}"
     return "请指定要读取的文件路径"
@@ -318,7 +320,8 @@ def _handler_code_exec(text):
     if cmd_m:
         cmd = cmd_m.group(1).strip()[:200]
         try:
-            r = subprocess.run(cmd, shell=True, capture_output=True,
+            import shlex
+            r = subprocess.run(shlex.split(cmd), shell=False, capture_output=True,
                               text=True, timeout=10, errors='replace')
             out = (r.stdout + r.stderr)[:1000] or "(执行完成)"
             return f"⚡ Shell执行:\n{out}"
@@ -409,7 +412,8 @@ def _handler_precision_scrape(text):
             parts = raw.split(",")
             if len(parts) > 3:
                 results["上证指数"] = f"{parts[0]}: {parts[1]} ({parts[3]}%)"
-        except:
+        except Exception as e:
+            L.debug(f"上证指数获取失败: {e}")
             results["上证指数"] = "获取失败"
         
         # Source 2: Web search (use DDG/bing fallback)

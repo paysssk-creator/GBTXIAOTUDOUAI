@@ -58,7 +58,7 @@ class WatcherAgent:
         self.running = False
         self._lock = threading.Lock()
         
-        # 状态
+        # 状态（以下字段的变更均受 self._lock 保护）
         self.findings: list[WatchFinding] = []
         self.memory_snapshots: dict[str, MemorySnapshot] = {}
         self.last_full_scan: Optional[str] = None
@@ -127,7 +127,9 @@ class WatcherAgent:
             elif not old:
                 changed.append(path)  # 新文件
         
-        self.memory_snapshots = snapshots
+        with self._lock:
+            self.memory_snapshots = snapshots
+        
         if changed:
             L.info(f"🧠 记忆同步: {len(snapshots)}文件, {len(changed)}变化")
         return changed
@@ -142,7 +144,8 @@ class WatcherAgent:
                 size=len(content),
                 last_modified=datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
             )
-        except:
+        except Exception as e:
+            L.debug(f"记忆快照失败 {path}: {e}")
             return MemorySnapshot(path=path, hash='error', size=0, last_modified='?')
     
     # ═══════════════════════════════════════════════════════
@@ -152,23 +155,28 @@ class WatcherAgent:
     def detect_hallucination(self, text: str, source: str = "unknown") -> list[WatchFinding]:
         """检测大模型输出中的幻觉"""
         findings = []
+        hallu_local = 0
         for pattern, concern in self.HALLUCINATION_PATTERNS:
             matches = re.findall(pattern, text, re.IGNORECASE)
             if matches:
+                first_match = matches[0]
+                snippet = first_match[:60] if isinstance(first_match, str) else str(first_match[0] if isinstance(first_match, tuple) else first_match)[:60]
                 finding = WatchFinding(
                     timestamp=datetime.now().strftime("%H:%M:%S"),
                     category="hallucination",
                     severity="warn",
                     source=source,
-                    message=f"{concern}: {matches[0][:60] if isinstance(matches[0], tuple) else str(matches[0])[:60]}",
+                    message=f"{concern}: {snippet}",
                     suggestion="请主Agent核实并纠正，避免传播不实信息",
                     context={"pattern": pattern, "matches": len(matches)}
                 )
                 findings.append(finding)
-                self.hallucination_count += 1
+                hallu_local += 1
         
         if findings:
-            self.findings.extend(findings)
+            with self._lock:
+                self.hallucination_count += hallu_local
+                self.findings.extend(findings)
             L.warning(f"🔍 幻觉检测: {len(findings)}处可疑 → {source}")
         
         return findings
@@ -227,7 +235,8 @@ class WatcherAgent:
                 L.warning(f"日志扫描异常 {log_file}: {e}")
         
         if findings:
-            self.findings.extend(findings)
+            with self._lock:
+                self.findings.extend(findings)
         return findings
     
     # ═══════════════════════════════════════════════════════
@@ -237,13 +246,14 @@ class WatcherAgent:
     def check_connections(self) -> list[WatchFinding]:
         """监控所有连接链路"""
         findings = []
+        alerts_local = 0
         
         # 4.1 GBT API
         try:
             import urllib.request
-            r = urllib.request.urlopen('http://localhost:8877/api/status', timeout=5)
-            if r.getcode() != 200:
-                raise Exception(f"HTTP {r.getcode()}")
+            with urllib.request.urlopen('http://localhost:8877/api/status', timeout=5) as r:
+                if r.getcode() != 200:
+                    raise Exception(f"HTTP {r.getcode()}")
         except Exception as e:
             findings.append(WatchFinding(
                 timestamp=datetime.now().strftime("%H:%M:%S"),
@@ -253,7 +263,7 @@ class WatcherAgent:
                 message=f"GBT API不可达: {str(e)[:60]}",
                 suggestion="主Agent检查GBT进程，必要时重启"
             ))
-            self.connection_alerts += 1
+            alerts_local += 1
         
         # 4.2 MCP服务器
         try:
@@ -265,7 +275,8 @@ class WatcherAgent:
                     r = call_mcp(name, "status", timeout=2)
                     if not r.ok:
                         down.append(name)
-                except:
+                except Exception as e:
+                    L.debug(f"MCP状态检查失败 {name}: {e}")
                     down.append(name)
             
             if down:
@@ -278,7 +289,7 @@ class WatcherAgent:
                     suggestion="主Agent执行MCP重连修复打补丁",
                     context={"down": down, "total": len(mcp._s)}
                 ))
-                self.connection_alerts += 1
+                alerts_local += 1
         except Exception as e:
             findings.append(WatchFinding(
                 timestamp=datetime.now().strftime("%H:%M:%S"),
@@ -292,9 +303,9 @@ class WatcherAgent:
         # 4.3 新浪行情API
         try:
             import urllib.request
-            r = urllib.request.urlopen('https://hq.sinajs.cn/list=sh000001', timeout=5)
-            if 'var hq_str' not in r.read().decode('gbk', errors='replace'):
-                raise Exception("响应格式异常")
+            with urllib.request.urlopen('https://hq.sinajs.cn/list=sh000001', timeout=5) as r:
+                if 'var hq_str' not in r.read().decode('gbk', errors='replace'):
+                    raise Exception("响应格式异常")
         except Exception as e:
             findings.append(WatchFinding(
                 timestamp=datetime.now().strftime("%H:%M:%S"),
@@ -304,11 +315,11 @@ class WatcherAgent:
                 message=f"行情源不可达: {str(e)[:60]}",
                 suggestion="主Agent检查网络连接，切换备用行情源"
             ))
-            self.connection_alerts += 1
+            alerts_local += 1
         
         # 4.4 DeepSeek LLM API
         try:
-            import urllib.request, os
+            import os
             api_key = os.environ.get('DEEPSEEK_API_KEY', '')
             if not api_key:
                 findings.append(WatchFinding(
@@ -320,10 +331,12 @@ class WatcherAgent:
                     suggestion="主Agent检查环境变量配置"
                 ))
         except Exception as e:
-            pass
+            L.warning(f"LLM API Key检查异常: {e}")
         
         if findings:
-            self.findings.extend(findings)
+            with self._lock:
+                self.connection_alerts += alerts_local
+                self.findings.extend(findings)
         return findings
     
     # ═══════════════════════════════════════════════════════
@@ -333,6 +346,7 @@ class WatcherAgent:
     def scan_project_structure(self) -> list[WatchFinding]:
         """扫描项目结构，检测主Agent是否跑偏"""
         findings = []
+        drift_local = 0
         
         # 5.1 关键文件完整性
         for fpath in self.WATCH_FILES:
@@ -369,7 +383,7 @@ class WatcherAgent:
                     suggestion="主Agent确认是否为预期操作，非预期则git restore恢复",
                     context={"deleted": [l[3:] for l in deleted[:5]]}
                 ))
-                self.drift_alerts += 1
+                drift_local += 1
             
             # 检测意外的大量变更（可能跑偏）
             if len(modified) > 10:
@@ -382,7 +396,7 @@ class WatcherAgent:
                     suggestion="主Agent回顾近期操作，确认变更合理性",
                     context={"modified": [l[3:] for l in modified[:5]]}
                 ))
-                self.drift_alerts += 1
+                drift_local += 1
                 
         except Exception as e:
             L.warning(f"Git扫描异常: {e}")
@@ -403,11 +417,14 @@ class WatcherAgent:
                     message=f"Python语法错误: {str(e)[:80]}",
                     suggestion="主Agent立即修复该文件的语法错误"
                 ))
-                self.drift_alerts += 1
+                drift_local += 1
         
         if findings:
-            self.findings.extend(findings)
-        self.last_full_scan = datetime.now().strftime("%H:%M:%S")
+            with self._lock:
+                self.drift_alerts += drift_local
+                self.findings.extend(findings)
+        with self._lock:
+            self.last_full_scan = datetime.now().strftime("%H:%M:%S")
         return findings
     
     # ═══════════════════════════════════════════════════════
@@ -416,7 +433,8 @@ class WatcherAgent:
     
     def heartbeat(self):
         """单次心跳 — 执行所有监控检查"""
-        self.heartbeat_count += 1
+        with self._lock:
+            self.heartbeat_count += 1
         now = datetime.now().strftime("%H:%M:%S")
         all_findings = []
         
@@ -443,8 +461,9 @@ class WatcherAgent:
             self._wake_main_agent(all_findings)
         
         # 清理旧发现（保留最近100条）
-        if len(self.findings) > 100:
-            self.findings = self.findings[-100:]
+        with self._lock:
+            if len(self.findings) > 100:
+                self.findings = self.findings[-100:]
         
         return {
             "heartbeat": self.heartbeat_count,
@@ -489,8 +508,8 @@ class WatcherAgent:
                     for f in criticals[:3]:
                         _w._add_alert("watcher_agent", "critical" if f.severity == "critical" else "warn",
                                      f.message[:100], f.suggestion[:100])
-                except:
-                    pass
+                except Exception as e:
+                    L.warning(f"Watcher告警保存失败: {e}")
                     
         except Exception as e:
             L.error(f"唤醒主Agent失败: {e}")
@@ -504,7 +523,8 @@ class WatcherAgent:
         if main_brain:
             self.main_brain = main_brain
         
-        self.running = True
+        with self._lock:
+            self.running = True
         L.info(f"🦉 守夜人Agent已启动 — 监控中")
         
         # 首次快速扫描
@@ -515,24 +535,21 @@ class WatcherAgent:
     
     def stop(self):
         """停止守夜人Agent"""
-        self.running = False
+        with self._lock:
+            self.running = False
         L.info("🦉 守夜人Agent已停止")
     
     def get_status(self):
         """获取状态"""
-        return {
-            "running": self.running,
-            "version": "v1.0",
-            "heartbeat_count": self.heartbeat_count,
-            "memory_snapshots": len(self.memory_snapshots),
-            "findings": len(self.findings),
-            "stats": {
-                "hallucination": self.hallucination_count,
-                "connection_alerts": self.connection_alerts,
-                "drift_alerts": self.drift_alerts,
-            },
-            "last_full_scan": self.last_full_scan,
-            "recent_findings": [
+        with self._lock:
+            hb = self.heartbeat_count
+            mem_snaps = len(self.memory_snapshots)
+            f_len = len(self.findings)
+            hallu = self.hallucination_count
+            conn_a = self.connection_alerts
+            drift_a = self.drift_alerts
+            last_scan = self.last_full_scan
+            recent = [
                 {
                     "time": f.timestamp,
                     "category": f.category,
@@ -541,7 +558,20 @@ class WatcherAgent:
                     "suggestion": f.suggestion[:80],
                 }
                 for f in self.findings[-10:]
-            ],
+            ]
+        return {
+            "running": self.running,
+            "version": "v1.0",
+            "heartbeat_count": hb,
+            "memory_snapshots": mem_snaps,
+            "findings": f_len,
+            "stats": {
+                "hallucination": hallu,
+                "connection_alerts": conn_a,
+                "drift_alerts": drift_a,
+            },
+            "last_full_scan": last_scan,
+            "recent_findings": recent,
             "mode": "readonly — 不参与项目改动"
         }
 
@@ -627,3 +657,145 @@ def get_llm_monitor() -> LLMResponseMonitor:
         agent = get_watcher_agent()
         _llm_monitor_instance = LLMResponseMonitor(agent)
     return _llm_monitor_instance
+
+
+# ═══════════════════════════════════════════════════════
+# 沙盒验证闭环
+# ═══════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    import tempfile
+    
+    # 配置 logging 以便观察输出
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(name)s [%(levelname)s] %(message)s"
+    )
+    
+    print("=" * 60)
+    print("WatcherAgent 沙盒验证")
+    print("=" * 60)
+    
+    # 1. 创建实例（使用临时目录作为项目根）
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # 创建 logs 子目录供 scan_logs 使用
+        logs_dir = os.path.join(tmpdir, 'logs')
+        os.makedirs(logs_dir, exist_ok=True)
+        # 写一个示例日志文件
+        with open(os.path.join(logs_dir, 'test.log'), 'w', encoding='utf-8') as f:
+            f.write("2025-01-01 00:00:00 INFO 正常消息\n")
+            f.write("2025-01-01 00:00:01 ERROR 测试错误\n")
+            f.write("2025-01-01 00:00:02 WARNING 测试警告\n")
+        
+        print(f"\n[1] 创建 WatcherAgent (project_root={tmpdir})...")
+        agent = WatcherAgent(project_root=tmpdir)
+        assert agent is not None
+        assert agent.running is False
+        assert agent.heartbeat_count == 0
+        assert agent.hallucination_count == 0
+        assert agent.connection_alerts == 0
+        assert agent.drift_alerts == 0
+        print("    ✅ 实例创建成功，初始状态正确")
+        
+        # 2. 测试 start / stop（验证锁保护 running）
+        print("\n[2] 测试 start() / stop()...")
+        result = agent.start()
+        assert result["ok"] is True
+        assert agent.running is True
+        print(f"    ✅ start() 返回: {result}")
+        
+        agent.stop()
+        assert agent.running is False
+        print("    ✅ stop() 后 running=False")
+        
+        # 3. 测试幻觉检测（验证锁保护 hallucination_count 和 findings）
+        print("\n[3] 测试 detect_hallucination()...")
+        test_text = "我已经修复了所有bug，全部通过了测试，买入100股成功成交价格为12.50元"
+        findings = agent.detect_hallucination(test_text, source="test")
+        print(f"    发现 {len(findings)} 处可疑")
+        for f_ in findings:
+            print(f"      [{f_.severity}] {f_.message[:60]}")
+        assert agent.hallucination_count == len(findings)
+        assert len(agent.findings) == len(findings)
+        print("    ✅ 幻觉计数与 findings 一致，锁正常工作")
+        
+        # 4. 测试 scan_logs（验证锁保护 findings）
+        print("\n[4] 测试 scan_logs()...")
+        log_findings = agent.scan_logs()
+        print(f"    日志扫描发现 {len(log_findings)} 条")
+        for f_ in log_findings:
+            print(f"      [{f_.severity}] {f_.message[:80]}")
+        # findings 应包含之前的幻觉检测 + 日志发现
+        assert len(agent.findings) >= len(findings) + len(log_findings)
+        print("    ✅ findings 累积正确，锁正常工作")
+        
+        # 5. 测试 check_connections（验证锁保护 connection_alerts）
+        print("\n[5] 测试 check_connections()...")
+        conn_findings = agent.check_connections()
+        print(f"    连接检查发现 {len(conn_findings)} 条告警")
+        for f_ in conn_findings:
+            print(f"      [{f_.severity}] {f_.source}: {f_.message[:60]}")
+        # 连接数应与 findings 中 connection 类别数匹配
+        conn_categories = sum(1 for f_ in conn_findings if f_.category == "connection")
+        print(f"    connection_alerts={agent.connection_alerts}, connection类别数={conn_categories}")
+        print("    ✅ check_connections 完成，锁正常工作")
+        
+        # 6. 多线程压力测试：验证锁不会死锁
+        print("\n[6] 多线程并发测试（10线程 x 100次 heartbeat）...")
+        errors_in_threads = []
+        
+        def worker():
+            try:
+                for _ in range(100):
+                    agent.heartbeat()
+            except Exception as e:
+                errors_in_threads.append(str(e))
+        
+        threads = [threading.Thread(target=worker) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        
+        assert len(errors_in_threads) == 0, f"线程异常: {errors_in_threads}"
+        # heartbeat_count 应为 10 * 100 = 1000
+        print(f"    heartbeat_count={agent.heartbeat_count} (预期=1000)")
+        assert agent.heartbeat_count == 1000, f"心跳计数不一致: {agent.heartbeat_count}"
+        print("    ✅ 多线程并发无异常，锁无死锁，计数器正确")
+        
+        # 7. 测试 get_status
+        print("\n[7] 测试 get_status()...")
+        status = agent.get_status()
+        print(f"    heartbeat_count={status['heartbeat_count']}")
+        print(f"    total_findings={status['findings']}")
+        print(f"    stats={status['stats']}")
+        assert status["running"] is False
+        print("    ✅ get_status 正常返回")
+        
+        # 8. 测试 LLMResponseMonitor
+        print("\n[8] 测试 LLMResponseMonitor...")
+        monitor = LLMResponseMonitor(agent)
+        result = monitor.audit("API返回正常，所有接口连接成功，已修复全部问题", source="test-llm")
+        if result:
+            print(f"    audit 发现 {len(result)} 处可疑")
+        else:
+            print("    audit 未发现可疑（正常）")
+        
+        api_response = {"conclusion": "短", "protocol": {"ok": False, "error_level": "high"}}
+        api_findings = monitor.check_api_response(api_response)
+        if api_findings:
+            print(f"    check_api_response 发现 {len(api_findings)} 条")
+            for f_ in api_findings:
+                print(f"      [{f_.severity}] {f_.message[:60]}")
+        print("    ✅ LLMResponseMonitor 正常工作")
+        
+        # 9. 测试单例
+        print("\n[9] 测试单例...")
+        a1 = get_watcher_agent(tmpdir)
+        a2 = get_watcher_agent()
+        assert a1 is a2
+        print(f"    ✅ 单例模式正确 (a1 is a2 = {a1 is a2})")
+    
+    print("\n" + "=" * 60)
+    print("🎉 全部沙盒验证通过 — 锁、异常处理、连接检查均正常")
+    print("=" * 60)

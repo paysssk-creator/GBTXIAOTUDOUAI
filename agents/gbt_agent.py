@@ -229,7 +229,6 @@ class GBTAgent(SimpleAgent):
         mode_map = {m.value: m for m in ReasonMode}
         rm = mode_map.get(mode, ReasonMode.CHAIN)
         reasoner = DeepReasoner(self.llm, self._tools)
-        reasoner = DeepReasoner(self.llm, self._tools)
         result = reasoner.reason(question, rm)
         return (f"## 推理结果 [{result.mode.value}] 置信度:{result.confidence:.0%}\n\n"
                 f"{result.conclusion}\n\n"

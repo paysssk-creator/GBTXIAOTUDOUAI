@@ -37,9 +37,8 @@ def _load_env_force():
                         k=k.strip();v=v.strip().strip('"').strip("'")
                         if k and v:
                             os.environ[k]=v
-                            if 'KEY' in k.upper():
-                                mask=v[:8]+"..."+v[-4:] if len(v)>12 else "***"
-                                print(f"ENV: {k}={mask}")
+                            # 安全: 仅记录加载成功的变量名，不打印值
+                            pass
         except Exception as _e:
             print(f"ENV FAIL: {_p} -> {_e}")
 _load_env_force()
@@ -86,7 +85,7 @@ class LLMMgr:
         valid=[p for p,i in disc.items() if i["status"]=="available"]
         if prov!="auto" and prov in valid:valid.insert(0,prov)
         if not valid:
-            s.a=None;s.prov=None;L.warning("No keys - demo mode");return False
+            s.a=None;s.prov=None;L.warning("No API keys configured — set via .env or /api/providers");return False
         last_err=None
         for p in valid:
             try:s.a=GBTLLM(provider=p,timeout=120);s.prov=p;s.model=s.a.model;L.info(f"LLM: {PROVIDERS[p]['name']} | {s.model}");return True
@@ -97,9 +96,9 @@ class LLMMgr:
         L.warning(f"All LLM providers failed: {last_err}")
         s.a=None;s.prov=None;return False
     def switch(s,prov):
-        r=s.try_init(prov);return {"ok":r,"provider":s.prov,"model":s.model,"name":PROVIDERS[s.prov]["name"] if s.prov else "Demo"}
+        r=s.try_init(prov);return {"ok":r,"provider":s.prov,"model":s.model,"name":PROVIDERS[s.prov]["name"] if s.prov else "Not configured"}
     def chat(s,t):
-        if not s.a:return "[Demo] No LLM available."
+        if not s.a:return '{"ok":false,"error":"LLM not configured","help":"Set API keys via /api/providers"}'
         try:
             msgs=[{"role":"system","content":"""你是 GBT Pro v2.1，运行在 Windows 桌面上的专业AI交易终端助手。
 
@@ -220,7 +219,9 @@ def hacker_exec_cap():
             text = d.get("text","GBT就绪")[:500]
             engine.say(text); engine.runAndWait()
             return jsonify({"ok":True,"spoken":text[:80]})
-        except: return jsonify({"ok":False,"error":"pip install pyttsx3"})
+        except Exception as e:
+            L.warning(f"TTS失败: {e}")
+            return jsonify({"ok":False,"error":"pip install pyttsx3"})
     if cid == "login_detect":
         try:
             from gbt.ocr import screenshot_to_text
@@ -241,9 +242,13 @@ def hacker_exec_cap():
         except Exception as e: return jsonify({"ok":False,"error":str(e)})
     if cid == "auto_pipeline":
         try:
-            import os
-            os.startfile("https://www.bing.com")
-            return jsonify({"ok":True,"step":"browser_opened","next":"login_required"})
+            from gbt.gcc.gcc_runner import GCCRunner
+            runner = GCCRunner(llm=llm.a if llm.a else None)
+            task = d.get("text", "打开交易平台并检查登录状态")
+            result = runner.run(task, max_steps=10, verbose=False)
+            return jsonify({"ok": result.get("ok", False), "task": task,
+                "steps": result.get("total_steps", 0),
+                "detail": result.get("steps", [])[:20]})
         except Exception as e: return jsonify({"ok":False,"error":str(e)})
     # 非MCP本地能力
     if cid == "winctl":
@@ -286,7 +291,7 @@ def hacker_exec_cap():
 @app.route("/api/hacker/status")
 def hacker_status():
     return jsonify({"ok":True,"mcp":get_mcp().list_servers(),"mcp_count":len(get_mcp().list_servers()),
-        "llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Demo",
+        "llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Not configured",
         "watcher":watcher.get_status() if watcher else {}})
 
 
@@ -378,7 +383,7 @@ def home():
 @app.route("/api/status")
 def st():
     m=get_mcp();d=AutoKeyConfig.scan()
-    return jsonify({"mcp_count":len(m.list_servers()),"llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Demo","model":llm.model or "N/A","keys_available":sum(1 for v in d.values() if v["status"]=="available"),"keys_total":len(PROVIDERS)})
+    return jsonify({"mcp_count":len(m.list_servers()),"llm":PROVIDERS[llm.prov]["name"] if llm.prov else "Not configured","model":llm.model or "N/A","keys_available":sum(1 for v in d.values() if v["status"]=="available"),"keys_total":len(PROVIDERS)})
 
 @app.route("/api/providers")
 def pr():
@@ -481,7 +486,9 @@ def dv():
         try:
             r=subprocess.run(["powershell","-NoProfile","-Command",cmd],capture_output=True,text=True,timeout=8,errors='replace')
             return r.stdout.strip()
-        except:return ""
+        except Exception as e:
+            L.debug(f"PowerShell 命令失败: {e}")
+            return ""
     gpus=[]
     try:
         ps_cmd='Get-CimInstance Win32_VideoController | Select Name,AdapterRAM,DriverVersion | ConvertTo-Json'
@@ -492,7 +499,9 @@ def dv():
             for i in items:
                 ram=i.get('AdapterRAM',0) or 0
                 gpus.append({'name':i.get('Name','GPU'),'ram_mb':round(ram/(1024*1024),0) if ram else 0,'driver':i.get('DriverVersion','')})
-    except:gpus=[{'name':'GPU Info Unavailable','ram_mb':0,'driver':''}]
+    except Exception as e:
+        L.debug(f"GPU信息获取失败: {e}")
+        gpus=[{'name':'GPU Info Unavailable','ram_mb':0,'driver':''}]
     audio=[]
     try:
         out=_ps('Get-CimInstance Win32_SoundDevice | Select Name,Status | ConvertTo-Json')
@@ -500,7 +509,8 @@ def dv():
             import json as _j
             items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
             for i in items:audio.append({'name':i.get('Name','Audio'),'status':i.get('Status','OK')})
-    except:pass
+    except Exception as e:
+        L.debug(f"音频设备信息获取失败: {e}")
     disks=[]
     try:
         out=_ps('Get-CimInstance Win32_DiskDrive | Select Model,Size | ConvertTo-Json')
@@ -510,7 +520,8 @@ def dv():
             for i in items:
                 sz=i.get('Size',0) or 0
                 disks.append({'model':(i.get('Model','Disk') or '').strip(),'size_gb':round(sz/(1024**3),0)})
-    except:pass
+    except Exception as e:
+        L.debug(f"磁盘信息获取失败: {e}")
     net=[]
     try:
         out=_ps('Get-CimInstance Win32_NetworkAdapter | Where-Object {$_.NetEnabled -eq $true} | Select Name,Speed | ConvertTo-Json')
@@ -520,7 +531,8 @@ def dv():
             for i in items:
                 sp=i.get('Speed',0) or 0
                 net.append({'name':i.get('Name','Network'),'speed_mbps':round(sp/(1000*1000),0) if sp else 0})
-    except:pass
+    except Exception as e:
+        L.debug(f"网络信息获取失败: {e}")
     # Disk usage
     du_total=0;du_used=0;du_free=0
     try:
@@ -530,7 +542,8 @@ def dv():
         du_total=round(total.value/(1024**3),1)
         du_free=round(free.value/(1024**3),1)
         du_used=round(du_total-du_free,1)
-    except:pass
+    except Exception as e:
+        L.debug(f"磁盘用量获取失败: {e}")
     return jsonify({"gpu":gpus,"audio":audio,"disks":disks,"network":net,"disk_c":{"total_gb":du_total,"used_gb":du_used,"free_gb":du_free}})
 
 @app.route("/api/connectors")
@@ -583,7 +596,8 @@ def cn_action(cid):
         cmd = args.get("cmd","")
         if act == "exec" and cmd:
             try:
-                res = subprocess.run(cmd,shell=True,capture_output=True,text=True,timeout=30,errors='replace',cwd=args.get("cwd") or os.path.expanduser("~"))
+                import shlex
+                res = subprocess.run(shlex.split(cmd),shell=False,capture_output=True,text=True,timeout=30,errors='replace',cwd=args.get("cwd") or os.path.expanduser("~"))
                 r = {"ok":True,"stdout":res.stdout[:3000],"stderr":res.stderr[:1000],"code":res.returncode}
             except subprocess.TimeoutExpired: r = {"ok":False,"error":"Timeout (30s)"}
             except Exception as e: r = {"ok":False,"error":str(e)}
@@ -592,19 +606,19 @@ def cn_action(cid):
         repo = args.get("repo",os.path.dirname(os.path.dirname(__file__)))
         if act == "status":
             try:
-                res = subprocess.run("git status --short",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
-                r = {"ok":True,"output":res.stdout,"branch":subprocess.run("git branch --show-current",shell=True,capture_output=True,text=True,errors='replace',cwd=repo).stdout.strip()}
+                res = subprocess.run(["git","status","--short"],shell=False,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
+                r = {"ok":True,"output":res.stdout,"branch":subprocess.run(["git","branch","--show-current"],shell=False,capture_output=True,text=True,errors='replace',cwd=repo).stdout.strip()}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "log":
             try:
-                res = subprocess.run("git log --oneline -10",shell=True,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
+                res = subprocess.run(["git","log","--oneline","-10"],shell=False,capture_output=True,text=True,timeout=10,errors='replace',cwd=repo)
                 r = {"ok":True,"commits":res.stdout.strip().split("\n") if res.stdout else []}
             except Exception as e: r = {"ok":False,"error":str(e)}
     # ── Process Manager ──
     elif cid == "process":
         if act == "list":
             try:
-                res = subprocess.run("tasklist /fo csv /nh",shell=True,capture_output=True,text=True,timeout=10,errors='replace')
+                res = subprocess.run(["tasklist","/fo","csv","/nh"],shell=False,capture_output=True,text=True,timeout=10,errors='replace')
                 procs = []
                 for line in res.stdout.strip().split("\n")[:30]:
                     parts = line.replace('"','').split(",")
@@ -730,12 +744,12 @@ def cn_action(cid):
     elif cid == "wifi":
         if act == "scan":
             try:
-                res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=True,errors='replace')
+                res = subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,shell=False,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:3000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
         elif act == "info":
             try:
-                res = subprocess.run("netsh wlan show interfaces",capture_output=True,text=True,timeout=10,shell=True,errors='replace')
+                res = subprocess.run(["netsh","wlan","show","interfaces"],capture_output=True,text=True,timeout=10,shell=False,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
     return jsonify(r)
@@ -743,7 +757,7 @@ def cn_action(cid):
 @app.route("/api/reason",methods=["POST"])
 def rs():
     d=request.json or {};
-    if not llm.a:return jsonify({"mode":"demo","conclusion":"No LLM available.","confidence":0})
+    if not llm.a:return jsonify({"ok":False,"error":"LLM not configured","help":"Set API keys via /api/providers"})
     text = d.get("text","")
     
     # ── 多Agent智能路由: 优先走Agent框架 ──
@@ -932,17 +946,32 @@ def wt_alerts():
     ]})
 
 # ── 多Agent框架 ──
+def _ensure_framework():
+    """Lazy-init 多Agent框架: 首次API调用时自动初始化"""
+    global _framework
+    if hasattr(_brain, 'framework') and _brain.framework:
+        return True
+    try:
+        from gbt.agents import init_framework
+        _framework = init_framework(brain=_brain, trader=trader, account=account, watcher=watcher)
+        _brain.framework = _framework
+        L.info("Framework lazy-init 成功")
+        return True
+    except Exception as e:
+        L.warning("Framework lazy-init 失败: %s", e)
+        return False
+
 @app.route("/api/framework/status")
 def fw_status():
     """多Agent框架状态"""
-    if hasattr(_brain, 'framework') and _brain.framework:
+    if _ensure_framework():
         return jsonify(_brain.framework.get_system_status())
     return jsonify({"error": "多Agent框架未初始化"}), 503
 
 @app.route("/api/framework/agents")
 def fw_agents():
     """列出所有Agent"""
-    if hasattr(_brain, 'framework') and _brain.framework:
+    if _ensure_framework():
         fw = _brain.framework
         agents = {}
         for name, agent in fw.router.agents.items():
@@ -953,7 +982,7 @@ def fw_agents():
 @app.route("/api/framework/context")
 def fw_context():
     """共享上下文 — 所有Agent全局状态"""
-    if hasattr(_brain, 'framework') and _brain.framework:
+    if _ensure_framework():
         ctx = _brain.framework.get_shared_context()
         return jsonify(ctx)
     return jsonify({"error": "多Agent框架未初始化"}), 503
@@ -1269,7 +1298,8 @@ def acct_status():
             q = trader.fetch_quote([code])
             if code in q:
                 prices[code] = q[code].price
-    except: pass
+    except Exception as e:
+        L.warning(f"持仓市值获取失败: {e}")
     pnl = account.get_pnl(prices)
     positions = account.get_positions_with_value(prices)
     return jsonify({
@@ -1317,7 +1347,9 @@ def get_settings():
             "max_daily_loss_pct": risk_mgr.max_daily_loss_pct,
             "total_capital": risk_mgr.total_capital
         }
-    except: pass
+    except Exception as e:
+        L.warning(f"风控状态获取失败: {e}")
+        risk_data = {}
     return jsonify({
         "ok": True,
         "trader": {
@@ -1348,7 +1380,8 @@ def update_settings():
                 if hasattr(risk_mgr, k):
                     setattr(risk_mgr, k, v)
                     ch.append(f"risk.{k}={v}")
-        except: pass
+        except Exception as e:
+            L.debug(f"Settings apply failed: {e}")
     if "watchlist_add" in d:
         for item in d["watchlist_add"]:
             code = item.get("code", "")
@@ -1472,7 +1505,7 @@ def dashboard():
     connected = sum(1 for c in all_conns if c.get("status") == "connected")
     
     return jsonify({
-        "llm": llm.prov.upper() if llm.prov else "Demo",
+        "llm": llm.prov.upper() if llm.prov else "Not configured",
         "model": llm.model or "N/A",
         "mcp_servers": mcp_count,
         "connectors": {"connected": connected, "total": len(all_conns)},
@@ -1544,7 +1577,8 @@ def backtest_codes():
         with _db.conn() as c:
             rows = c.execute("SELECT DISTINCT code FROM kline_cache ORDER BY code").fetchall()
             return jsonify({"ok": True, "codes": [r[0] for r in rows]})
-    except:
+    except Exception as e:
+        L.debug(f"K线缓存查询失败，回退自选列表: {e}")
         return jsonify({"ok": True, "codes": list(trader.watchlist.keys())})
 
 

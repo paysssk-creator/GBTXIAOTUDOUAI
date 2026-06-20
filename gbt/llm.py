@@ -74,10 +74,11 @@ class GBTLLM:
                                         if kk.strip()==ek:
                                             v=vv.strip().strip('"').strip("'")
                                             break
-                        except: pass
-                        if v: print(f"KEY from .env: {ek}={v[:8]}...{v[-4:]}"); break
+                        except Exception:
+                            pass  # .env读取失败降级到环境变量
+                        if v: break
             if v:
-                print(f"KEY used: {ek}={v[:8]}...{v[-4:]}")
+                pass  # 密钥已就绪，静默返回
                 return v
         print(f"NO KEY found for {cfg['env_keys']}")
         return None

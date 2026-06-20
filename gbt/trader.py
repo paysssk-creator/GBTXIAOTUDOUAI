@@ -212,7 +212,8 @@ class AShareTrader:
                 if cached.get("ok") and len(cached.get("closes", [])) >= 10:
                     L.warning(f"🌐 新浪不可达，使用本地缓存 {code} count={cached['count']}")
                     return cached
-            except: pass
+            except Exception as cache_err:
+                L.debug(f"K线缓存回退失败 {code}: {cache_err}")
             return {"ok": False, "error": str(e), "code": code}
 
     # ═══════════════════════════════════════════════
@@ -299,8 +300,8 @@ class AShareTrader:
                                        kline.get("lows"), kline.get("volumes"),
                                        name=quote.name, code=code)
                 else:
-                    fake_closes = [quote.price] * 20
-                    tech = FullAnalysis(fake_closes, name=quote.name, code=code)
+                    # 数据不足时不伪造K线，避免生成虚假分析
+                    tech = {"signal": {"action": "hold", "confidence": 0}, "trend": "数据不足(需≥20根K线)", "warning": "insufficient_kline_data"}
                 tech_sig = tech.get("signal", {})
                 if session:
                     s.detail += f" | 技术:{tech.get('trend','N/A')}"
@@ -519,78 +520,104 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
             except Exception as e:
                 L.error(f"风控检查异常: {e}")
 
-        # ── 电脑操控步骤 ──
+        # ── 真实电脑操控：尝试 GCC 自动化 ──
+        executed_via_gcc = False
+        try:
+            from gbt.gcc.gcc_runner import GCCRunner
+            runner = GCCRunner(llm=self.llm)
+            task_desc = (
+                f"在东方财富交易平台执行: {'买入' if action=='buy' else '卖出'} "
+                f"{name}({code}) {shares}股 @ ¥{trade_price}"
+            )
+            if session:
+                s_gcc = session.add_step("execute", "GCC自动化", f"任务: {task_desc}")
+            result = runner.run(task_desc, max_steps=10, verbose=False)
+            if result.get("ok"):
+                executed_via_gcc = True
+                log_entry["status"] = "executed_via_gcc"
+                log_entry["msg"] = f"GCC自动化: {action.upper()} {name}"
+                if session:
+                    s_gcc.status = "done"
+                    s_gcc.result = f"✅ GCC自动化完成 ({result.get('total_steps', 0)} 步)"
+            else:
+                if session:
+                    s_gcc.status = "error"
+                    s_gcc.result = "GCC自动化未完成 — 回退通知模式"
+        except Exception as e:
+            L.warning(f"GCC 自动化不可用: {e}")
+
+        # ── 通知模式：打开平台 + 发送桌面通知 ──
         platform = "东方财富交易"
         platform_url = self.TRADING_PLATFORMS.get(platform)
-        
-        # 防重复开关: 30分钟内不重复打开同一URL
-        now_ts = time.time()
-        last_open = getattr(self, '_last_browser_open', 0)
-        if now_ts - last_open < 1800:  # 30分钟冷却
-            L.info(f"⏭ 浏览器冷却中 ({(now_ts - last_open)/60:.0f}分钟前已打开)")
-        else:
-            self._last_browser_open = now_ts
-            try:
-                # Step 5.1: 打开浏览器
-                if session:
-                    s1 = session.add_step("execute", "打开浏览器", f"启动系统默认浏览器")
-                os.startfile(platform_url)
-                if session: s1.status = "done"; s1.result = "✅ 浏览器已打开"
-            except Exception as e:
-                if session: s1.status = "error"; s1.result = f"❌ {e}"
-                # 尝试备用方案
+
+        if not executed_via_gcc:
+            # 防重复开关: 30分钟内不重复打开同一URL
+            now_ts = time.time()
+            last_open = getattr(self, '_last_browser_open', 0)
+            if now_ts - last_open < 1800:  # 30分钟冷却
+                L.info(f"⏭ 浏览器冷却中 ({(now_ts - last_open)/60:.0f}分钟前已打开)")
+            else:
+                self._last_browser_open = now_ts
                 try:
-                    subprocess.run(f'start {platform_url}', shell=True, timeout=5)
-                    if session: s1.status = "done"; s1.result = "✅ (备用方式)"
-                except:
-                    pass
+                    if session:
+                        s1 = session.add_step("execute", "打开浏览器", "启动系统默认浏览器")
+                    os.startfile(platform_url)
+                    if session:
+                        s1.status = "done"
+                        s1.result = "✅ 浏览器已打开"
+                except Exception as e:
+                    if session:
+                        s1.status = "error"
+                        s1.result = f"❌ {e}"
+                    try:
+                        import webbrowser
+                        webbrowser.open(platform_url)
+                        if session:
+                            s1.status = "done"
+                            s1.result = "✅ (备用方式)"
+                    except Exception as e:
+                        L.debug(f"浏览器备用方式失败: {e}")
 
+        # ── 发送桌面通知 ──
         try:
-            # Step 5.2: 模拟键盘输入股票代码 (如果浏览器已激活)
-            if session:
-                s2 = session.add_step("execute", "定位交易界面",
-                    f"等待页面加载... 目标股票: {code}")
-            time.sleep(0.5)
-            if session: s2.status = "done"; s2.result = f"交易平台已打开: {platform}"
-
-            # Step 5.3: 发送桌面通知 (安全转义)
-            try:
-                safe_name = name.replace("'", "''")
-                safe_action = action.upper().replace("'", "''")
-                subprocess.run([
-                    "powershell", "-NoProfile", "-Command",
-                    f"Add-Type -AssemblyName System.Windows.Forms; "
-                    f"$n = New-Object System.Windows.Forms.NotifyIcon; "
-                    f"$n.Icon = [System.Drawing.SystemIcons]::Information; "
-                    f"$n.Visible = $true; "
-                    f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{safe_action} {safe_name} {shares}股 @ ¥{trade_price}', 'Info')"
-                ], capture_output=True, timeout=5)
-            except: pass
-
-            log_entry["status"] = "opened"
-            log_entry["msg"] = f"已打开: {platform} | {action.upper()} {name}"
-
-            if session:
-                session.executed = True
-                session.status = "executed"
-
+            safe_name = name.replace("'", "''")
+            safe_action = action.upper().replace("'", "''")
+            subprocess.run([
+                "powershell", "-NoProfile", "-Command",
+                f"Add-Type -AssemblyName System.Windows.Forms; "
+                f"$n = New-Object System.Windows.Forms.NotifyIcon; "
+                f"$n.Icon = [System.Drawing.SystemIcons]::Information; "
+                f"$n.Visible = $true; "
+                f"$n.ShowBalloonTip(3000, 'GBT操盘手', '{safe_action} {safe_name} {shares}股 @ ¥{trade_price}', 'Info')"
+            ], capture_output=True, timeout=5)
         except Exception as e:
-            log_entry["status"] = "error"
-            log_entry["msg"] = str(e)[:100]
-            if session:
-                s2 = session.add_step("execute", "错误", str(e)[:100])
-                s2.status = "error"
+            L.debug(f"桌面通知发送失败: {e}")
 
-        with self._lock: self.trade_log.appendleft(log_entry)
+        if not executed_via_gcc:
+            log_entry["status"] = "trade_notification_only"
+            log_entry["msg"] = f"通知已发送: {action.upper()} {name} — 需人工在交易平台确认"
+            if session:
+                s2 = session.add_step("execute", "通知模式",
+                    f"交易通知已发送，需人工在 {platform} 确认 {action.upper()} {name}")
+                s2.status = "done"
+                s2.result = "trade_notification_only — 等待人工确认"
+
+        if session:
+            session.executed = True
+            session.status = "executed"
+
+        with self._lock:
+            self.trade_log.appendleft(log_entry)
 
         # ── 阶段6: 确认 ──
         if session:
             s6 = session.add_step("confirm", "交易确认",
                 f"{action.upper()} {name} | {shares}股 @ ¥{trade_price} | 金额:¥{log_entry['amount']}")
             s6.status = "done"
-            s6.result = f"状态: {log_entry['status']}"
+            s6.result = f"状态: {log_entry['status']} | 方法: {'gcc_runner' if executed_via_gcc else 'notification_only'}"
 
-        return {"ok": True, "log": log_entry}
+        return {"ok": True, "log": log_entry,
+                "method": "gcc_runner" if executed_via_gcc else "trade_notification_only"}
 
     # ═══════════════════════════════════════════════
     # 完整交易流程 (6阶段串联)
@@ -600,7 +627,8 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
         session = TradeSession(code, self.watchlist.get(code, code))
 
         with self._lock: self.sessions.appendleft(session)
-        self.current_session = session
+        with self._lock:
+            self.current_session = session
 
         # 阶段1: 获取行情
         session.add_step("fetch", "▶ 开始", f"启动完整交易流程: {code}")
@@ -685,7 +713,8 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                                 try:
                                     from gbt.brain import brain as _br
                                     if _br.running: _br.ping("trader", f"风控拦截: {sig.name}")
-                                except: pass
+                                except Exception as e:
+                                    L.debug(f"Brain ping failed: {e}")
                                 continue
 
                         # 通过了 — 从冷却名单清除
@@ -698,7 +727,8 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         try:
                             from gbt.brain import brain as _br
                             if _br.running: _br.ping("trader", f"{sig.action.upper()}: {sig.name} {sig.confidence}%")
-                        except: pass
+                        except Exception as e:
+                            L.debug(f"Brain ping failed: {e}")
                         
                         # 完整流水线
                         ts = self.run_full_pipeline(sig.code, sig.action)

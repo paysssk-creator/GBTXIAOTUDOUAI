@@ -4,8 +4,10 @@ Tesseract + Windows OCR + EasyOCR 三引擎自动降级
 让没有视觉能力的大模型也能\"看懂\"图片
 """
 
-import os, base64, tempfile, subprocess
+import os, base64, tempfile, subprocess, logging
 from typing import Optional, List, Tuple
+
+L = logging.getLogger("GBT.OCR")
 from dataclasses import dataclass
 from enum import Enum
 
@@ -36,7 +38,7 @@ class ImageToText:
                   r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
                   os.path.expandvars(r"%LOCALAPPDATA%\Tesseract-OCR\tesseract.exe")]:
             if os.path.exists(p): return p
-        r = subprocess.run("where tesseract", shell=True, capture_output=True, text=True)
+        r = subprocess.run(["where", "tesseract"], shell=False, capture_output=True, text=True)
         return r.stdout.strip().split("\n")[0] if r.returncode == 0 else ""
 
     def _detect(self) -> List[str]:
@@ -61,7 +63,8 @@ class ImageToText:
             if r and len(r.strip())>2:
                 return OCRResult(text=r, engine=OCREngine.EASYOCR,
                                duration=time.time()-t0, lang=self.lang)
-        except: pass
+        except Exception as e:
+            L.debug(f"EasyOCR 不可用，降级到 Windows OCR: {e}")
         # 3. Windows
         try:
             r = self._win_ocr(fp)
@@ -105,14 +108,16 @@ class ImageToText:
     def _tess_ocr(self, fp: str) -> str:
         if not self._tess or not os.path.exists(fp): return ""
         try:
-            r = subprocess.run(f'"{self._tess}" "{fp}" stdout -l {self.lang} --psm 3',
-                shell=True, capture_output=True, text=True, timeout=30)
+            r = subprocess.run([self._tess, fp, "stdout", "-l", self.lang, "--psm", "3"],
+                shell=False, capture_output=True, text=True, timeout=30)
             return r.stdout.strip() if r.returncode == 0 else ""
-        except: return ""
+        except Exception as e:
+            L.warning(f"Tesseract OCR failed: {e}")
+            return ""
 
     def _win_ocr(self, fp: str) -> str:
         ps = f'''Add-Type -AssemblyName System.Drawing;[Reflection.Assembly]::LoadFrom("C:\\Windows\\System32\\Windows.Media.Ocr.dll")|Out-Null;$b=[System.Drawing.Bitmap]::FromFile("{fp}");$m=New-Object IO.MemoryStream;$b.Save($m,[Drawing.Imaging.ImageFormat]::Png);$s=New-Object Windows.Storage.Streams.InMemoryRandomAccessStream;$w=New-Object Windows.Storage.Streams.DataWriter($s.GetOutputStreamAt(0));$w.WriteBytes($m.ToArray());$w.StoreAsync().GetAwaiter().GetResult();$d=[Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($s).GetAwaiter().GetResult();$sw=[Windows.Graphics.Imaging.SoftwareBitmap]::Convert($d.GetSoftwareBitmapAsync().GetAwaiter().GetResult(),[Windows.Graphics.Imaging.BitmapPixelFormat]::Rgba8);$e=[Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages();$e.Result.RecognizeAsync($sw).GetAwaiter().GetResult().Text;$b.Dispose();$m.Dispose();$s.Dispose()'''
-        r = subprocess.run(f'powershell -c "{ps}"', shell=True, capture_output=True, text=True, timeout=30)
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], shell=False, capture_output=True, text=True, timeout=30)
         return r.stdout.strip() if r.returncode == 0 else ""
 
     def _easy_ocr(self, fp: str) -> str:
@@ -120,7 +125,9 @@ class ImageToText:
             if self._reader is None:
                 import easyocr; self._reader = easyocr.Reader(['ch_sim','en'], gpu=False)
             return "\n".join(t for _,t,_ in self._reader.readtext(fp))
-        except: return ""
+        except Exception as e:
+            L.debug(f"EasyOCR failed: {e}")
+            return ""
 
 
 _ocr: Optional[ImageToText] = None

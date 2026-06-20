@@ -57,7 +57,8 @@ class NightWatcher:
                 from gbt.brain import brain as _br
                 if _br.running:
                     _br.ping("watcher", f"{source}: {message[:60]}")
-            except: pass
+            except Exception as e:
+                L.debug(f"Brain ping 失败: {e}")
         
         return a
     
@@ -94,7 +95,7 @@ class NightWatcher:
                         alert.fix_result += f"\n⚠️ 命令被拦截(安全策略): {cmd}"
                     else:
                         try:
-                            r = subprocess.run(cmd, shell=True, capture_output=True,
+                            r = subprocess.run(cmd, shell=False, capture_output=True,
                                 text=True, timeout=30, errors='replace')
                             alert.fix_result += f"\n✅ 命令已执行: {cmd}\n输出: {r.stdout[:200]}"
                             alert.fixed = True
@@ -240,8 +241,8 @@ class NightWatcher:
                         fp = os.path.join(d, f)
                         try:
                             current.add((f, os.path.getsize(fp) if os.path.isfile(fp) else 0))
-                        except:
-                            pass
+                        except Exception as e:
+                            L.debug(f"文件信息读取失败 {fp}: {e}")
                     
                     if d in prev_snapshot:
                         new_files = current - prev_snapshot[d]
@@ -279,7 +280,7 @@ class NightWatcher:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
                 for key in keys:
-                    r = subprocess.run(["reg", "query", key], capture_output=True, text=True, timeout=10, shell=True, errors='replace')
+                    r = subprocess.run(["reg", "query", key], capture_output=True, text=True, timeout=10, shell=False, errors='replace')
                     entries = [l.strip() for l in r.stdout.split("\n") if l.strip() and "REG_" in l]
                     suspicious = [e for e in entries if any(s in e.lower() for s in
                         ["temp", "appdata", "unknown", "crack", "hack"])]
@@ -382,7 +383,8 @@ class NightWatcher:
                 
                 self.monitor_status["logs"] = {"status": "ok", "last_check": now,
                     "details": "监控中"}
-            except Exception:
+            except Exception as e:
+                L.debug(f"日志监控异常: {e}")
                 self.monitor_status["logs"]["status"] = "ok"
                 self.monitor_status["logs"]["details"] = "等待日志"
             
@@ -466,14 +468,18 @@ class NightWatcher:
             try:
                 r = subprocess.run(["ping", "-n", "2", "8.8.8.8"], capture_output=True, text=True, timeout=6, errors='replace')
                 results["network"] = {"ok": r.returncode == 0, "output": r.stdout[-200:]}
-            except: results["network"] = {"ok": False, "output": "扫描超时"}
+            except Exception as e:
+                L.warning(f"网络扫描失败: {e}")
+                results["network"] = {"ok": False, "output": f"扫描超时: {e}"}
         
         if target == "process" or target == "all":
             try:
                 r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=10, errors='replace')
                 count = len([l for l in r.stdout.split("\n") if l.strip()])
                 results["process"] = {"ok": True, "output": f"活跃进程: {count}"}
-            except: results["process"] = {"ok": False, "output": "扫描失败"}
+            except Exception as e:
+                L.warning(f"进程扫描失败: {e}")
+                results["process"] = {"ok": False, "output": f"扫描失败: {e}"}
         
         if target == "disk" or target == "all":
             try:
@@ -482,6 +488,8 @@ class NightWatcher:
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW("C:\\", ctypes.byref(free), ctypes.byref(total), ctypes.byref(tfree))
                 results["disk"] = {"ok": True,
                     "output": f"剩余 {round(free.value/(1024**3),1)}GB / {round(total.value/(1024**3),1)}GB"}
-            except: results["disk"] = {"ok": False, "output": "扫描失败"}
+            except Exception as e:
+                L.warning(f"磁盘扫描失败: {e}")
+                results["disk"] = {"ok": False, "output": f"扫描失败: {e}"}
         
         return results

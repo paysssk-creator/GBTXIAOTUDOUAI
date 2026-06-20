@@ -53,7 +53,9 @@ class DesktopController:
         try:
             import subprocess
             # PowerShell 设置剪贴板
-            ps = f'Set-Clipboard -Value "{text}"'
+            import base64 as _b64
+            encoded = _b64.b64encode(text.encode('utf-8')).decode('ascii')
+            ps = f'Set-Clipboard -Value ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{encoded}")))'
             subprocess.run(["powershell", "-NoProfile", "-Command", ps],
                           capture_output=True, timeout=5, text=True, errors='replace')
             # 粘贴
@@ -168,7 +170,9 @@ if ($procs) {{
         
         # Step 1: 打开浏览器
         steps.append({"step": 1, "action": "打开浏览器", "result": "执行中"})
-        os.startfile("https://jywg.eastmoney.com/")
+        TRADE_PLATFORMS = {"eastmoney": "https://jywg.eastmoney.com/", "同花顺": "https://www.10jqka.com.cn/", "华泰": "https://www.htsc.com.cn/"}
+        url = TRADE_PLATFORMS.get(platform, platform if platform.startswith("http") else TRADE_PLATFORMS["eastmoney"])
+        os.startfile(url)
         time.sleep(2)
         steps[-1]["result"] = "✅ 已打开"
 
@@ -202,7 +206,8 @@ if ($procs) {{
             '''
             subprocess.run(["powershell", "-NoProfile", "-Command", ps],
                           capture_output=True, timeout=5, text=True, errors='replace')
-        except: pass
+        except Exception as e:
+            L.warning(f"桌面通知失败: {e}")
         
         return {"ok": True, "steps": steps, "platform": platform}
 

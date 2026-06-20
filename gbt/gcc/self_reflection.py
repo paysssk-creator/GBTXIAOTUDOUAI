@@ -3,7 +3,10 @@ self_reflection.py — 自省反思循环 (借鉴Cradle Self-Reflection Module)
 操作后截图对比 → 判断成功/失败 → 修正策略
 """
 
-import json, time
+import json, time, os, logging
+from collections import deque
+
+L = logging.getLogger("GBT.GCC.Reflection")
 from typing import Optional, Dict, List
 
 try:
@@ -23,6 +26,17 @@ class SelfReflectionLoop:
     def __init__(self, llm: Optional[GBTLLM] = None):
         self.llm = llm
         self.history: List[Dict] = []
+        self._memory_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "reflection_memory.json")
+        self._load_memory()
+
+    def _load_memory(self):
+        try:
+            if os.path.exists(self._memory_path):
+                with open(self._memory_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.history = data.get("history", [])[-50:]
+        except Exception as e:
+            L.debug(f"记忆加载失败: {e}")
 
     def judge(self, before_b64: Optional[str], after_b64: Optional[str],
               action: Dict, goal: str) -> Dict:
@@ -50,7 +64,15 @@ class SelfReflectionLoop:
             s = raw.find("{"); e = raw.rfind("}") + 1
             if s >= 0 and e > s:
                 result = json.loads(raw[s:e])
-                self.history.append({"action": action, "result": result, "time": time.time()})
+                entry = {"action": action, "result": result, "time": time.time()}
+                self.history.append(entry)
+                # 持久化记忆
+                try:
+                    os.makedirs(os.path.dirname(self._memory_path), exist_ok=True)
+                    with open(self._memory_path, "w", encoding="utf-8") as f:
+                        json.dump({"history": self.history[-50:], "updated": time.strftime("%Y-%m-%d %H:%M:%S")}, f, ensure_ascii=False)
+                except Exception as e:
+                    L.debug(f"记忆持久化失败: {e}")
                 return result
             return {"success": True, "reasoning": raw[:200], "next_action": "continue"}
         except Exception as e:

@@ -52,7 +52,7 @@ class Account:
             "equity": equity,
             "cash": round(self.cash, 2),
             "pnl": round(equity - self.initial_cash, 2),
-            "pnl_pct": round((equity - self.initial_cash) / self.initial_cash * 100, 2),
+            "pnl_pct": round((equity - self.initial_cash) / self.initial_cash * 100, 2) if self.initial_cash else 0,
             "total_trades": self.total_trades,
             "win_rate": round(self.win_trades / max(self.total_trades, 1) * 100, 1),
             "daily_pnl": round(self.daily_pnl, 2)

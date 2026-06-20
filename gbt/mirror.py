@@ -179,7 +179,8 @@ class MirrorSpace:
     def __exit__(self, *args):
         if self._active:
             try: shutil.rmtree(self.mirror_dir, ignore_errors=True)
-            except: pass
+            except Exception:
+                pass  # 清理临时文件失败不影响运行
         print("  🧹 镜像已清理")
 
     def get_path(self, rel: str) -> str:
@@ -195,7 +196,7 @@ class MirrorSpace:
     def run_test(self, cmd: str) -> Tuple[bool, str]:
         print(f"  🧪 镜像测试: {cmd}")
         try:
-            r = subprocess.run(cmd, shell=True, capture_output=True,
+            r = subprocess.run(cmd, shell=False, capture_output=True,
                 text=True, timeout=60, cwd=self.mirror_dir)
             ok = r.returncode == 0
             out = r.stdout.strip() or r.stderr.strip()
@@ -315,4 +316,3 @@ def scan_fakes(root: str) -> List[CodeIssue]:
 
 def mirror_run(root: str, callback: Callable) -> List[MirrorReport]:
     return MirrorPipeline(root).run(fix_callback=callback)
-

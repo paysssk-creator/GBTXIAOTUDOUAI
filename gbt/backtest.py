@@ -235,7 +235,8 @@ class BacktestEngine:
                 d2 = datetime.strptime(last_day[:10], "%Y-%m-%d")
                 years = max((d2 - d1).days / 365, 0.02)
                 result.annual_return = round(((1 + result.total_return / 100) ** (1 / years) - 1) * 100, 2)
-            except:
+            except Exception as e:
+                L.debug(f"年化收益率计算失败: {e}")
                 result.annual_return = result.total_return
 
         # 最大回撤
@@ -283,7 +284,8 @@ class BacktestEngine:
             try:
                 month = t["time"][:7]
                 monthly[month] = monthly.get(month, 0) + t.get("pnl", 0)
-            except: pass
+            except Exception as e:
+                L.debug(f"月度收益聚合跳过: {e}")
         result.monthly_returns = {k: round(v, 2) for k, v in sorted(monthly.items())}
 
         result.trade_log = self.trades

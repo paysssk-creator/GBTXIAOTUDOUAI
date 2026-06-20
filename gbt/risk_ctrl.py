@@ -135,12 +135,11 @@ class RiskManager:
             "total_capital": self.total_capital,
             "daily_trades": self.daily_trades,
             "daily_pnl": self.daily_pnl,
-            "max_single_pct": self.max_single_pct,
             "stop_loss_pct": self.stop_loss_pct,
             "stop_profit_pct": self.stop_profit_pct,
-            "max_daily_loss": self.max_daily_loss,
+            "max_daily_loss": self.max_daily_loss_pct,
             "max_daily_trades": self.max_daily_trades,
-            "max_position_size": self.max_position_size
+            "max_single_pct": self.max_single_pct
         }
 
 

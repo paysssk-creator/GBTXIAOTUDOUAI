@@ -175,6 +175,13 @@ class ConnectorRegistry:
         if conn_id not in self._connectors:
             return {"ok": False, "error": "Unknown connector"}
         c = self._connectors[conn_id]
+        # 尝试加载实现模块
+        try:
+            from . import MODULE_MAP
+            if conn_id in MODULE_MAP:
+                self._instances[conn_id] = MODULE_MAP[conn_id]
+        except ImportError:
+            pass
         if not c.config_keys:
             c.status = "connected"
             return {"ok": True, "status": "connected"}

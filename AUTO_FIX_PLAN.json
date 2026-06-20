@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-20T17:16:45.437Z",
-  "project": "C:\\Users\\ADMIN\\Desktop\\GBT-local-new",
+  "timestamp": "2026-06-20T23:19:25.840Z",
+  "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "issues": [
     {
       "ruleId": "SEC-008",
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 186,
+      "line": 190,
       "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -17,7 +17,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 187,
+      "line": 191,
       "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
       "desc": "硬编码IP",
       "fixable": 0
@@ -27,7 +27,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 766,
+      "line": 860,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -37,7 +37,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\agents.py",
-      "line": 547,
+      "line": 660,
       "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netst",
       "desc": "硬编码IP",
       "fixable": 0
@@ -46,8 +46,28 @@
       "ruleId": "SEC-008",
       "name": "hard-ip",
       "severity": "medium",
+      "file": "gbt\\connectors\\network.py",
+      "line": 17,
+      "snippet": "h = {\"ping\": lambda: ping_host(params.get(\"host\", \"8.8.8.8\"), params.get(\"count\", 4)),",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
+      "file": "gbt\\connectors\\network.py",
+      "line": 19,
+      "snippet": "\"traceroute\": lambda: traceroute(params.get(\"host\", \"8.8.8.8\"))}.get(action)",
+      "desc": "硬编码IP",
+      "fixable": 0
+    },
+    {
+      "ruleId": "SEC-008",
+      "name": "hard-ip",
+      "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 168,
+      "line": 169,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -57,7 +77,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "gbt\\watcher.py",
-      "line": 467,
+      "line": 469,
       "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
       "desc": "硬编码IP",
       "fixable": 0
@@ -66,48 +86,62 @@
   "actions": [
     {
       "type": "audit_fix",
-      "item": "无未提交改动 (当前: 6)",
+      "item": "无未提交改动 (当前: 54)",
       "detail": ""
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 186,
+      "line": 190,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 187,
+      "line": 191,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 766,
+      "line": 860,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\agents.py",
-      "line": 547,
+      "line": 660,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "gbt\\connectors\\network.py",
+      "line": 17,
+      "severity": "medium",
+      "autoFixable": false
+    },
+    {
+      "type": "code_fix",
+      "file": "gbt\\connectors\\network.py",
+      "line": 19,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 168,
+      "line": 169,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "gbt\\watcher.py",
-      "line": 467,
+      "line": 469,
       "severity": "medium",
       "autoFixable": false
     }

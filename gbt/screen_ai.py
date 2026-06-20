@@ -251,12 +251,14 @@ class Voice:
             voice = Voice.CHINESE_VOICE if has_chinese else Voice.ENGLISH_VOICE
         
         try:
+            import base64 as _b64
+            safe_text = _b64.b64encode(text.encode('utf-8')).decode('ascii')
             ps_script = f'''
 Add-Type -AssemblyName System.Speech
 $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
 $s.Rate = {rate}
 try {{ $s.SelectVoice("{voice}") }} catch {{}}
-$s.Speak('{text.replace("'", "''")}')
+$s.Speak([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{safe_text}")))
 '''
             subprocess.run(
                 ["powershell", "-NoProfile", "-Command", ps_script],

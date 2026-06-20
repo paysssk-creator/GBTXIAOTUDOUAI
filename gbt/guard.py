@@ -40,7 +40,7 @@ DANGER_PATTERNS = [
     (r"eval\s*\(.+\)", "危险eval"),
     (r"exec\s*\(.+\)", "危险exec"),
     (r"os\.system\s*\(.+\)", "危险system"),
-    (r"subprocess\.call\s*\(.+shell\s*=\s*True", "危险shell=True"),
+    (r"subprocess\.(?:call|run|Popen)\s*\(.+shell\s*=\s*True", "危险shell=True"),
 ]
 
 CODE_EXTS = {".py",".js",".ts",".jsx",".tsx",".vue",
@@ -84,7 +84,8 @@ class PreActionGuard:
                                     issues += len(item.issues)
                                     for iss in item.issues:
                                         print(f"  ⚠️ {item.path}: {iss}")
-                            except: pass
+                            except Exception:
+                                pass  # 单个文件扫描异常不阻断全项目扫描
                         files.append(item)
                         if len(files) % 80 == 0: print(f"  📂 {len(files)}...")
                 except Exception as e:
@@ -173,7 +174,7 @@ class PreActionGuard:
             with open(path,"rb") as f:
                 for c in iter(lambda: f.read(8192), b""): h.update(c)
             return h.hexdigest()
-        except: return "err"
+        except Exception: return "err"
 
     def _detect(self, content: str) -> List[str]:
         return [f"🚨{desc}" for p, desc in DANGER_PATTERNS if re.search(p, content)]
@@ -185,13 +186,14 @@ class PreActionGuard:
         return f"{s:.1f}TB"
 
     def _check_fw(self) -> dict:
-        fw = os.path.join(os.path.expanduser("~"), ".cline", "agent-framework")
+        """检测项目根目录下的核心框架文件 (self.root/gbt/)"""
+        root = self.root
         req = ["gbt/__init__.py","gbt/llm.py","gbt/providers.py",
             "gbt/tool.py","gbt/agent.py","gbt/message.py","gbt/react.py",
             "gbt/memory.py","gbt/evolve.py","gbt/guard.py",
-            "agents/__init__.py","agents/gbt_agent.py",
+            "gbt/agents.py",
             "tools/__init__.py","tools/mcp_tools.py","main.py","requirements.txt"]
-        errs = [rf for rf in req if not os.path.exists(os.path.join(fw, rf))]
+        errs = [rf for rf in req if not os.path.exists(os.path.join(root, rf))]
         ok = len(req)-len(errs)
         r = {"ok":not errs,"total":len(req),"found":ok,"missing":len(errs),"errors":errs}
         if errs:
@@ -203,12 +205,14 @@ class PreActionGuard:
 
     def _check_git(self) -> bool:
         try:
-            r = subprocess.run("git status --porcelain", shell=True,
+            r = subprocess.run(["git","status","--porcelain"], shell=False,
                 capture_output=True, text=True, timeout=10, cwd=self.root)
             dirty = len([l for l in r.stdout.split("\n") if l.strip()])
             if dirty: print(f"  📝 Git:{dirty}未提交"); return False
             print("  ✅ Git干净"); return True
-        except: return True
+        except Exception as e:
+            print(f"  ⚠️ Git检查失败: {e}")
+            return False  # 无法验证时保守处理
 
     @property
     def is_blocked(self) -> bool:

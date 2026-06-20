@@ -51,7 +51,7 @@ class UniversalMCP:
                 args = [a.replace("${workspaceFolder}", wd) for a in cfg.get("args", [])]
                 env = {}
                 for k, v in cfg.get("env", {}).items():
-                    env[k] = os.getenv(v[2:-1], "") if v.startswith("${") else v
+                    env[k] = os.getenv(v.removeprefix("${").removesuffix("}"), "") if v.startswith("${") and v.endswith("}") else v
                 self._s[n] = MCPServer(name=n, command=cfg["command"],
                     args=args, description=cfg.get("description", ""), env=env)
             print(f"🔌 MCP: {len(self._s)}个服务器")
@@ -89,7 +89,7 @@ class UniversalMCP:
             cmd = " ".join(f'"{p}"' if " " in p else p for p in parts)
             print(f"🔌 {server} {' '.join(full[:2])}")
             env = os.environ.copy(); env.update(srv.env)
-            r = subprocess.run(cmd, shell=True, capture_output=True,
+            r = subprocess.run(parts, shell=False, capture_output=True,
                 text=True, timeout=timeout, encoding='utf-8', errors='replace',
                 cwd=os.path.expanduser("~/.cline"), env=env)
             out = (r.stdout or "").strip() or (r.stderr or "").strip()
@@ -131,10 +131,24 @@ class UniversalMCP:
         return results
 
     def health(self) -> Dict[str, str]:
+        """健康检查 — 轻量级连通性测试"""
         h = {}
         for n, s in self._s.items():
             scr = s.args[0] if s.args else ""
-            h[n] = "🟢" if os.path.exists(scr) else "⚪"
+            if not os.path.exists(scr):
+                h[n] = "⚪"
+                continue
+            try:
+                r = subprocess.run(
+                    [s.command] + list(s.args[:1]),
+                    capture_output=True, text=True, timeout=3,
+                    cwd=os.path.expanduser("~/.cline"),
+                    env={**os.environ, **s.env})
+                h[n] = "🟢" if r.returncode == 0 else "🟡"
+            except subprocess.TimeoutExpired:
+                h[n] = "🟡"
+            except Exception:
+                h[n] = "🔴"
         return h
 
     def refresh(self):

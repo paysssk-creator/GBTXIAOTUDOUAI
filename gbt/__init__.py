@@ -5,9 +5,9 @@ GBT Agent Framework - AI原生Agent框架核心
 import sys, os
 if sys.platform == 'win32':
     try: sys.stdout.reconfigure(encoding='utf-8')
-    except: pass
+    except Exception: pass  # 非关键：编码设置失败不影响核心功能
     try: sys.stderr.reconfigure(encoding='utf-8')
-    except: pass
+    except Exception: pass  # 非关键：编码设置失败不影响核心功能
 
 from .llm import GBTLLM
 from .tool import ToolRegistry, Tool

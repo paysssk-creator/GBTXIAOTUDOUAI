@@ -42,9 +42,7 @@ class PrecisionScraper:
     
     def __init__(self):
         self.results = {}
-        self.ssl_ctx = ssl.create_default_context()
-        self.ssl_ctx.check_hostname = False
-        self.ssl_ctx.verify_mode = ssl.CERT_NONE
+        self.ssl_ctx = ssl.create_default_context()  # 使用系统默认证书验证
     
     def scrape_stock_quote(self, codes):
         """抓取实时行情（新浪）"""

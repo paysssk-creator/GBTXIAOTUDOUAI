@@ -2,8 +2,10 @@
 providers.py — GBT 13大模型提供商配置 + 自主密钥发现
 """
 
-import os
+import os, logging
 from typing import Dict, List, Optional
+
+L = logging.getLogger("GBT.Providers")
 
 PROVIDERS: Dict[str, dict] = {
     "zhipu": {"name":"智谱(GLM)","base_url":"https://open.bigmodel.cn/api/paas/v4/",
@@ -88,7 +90,7 @@ def detect_keys() -> Dict[str, dict]:
         found = []
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
-            if v:
+            if v and len(v.strip()) > 10:
                 mk = v[:8]+"..."+v[-4:] if len(v)>12 else "***"
                 found.append({"key_name":ek,"masked":mk,"raw":v})
         discovered[pid] = {
@@ -136,6 +138,6 @@ class AutoKeyConfig:
             s.connect(("localhost", 11434))
             s.close()
             return True
-        except:
+        except Exception as e:
+            L.debug(f"Ollama 连接检查失败: {e}")
             return False
-

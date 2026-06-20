@@ -68,10 +68,12 @@ def verify(capability_name: str, result_data: Dict, dependencies: Dict) -> tuple
     rule = VERIFICATION_RULES.get(capability_name)
     if rule:
         return rule(result_data, dependencies)
-    # 默认验证: 只要有返回数据就算通过
-    if result_data:
-        return True, "default: data returned"
-    return False, "default: empty data"
+    # 默认验证: 检查返回结构是否符合基本schema
+    if not isinstance(result_data, dict):
+        return False, "default: result is not a dict"
+    if not result_data:
+        return False, "default: empty dict"
+    return True, "default: valid dict with data"
 
 # ═══════════════════════════════════════════════════════
 # 执行协议核心

@@ -60,7 +60,7 @@ class MemoryManager:
                 json.dump({"store": store_data, "updated": datetime.now().isoformat()},
                          f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"⚠️ 记忆保存失败: {e}")
+            L.warning(f"记忆保存失败: {e}")
 
     def set(self, key: str, value: Any, category: str = "general",
             importance: int = 1) -> None:
@@ -76,7 +76,7 @@ class MemoryManager:
         item = self._store.get(key)
         if item:
             item.access()
-            self._save()
+            pass  # 读取不触发磁盘写入
             return item.value
         return None
 

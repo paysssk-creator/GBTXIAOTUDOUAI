@@ -41,7 +41,7 @@ def register_all_mcp_tools(registry: ToolRegistry, project: str = ".") -> ToolRe
         lambda **kw: _pipeline(kw.get("steps","")),
         {"steps": "管道步骤: srv1,m1,a1|srv2,m2,a2"})
 
-    # 2. 为核心MCP Server注册快捷工具
+    # 2. 为核心MCP Server注册快捷工具 (先probe可达性)
     core_servers = [
         ("scanner", "代码安全扫描", "scanner"),
         ("audit", "项目健康审计", "audit", "--strict"),
@@ -53,16 +53,32 @@ def register_all_mcp_tools(registry: ToolRegistry, project: str = ".") -> ToolRe
         ("deepseek", "DeepSeek深度分析", "deepseek-analyzer"),
     ]
 
+    available_servers = set(servers)
+    registered = 0
     for item in core_servers:
-        name, desc, srv_command, *extra_args = item # 允许额外参数
+        name, desc, srv_command, *extra_args = item
         method = ""
-        args = " ".join(extra_args) # 将额外参数合并为字符串
+        args = " ".join(extra_args)
+
+        # Probe: 验证MCP服务器是否在配置中且可达
+        if srv_command not in available_servers:
+            print(f"  ⚠️ MCP服务器 [{name}] 未在配置中发现，跳过注册")
+            continue
+
+        # 尝试快速probe调用验证可达性
+        try:
+            probe = call_mcp(srv_command, timeout=10)
+            if not probe.ok:
+                print(f"  ⚠️ MCP服务器 [{name}] probe失败: {probe.error}，仍注册(降级)")
+        except Exception as e:
+            print(f"  ⚠️ MCP服务器 [{name}] probe异常: {e}，仍注册(降级)")
 
         registry.register(name, desc,
-            lambda **kw: mcp_call(srv_command, method, args),
+            lambda srv=srv_command, m=method, a=args, **kw: mcp_call(srv, m, a),
             {"query": "可选查询参数"})
+        registered += 1
 
-    print(f"🔧 万能MCP: {len(servers)}个服务器, {len(core_servers)+5}个工具")
+    print(f"🔧 万能MCP: {len(servers)}个服务器, {registered}个核心工具已注册")
     return registry
 
 
@@ -77,4 +93,3 @@ def _pipeline(steps_str: str) -> str:
     mcp = get_mcp()
     results = mcp.pipeline(steps)
     return "\n".join(f"{'✅' if r.ok else '❌'} {r.server}: {r.data[:200] if r.data else r.error}" for r in results)
-

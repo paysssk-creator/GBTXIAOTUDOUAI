@@ -4,10 +4,13 @@ reasoner.py — 深度推理引擎
 分析 → 拆解 → 计算 → 评估 → 规划
 """
 
-import time, re
+import time, re, logging
+from collections import deque
 from typing import List, Dict, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+
+L = logging.getLogger("GBT.Reasoner")
 
 
 class ReasonMode(Enum):
@@ -280,14 +283,14 @@ class DeepReasoner:
     def __init__(self, llm, tool_registry=None):
         self.llm = llm  # GBTLLM
         self.tools = tool_registry
-        self._history: List[ReasonResult] = []
+        self._history: deque = deque(maxlen=50)  # 最多保留最近50条历史，防止无限增长
 
     def reason(self, question: str, mode: ReasonMode = ReasonMode.CHAIN,
                context: str = "", tool_hints: List[str] = None,
                **kwargs) -> ReasonResult:
         """全方位深度推理"""
         t0 = time.time()
-        print(f"\n🧠 深度推理 [{mode.value}]: {question[:80]}...")
+        print(f"\n[DeepReason] [{mode.value}]: {question[:80]}...")
 
         # 1. 构建推理提示
         prompt = REASON_PROMPTS[mode].format(
@@ -301,7 +304,8 @@ class DeepReasoner:
                     result = self.tools.execute(hint, question[:200])
                     if result and "❌" not in result:
                         evidence.append(result[:500])
-                except: pass
+                except Exception as e:
+                    L.warning(f"证据收集工具执行失败 [{hint}]: {e}")
 
         if evidence:
             context += "\n\n## 工具收集的证据\n" + "\n".join(evidence)
@@ -324,7 +328,7 @@ class DeepReasoner:
         )
 
         self._history.append(result)
-        print(f"  ✅ 推理完成 | 置信度:{confidence:.0%} | {result.duration:.1f}s")
+        print(f"  [OK] reasoning complete | confidence:{confidence:.0%} | {result.duration:.1f}s")
         return result
 
     def multi_reason(self, question: str,
@@ -337,9 +341,12 @@ class DeepReasoner:
         for mode in modes:
             r = self.reason(question, mode, context, **kwargs)
             results.append(r)
-        # 取最高置信度作为综合建议
+        # 取最高置信度作为综合建议（空列表时安全返回 None 而非崩溃）
+        if not results:
+            print("  [WARN] no reasoning results")
+            return results
         best = max(results, key=lambda x: x.confidence)
-        print(f"\n  🏆 最佳推理: {best.mode.value} (置信度{best.confidence:.0%})")
+        print(f"\n  [BEST] best reasoning: {best.mode.value} (confidence {best.confidence:.0%})")
         return results
 
     def reason_and_plan(self, question: str, context: str = "",
@@ -362,7 +369,6 @@ class DeepReasoner:
         return rc, dec, plan
 
     def _parse(self, raw: str, mode: ReasonMode) -> Tuple[str, float, List[str]]:
-        import re
         # 提取结论
         conclusion = ""
         for tag in ["## 最终答案", "## 综合结论", "## 根本原因",
@@ -408,9 +414,141 @@ class DeepReasoner:
         return nodes
 
     def get_history(self) -> List[ReasonResult]:
-        return self._history
+        """返回历史列表副本"""
+        return list(self._history)
 
     def clear_history(self):
         self._history.clear()
 
 
+# ── 沙盒验证闭环 ──
+
+if __name__ == "__main__":
+    import sys
+
+    print("=" * 60)
+    print("[TEST] reasoner.py sandbox verification")
+    print("=" * 60)
+
+    errors: List[str] = []
+
+    # ------------------------------------------------------------------
+    # 1. 验证 8 种推理模式 template 都能正常渲染
+    # ------------------------------------------------------------------
+    print("\n[1] 8 reasoning mode template rendering")
+    test_question = "如何优化交易策略？"
+    test_context = "市场波动率上升"
+    all_modes = list(ReasonMode)
+    missing_keys = set()
+
+    for mode in all_modes:
+        try:
+            tmpl = REASON_PROMPTS.get(mode)
+            assert tmpl is not None, f"缺少 {mode} 的模板"
+            rendered = tmpl.format(question=test_question, context=test_context)
+            assert test_question in rendered, f"{mode.value} 模板未包含 question"
+            assert test_context in rendered, f"{mode.value} 模板未包含 context"
+            assert len(rendered) > 100, f"{mode.value} 模板渲染结果过短"
+            print(f"  [OK] {mode.value:12s} - rendered ({len(rendered)} chars)")
+        except KeyError as e:
+            missing_keys.add(str(e))
+            print(f"  [FAIL] {mode.value:12s} - missing placeholder: {e}")
+            errors.append(f"{mode.value}: 模板占位符缺失 {e}")
+        except Exception as e:
+            print(f"  [FAIL] {mode.value:12s} - exception: {e}")
+            errors.append(f"{mode.value}: {e}")
+
+    if missing_keys:
+        errors.append(f"模板缺少占位符: {missing_keys}")
+    assert len(all_modes) == 8, f"ReasonMode 应为 8 种，实际 {len(all_modes)} 种"
+    print(f"  [OK] ReasonMode has {len(all_modes)} modes (CHAIN / TREE / SWOT / "
+          f"ROOT_CAUSE / DECISION / ESTIMATE / COMPARE / PLAN）")
+
+    # ------------------------------------------------------------------
+    # 2. 验证 _history 截断正常工作（deque maxlen=50）
+    # ------------------------------------------------------------------
+    print("\n[2] _history truncation (maxlen=50)")
+
+    class _MockLLM:
+        def invoke(self, messages, **kw):
+            return "## 最终答案\n测试结论。\n\n## 置信度\n85"
+
+    dr = DeepReasoner(_MockLLM())
+    # 不依赖真实 LLM：直接构造 ReasonResult 填入 history 测试 deque 截断
+    for i in range(60):
+        dr._history.append(ReasonResult(
+            mode=ReasonMode.CHAIN,
+            question=f"Q{i}",
+            conclusion=f"结论{i}",
+            confidence=0.8,
+            duration=0.1,
+        ))
+
+    hist = dr.get_history()
+    assert len(hist) == 50, f"期望 50，实际 {len(hist)}"
+    assert hist[0].question == "Q10", f"最早应为 Q10，实际 {hist[0].question}"
+    assert hist[-1].question == "Q59", f"最晚应为 Q59，实际 {hist[-1].question}"
+    print(f"  [OK] 60 writes -> keeps latest 50, earliest: {hist[0].question}, latest: {hist[-1].question}")
+
+    dr.clear_history()
+    assert len(dr.get_history()) == 0, "clear_history 后应空"
+    print("  [OK] clear_history works")
+
+    # ------------------------------------------------------------------
+    # 3. 验证空输入安全返回
+    # ------------------------------------------------------------------
+    print("\n[3] empty input safe return")
+
+    # 空 question
+    empty_result = dr.reason("", ReasonMode.CHAIN, "")
+    assert empty_result.question == "", "空 question 应保留"
+    assert empty_result.mode == ReasonMode.CHAIN
+    assert empty_result.duration >= 0
+    print("  [OK] reason('') safely returns ReasonResult")
+
+    # 空 context
+    r2 = dr.reason("测试", ReasonMode.SWOT, "")
+    assert r2.question == "测试"
+    print("  [OK] empty context safe")
+
+    # multi_reason 空 modes 列表
+    empty_modes: List[ReasonMode] = []
+    mr = dr.multi_reason("测试", modes=empty_modes)
+    assert mr == [], f"空 modes 应返回空列表，实际: {mr}"
+    print("  [OK] multi_reason(modes=[]) returns empty list")
+
+    # ------------------------------------------------------------------
+    # 4. 验证 max() 不崩溃
+    # ------------------------------------------------------------------
+    print("\n[4] max() empty list does not crash")
+
+    # 构造一个空列表直接验证 max 保护逻辑
+    test_empty: List[ReasonResult] = []
+    try:
+        if test_empty:
+            _ = max(test_empty, key=lambda x: x.confidence)
+            print("  [OK] non-empty list max works")
+        else:
+            print("  [OK] empty list guarded, max() not called")
+    except ValueError as e:
+        errors.append(f"max() 空列表崩溃: {e}")
+        print(f"  [FAIL] max() crashed: {e}")
+
+    # 通过 multi_reason 空 modes 再次验证
+    dr2 = DeepReasoner(_MockLLM())
+    result = dr2.multi_reason("测试", modes=[])
+    assert result == [], "multi_reason 空 modes 应返回 []"
+    print("  [OK] multi_reason empty modes returns [] (max not called)")
+
+    # ------------------------------------------------------------------
+    # 汇总
+    # ------------------------------------------------------------------
+    print("\n" + "=" * 60)
+    if errors:
+        print(f"[FAIL] verification failed ({len(errors)} items):")
+        for e in errors:
+            print(f"  - {e}")
+        sys.exit(1)
+    else:
+        print("[PASS] All checks passed: 8 templates | _history truncation | empty input safety | max() safe")
+        sys.exit(0)

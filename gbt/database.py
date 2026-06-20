@@ -414,7 +414,7 @@ class Database:
         """启动时加载配置缓存"""
         with self.conn() as c:
             for table in ("strategy_config", "risk_config"):
-                rows = c.execute(f"SELECT key, value, value_type FROM {table}").fetchall()
+                rows = c.execute("SELECT key, value, value_type FROM " + table).fetchall()
                 for r in rows:
                     prefix = "strategy." if table == "strategy_config" else "risk."
                     self._config_cache[prefix + r["key"]] = self._parse_value(r["value"], r["value_type"])
@@ -434,7 +434,8 @@ class Database:
             r = c.execute(f"SELECT value, value_type FROM {table} WHERE key=?", (key,)).fetchone()
             if r:
                 val = self._parse_value(r["value"], r["value_type"])
-                self._config_cache[cache_key] = val
+                with self._lock:
+                    self._config_cache[cache_key] = val
                 return val
         return default
 
@@ -455,7 +456,8 @@ class Database:
             )
             c.commit()
         cache_key = f"{'strategy' if table=='strategy_config' else 'risk'}.{key}"
-        self._config_cache[cache_key] = value
+        with self._lock:
+            self._config_cache[cache_key] = value
 
     def get_all_configs(self, table="strategy_config"):
         with self.conn() as c:

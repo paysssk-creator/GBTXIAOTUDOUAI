@@ -4,6 +4,7 @@ screenshot_reasoner.py — 截图推理器 (借鉴Cradle Information Gathering)
 """
 
 import json
+from gbt.gcc.gcc_runner import GCCRunner
 from typing import Optional, Dict, List
 
 try:
