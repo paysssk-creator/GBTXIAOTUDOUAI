@@ -1481,6 +1481,7 @@ def launch():
                     else: win.toggle_fullscreen()
                 except Exception:
                     win.toggle_fullscreen()
+            def move(self,x,y): wv.windows[0].move(int(x),int(y))
             def close(self): wv.windows[0].destroy()
         t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
         t.start();time.sleep(1.0)
