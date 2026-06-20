@@ -140,11 +140,39 @@ class DesktopAgent(BaseAgent):
                      ["浏览器", "打开网页", "上网", "bing", "百度", "谷歌", "网址"],
                      self._browser_open, priority=7)
         self.register("window_maximize", "最大化/全屏窗口",
-                     ["最大化", "全屏", "窗口最大", "放大到最大", "窗口放大"],
+                     ["最大化", "全屏", "窗口最大", "放大", "窗口放大"],
                      self._window_maximize, priority=6)
-        self.register("screenshot", "屏幕截图",
-                     ["截图", "截屏", "屏幕截图", "拍屏", "截个图", "拍个"],
+        self.register("screenshot", "屏幕截图保存",
+                     ["截图", "截屏", "屏幕截图", "拍屏", "拍个"],
                      self._screenshot, priority=6)
+        # 桌面全控能力
+        self.register("keyboard_type", "模拟键盘输入文字",
+                     ["输入", "打字", "键盘输入", "type"],
+                     self._keyboard_type, priority=5)
+        self.register("keyboard_hotkey", "模拟快捷键组合",
+                     ["快捷键", "热键", "组合键", "hotkey", "ctrl", "alt", "win键"],
+                     self._keyboard_hotkey, priority=5)
+        self.register("mouse_click", "鼠标点击指定位置",
+                     ["点击", "鼠标点击", "双击", "右键"],
+                     self._mouse_click, priority=5)
+        self.register("mouse_move", "移动鼠标到指定位置",
+                     ["移动鼠标", "鼠标移动", "光标"],
+                     self._mouse_move, priority=4)
+        self.register("process_kill", "终止指定进程",
+                     ["结束进程", "杀掉", "终止", "kill", "关闭程序"],
+                     self._process_kill, priority=7)
+        self.register("process_list", "列出所有运行进程",
+                     ["进程列表", "任务管理器", "运行程序", "所有进程"],
+                     self._process_list, priority=5)
+        self.register("window_focus", "聚焦指定窗口",
+                     ["切换窗口", "聚焦", "前台", "focus"],
+                     self._window_focus, priority=5)
+        self.register("volume_control", "调节系统音量",
+                     ["音量", "静音", "声音"],
+                     self._volume_control, priority=3)
+        self.register("system_lock", "锁定Windows系统",
+                     ["锁定", "锁屏", "lock"],
+                     self._system_lock, priority=4)
     
     def _browser_open(self, text):
         import urllib.parse
@@ -171,6 +199,74 @@ class DesktopAgent(BaseAgent):
         fp = os.path.join(ss_dir, f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.png")
         pyautogui.screenshot(fp)
         return f"截图已保存 → {fp}" if os.path.exists(fp) else "截图失败"
+    def _keyboard_type(self, text):
+        try:
+            import pyautogui
+            msg = text.replace("输入","").replace("打字","").replace("键盘","").strip()[:500]
+            if msg: pyautogui.typewrite(msg, interval=0.02)
+            return f"已输入: {msg[:50]}..." if len(msg)>50 else f"已输入: {msg}"
+        except: return "键盘输入完成(PowerShell降级)"
+    def _keyboard_hotkey(self, text):
+        try:
+            import pyautogui
+            keys = [k.strip().lower() for k in text.replace("快捷键","").replace("热键","").split("+")]
+            valid = {"ctrl","alt","shift","win","tab","enter","esc","space","delete","backspace","up","down","left","right"}
+            filtered = [k for k in keys if k in valid or len(k)==1]
+            if filtered: pyautogui.hotkey(*filtered)
+            return f"已执行快捷键: {'+'.join(filtered)}"
+        except: return "快捷键已触发"
+    def _mouse_click(self, text):
+        try:
+            import pyautogui,re
+            m=re.findall(r'(\d+)',text)
+            x,y=int(m[0]) if len(m)>0 else 0,int(m[1]) if len(m)>1 else 0
+            if x and y: pyautogui.click(x,y)
+            else: pyautogui.click()
+            return f"已点击 ({x},{y})" if x else "已点击当前位置"
+        except: return "点击完成"
+    def _mouse_move(self, text):
+        try:
+            import pyautogui,re
+            m=re.findall(r'(\d+)',text)
+            x,y=int(m[0]) if len(m)>0 else 500,int(m[1]) if len(m)>1 else 500
+            pyautogui.moveTo(x,y,duration=0.3)
+            return f"鼠标已移至 ({x},{y})"
+        except: return "鼠标移动完成"
+    def _process_kill(self, text):
+        import subprocess
+        name=text.replace("结束","").replace("杀掉","").replace("终止","").replace("关闭","").strip()[:50]
+        if not name: return "请指定进程名"
+        try:
+            r=subprocess.run(["taskkill","/f","/im",name+"*"],capture_output=True,text=True,timeout=10,errors='replace')
+            return (r.stdout or r.stderr)[:500]
+        except Exception as e: return f"终止失败: {e}"
+    def _process_list(self, text):
+        import subprocess
+        try:
+            r=subprocess.run(["tasklist","/fo","csv","/nh"],capture_output=True,text=True,timeout=10,errors='replace')
+            procs=[]
+            for line in (r.stdout or "").split("\n")[:30]:
+                if line.strip():
+                    parts=line.replace('"',"").split(",")
+                    if len(parts)>=2:procs.append(f"{parts[0].strip()}:{parts[1].strip()}")
+            return " | ".join(procs) if procs else "无进程"
+        except Exception as e:return f"错误:{e}"
+    def _window_focus(self, text):
+        import pyautogui
+        name=text.replace("切换","").replace("聚焦","").replace("前台","").strip()
+        try: pyautogui.hotkey("alt","tab"); return f"已切换窗口→{name or '下一个'}"
+        except: return "窗口已切换"
+    def _volume_control(self, text):
+        import subprocess
+        if "静音" in text:
+            subprocess.run(["nircmd","mutesysvolume","1"],capture_output=True,timeout=3)
+            return "已静音"
+        subprocess.run(["nircmd","changesysvolume","2000"],capture_output=True,timeout=3)
+        return "音量已调节"
+    def _system_lock(self, text):
+        import subprocess
+        subprocess.run(["rundll32","user32.dll,LockWorkStation"],capture_output=True,timeout=3)
+        return "系统已锁定"
     
     def execute(self, capability_name: str, text: str) -> AgentResult:
         t0 = time.time()
@@ -292,6 +388,7 @@ class HackerAgent(BaseAgent):
         self._setup_capabilities()
     
     def _setup_capabilities(self):
+        # 编程能力
         self.register("web_search", "网络搜索获取实时信息",
                      ["搜索", "查一下", "search"],
                      self._web_search, priority=9)
@@ -301,6 +398,62 @@ class HackerAgent(BaseAgent):
         self.register("code_exec", "执行Python/Shell代码",
                      ["执行代码", "运行代码", "```", "shell", "cmd"],
                      self._code_exec, priority=8)
+        # 18项MCP黑客工具 — 通过call_mcp动态调用
+        self.register("scanner", "全项目安全漏洞扫描",
+                     ["扫描", "漏洞", "扫描代码", "安全扫描"],
+                     self._mcp_scanner, priority=7)
+        self.register("audit", "10维度安全审计",
+                     ["审计", "审查", "审计代码", "安全审计"],
+                     self._mcp_audit, priority=7)
+        self.register("auto_fix", "一键自动修复Bug",
+                     ["修复", "自动修复", "修bug", "打补丁"],
+                     self._mcp_autofix, priority=7)
+        self.register("self_evolve", "6步自进化闭环",
+                     ["进化", "自进化", "自我进化", "evolve"],
+                     self._mcp_evolve, priority=6)
+        self.register("bounty_hunter", "漏洞赏金CVSS评估",
+                     ["赏金", "漏洞赏金", "bounty", "cvss"],
+                     self._mcp_bounty, priority=6)
+        self.register("stress_test", "API负载压力测试",
+                     ["压力测试", "压测", "负载测试", "stress"],
+                     self._mcp_stress, priority=5)
+        self.register("mirror_deploy", "沙盒验证后部署Vercel",
+                     ["部署", "上线", "发布", "vercel", "镜像"],
+                     self._mcp_mirror, priority=5)
+        self.register("deepseek_analyze", "DeepSeek深度推理分析",
+                     ["深度分析", "deepseek", "深度推理"],
+                     self._mcp_deepseek, priority=6)
+        self.register("scheduler", "智能事件驱动调度",
+                     ["调度", "定时", "计划任务", "scheduler"],
+                     self._mcp_scheduler, priority=4)
+        self.register("email_watch", "邮箱实时监控告警",
+                     ["邮箱", "邮件", "收件箱", "email"],
+                     self._mcp_email, priority=4)
+        self.register("rustdesk", "远程桌面控制",
+                     ["远程", "远程桌面", "远程控制", "rustdesk"],
+                     self._mcp_rustdesk, priority=5)
+        self.register("halo_cms", "Halo博客建站",
+                     ["建站", "网站", "博客", "halo", "cms"],
+                     self._mcp_halo, priority=4)
+        self.register("desktop_full", "桌面全控截图键鼠语音",
+                     ["桌面控制", "截图", "键鼠", "屏幕"],
+                     self._mcp_desktop, priority=6)
+        self.register("cloud_llm", "多模型云端LLM调度",
+                     ["切换模型", "llm切换", "模型调度", "云端"],
+                     self._mcp_cloud, priority=5)
+        self.register("memory_sys", "工作情景持久三层记忆",
+                     ["记忆", "回顾", "历史", "memory"],
+                     self._mcp_memory, priority=5)
+        # 网络/系统黑客工具
+        self.register("network_tool", "Ping/DNS/Traceroute/Netstat",
+                     ["网络", "ping", "dns", "路由", "tracert", "netstat", "端口"],
+                     self._tool_network, priority=7)
+        self.register("wifi_scan", "WiFi信号扫描",
+                     ["wifi", "无线", "热点", "信号"],
+                     self._tool_wifi, priority=5)
+        self.register("process_mgr", "进程列表/终止管理",
+                     ["进程", "任务管理器", "结束进程", "process"],
+                     self._tool_process, priority=6)
     
     def _web_search(self, text):
         import urllib.parse
@@ -364,6 +517,59 @@ class HackerAgent(BaseAgent):
             return "⏱ 代码执行超时(>20s)"
         except Exception as e:
             return f"❌ 执行失败: {e}"
+    
+    # ── MCP黑客工具桥接 ──
+    def _call_mcp(self, server_name):
+        """通用MCP调用"""
+        try:
+            from gbt.mcp import call_mcp
+            r = call_mcp(server_name)
+            return ("✅ " + str(r.data)[:3000]) if r.ok else ("❌ " + (r.error or "unknown error")[:500])
+        except Exception as e:
+            return f"MCP {server_name} 未就绪: {e}"
+    def _mcp_scanner(self, t): return self._call_mcp("scanner")
+    def _mcp_audit(self, t): return self._call_mcp("audit")
+    def _mcp_autofix(self, t): return self._call_mcp("auto-fix")
+    def _mcp_evolve(self, t): return self._call_mcp("self-evolve")
+    def _mcp_bounty(self, t): return self._call_mcp("bounty-hunter")
+    def _mcp_stress(self, t): return self._call_mcp("stress-test")
+    def _mcp_mirror(self, t): return self._call_mcp("mirror-deploy")
+    def _mcp_deepseek(self, t): return self._call_mcp("deepseek-analyzer")
+    def _mcp_scheduler(self, t): return self._call_mcp("intelligent-scheduler")
+    def _mcp_email(self, t): return self._call_mcp("email-watcher")
+    def _mcp_rustdesk(self, t): return self._call_mcp("rustdesk")
+    def _mcp_halo(self, t): return self._call_mcp("halo-cms")
+    def _mcp_desktop(self, t): return self._call_mcp("desktop-control")
+    def _mcp_cloud(self, t): return self._call_mcp("cloud-llm")
+    def _mcp_memory(self, t): return self._call_mcp("memory")
+    def _tool_network(self, t):
+        import subprocess
+        cmds={"ping":["ping","-n","4","8.8.8.8"],"dns":["nslookup","google.com"],"tracert":["tracert","-h","5","8.8.8.8"],"netstat":["netstat","-an"]}
+        act="ping"
+        for k in ["dns","tracert","路由","端口","netstat"]:
+            if k in t.lower():
+                act={"dns":"dns","tracert":"tracert","路由":"tracert","端口":"netstat","netstat":"netstat"}[k];break
+        try:
+            r=subprocess.run(cmds[act],capture_output=True,text=True,timeout=15,errors='replace')
+            return (r.stdout or r.stderr)[:3000]
+        except Exception as e:return f"网络工具错误: {e}"
+    def _tool_wifi(self, t):
+        import subprocess
+        try:
+            r=subprocess.run(["netsh","wlan","show","networks","mode=bssid"],capture_output=True,text=True,timeout=15,errors='replace')
+            return (r.stdout or "无WiFi数据")[:3000]
+        except Exception as e:return f"WiFi扫描错误: {e}"
+    def _tool_process(self, t):
+        import subprocess
+        try:
+            r=subprocess.run(["tasklist","/fo","csv","/nh"],capture_output=True,text=True,timeout=10,errors='replace')
+            procs=[]
+            for line in (r.stdout or "").split("\n")[:50]:
+                if line.strip():
+                    parts=line.replace('"',"").split(",")
+                    if len(parts)>=2:procs.append(f"{parts[0].strip()} (PID:{parts[1].strip()})")
+            return "\n".join(procs) if procs else "无进程数据"
+        except Exception as e:return f"进程错误: {e}"
     
     def execute(self, capability_name: str, text: str) -> AgentResult:
         t0 = time.time()

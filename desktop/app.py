@@ -200,6 +200,32 @@ def hacker_status():
         "watcher":watcher.get_status() if watcher else {}})
 
 
+# ── Agent协作状态API ──
+@app.route("/api/agents/status")
+def agents_status():
+    """所有Agent实时状态+能力清单"""
+    agents_data = {}
+    if hasattr(_brain, 'framework') and _brain.framework:
+        fw = _brain.framework
+        agents_data = fw.get_system_status()
+    # 回退到旧路由
+    elif hasattr(_brain, 'router') and _brain.router:
+        agents_data = {"framework":"legacy","router_caps":len(_brain.router.capabilities)}
+    return jsonify({"ok":True,"agents":agents_data})
+
+@app.route("/api/agents/collaborate",methods=["POST"])
+def agents_collab():
+    """Agent间协作 — 一个Agent调用另一个Agent的能力"""
+    d = request.json or {}
+    text = d.get("text","")
+    if not text: return jsonify({"ok":False,"error":"需要输入文本"})
+    if hasattr(_brain, 'framework') and _brain.framework:
+        result = _brain.framework.router.route(text, source=d.get("source","api"))
+        return jsonify({"ok":True,"result":result})
+    return jsonify({"ok":False,"error":"Agent框架未就绪"})
+
+
+
 @app.before_request
 def _log_req():
     p=request.path
