@@ -3,7 +3,7 @@ llm.py — GBT全模型LLM抽象层
 基于 hello-agents 模式，支持13大模型 + 自动降级
 """
 
-import os, time, socket
+import os, sys, time, socket
 from typing import Optional, List, Dict, Any, Iterator
 from openai import OpenAI
 

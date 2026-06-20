@@ -5,9 +5,9 @@ _precommit.py — GBT 提交前强制检查
 import sys, io, os, glob, json, urllib.request, subprocess, time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-ROOT = r'C:\Users\ADMIN\Desktop\GBT-local'
-PY312 = r'C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe'
-API = 'http://localhost:8877'
+ROOT = os.path.dirname(os.path.abspath(__file__))
+PY312 = sys.executable  # 使用当前Python解释器
+API = 'http://localhost:8765'  # 对齐 app.py 默认端口
 PASS, FAIL = 0, 0
 
 def check(name, ok, detail=""):

@@ -31,12 +31,10 @@ pyinstaller_args = [
     "--exclude-module=pandas",
     "--exclude-module=scipy",
     "--exclude-module=sounddevice", # 排除可能导致内存问题的音频模块
-    "--exclude-module=dotenv",       # 已手动解析 .env，排除避免库内自动调用
     "--exclude-module=python_dotenv",
     # 显式包含所需模块 (自动检测之外的保证)
     "--hidden-import=flask",
     "--hidden-import=webview",
-    "--hidden-import=dotenv",
     "--hidden-import=openai",
     "--hidden-import=ollama",
     "--hidden-import=psutil",

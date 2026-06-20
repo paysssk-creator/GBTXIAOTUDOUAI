@@ -1,3 +1,3 @@
 @echo off
-set DEEPSEEK_API_KEY=sk-05b2e9cd964e4750ae987522f6eaa211
+REM 密钥请通过 .env 文件配置，不要硬编码在脚本中!
 "C:\Users\ADMIN\Desktop\GBT-local\dist\GBT\GBT.exe" --browser
