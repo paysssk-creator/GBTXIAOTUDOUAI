@@ -9,10 +9,10 @@ from dataclasses import dataclass, field
 
 try:
     from PIL import Image; HAS_PIL = True
-except: HAS_PIL = False
+except Exception: HAS_PIL = False
 try:
     import mss; HAS_MSS = True
-except: HAS_MSS = False
+except Exception: HAS_MSS = False
 
 @dataclass
 class TradeDecision:
@@ -39,7 +39,7 @@ class AITrader:
                 pil = Image.frombytes("RGB",img.size,img.bgra,"raw","BGRX")
                 buf = BytesIO(); pil.save(buf,format="JPEG",quality=50)
                 return base64.b64encode(buf.getvalue()).decode()
-        except: return None
+        except Exception: return None
 
     def _call(self, msgs):
         if not self.llm: return "[No LLM]"
@@ -61,7 +61,7 @@ class AITrader:
         try:
             s=raw.find("{"); e=raw.rfind("}")+1
             return json.loads(raw[s:e]) if s>=0 and e>s else {"raw":raw}
-        except: return {"raw":raw}
+        except Exception: return {"raw":raw}
 
     def decide(self, analysis, account_info=""):
         """做出交易决策"""
@@ -82,7 +82,7 @@ class AITrader:
                 price=float(d.get("price",0)),volume=int(d.get("volume",0)),
                 reasoning=d.get("reasoning",""),confidence=float(d.get("confidence",0)),
                 stop_loss=float(d.get("stop_loss",0)),take_profit=float(d.get("take_profit",0)))
-        except: return TradeDecision(action="hold",reasoning="解析失败")
+        except Exception: return TradeDecision(action="hold",reasoning="解析失败")
     def observe(self, b64, task=""):
         """先看再动: 截图分析当前状态, 确认是否已打开目标窗口"""
         msgs = [{"role":"system","content":'''你是电脑状态检查员。分析截图回答:
@@ -99,7 +99,7 @@ class AITrader:
         try:
             s=raw.find("{"); e=raw.rfind("}")+1
             return json.loads(raw[s:e]) if s>=0 and e>s else {"app":"未知","is_trading":False,"done":False}
-        except: return {"app":"未知","is_trading":False,"done":False}
+        except Exception: return {"app":"未知","is_trading":False,"done":False}
 
     def _ensure_trading_window(self, b64):
         """确保交易软件窗口在前台, 不盲目Alt+Tab"""
@@ -139,9 +139,7 @@ class AITrader:
                     return {"ok":True,"action":"hold","reason":"任务已完成"}
 
             # 2. 只在需要时切换窗口
-            if b64_before and not b64_before:
-                pass
-            elif b64_before:
+            if b64_before:
                 window_ok = self._ensure_trading_window(b64_before)
                 if window_ok == "already_done":
                     return {"ok":True,"action":"done","reason":"任务已完成, 不重复操作"}
@@ -184,7 +182,7 @@ class AITrader:
         try:
             s=raw.find("{"); e=raw.rfind("}")+1
             return json.loads(raw[s:e]) if s>=0 and e>s else {"filled":False,"reason":raw[:100]}
-        except: return {"filled":False,"reason":raw[:100]}
+        except Exception: return {"filled":False,"reason":raw[:100]}
 
     def run(self, task, focus="", account_info="", max_attempts=3):
         """完整AI操盘流程"""

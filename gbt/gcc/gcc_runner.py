@@ -15,10 +15,10 @@ from gbt.llm import GBTLLM
 from gbt.gcc.skill_curation import get_curator
 try:
     from PIL import Image; HAS_PIL = True
-except: HAS_PIL = False
+except ImportError: HAS_PIL = False
 try:
     import mss; HAS_MSS = True
-except: HAS_MSS = False
+except ImportError: HAS_MSS = False
 
 @dataclass
 class GCCAction:
@@ -54,7 +54,7 @@ class GCCRunner:
                 pil = Image.frombytes("RGB",img.size,img.bgra,"raw","BGRX")
                 buf = BytesIO(); pil.save(buf,format="JPEG",quality=55)
                 return base64.b64encode(buf.getvalue()).decode()
-        except: return None
+        except Exception: return None
 
     def _call(self, msgs):
         if not self.llm: return "[No LLM]"
@@ -106,7 +106,7 @@ class GCCRunner:
             elif a=="scroll": self.desk.mouse_scroll(p.get("amount",0))
             elif a=="wait": time.sleep(min(p.get("seconds",1),10))
             return True
-        except: return False
+        except Exception: return False
 
     def reflect(self, b64b, b64a, action, task):
         msgs = [{"role":"system","content":"判断操作是否成功。回复:成功/失败+原因。"}]
@@ -173,12 +173,15 @@ def gcc_run(task, llm=None, max_steps=15):
 # Game Mode — 实时游戏操控引擎
 # ═══════════════════════════════════════════════════════
 
-try:
-    import ctypes, ctypes.wintypes
-    _user32 = ctypes.windll.user32
-    _gdi32 = ctypes.windll.gdi32
-    HAS_DXGI = True
-except Exception:
+if sys.platform == 'win32':
+    try:
+        import ctypes, ctypes.wintypes
+        _user32 = ctypes.windll.user32
+        _gdi32 = ctypes.windll.gdi32
+        HAS_DXGI = True
+    except Exception:
+        HAS_DXGI = False
+else:
     HAS_DXGI = False
 
 
@@ -192,30 +195,38 @@ class GameController:
     # ── 连续输入 ──
     def key_down(self, key):
         """持续按下（WASD移动）"""
+        if not HAS_PYAUTOGUI: return
         pyautogui.keyDown(key)
         self._pressed_keys.add(key)
 
     def key_up(self, key):
+        if not HAS_PYAUTOGUI: return
         pyautogui.keyUp(key)
         self._pressed_keys.discard(key)
 
     def key_tap(self, key, duration=0.05):
+        if not HAS_PYAUTOGUI: return
         pyautogui.press(key, presses=1, interval=duration)
 
     def release_all(self):
+        if not HAS_PYAUTOGUI: return
         for k in list(self._pressed_keys):
             self.key_up(k)
 
     def mouse_move_to(self, x, y, duration=0.01):
+        if not HAS_PYAUTOGUI: return
         pyautogui.moveTo(x, y, duration=duration)
 
     def mouse_down(self, button="left"):
+        if not HAS_PYAUTOGUI: return
         pyautogui.mouseDown(button=button)
 
     def mouse_up(self, button="left"):
+        if not HAS_PYAUTOGUI: return
         pyautogui.mouseUp(button=button)
 
     def mouse_click(self, x, y, button="left"):
+        if not HAS_PYAUTOGUI: return
         pyautogui.click(x, y, button=button)
 
     # ── 快速截图 (mss 内存抓取, <10ms) ──

@@ -13,6 +13,8 @@ import os
 import re
 import json
 import hashlib
+import logging
+import threading
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -111,7 +113,8 @@ class SkillCurator:
                 for item in data["skills"]:
                     skill = Skill.from_dict(item)
                     self.skills[skill.name] = skill
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, OSError) as e:
+            logging.getLogger("GBT.SkillCurator").warning(f"技能文件加载失败: {e}")
             self.skills = {}
 
     def _save(self) -> None:
@@ -204,7 +207,7 @@ class SkillCurator:
         words = re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z]{2,}", task)
         key = "_".join(words[:5]) if words else "task"
         # 追加短哈希防冲突
-        h = hashlib.md5(task.encode()).hexdigest()[:6]
+        h = hashlib.md5(task.encode(), usedforsecurity=False).hexdigest()[:6]
         return f"skill_{key}_{h}" if len(key) > 30 else f"skill_{key}"
 
     def _extract_pattern(self, task: str) -> str:
@@ -414,13 +417,16 @@ class SkillCurator:
 
 # ─── 全局单例 ─────────────────────────────────────────────────────
 _curator: Optional[SkillCurator] = None
+_curator_lock = threading.Lock()
 
 
 def get_curator(skill_path: Optional[str] = None) -> SkillCurator:
     """获取全局 SkillCurator 单例"""
     global _curator
     if _curator is None:
-        _curator = SkillCurator(skill_path=skill_path)
+        with _curator_lock:
+            if _curator is None:
+                _curator = SkillCurator(skill_path=skill_path)
     return _curator
 
 
