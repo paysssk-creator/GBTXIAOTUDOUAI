@@ -68764,10 +68764,716 @@
           "output": ""
         }
       }
+    },
+    {
+      "timestamp": "2026-06-21T12:21:53.800Z",
+      "stats": {
+        "files": 979,
+        "git": {
+          "isRepo": true,
+          "branch": "main",
+          "lastCommit": "8e5f45e",
+          "uncommitted": 6
+        },
+        "tests": {
+          "exists": true,
+          "count": 3,
+          "framework": ""
+        }
+      },
+      "problemsFound": 112,
+      "problemsBySeverity": {
+        "critical": 1,
+        "high": 1,
+        "medium": 104,
+        "low": 5
+      },
+      "problems": [
+        {
+          "severity": "high",
+          "category": "version-control",
+          "file": "6 个未提交文件",
+          "desc": "存在未提交改动，Cline修改将无法回溯"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:107",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:175",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:181",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:182",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "agents\\gbt_agent.py:207",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:209",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:210",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:966",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:445",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:459",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:594",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:940",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1075",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1086",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1094",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1190",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1215",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1258",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1283",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1292",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1303",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1317",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1330",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "desktop\\app.py:1333",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\account.py:42",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agent.py:55",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agent.py:58",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\agents.py:660",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:281",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:374",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:390",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:399",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:406",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:594",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:595",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\agents.py:840",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\brain.py:87",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\brain.py:539",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\brain.py:545",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:47",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:61",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:89",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:92",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:134",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:165",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:297",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:298",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:330",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:356",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:388",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\capabilities.py:465",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\github.py:47",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\github.py:81",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\connectors\\network.py:17",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\connectors\\network.py:19",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\registry.py:177",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\connectors\\registry.py:196",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\database.py:350",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\database.py:407",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\database.py:440",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\evolve.py:506",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\ai_trader.py:120",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\ai_trader.py:121",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\ai_trader.py:132",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\gcc_runner.py:267",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\gcc_runner.py:278",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\gcc_runner.py:283",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\screenshot_reasoner.py:55",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\self_reflection.py:77",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\self_reflection.py:95",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\skill_curation.py:43",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\skill_curation.py:367",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\skill_curation.py:407",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\gcc\\skill_curation.py:438",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\guard.py:148",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\llm.py:103",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\mcp.py:72",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\memory.py:81",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\memory.py:105",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\protocol.py:76",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\protocol.py:178",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\protocol.py:184",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\protocol.py:190",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\reasoner.py:348",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\risk_ctrl.py:29",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\risk_ctrl.py:42",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\risk_ctrl.py:55",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\scraper.py:208",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\strategies.py:79",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tech_analysis.py:16",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tech_analysis.py:23",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tool.py:58",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\tool.py:90",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\trader.py:434",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\trader.py:663",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\trader.py:795",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\watcher.py:175",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\watcher.py:475",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\watcher_agent.py:594",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\winctl.py:79",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\winctl.py:93",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "gbt\\winctl.py:272",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "start_demo.py:25",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "medium",
+          "category": "dead-code",
+          "file": "tools\\mcp_tools.py:15",
+          "desc": "return后死代码"
+        },
+        {
+          "severity": "low",
+          "category": "console",
+          "file": "desktop\\app.py:93",
+          "desc": "console残留"
+        },
+        {
+          "severity": "low",
+          "category": "deprecated",
+          "file": "gbt\\connectors\\registry.py:37",
+          "desc": "废弃API"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:55",
+          "desc": "待办标记"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:56",
+          "desc": "待办标记"
+        },
+        {
+          "severity": "low",
+          "category": "console",
+          "file": "_w.js:1",
+          "desc": "console残留"
+        },
+        {
+          "severity": "critical",
+          "category": "eval",
+          "file": "gbt\\evolve.py:80",
+          "desc": "eval()注入"
+        },
+        {
+          "severity": "info",
+          "category": "sync-loop",
+          "file": "_w.js:1",
+          "desc": "循环同步IO"
+        }
+      ],
+      "audit": {
+        "tests": {
+          "ran": false,
+          "passed": 0,
+          "failed": 0,
+          "output": ""
+        }
+      }
     }
   ],
-  "lastEvolve": "2026-06-21T12:21:18.192Z",
-  "totalEvolves": 113,
+  "lastEvolve": "2026-06-21T12:21:53.800Z",
+  "totalEvolves": 114,
   "memories": [],
   "config": {}
 }
