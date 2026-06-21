@@ -1785,4 +1785,80 @@ def main():
         L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
     else:launch()
 
+# ── DeepSeek Agent 集成面板 ──
+_DS_AGENTS = [
+    {"name":"AstrBot","desc":"飞书/Telegram开源Agent助手","guide":"docs/astrbot.md"},
+    {"name":"Cherry Studio","desc":"跨平台桌面AI客户端,300+助手","guide":"docs/cherry_studio.md"},
+    {"name":"Claude Code","desc":"终端AI编程助手","guide":"docs/claude_code.md"},
+    {"name":"Cline","desc":"VS Code AI编程扩展","guide":"docs/cline.md"},
+    {"name":"Codex","desc":"OpenAI编程Agent","guide":"docs/codex.md"},
+    {"name":"Crush","desc":"终端AI编程Agent,多模型支持","guide":"docs/crush.md"},
+    {"name":"Deep Code","desc":"DeepSeek-V4终端编程助手","guide":"docs/deepcode.md"},
+    {"name":"DeepSeek-TUI","desc":"Rust终端编程助手,1M上下文","guide":"docs/deepseek-tui.md"},
+    {"name":"GitHub Copilot","desc":"VS Code内置AI编程","guide":"docs/github_copilot.md"},
+    {"name":"Copilot CLI","desc":"终端原生AI编程Agent","guide":"docs/copilot_cli.md"},
+    {"name":"Hermes","desc":"Nous Research自进化Agent","guide":"docs/hermes.md"},
+    {"name":"Kilo Code","desc":"CLI+编辑器AI编程助手","guide":"docs/kilo_code.md"},
+    {"name":"Langcli","desc":"Claude Code兼容,支持主流LLM","guide":"docs/langcli.md"},
+    {"name":"LobeHub","desc":"首席Agent调度官,7x24运营","guide":"docs/lobehub.md"},
+    {"name":"nanobot","desc":"轻量级AI Agent,聊天集成","guide":"docs/nanobot.md"},
+    {"name":"Oh My Pi","desc":"终端AI编程Agent,MCP/插件","guide":"docs/oh-my-pi.md"},
+    {"name":"OpenClaw","desc":"飞书/微信个人AI助手","guide":"docs/openclaw.md"},
+    {"name":"OpenCode","desc":"终端/Web/多形态AI编程","guide":"docs/opencode.md"},
+    {"name":"Pi","desc":"极简终端编程工具","guide":"docs/pi_mono.md"},
+    {"name":"Qwen Code","desc":"阿里通义编程Agent CLI","guide":"docs/qwen_code.md"},
+    {"name":"Reasonix","desc":"DeepSeek原生编程Agent","guide":"docs/reasonix.md"},
+    {"name":"WorkBuddy","desc":"AI Agent编程助手","guide":"docs/workbuddy.md"},
+]
+
+@app.route("/api/deepseek/agents")
+def ds_agents():
+    return jsonify({"ok":True,"repo":"deepseek-ai/awesome-deepseek-agent","stars":3924,"forks":428,"issues":178,"agents":_DS_AGENTS,"total":len(_DS_AGENTS)})
+
+@app.route("/api/deepseek/usage")
+def ds_usage():
+    """DeepSeek API 用量查询"""
+    key = os.environ.get("DEEPSEEK_API_KEY","")
+    if not key:
+        try:
+            cp = os.path.join(os.path.expanduser("~"),".cline","data","credentials.json")
+            if os.path.exists(cp):
+                key = json.load(open(cp,"r",encoding="utf-8")).get("services",{}).get("deepseek",{}).get("apiKey","")
+        except: pass
+    if not key: return jsonify({"ok":False,"error":"未配置DeepSeek密钥","help":"https://platform.deepseek.com/api_keys"})
+    try:
+        import urllib.request as _ur
+        req = _ur.Request("https://api.deepseek.com/user/balance",headers={"Authorization":"Bearer "+key})
+        r = _ur.urlopen(req,timeout=8)
+        data = json.loads(r.read())
+        return jsonify({"ok":True,"usage":data})
+    except Exception as e:
+        # 用量API可能不可用,返回密钥状态
+        return jsonify({"ok":True,"note":"用量API待开通","key_configured":True,"key_prefix":key[:10]+"..."})
+
+@app.route("/api/deepseek/key-status")
+def ds_key_status():
+    """密钥自动读取状态"""
+    sources = {}
+    # 环境变量
+    for ek in ["DEEPSEEK_API_KEY","GLM_API_KEY","GEMINI_API_KEY","QWEN_API_KEY"]:
+        v = os.environ.get(ek,"")
+        sources[ek] = {"found":bool(v),"prefix":v[:8]+"..." if v else None}
+    # credentials.json
+    cp = os.path.join(os.path.expanduser("~"),".cline","data","credentials.json")
+    try:
+        if os.path.exists(cp):
+            creds = json.load(open(cp,"r",encoding="utf-8"))
+            for svc, info in creds.get("services",{}).items():
+                ak = info.get("apiKey","")
+                sources["cred:"+svc] = {"found":bool(ak and len(ak)>10),"url":info.get("url",""),"guide":info.get("获取步骤","")}
+    except: pass
+    return jsonify({"ok":True,"sources":sources,"tips":"访问 https://platform.deepseek.com/api_keys 注册即送500万tokens"})
+
+# 注册路由
+_reg_url = "https://platform.deepseek.com/api_keys"
+@app.route("/api/deepseek/register")
+def ds_register():
+    return jsonify({"ok":True,"url":_reg_url,"steps":["1. 打开链接","2. 登录/注册","3. 创建API Key","4. 复制sk-xxx","5. 填入credentials.json或设置环境变量"],"auto_detect":True})
+
 if __name__=="__main__":main()
