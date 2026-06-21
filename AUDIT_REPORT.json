@@ -16,11 +16,11 @@
   ],
   "failed": [
     {
-      "name": "无未提交改动 (当前: 8)",
+      "name": "无未提交改动 (当前: 6)",
       "detail": ""
     }
   ],
-  "timestamp": "2026-06-21T12:52:24.843Z",
+  "timestamp": "2026-06-21T12:52:36.533Z",
   "summary": {
     "passed": 7,
     "warnings": 1,
