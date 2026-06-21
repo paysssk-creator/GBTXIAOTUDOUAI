@@ -1,5 +1,5 @@
 {
-  "time": "2026-06-21T11:03:58.724Z",
+  "time": "2026-06-21T11:04:38.136Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "summary": {
     "critical": 1,
@@ -784,7 +784,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "gbt\\llm.py",
-      "line": 94,
+      "line": 103,
       "snippet": "return None",
       "desc": "return后死代码",
       "fixable": 0

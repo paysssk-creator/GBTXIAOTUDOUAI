@@ -1,6 +1,6 @@
 # Scan Report v3
 
-**Time**:2026-06-21T11:03:58.724Z
+**Time**:2026-06-21T11:04:38.136Z
 **Deep**:Y
 
 ## Summary
@@ -90,7 +90,7 @@
 - **[MEDIUM]** gbt\gcc\skill_curation.py:438 — return后死代码
 - **[MEDIUM]** gbt\guard.py:148 — return后死代码
 - **[MEDIUM]** gbt\llm.py:83 — return后死代码
-- **[MEDIUM]** gbt\llm.py:94 — return后死代码
+- **[MEDIUM]** gbt\llm.py:103 — return后死代码
 - **[MEDIUM]** gbt\mcp.py:72 — return后死代码
 - **[MEDIUM]** gbt\memory.py:81 — return后死代码
 - **[MEDIUM]** gbt\memory.py:105 — return后死代码

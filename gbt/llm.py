@@ -84,17 +84,47 @@ class GBTLLM:
         return None
 
     def _auto_detect(self) -> Optional[str]:
-        """自动检测可用提供商 (按tier优先级)"""
+        """自动检测可用提供商 (按tier优先级, 连接验证)"""
         discovered = AutoKeyConfig.scan()
         available = [pid for pid, info in discovered.items()
                     if info["status"] == "available"]
+        # Ollama is most reliable for local dev — prefer if cloud keys fail
+        if "ollama" in available:
+            # Move ollama to end so cloud providers get tried first
+            available.remove("ollama")
+            available.append("ollama")
         if not available:
-            if AutoKeyConfig.check_ollama():
-                return "ollama"
             return None
-        # 按tier排序取最优
+        # 按tier排序取最优，但添加连接验证
         available.sort(key=lambda p: PROVIDERS[p]["tier"])
-        return available[0]
+        for pid in available:
+            if self._test_connection(pid):
+                return pid
+        return None
+
+    def _test_connection(self, pid: str) -> bool:
+        """快速连接测试"""
+        import json, urllib.request
+        cfg = PROVIDERS.get(pid, {})
+        try:
+            api_key = self._find_key(cfg) if pid != "ollama" else "ollama"
+            headers = {"Content-Type": "application/json"}
+            if pid != "ollama":
+                headers["Authorization"] = f"Bearer {api_key}"
+            data = json.dumps({
+                "model": cfg.get("default_model", "qwen2.5:0.5b"),
+                "messages": [{"role": "user", "content": "ok"}],
+                "max_tokens": 1,
+                "stream": False
+            }).encode()
+            req = urllib.request.Request(
+                cfg["base_url"] + "chat/completions",
+                data=data, headers=headers, method="POST"
+            )
+            urllib.request.urlopen(req, timeout=10)
+            return True
+        except Exception:
+            return False
 
     def invoke(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """非流式调用"""
