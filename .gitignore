@@ -1,19 +1,45 @@
+# Logs
 *.log
+
+# Python cache
 __pycache__/
 *.pyc
+
+# Build artifacts
 build/
 dist/
 GBT.spec
 *.spec
+gbt_agent_framework.egg-info/
+
+# Screenshots
+screenshots/
 screen.png
-check.py
-run.py
-test_gbt_app.py
-screen.py
+
+# Environment secrets
 .env
 .env.bak
 *.env.bak
 *.env.backup
 !.env.example
 
+# Backup files
+*.bak
+
+# Generated reports
+AUDIT_REPORT.json
+AUTO_FIX_PLAN.json
+VULN-FINDINGS.json
+VULN-FINDINGS.md
+CLEANUP_PLAN.md
+cleanup_files.txt
+
+# Runtime data
 data/
+monitoring.db/
+
+# Temp dev scripts
+check.py
+run.py
+test_gbt_app.py
+screen.py

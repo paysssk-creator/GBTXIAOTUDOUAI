@@ -1,4 +1,0 @@
-agents
-desktop
-gbt
-tools
