@@ -177,7 +177,7 @@ class AShareTrader:
 
         # ── 从新浪拉取 ──
         try:
-            url = f"http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={code}&scale={scale}&ma=no&datalen={datalen}"
+            url = f"https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol={code}&scale={scale}&ma=no&datalen={datalen}"
             req = urllib.request.Request(url, headers={
                 "Referer": "https://finance.sina.com.cn",
                 "User-Agent": "Mozilla/5.0"
@@ -229,7 +229,7 @@ class AShareTrader:
             s.detail = f"接口: hq.sinajs.cn | 代码: {','.join(codes[:5])}..."
 
         try:
-            url = f"http://hq.sinajs.cn/list={code_str}"
+            url = f"https://hq.sinajs.cn/list={code_str}"
             req = urllib.request.Request(url, headers={
                 "Referer": "https://finance.sina.com.cn",
                 "User-Agent": "Mozilla/5.0"

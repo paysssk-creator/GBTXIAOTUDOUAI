@@ -18,7 +18,7 @@ L = logging.getLogger("GBT.Scraper")
 SOURCES = {
     "sina_quote": {
         "name": "新浪行情",
-        "url": "http://hq.sinajs.cn/list={codes}",
+        "url": "https://hq.sinajs.cn/list={codes}",
         "type": "实时行情",
         "weight": 1.0
     },
