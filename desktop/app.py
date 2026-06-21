@@ -760,6 +760,10 @@ def cn_action(cid):
                 res = subprocess.run(["netsh","wlan","show","interfaces"],capture_output=True,text=True,timeout=10,shell=False,errors='replace')
                 r = {"ok":True,"output":(res.stdout or res.stderr or "no data")[:2000]}
             except Exception as e: r = {"ok":False,"error":str(e)}
+    # ── GitHub (REST API free, no auth needed) ──
+    elif cid == "github":
+        from gbt.connectors.github import github_handle
+        r = github_handle(act, **args)
     return jsonify(r)
 
 @app.route("/api/reason",methods=["POST"])
