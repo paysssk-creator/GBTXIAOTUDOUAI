@@ -4,7 +4,7 @@ LLM switching + failover + real 6-step evolve
 import os,sys,threading,json,logging,time,subprocess
 
 # ── 自动注入已知API密钥（从credentials.json读取） ──
-_cred_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".cline", "data", "credentials.json")
+_cred_path = os.path.join(os.path.expanduser("~"), ".cline", "data", "credentials.json")
 try:
     with open(_cred_path, "r", encoding="utf-8") as f:
         _creds = json.load(f)
