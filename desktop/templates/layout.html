@@ -481,7 +481,7 @@ async function loadHack(){
     var h='<div class="cp-list" style="max-height:360px;overflow-y:auto">';
     caps.forEach(function(c){
       var lvl=c.cat==='security'?'high':c.cat==='core'?'mid':'low';
-      h+='<div class="cp-item hack-'+lvl+'" onclick="execCapability('"+c.id+"')" title="'+c.desc+'">';
+      h+='<div class="cp-item hack-'+lvl+'" onclick="execCapability(\x27'+c.id+'\x27)" title="'+c.desc+'">';
       h+='<i class="ph '+c.icon+' cp-icon hack"></i>';
       h+='<span class="cp-name">'+c.name+'</span>';
       h+='<span class="cp-sub">'+c.desc+'</span>';
@@ -501,9 +501,9 @@ async function loadHackerCapabilities(){
     $('hack-status').textContent=_HCAPS.length+'/'+d.total+' online';
     var cats={};
     _HCAPS.forEach(function(c){cats[c.cat]=(cats[c.cat]||0)+1});
-    var tabs='<button class="hack-tab active" onclick="filterHackCaps('all')">All ('+_HCAPS.length+')</button>';
+    var tabs='<button class="hack-tab active" onclick="filterHackCaps(\x27all\x27)">All ('+_HCAPS.length+')</button>';
     for(var cat in cats){
-      tabs+='<button class="hack-tab" onclick="filterHackCaps(''+cat+'')">'+cat.toUpperCase()+' ('+cats[cat]+')</button>';
+      tabs+='<button class="hack-tab" onclick="filterHackCaps(\x27'+cat+'\x27)">'+cat.toUpperCase()+' ('+cats[cat]+')</button>';
     }
     $('hack-cat-tabs').innerHTML=tabs;
     renderHackGrid(_HCAPS);
@@ -526,14 +526,14 @@ function renderHackGrid(caps){
   caps.forEach(function(c){
     var catColors={security:'var(--red)',core:'var(--accent)',ai:'var(--purple)',devops:'var(--cyan)',control:'var(--blue)',monitor:'var(--amber)'};
     var cc=catColors[c.cat]||'var(--t3)';
-    h+='<div class="hack-card" onclick="execCapability('"+c.id+"')" style="border-left:3px solid '+cc+'">';
+    h+='<div class="hack-card" onclick="execCapability(\x27'+c.id+'\x27)" style="border-left:3px solid '+cc+'">';
     h+='<div style="display:flex;align-items:center;gap:8px"><i class="ph '+c.icon+'" style="font-size:20px;color:'+cc+'"></i>';
     h+='<div><div style="font-weight:600;font-size:13px">'+c.name+'</div>';
     h+='<div style="font-size:10px;color:var(--t4);text-transform:uppercase">'+c.cat+'</div></div></div>';
     h+='<div style="font-size:11px;color:var(--t3);margin-top:6px">'+c.desc+'</div>';
     h+='<div style="margin-top:8px;display:flex;gap:4px">';
-    h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability('"+c.id+"')">Run</button>';
-    if(c.mcp)h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability('"+c.id+"','info')" style="background:var(--bg3)">Info</button>';
+    h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(\x27'+c.id+'\x27)">Run</button>';
+    if(c.mcp)h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(\x27'+c.id+'\x27,\x27info\x27)" style="background:var(--bg3)">Info</button>';
     h+='</div></div>';
   });
   g.innerHTML=h;
