@@ -166,7 +166,7 @@ try:
     _framework = init_framework(brain=_brain, trader=trader, account=account, watcher=watcher)
     _brain.framework = _framework
 except Exception as e:
-    pass  # 非致命: API端点会自动回退
+    L.warning(f"Agent init failed: {e} — framework disabled")  # 非致命: API端点会自动回退
 
 # ═══════════════════════════════════════════════
 # 黑客全能力 API

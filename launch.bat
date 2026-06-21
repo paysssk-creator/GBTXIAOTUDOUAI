@@ -1,5 +1,5 @@
 @echo off
-cd /d "C:\Users\ADMIN\Desktop\GBT-local-new"
+cd /d "C:\Users\ADMIN\GBTXIAOTUDOUAI"
 echo ===================================
 echo   GBT Pro v2.1 — Server Mode
 echo ===================================
