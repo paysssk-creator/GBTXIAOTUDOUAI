@@ -2,7 +2,6 @@
   "passed": [
     "Git 仓库已初始化",
     "当前分支: main",
-    "无未提交改动 (当前: 0)",
     "已配置远程仓库",
     ".clinerules 存在",
     ".gitignore 存在",
@@ -15,11 +14,16 @@
       "detail": "项目无测试，修改后无法自动验证"
     }
   ],
-  "failed": [],
-  "timestamp": "2026-06-21T11:27:31.007Z",
+  "failed": [
+    {
+      "name": "无未提交改动 (当前: 8)",
+      "detail": ""
+    }
+  ],
+  "timestamp": "2026-06-21T11:28:18.657Z",
   "summary": {
-    "passed": 8,
+    "passed": 7,
     "warnings": 1,
-    "failed": 0
+    "failed": 1
   }
 }
