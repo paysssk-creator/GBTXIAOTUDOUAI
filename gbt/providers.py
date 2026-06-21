@@ -93,10 +93,23 @@ def detect_keys() -> Dict[str, dict]:
             if v and len(v.strip()) > 10:
                 mk = v[:8]+"..."+v[-4:] if len(v)>12 else "***"
                 found.append({"key_name":ek,"masked":mk,"raw":v})
+        # Ollama: 真正检查端口连通性
+        if pid == "ollama":
+            import socket
+            try:
+                s = socket.socket()
+                s.settimeout(1)
+                s.connect(("localhost", 11434))
+                s.close()
+                status = "available"
+            except Exception:
+                status = "check_port"
+        else:
+            status = "available" if found else "missing"
         discovered[pid] = {
             "config": cfg,
             "found_keys": found,
-            "status": "available" if found else ("check_port" if pid=="ollama" else "missing"),
+            "status": status,
         }
     return discovered
 
