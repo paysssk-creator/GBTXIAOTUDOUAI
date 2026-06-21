@@ -206,7 +206,7 @@ def hacker_exec_cap():
         try:r=call_mcp(cid);return jsonify({"ok":r.ok,"data":str(r.data)[:3000],"error":r.error})
         except Exception as e:return jsonify({"ok":False,"error":str(e)})
     if cid=="network":
-        _H = "8.8.8.8"
+        _H = os.getenv("PING_TARGET", "8.8.8.8")
         cmds={"ping":["ping","-n","4",_H],"dns":["nslookup","google.com"],
               "tracert":["tracert","-h","5",_H],"netstat":["netstat","-an"]}
         cmd=cmds.get(act,cmds["ping"])
@@ -899,7 +899,7 @@ def np():
     import subprocess, platform
     output = []
     try:
-        _PH = "8.8.8.8"
+        _PH = os.getenv("PING_TARGET", "8.8.8.8")
         p = subprocess.run(["ping", "-n", "3", _PH] if platform.system()=="Windows" else ["ping","-c","3",_PH],
             capture_output=True, text=True, timeout=10, errors='replace')
         output.append("--- Ping 8.8.8.8 ---")

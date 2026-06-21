@@ -1,5 +1,5 @@
 """network.py — Network Scanner connector"""
-import subprocess, shlex
+import os, subprocess, shlex
 
 def ping_host(host, count=4):
     try: r = subprocess.run(["ping", "-n", str(count), str(host)], shell=False, capture_output=True, text=True, timeout=15); return {"ok": r.returncode == 0, "output": r.stdout[:2000]}
@@ -13,7 +13,7 @@ def traceroute(host):
     try: r = subprocess.run(["tracert", "-h", "10", str(host)], shell=False, capture_output=True, text=True, timeout=60); return {"ok": True, "output": r.stdout[:3000]}
     except Exception as e: return {"ok": False, "error": str(e)}
 
-_DEFAULT_PING = "8.8.8.8"
+_DEFAULT_PING = os.getenv("PING_TARGET", "8.8.8.8")
 _DEFAULT_DNS = "google.com"
 
 def net_handle(action, **params):

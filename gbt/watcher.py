@@ -172,7 +172,7 @@ class NightWatcher:
             try:
                 now = datetime.now().strftime("%H:%M:%S")
                 # Ping 外网
-                _PH = "8.8.8.8"
+                _PH = os.getenv("PING_TARGET", "8.8.8.8")
                 r = subprocess.run(["ping", "-n", "1", "-w", "2000", _PH],
                     capture_output=True, text=True, timeout=5, errors='replace')
                 if r.returncode != 0:
@@ -473,7 +473,7 @@ class NightWatcher:
         
         if target == "network" or target == "all":
             try:
-                _PH = "8.8.8.8"
+                _PH = os.getenv("PING_TARGET", "8.8.8.8")
                 r = subprocess.run(["ping", "-n", "2", _PH], capture_output=True, text=True, timeout=6, errors='replace')
                 results["network"] = {"ok": r.returncode == 0, "output": r.stdout[-200:]}
             except Exception as e:

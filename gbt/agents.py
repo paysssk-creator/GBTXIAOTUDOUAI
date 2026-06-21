@@ -657,7 +657,7 @@ class HackerAgent(BaseAgent):
     def _mcp_memory(self, t): return self._call_mcp("memory")
     def _tool_network(self, t):
         import subprocess
-        _H = "8.8.8.8"
+        _H = os.getenv("PING_TARGET", "8.8.8.8")
         cmds={"ping":["ping","-n","4",_H],"dns":["nslookup","google.com"],"tracert":["tracert","-h","5",_H],"netstat":["netstat","-an"]}
         act="ping"
         for k in ["dns","tracert","路由","端口","netstat"]:
