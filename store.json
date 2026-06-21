@@ -63494,10 +63494,134 @@
           "output": ""
         }
       }
+    },
+    {
+      "timestamp": "2026-06-21T10:18:52.792Z",
+      "stats": {
+        "files": 309,
+        "git": {
+          "isRepo": true,
+          "branch": "main",
+          "lastCommit": "ee95d48",
+          "uncommitted": 3
+        },
+        "tests": {
+          "exists": true,
+          "count": 3,
+          "framework": ""
+        }
+      },
+      "problemsFound": 15,
+      "problemsBySeverity": {
+        "critical": 1,
+        "high": 1,
+        "medium": 8,
+        "low": 4
+      },
+      "problems": [
+        {
+          "severity": "high",
+          "category": "version-control",
+          "file": "3 个未提交文件",
+          "desc": "存在未提交改动，Cline修改将无法回溯"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:193",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:194",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "desktop\\app.py:863",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\agents.py:660",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\connectors\\network.py:17",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\connectors\\network.py:19",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\watcher.py:169",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "medium",
+          "category": "hard-ip",
+          "file": "gbt\\watcher.py:469",
+          "desc": "硬编码IP"
+        },
+        {
+          "severity": "low",
+          "category": "console",
+          "file": "desktop\\app.py:77",
+          "desc": "console残留"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:55",
+          "desc": "待办标记"
+        },
+        {
+          "severity": "low",
+          "category": "todo",
+          "file": "gbt\\mirror.py:56",
+          "desc": "待办标记"
+        },
+        {
+          "severity": "low",
+          "category": "console",
+          "file": "_w.js:1",
+          "desc": "console残留"
+        },
+        {
+          "severity": "critical",
+          "category": "eval",
+          "file": "gbt\\evolve.py:80",
+          "desc": "eval()注入"
+        },
+        {
+          "severity": "info",
+          "category": "sync-loop",
+          "file": "_w.js:1",
+          "desc": "循环同步IO"
+        }
+      ],
+      "audit": {
+        "tests": {
+          "ran": false,
+          "passed": 0,
+          "failed": 0,
+          "output": ""
+        }
+      }
     }
   ],
-  "lastEvolve": "2026-06-21T10:18:49.523Z",
-  "totalEvolves": 116,
+  "lastEvolve": "2026-06-21T10:18:52.792Z",
+  "totalEvolves": 117,
   "memories": [
     {
       "key": "sec-https",
