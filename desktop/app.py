@@ -1756,12 +1756,12 @@ def launch():
         time.sleep(0.5)
         L.info("Desktop window opening...");wv.create_window("GBT Pro v2.1","http://localhost:8877/?v="+str(int(time.time())),width=1200,height=720,min_size=(1000,600),js_api=GBTWindowApi());wv.start()
     except ImportError:
-        L.warning("Browser mode");L.info("http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
+        L.warning("Browser mode");L.info("http://localhost:8765");__import__('waitress').serve(app,host="127.0.0.1",port=8765)
 
 def main():
     import argparse;p=argparse.ArgumentParser();p.add_argument("--browser",action="store_true");p.add_argument("--server",action="store_true");a=p.parse_args()
     if a.server:
-        L.info("Flask server mode - http://localhost:8765");app.run(host="127.0.0.1",port=8765,debug=False)
+        L.info("Flask server mode - http://localhost:8765");__import__('waitress').serve(app,host="127.0.0.1",port=8765)
     elif a.browser:
         try:
             trader.start_autonomous()
