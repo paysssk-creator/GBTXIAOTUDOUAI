@@ -104,26 +104,31 @@ class GBTLLM:
 
     def _test_connection(self, pid: str) -> bool:
         """快速连接测试"""
-        import json, urllib.request
+        import json, urllib.request, urllib.error
         cfg = PROVIDERS.get(pid, {})
         try:
             api_key = self._find_key(cfg) if pid != "ollama" else "ollama"
             headers = {"Content-Type": "application/json"}
             if pid != "ollama":
                 headers["Authorization"] = f"Bearer {api_key}"
+            model = cfg.get("default_model", "qwen2.5:0.5b")
             data = json.dumps({
-                "model": cfg.get("default_model", "qwen2.5:0.5b"),
+                "model": model,
                 "messages": [{"role": "user", "content": "ok"}],
                 "max_tokens": 1,
                 "stream": False
             }).encode()
+            url = cfg["base_url"].rstrip("/") + "/chat/completions"
             req = urllib.request.Request(
-                cfg["base_url"] + "chat/completions",
-                data=data, headers=headers, method="POST"
+                url, data=data, headers=headers, method="POST"
             )
             urllib.request.urlopen(req, timeout=10)
             return True
-        except Exception:
+        except urllib.error.HTTPError as e:
+            print(f"  ⚠ {pid} HTTP {e.code}: {e.reason}")
+            return False
+        except Exception as e:
+            print(f"  ⚠ {pid}: {e}")
             return False
 
     def invoke(self, messages: List[Dict[str, str]], **kwargs) -> str:
