@@ -1,6 +1,6 @@
 # Scan Report v3
 
-**Time**:2026-06-21T10:57:44.554Z
+**Time**:2026-06-21T10:58:14.131Z
 **Deep**:Y
 
 ## Summary
@@ -8,9 +8,9 @@
 |---|---|
 |critical|1|
 |medium|106|
-|low|4|
+|low|5|
 |info|1|
-|Total|**112**|
+|Total|**113**|
 
 ## Findings
 - **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
@@ -120,6 +120,7 @@
 - **[MEDIUM]** start_demo.py:25 — return后死代码
 - **[MEDIUM]** tools\mcp_tools.py:15 — return后死代码
 - **[LOW]** desktop\app.py:77 — console残留
+- **[LOW]** gbt\connectors\registry.py:37 — 废弃API
 - **[LOW]** gbt\mirror.py:55 — 待办标记
 - **[LOW]** gbt\mirror.py:56 — 待办标记
 - **[LOW]** _w.js:1 — console残留
