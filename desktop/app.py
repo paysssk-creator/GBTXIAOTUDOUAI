@@ -197,6 +197,78 @@ def hacker_all_caps():
     ]
     return jsonify({"capabilities":caps,"total":len(caps)})
 
+@app.route("/api/dashboard")
+def dashboard_data():
+    """生产仪表盘 — 统一数据端点(LM消耗 + A股 + 黑客 + 电脑操控)"""
+    import psutil
+    data = {}
+    # ── LLM消耗 ──
+    try:
+        from gbt.llm_metrics import get_llm_metrics
+        data["llm"] = get_llm_metrics()
+    except Exception:
+        data["llm"] = {"error": "metrics not available"}
+    # ── 系统信息 ──
+    try:
+        data["system"] = {
+            "cpu": psutil.cpu_percent(interval=0.1),
+            "memory": psutil.virtual_memory().percent,
+            "disk": psutil.disk_usage("/").percent,
+            "host": os.environ.get("COMPUTERNAME",""),
+        }
+    except Exception:
+        data["system"] = {"cpu": 0, "memory": 0, "disk": 0}
+    # ── A股操盘 ──
+    try:
+        ts = trader.get_status() if trader else {}
+        wl = getattr(trader, "watchlist", {}) or {}
+        acct = {
+            "cash": account.cash if account else 0,
+            "equity": account.get_equity() if account else 0,
+            "pnl": account.get_pnl() if account else 0,
+            "positions": len(account.positions) if hasattr(account,"positions") and account else 0,
+        }
+        data["trade"] = {
+            "auto_trade": ts.get("auto_trade", False),
+            "watchlist_count": len(wl),
+            "watchlist": list(wl.items())[:10],
+            "account": acct,
+        }
+    except Exception:
+        data["trade"] = {"error": "trader not ready"}
+    # ── 黑客能力状态 ──
+    try:
+        mcp = get_mcp()
+        mcp_servers = mcp.list_servers()
+        data["mcp"] = {"servers": mcp_servers, "total": len(mcp_servers)}
+    except Exception:
+        data["mcp"] = {"servers": [], "total": 0}
+    # ── 守夜人 ──
+    try:
+        if watcher:
+            ws = watcher.get_status()
+            data["watcher"] = {
+                "running": ws.get("running", False),
+                "monitors": ws.get("monitors", {}),
+                "alerts": list(watcher.alerts)[-5:] if hasattr(watcher, "alerts") else [],
+            }
+    except Exception:
+        data["watcher"] = {"running": False}
+    # ── 电脑操控 ──
+    try:
+        procs = []
+        for p in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
+            try:
+                procs.append(p.info)
+            except Exception:
+                pass
+        top_procs = sorted(procs, key=lambda x: x.get("cpu_percent", 0) or 0, reverse=True)[:10]
+        data["desktop"] = {"top_processes": top_procs}
+    except Exception:
+        data["desktop"] = {"top_processes": []}
+    return jsonify(data)
+
+
 @app.route("/api/hacker/exec",methods=["POST"])
 def hacker_exec_cap():
     d=request.json or {};cid=d.get("id","");act=d.get("action","run")

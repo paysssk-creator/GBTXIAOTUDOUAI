@@ -66,44 +66,160 @@ window.addEventListener('unhandledrejection',function(e){fetch('/api/access_log?
         </div>
       </div>
 
-      <!-- 仪表盘 -->
+      
+      <!-- 仪表盘 4面板 -->
       <div class="welcome" id="wc">
-        <h1 style="margin-bottom:4px">🛡️ GBT Pro 仪表盘</h1>
-        <div id="dash" style="margin:8px 0">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
-            <div class="dash-card"><div class="dash-val" id="dv-llm">--</div><div class="dash-lbl">🤖 AI引擎</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-mcp">--</div><div class="dash-lbl">🔌 MCP服务</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-watch">--</div><div class="dash-lbl">🛡️ 监控点</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-trade">--</div><div class="dash-lbl">📊 自选股</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center;margin-top:8px">
-            <div class="dash-card"><div class="dash-val" id="dv-risk">--</div><div class="dash-lbl">🛡️ 止损%</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-profit">--</div><div class="dash-lbl">🎯 止盈%</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-cap">--</div><div class="dash-lbl">💰 仓位%</div></div>
-            <div class="dash-card"><div class="dash-val" id="dv-daily">--</div><div class="dash-lbl">📅 今日信号</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-top:8px">
-            <div class="dash-card" style="grid-column:1/3;display:flex;justify-content:space-between;align-items:center">
-              <div style="text-align:left"><div class="dash-val" id="dv-equity" style="font-size:20px">--</div><div class="dash-lbl">💰 总资产</div></div>
-              <div style="text-align:right"><div id="dv-pnl" style="font-size:14px;font-weight:700">--</div><div class="dash-lbl" style="font-size:9px">盈亏</div></div>
-            </div>
-            <div class="dash-card" style="display:flex;justify-content:space-between;align-items:center">
-              <div style="text-align:left"><div class="dash-val" id="dv-cash" style="font-size:16px">--</div><div class="dash-lbl">💵 现金</div></div>
-              <div style="text-align:right"><div id="dv-wr" style="font-size:12px;font-weight:700">--</div><div class="dash-lbl" style="font-size:9px">胜率</div></div>
-            </div>
-          </div>
-          <div id="dash-detail" style="margin-top:8px;font-size:12px;color:var(--t4);text-align:center">加载中...</div>
-        </div>
-        <div class="qs">
-          <div class="qs-l">快速开始</div>
-          <button class="qs-r" onclick="qchat('分析我的项目结构')"><i class="ph ph-folder-open"></i> 项目分析<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="qchat('扫描安全漏洞')"><i class="ph ph-shield"></i> 安全扫描<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="qchat('帮我规划实现方案')"><i class="ph ph-git-branch"></i> 方案规划<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-          <button class="qs-r" onclick="mcp('audit')"><i class="ph ph-squares-four"></i> 连接工具<span class="qs-ar"><i class="ph ph-arrow-right"></i></span></button>
-        </div>
+<style>
+.d4g{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;text-align:left}
+.d4p{background:var(--bg-card);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.d4p .phd{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-shrink:0}
+.d4p .phd h3{font-size:11.5px;font-weight:600;color:var(--t2);margin:0}
+.d4p .pbd{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;font-size:10.5px}
+.d4p .pbd::-webkit-scrollbar{width:3px}
+.d4-mrow{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.d4-m{text-align:center;min-width:50px}
+.d4-m .mv{font-size:15px;font-weight:700;color:var(--t1)}
+.d4-m .ml{font-size:8px;color:var(--t4);margin-top:1px}
+.d4-tbl{width:100%;border-collapse:collapse;font-size:9px}
+.d4-tbl th{text-align:left;color:var(--t4);font-weight:500;padding:2px 3px;border-bottom:1px solid var(--b-def);position:sticky;top:0;background:var(--bg-card)}
+.d4-tbl td{padding:2px 3px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap}
+.d4-barw{height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin:2px 0 5px;overflow:hidden}
+.d4-barf{height:100%;border-radius:3px;transition:width .4s}
+.d4-barf.cpu{background:var(--accent)}
+.d4-barf.mem{background:#a855f7}
+.d4-barf.disk{background:#06b6d4}
+.d4-mcpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:4px}
+.d4-mcpi{padding:5px 7px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--t2);transition:all .12s}
+.d4-mcpi:hover{border-color:var(--accent);background:rgba(255,255,255,.06)}
+.d4-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.d4-dot.on{background:var(--green);box-shadow:0 0 5px rgba(34,197,94,.4)}
+.d4-dot.off{background:var(--t4)}
+.d4-badge{padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600}
+.d4-badge.on{background:rgba(34,197,94,.12);color:var(--green)}
+.d4-badge.off{background:rgba(239,68,68,.1);color:var(--red)}
+.d4-stat{font-size:18px;font-weight:700;color:var(--t1)}
+.d4-sub{font-size:9px;color:var(--t4)}
+</style>
+<div class="d4g">
+  <div class="d4p">
+    <div class="phd"><h3>🤖 LLM消耗</h3><span class="d4-sub" id="d4-uptime">--</span></div>
+    <div class="pbd">
+      <div><span class="d4-stat" id="d4-provider">--</span><span class="d4-sub" style="margin-left:6px" id="d4-model"></span></div>
+      <div class="d4-mrow">
+        <div class="d4-m"><div class="mv" id="d4-tokens">--</div><div class="ml">Tokens</div></div>
+        <div class="d4-m"><div class="mv" id="d4-cost">¥--</div><div class="ml">成本</div></div>
+        <div class="d4-m"><div class="mv" id="d4-rpm">--</div><div class="ml">RPM</div></div>
+        <div class="d4-m"><div class="mv" id="d4-lat">--s</div><div class="ml">延迟</div></div>
       </div>
-
-      <!-- 推理视图 -->
+      <table class="d4-tbl"><thead><tr><th>时间</th><th>模型</th><th>In</th><th>Out</th><th>延迟</th><th>¥</th></tr></thead><tbody id="d4-llmhist"></tbody></table>
+    </div>
+  </div>
+  <div class="d4p">
+    <div class="phd"><h3>📊 A股操盘</h3><span class="d4-badge off" id="d4-autotrade">手动</span></div>
+    <div class="pbd">
+      <div class="d4-mrow">
+        <div class="d4-m"><div class="mv" id="d4-cash">¥--</div><div class="ml">现金</div></div>
+        <div class="d4-m"><div class="mv" id="d4-equity">¥--</div><div class="ml">总资产</div></div>
+        <div class="d4-m"><div class="mv" id="d4-pnl">--</div><div class="ml">盈亏</div></div>
+        <div class="d4-m"><div class="mv" id="d4-pos">--</div><div class="ml">持仓</div></div>
+      </div>
+      <table class="d4-tbl"><thead><tr><th>代码</th><th>名称</th><th style="text-align:right">现价</th><th style="text-align:right">涨跌%</th></tr></thead><tbody id="d4-watchlist"><tr><td colspan="4" style="color:var(--t4);text-align:center">加载中...</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="d4p">
+    <div class="phd"><h3>💀 黑客全能力</h3><span class="d4-sub" id="d4-mcpcount">--</span></div>
+    <div class="pbd"><div class="d4-mcpg" id="d4-mcpgrid"></div></div>
+  </div>
+  <div class="d4p">
+    <div class="phd"><h3>🖥️ 电脑操控</h3><span class="d4-sub" id="d4-host">--</span></div>
+    <div class="pbd">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px">
+        <div><div style="font-size:9px;color:var(--t4)">CPU <span id="d4-cpu">--</span></div><div class="d4-barw"><div class="d4-barf cpu" id="d4-cpubar" style="width:0%"></div></div></div>
+        <div><div style="font-size:9px;color:var(--t4)">内存 <span id="d4-mem">--</span></div><div class="d4-barw"><div class="d4-barf mem" id="d4-membar" style="width:0%"></div></div></div>
+        <div><div style="font-size:9px;color:var(--t4)">磁盘 <span id="d4-disk">--</span></div><div class="d4-barw"><div class="d4-barf disk" id="d4-diskbar" style="width:0%"></div></div></div>
+      </div>
+      <table class="d4-tbl"><thead><tr><th>进程</th><th>PID</th><th style="text-align:right">CPU%</th><th style="text-align:right">MEM%</th></tr></thead><tbody id="d4-procs"></tbody></table>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  var q=function(id){return document.getElementById(id)};
+  var esc=function(t){var e=document.createElement('span');e.textContent=t||'';return e.innerHTML};
+  
+  async function refresh(){
+    try{
+      var r=await fetch('/api/dashboard');var d=await r.json();
+      // LLM
+      var lm=d.llm||{},ct=lm.current||{},tt=lm.totals||{};
+      q('d4-provider').textContent=ct.provider||'--';
+      q('d4-model').textContent=ct.model||'';
+      q('d4-tokens').textContent=(tt.tokens_total||0).toLocaleString();
+      q('d4-cost').textContent='¥'+(tt.cost_rmb||0).toFixed(4);
+      q('d4-rpm').textContent=(lm.rpm||0).toFixed(1);
+      q('d4-lat').textContent=(tt.avg_latency_s||0).toFixed(1)+'s';
+      q('d4-uptime').textContent='↑'+(lm.uptime_h||0).toFixed(1)+'h';
+      var hist=lm.history||[];
+      var hh='';
+      hist.slice(-15).reverse().forEach(function(h){
+        hh+='<tr><td>'+esc(h.time)+'</td><td>'+esc(h.model)+'</td><td style="text-align:right">'+(h.tokens_in||0)+'</td><td style="text-align:right">'+(h.tokens_out||0)+'</td><td style="text-align:right">'+(h.latency_s||0)+'s</td><td style="text-align:right">'+(h.cost_rmb||0).toFixed(4)+'</td></tr>';
+      });
+      q('d4-llmhist').innerHTML=hh||'<tr><td colspan="6" style="color:var(--t4);text-align:center">无记录</td></tr>';
+      // A股
+      var td=d.trade||{},acct=td.account||{};
+      var at=td.auto_trade;
+      q('d4-autotrade').textContent=at?'自主交易':'手动';
+      q('d4-autotrade').className='d4-badge '+(at?'on':'off');
+      q('d4-cash').textContent='¥'+(acct.cash||0).toLocaleString();
+      q('d4-equity').textContent='¥'+(acct.equity||0).toLocaleString();
+      var pnl=acct.pnl||0;
+      var pnlEl=q('d4-pnl');
+      pnlEl.textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
+      pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
+      q('d4-pos').textContent=(acct.positions||0);
+      var wl=td.watchlist||[];
+      var wh='';
+      wl.forEach(function(w){
+        wh+='<tr><td>'+esc(w[0])+'</td><td>'+esc(w[1])+'</td><td style="text-align:right">--</td><td style="text-align:right">--</td></tr>';
+      });
+      q('d4-watchlist').innerHTML=wh||'<tr><td colspan="4" style="color:var(--t4);text-align:center">暂无自选股</td></tr>';
+      // 黑客
+      var mcp=d.mcp||{},srvs=mcp.servers||[];
+      q('d4-mcpcount').textContent=srvs.length+'服务';
+      var mh='';
+      srvs.forEach(function(s){
+        var sid=typeof s==='string'?s:(s.id||s.name||'');
+        var sname=typeof s==='string'?s:(s.name||s.id||'');
+        mh+='<div class="d4-mcpi" data-mcp="'+esc(sid)+'" onclick="window._execMcp(''+esc(sid)+'',this)"><span class="d4-dot on"></span>'+esc(sname)+'</div>';
+      });
+      q('d4-mcpgrid').innerHTML=mh||'<span style="color:var(--t4);font-size:10px">无MCP服务</span>';
+      // 电脑
+      var sys=d.system||{};
+      q('d4-host').textContent=sys.host||'';
+      var cpu=sys.cpu||0;q('d4-cpu').textContent=cpu.toFixed(0)+'%';q('d4-cpubar').style.width=cpu+'%';
+      var mem=sys.memory||0;q('d4-mem').textContent=mem.toFixed(0)+'%';q('d4-membar').style.width=mem+'%';
+      var dsk=sys.disk||0;q('d4-disk').textContent=dsk.toFixed(0)+'%';q('d4-diskbar').style.width=dsk+'%';
+      var procs=(d.desktop||{}).top_processes||[];
+      var ph='';
+      procs.forEach(function(p){ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+esc(p.pid||'')+'</td><td style="text-align:right">'+(p.cpu_percent||0).toFixed(1)+'</td><td style="text-align:right">'+(p.memory_percent||0).toFixed(1)+'</td></tr>'});
+      q('d4-procs').innerHTML=ph||'<tr><td colspan="4" style="color:var(--t4);text-align:center">无进程</td></tr>';
+    }catch(e){console.error('d4:',e)}
+  }
+  
+  window._execMcp=async function(id,el){
+    try{el.style.opacity='0.5';el.textContent='⏳ '+id;
+      var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+      var d=await r.json();
+      if(window.toast)window.toast((d.ok?'✅ ':'❌ ')+id+(d.ok?' OK':' '+d.error));
+    }catch(e){if(window.toast)window.toast('❌ '+e.message)}
+    refresh();
+  };
+  
+  refresh();setInterval(refresh,5000);
+})();
+</script>
+<!-- 推理视图 -->
       <div class="chat-area" id="rv" style="display:none">
         <div class="rh">
           <h3>深度推理引擎</h3>

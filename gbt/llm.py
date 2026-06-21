@@ -137,12 +137,19 @@ class GBTLLM:
         mt = kwargs.get("max_tokens", self.max_tokens)
         print(f"🧠 [{self.provider_name}] {self.model}...")
         start = time.time()
+        prompt_text = " ".join(m.get("content","") for m in messages)
         try:
             resp = self._client.chat.completions.create(
                 model=self.model, messages=messages,
                 temperature=t, max_tokens=mt, stream=False)
             content = (resp.choices[0].message.content or "") if resp.choices else ""
-            print(f"✅ [{self.provider_name}] {(time.time()-start):.1f}s {len(content)}chars")
+            latency = time.time() - start
+            print(f"✅ [{self.provider_name}] {latency:.1f}s {len(content)}chars")
+            try:
+                from gbt.llm_metrics import record_llm_call
+                record_llm_call(self.provider, self.model, prompt_text, content, latency)
+            except Exception:
+                pass
             return content
         except Exception as e:
             print(f"❌ [{self.provider_name}] 失败: {e}")
