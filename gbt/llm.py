@@ -78,9 +78,9 @@ class GBTLLM:
                             pass  # .env读取失败降级到环境变量
                         if v: break
             if v:
-                pass  # 密钥已就绪，静默返回
                 return v
-        print(f"NO KEY found for {cfg['env_keys']}")
+        if cfg.get("auth_mode") != "none":
+            print(f"NO KEY found for {cfg['env_keys']}")
         return None
 
     def _auto_detect(self) -> Optional[str]:

@@ -1,16 +1,16 @@
 # Scan Report v3
 
-**Time**:2026-06-21T11:06:43.995Z
+**Time**:2026-06-21T11:07:15.941Z
 **Deep**:Y
 
 ## Summary
 |Level|Count|
 |---|---|
 |critical|1|
-|medium|106|
+|medium|105|
 |low|5|
 |info|1|
-|Total|**113**|
+|Total|**112**|
 
 ## Findings
 - **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
@@ -89,7 +89,6 @@
 - **[MEDIUM]** gbt\gcc\skill_curation.py:407 — return后死代码
 - **[MEDIUM]** gbt\gcc\skill_curation.py:438 — return后死代码
 - **[MEDIUM]** gbt\guard.py:148 — return后死代码
-- **[MEDIUM]** gbt\llm.py:83 — return后死代码
 - **[MEDIUM]** gbt\llm.py:103 — return后死代码
 - **[MEDIUM]** gbt\mcp.py:72 — return后死代码
 - **[MEDIUM]** gbt\memory.py:81 — return后死代码

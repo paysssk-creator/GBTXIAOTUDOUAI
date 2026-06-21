@@ -1,10 +1,10 @@
 {
-  "time": "2026-06-21T11:06:43.995Z",
+  "time": "2026-06-21T11:07:15.941Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "summary": {
     "critical": 1,
     "high": 0,
-    "medium": 106,
+    "medium": 105,
     "low": 5,
     "info": 1
   },
@@ -766,16 +766,6 @@
       "file": "gbt\\guard.py",
       "line": 148,
       "snippet": "return pre, self.post_action_check(action)",
-      "desc": "return后死代码",
-      "fixable": 0
-    },
-    {
-      "ruleId": "QUAL-007",
-      "name": "dead-code",
-      "severity": "medium",
-      "file": "gbt\\llm.py",
-      "line": 83,
-      "snippet": "print(f\"NO KEY found for {cfg['env_keys']}\")",
       "desc": "return后死代码",
       "fixable": 0
     },
