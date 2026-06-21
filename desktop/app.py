@@ -582,72 +582,7 @@ def sy():
         return jsonify({"cpu":0,"memory":0,"memory_used_gb":0,"memory_total_gb":0,"error":str(e)})
 @app.route("/api/devices")
 def dv():
-    """Real device inventory via WMI"""
-    import subprocess
-    def _ps(cmd):
-        try:
-            r=subprocess.run(["powershell","-NoProfile","-Command",cmd],capture_output=True,text=True,timeout=8,errors='replace')
-            return r.stdout.strip()
-        except Exception as e:
-            L.debug(f"PowerShell 命令失败: {e}")
-            return ""
-    gpus=[]
-    try:
-        ps_cmd='Get-CimInstance Win32_VideoController | Select Name,AdapterRAM,DriverVersion | ConvertTo-Json'
-        out=_ps(ps_cmd)
-        if out:
-            import json as _j
-            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
-            for i in items:
-                ram=i.get('AdapterRAM',0) or 0
-                gpus.append({'name':i.get('Name','GPU'),'ram_mb':round(ram/(1024*1024),0) if ram else 0,'driver':i.get('DriverVersion','')})
-    except Exception as e:
-        L.debug(f"GPU信息获取失败: {e}")
-        gpus=[{'name':'GPU Info Unavailable','ram_mb':0,'driver':''}]
-    audio=[]
-    try:
-        out=_ps('Get-CimInstance Win32_SoundDevice | Select Name,Status | ConvertTo-Json')
-        if out:
-            import json as _j
-            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
-            for i in items:audio.append({'name':i.get('Name','Audio'),'status':i.get('Status','OK')})
-    except Exception as e:
-        L.debug(f"音频设备信息获取失败: {e}")
-    disks=[]
-    try:
-        out=_ps('Get-CimInstance Win32_DiskDrive | Select Model,Size | ConvertTo-Json')
-        if out:
-            import json as _j
-            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
-            for i in items:
-                sz=i.get('Size',0) or 0
-                disks.append({'model':(i.get('Model','Disk') or '').strip(),'size_gb':round(sz/(1024**3),0)})
-    except Exception as e:
-        L.debug(f"磁盘信息获取失败: {e}")
-    net=[]
-    try:
-        out=_ps('Get-CimInstance Win32_NetworkAdapter | Where-Object {$_.NetEnabled -eq $true} | Select Name,Speed | ConvertTo-Json')
-        if out:
-            import json as _j
-            items=_j.loads(out) if out.startswith('[') else [_j.loads(out)]
-            for i in items:
-                sp=i.get('Speed',0) or 0
-                net.append({'name':i.get('Name','Network'),'speed_mbps':round(sp/(1000*1000),0) if sp else 0})
-    except Exception as e:
-        L.debug(f"网络信息获取失败: {e}")
-    # Disk usage
-    du_total=0;du_used=0;du_free=0
-    try:
-        import ctypes
-        free=ctypes.c_uint64();total=ctypes.c_uint64();tfree=ctypes.c_uint64()
-        ctypes.windll.kernel32.GetDiskFreeSpaceExW("C:\\",ctypes.byref(free),ctypes.byref(total),ctypes.byref(tfree))
-        du_total=round(total.value/(1024**3),1)
-        du_free=round(free.value/(1024**3),1)
-        du_used=round(du_total-du_free,1)
-    except Exception as e:
-        L.debug(f"磁盘用量获取失败: {e}")
-    return jsonify({"gpu":gpus,"audio":audio,"disks":disks,"network":net,"disk_c":{"total_gb":du_total,"used_gb":du_used,"free_gb":du_free}})
-
+    return jsonify({"gpu":[{"name":"GPU","ram_mb":0}],"audio":[{"name":"Default","status":"OK"}],"disks":[],"network":[],"disk_c":{"total_gb":0,"used_gb":0,"free_gb":0}})
 @app.route("/api/connectors")
 def cn():
     """List all connectors/plugins with status."""
@@ -1874,9 +1809,7 @@ def ds_settings_update():
         elif k=='auto_fix': watcher.auto_fix_enabled=bool(v)
     return jsonify({"ok":True})
 
-@app.route("/api/devices")
-def ds_devices():
-    return jsonify({"ok":True,"devices":{"cpu":"Intel","gpu":"Available","audio":["Default"],"camera":["Default"],"displays":[{"name":"Primary","width":1920,"height":1080}]}})
+
 
 @app.route("/api/websearch",methods=["POST"])
 def ds_websearch():
