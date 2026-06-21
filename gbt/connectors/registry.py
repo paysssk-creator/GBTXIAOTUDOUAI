@@ -33,8 +33,8 @@ class ConnectorRegistry:
         self.add(ConnectorInfo(
             id="github", name="GitHub", description="Repositories, PRs, issues, CI/CD",
             icon="ph ph-github-logo", category="code",
-            config_keys=["GITHUB_TOKEN"],
-            tools=[{"name":"list_repos","desc":"List repositories"},{"name":"search_code","desc":"Search code"},{"name":"create_pr","desc":"Create pull request"}]
+            config_keys=[],  # REST API免费，gh CLI可选
+            tools=[{"name":"list_repos","desc":"List repositories"},{"name":"search_code","desc":"Search code"},{"name":"get_user","desc":"User profile(免费)"},{"name":"trending","desc":"Trending repos"},{"name":"create_pr","desc":"Create pull request(需gh CLI)"}]
         ))
         self.add(ConnectorInfo(
             id="git", name="Local Git", description="Local repository management",
