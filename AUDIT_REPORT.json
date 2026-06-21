@@ -10,19 +10,20 @@
   ],
   "warnings": [
     {
-      "name": "无未提交改动 (当前: 3)",
-      "detail": ""
-    },
-    {
       "name": "测试套件存在",
       "detail": "项目无测试，修改后无法自动验证"
     }
   ],
-  "failed": [],
-  "timestamp": "2026-06-21T13:37:33.294Z",
+  "failed": [
+    {
+      "name": "无未提交改动 (当前: 10)",
+      "detail": ""
+    }
+  ],
+  "timestamp": "2026-06-21T13:38:13.753Z",
   "summary": {
     "passed": 7,
-    "warnings": 2,
-    "failed": 0
+    "warnings": 1,
+    "failed": 1
   }
 }
