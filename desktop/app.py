@@ -128,7 +128,7 @@ class LLMMgr:
             return s.a.invoke(msgs)
         except Exception as e:return f"[Error] {e}"
 
-llm=LLMMgr(prov="deepseek")
+llm=LLMMgr(prov="auto")  # 自动检测可用LLM（优先云API，fallback到Ollama本地）
 free_llm=LLMMgr(prov="ollama")  # free local model for background loops
 
 # ── 守夜人 + 操盘手 ──
