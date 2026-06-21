@@ -5,7 +5,7 @@ test_api.py — GBT API 冒烟测试
 import sys, io, json, urllib.request
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-API = "http://localhost:8877/api"
+API = "http://localhost:8765/api"
 ENDPOINTS = [
     "/status",
     "/brain/status",

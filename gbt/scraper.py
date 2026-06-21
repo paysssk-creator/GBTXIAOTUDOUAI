@@ -193,3 +193,16 @@ def quick_search(query):
     """快速搜索"""
     scraper = PrecisionScraper()
     return scraper.scrape_web_info(query)
+
+
+def fetch_news(code, query=""):
+    """获取股票相关资讯 — 多源抓取+交叉验证"""
+    scraper = PrecisionScraper()
+    result = scraper.cross_verify(code, query)
+    if result.get("ok"):
+        return result
+    # 降级：至少尝试获取行情
+    quote = scraper.scrape_stock_quote(code)
+    if quote.get("ok"):
+        return {"ok": True, "data": quote.get("data", {}), "source": "quote_only"}
+    return {"ok": False, "error": "无法获取资讯", "code": code}

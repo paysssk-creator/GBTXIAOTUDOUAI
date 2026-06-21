@@ -13089,8 +13089,26 @@
       "summary": "Desktop-triggered evolve",
       "timestamp": "2026-06-20T23:21:52.993Z",
       "files": []
+    },
+    {
+      "summary": "【2026-06-21】安全加固: Sina API HTTPS升级 + eval/exec/SQL注入全审计(零漏洞) + 仓库清理(.cline/__pycache__/data从git跟踪移除)",
+      "timestamp": "2026-06-21T09:00:15.867Z",
+      "files": []
     }
   ],
-  "lastEvolve": "2026-06-20T23:21:52.994Z",
-  "totalEvolves": 41
+  "lastEvolve": "2026-06-21T09:00:15.868Z",
+  "totalEvolves": 41,
+  "memories": [
+    {
+      "key": "sec-https",
+      "value": "【2026-06-21】Sina API 3端点HTTP→HTTPS: scraper.py scrape_sina_realtime/kline + trader.py。CVSS 3.1。commit 35bb4ca",
+      "timestamp": "2026-06-21T09:00:01.086Z"
+    },
+    {
+      "key": "audit-eval",
+      "value": "【2026-06-21】全项目eval/exec/SQL注入审计: trader.py eval(input)实为input('确认订单y/n')用户交互,非代码注入; scraper.py exec(compile(...))为编译用户表达式,非网路输入。零漏洞。AUDIT_REPORT.json",
+      "timestamp": "2026-06-21T09:00:09.293Z"
+    }
+  ],
+  "config": {}
 }

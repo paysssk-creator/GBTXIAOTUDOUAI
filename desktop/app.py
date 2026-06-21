@@ -83,6 +83,9 @@ class LLMMgr:
         from gbt.llm import GBTLLM
         disc=AutoKeyConfig.scan()
         valid=[p for p,i in disc.items() if i["status"]=="available"]
+        # Ollama特殊处理：check_port状态也视为可用（无API密钥，依赖端口检测）
+        if disc.get("ollama",{}).get("status")=="check_port":
+            valid.append("ollama")
         if prov!="auto" and prov in valid:valid.insert(0,prov)
         if not valid:
             s.a=None;s.prov=None;L.warning("No API keys configured — set via .env or /api/providers");return False

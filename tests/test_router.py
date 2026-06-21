@@ -5,7 +5,7 @@ test_router.py — 智能路由器全能力测试
 import sys, io, json, urllib.request, time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-API = "http://localhost:8877/api"
+API = "http://localhost:8765/api"
 TIMEOUT = 25
 
 TEST_CASES = [

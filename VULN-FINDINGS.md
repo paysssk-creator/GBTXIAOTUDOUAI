@@ -1,16 +1,16 @@
 # Scan Report v3
 
-**Time**:2026-06-20T23:21:51.900Z
+**Time**:2026-06-21T09:51:53.314Z
 **Deep**:Y
 
 ## Summary
 |Level|Count|
 |---|---|
 |critical|1|
-|medium|103|
+|medium|104|
 |low|4|
 |info|1|
-|Total|**109**|
+|Total|**110**|
 
 ## Findings
 - **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
@@ -18,26 +18,26 @@
 - **[MEDIUM]** agents\gbt_agent.py:181 — return后死代码
 - **[MEDIUM]** agents\gbt_agent.py:182 — return后死代码
 - **[MEDIUM]** agents\gbt_agent.py:207 — return后死代码
-- **[MEDIUM]** desktop\app.py:190 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:191 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:860 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:320 — return后死代码
-- **[MEDIUM]** desktop\app.py:348 — return后死代码
-- **[MEDIUM]** desktop\app.py:362 — return后死代码
-- **[MEDIUM]** desktop\app.py:492 — return后死代码
-- **[MEDIUM]** desktop\app.py:834 — return后死代码
-- **[MEDIUM]** desktop\app.py:969 — return后死代码
-- **[MEDIUM]** desktop\app.py:980 — return后死代码
-- **[MEDIUM]** desktop\app.py:988 — return后死代码
-- **[MEDIUM]** desktop\app.py:1084 — return后死代码
-- **[MEDIUM]** desktop\app.py:1109 — return后死代码
-- **[MEDIUM]** desktop\app.py:1152 — return后死代码
-- **[MEDIUM]** desktop\app.py:1177 — return后死代码
-- **[MEDIUM]** desktop\app.py:1186 — return后死代码
-- **[MEDIUM]** desktop\app.py:1197 — return后死代码
-- **[MEDIUM]** desktop\app.py:1211 — return后死代码
-- **[MEDIUM]** desktop\app.py:1224 — return后死代码
+- **[MEDIUM]** desktop\app.py:193 — 硬编码IP
+- **[MEDIUM]** desktop\app.py:194 — 硬编码IP
+- **[MEDIUM]** desktop\app.py:863 — 硬编码IP
+- **[MEDIUM]** desktop\app.py:323 — return后死代码
+- **[MEDIUM]** desktop\app.py:351 — return后死代码
+- **[MEDIUM]** desktop\app.py:365 — return后死代码
+- **[MEDIUM]** desktop\app.py:495 — return后死代码
+- **[MEDIUM]** desktop\app.py:837 — return后死代码
+- **[MEDIUM]** desktop\app.py:972 — return后死代码
+- **[MEDIUM]** desktop\app.py:983 — return后死代码
+- **[MEDIUM]** desktop\app.py:991 — return后死代码
+- **[MEDIUM]** desktop\app.py:1087 — return后死代码
+- **[MEDIUM]** desktop\app.py:1112 — return后死代码
+- **[MEDIUM]** desktop\app.py:1155 — return后死代码
+- **[MEDIUM]** desktop\app.py:1180 — return后死代码
+- **[MEDIUM]** desktop\app.py:1189 — return后死代码
+- **[MEDIUM]** desktop\app.py:1200 — return后死代码
+- **[MEDIUM]** desktop\app.py:1214 — return后死代码
 - **[MEDIUM]** desktop\app.py:1227 — return后死代码
+- **[MEDIUM]** desktop\app.py:1230 — return后死代码
 - **[MEDIUM]** gbt\account.py:42 — return后死代码
 - **[MEDIUM]** gbt\agent.py:55 — return后死代码
 - **[MEDIUM]** gbt\agent.py:58 — return后死代码
@@ -76,16 +76,16 @@
 - **[MEDIUM]** gbt\gcc\ai_trader.py:120 — return后死代码
 - **[MEDIUM]** gbt\gcc\ai_trader.py:121 — return后死代码
 - **[MEDIUM]** gbt\gcc\ai_trader.py:132 — return后死代码
-- **[MEDIUM]** gbt\gcc\gcc_runner.py:256 — return后死代码
 - **[MEDIUM]** gbt\gcc\gcc_runner.py:267 — return后死代码
-- **[MEDIUM]** gbt\gcc\gcc_runner.py:272 — return后死代码
+- **[MEDIUM]** gbt\gcc\gcc_runner.py:278 — return后死代码
+- **[MEDIUM]** gbt\gcc\gcc_runner.py:283 — return后死代码
 - **[MEDIUM]** gbt\gcc\screenshot_reasoner.py:55 — return后死代码
 - **[MEDIUM]** gbt\gcc\self_reflection.py:77 — return后死代码
 - **[MEDIUM]** gbt\gcc\self_reflection.py:95 — return后死代码
-- **[MEDIUM]** gbt\gcc\skill_curation.py:41 — return后死代码
-- **[MEDIUM]** gbt\gcc\skill_curation.py:364 — return后死代码
-- **[MEDIUM]** gbt\gcc\skill_curation.py:404 — return后死代码
-- **[MEDIUM]** gbt\gcc\skill_curation.py:432 — return后死代码
+- **[MEDIUM]** gbt\gcc\skill_curation.py:43 — return后死代码
+- **[MEDIUM]** gbt\gcc\skill_curation.py:367 — return后死代码
+- **[MEDIUM]** gbt\gcc\skill_curation.py:407 — return后死代码
+- **[MEDIUM]** gbt\gcc\skill_curation.py:438 — return后死代码
 - **[MEDIUM]** gbt\guard.py:148 — return后死代码
 - **[MEDIUM]** gbt\llm.py:83 — return后死代码
 - **[MEDIUM]** gbt\llm.py:94 — return后死代码
@@ -100,6 +100,7 @@
 - **[MEDIUM]** gbt\risk_ctrl.py:29 — return后死代码
 - **[MEDIUM]** gbt\risk_ctrl.py:42 — return后死代码
 - **[MEDIUM]** gbt\risk_ctrl.py:55 — return后死代码
+- **[MEDIUM]** gbt\scraper.py:208 — return后死代码
 - **[MEDIUM]** gbt\strategies.py:79 — return后死代码
 - **[MEDIUM]** gbt\tech_analysis.py:16 — return后死代码
 - **[MEDIUM]** gbt\tech_analysis.py:23 — return后死代码
