@@ -1861,4 +1861,4 @@ _reg_url = "https://platform.deepseek.com/api_keys"
 def ds_register():
     return jsonify({"ok":True,"url":_reg_url,"steps":["1. 打开链接","2. 登录/注册","3. 创建API Key","4. 复制sk-xxx","5. 填入credentials.json或设置环境变量"],"auto_detect":True})
 
-if __name__=="__m
+if __name__=="__main__":main()
