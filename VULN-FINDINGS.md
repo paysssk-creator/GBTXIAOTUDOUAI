@@ -1,6 +1,6 @@
 # Scan Report v3
 
-**Time**:2026-06-21T10:58:51.902Z
+**Time**:2026-06-21T10:59:26.386Z
 **Deep**:Y
 
 ## Summary
@@ -20,24 +20,24 @@
 - **[MEDIUM]** agents\gbt_agent.py:207 — return后死代码
 - **[MEDIUM]** desktop\app.py:193 — 硬编码IP
 - **[MEDIUM]** desktop\app.py:194 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:868 — 硬编码IP
+- **[MEDIUM]** desktop\app.py:872 — 硬编码IP
 - **[MEDIUM]** desktop\app.py:323 — return后死代码
 - **[MEDIUM]** desktop\app.py:351 — return后死代码
 - **[MEDIUM]** desktop\app.py:365 — return后死代码
 - **[MEDIUM]** desktop\app.py:500 — return后死代码
-- **[MEDIUM]** desktop\app.py:842 — return后死代码
-- **[MEDIUM]** desktop\app.py:977 — return后死代码
-- **[MEDIUM]** desktop\app.py:988 — return后死代码
-- **[MEDIUM]** desktop\app.py:996 — return后死代码
-- **[MEDIUM]** desktop\app.py:1092 — return后死代码
-- **[MEDIUM]** desktop\app.py:1117 — return后死代码
-- **[MEDIUM]** desktop\app.py:1160 — return后死代码
-- **[MEDIUM]** desktop\app.py:1185 — return后死代码
-- **[MEDIUM]** desktop\app.py:1194 — return后死代码
-- **[MEDIUM]** desktop\app.py:1205 — return后死代码
-- **[MEDIUM]** desktop\app.py:1219 — return后死代码
-- **[MEDIUM]** desktop\app.py:1232 — return后死代码
-- **[MEDIUM]** desktop\app.py:1235 — return后死代码
+- **[MEDIUM]** desktop\app.py:846 — return后死代码
+- **[MEDIUM]** desktop\app.py:981 — return后死代码
+- **[MEDIUM]** desktop\app.py:992 — return后死代码
+- **[MEDIUM]** desktop\app.py:1000 — return后死代码
+- **[MEDIUM]** desktop\app.py:1096 — return后死代码
+- **[MEDIUM]** desktop\app.py:1121 — return后死代码
+- **[MEDIUM]** desktop\app.py:1164 — return后死代码
+- **[MEDIUM]** desktop\app.py:1189 — return后死代码
+- **[MEDIUM]** desktop\app.py:1198 — return后死代码
+- **[MEDIUM]** desktop\app.py:1209 — return后死代码
+- **[MEDIUM]** desktop\app.py:1223 — return后死代码
+- **[MEDIUM]** desktop\app.py:1236 — return后死代码
+- **[MEDIUM]** desktop\app.py:1239 — return后死代码
 - **[MEDIUM]** gbt\account.py:42 — return后死代码
 - **[MEDIUM]** gbt\agent.py:55 — return后死代码
 - **[MEDIUM]** gbt\agent.py:58 — return后死代码

@@ -1,5 +1,5 @@
 {
-  "time": "2026-06-21T10:58:51.902Z",
+  "time": "2026-06-21T10:59:26.386Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "summary": {
     "critical": 1,
@@ -84,7 +84,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 868,
+      "line": 872,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -134,7 +134,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 842,
+      "line": 846,
       "snippet": "import urllib.request, urllib.parse",
       "desc": "return后死代码",
       "fixable": 0
@@ -144,7 +144,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 977,
+      "line": 981,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -154,7 +154,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 988,
+      "line": 992,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -164,7 +164,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 996,
+      "line": 1000,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -174,7 +174,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1092,
+      "line": 1096,
       "snippet": "sig = trader.analyze_with_ai(code, quotes[code])",
       "desc": "return后死代码",
       "fixable": 0
@@ -184,7 +184,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1117,
+      "line": 1121,
       "snippet": "return jsonify(trader.execute_trade(code, action, shares, price))",
       "desc": "return后死代码",
       "fixable": 0
@@ -194,7 +194,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1160,
+      "line": 1164,
       "snippet": "return jsonify(trader.get_status())",
       "desc": "return后死代码",
       "fixable": 0
@@ -204,7 +204,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1185,
+      "line": 1189,
       "snippet": "return jsonify({\"ok\": False, \"error\": \"会话不存在\"})",
       "desc": "return后死代码",
       "fixable": 0
@@ -214,7 +214,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1194,
+      "line": 1198,
       "snippet": "return jsonify(trader.open_stock_page(code))",
       "desc": "return后死代码",
       "fixable": 0
@@ -224,7 +224,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1205,
+      "line": 1209,
       "snippet": "return jsonify(trader.fetch_kline(code, scale, datalen))",
       "desc": "return后死代码",
       "fixable": 0
@@ -234,7 +234,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1219,
+      "line": 1223,
       "snippet": "result = se.analyze(kline.get(\"closes\", []), kline.get(\"highs\"),",
       "desc": "return后死代码",
       "fixable": 0
@@ -244,7 +244,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1232,
+      "line": 1236,
       "snippet": "quote = trader.fetch_quote([code])",
       "desc": "return后死代码",
       "fixable": 0
@@ -254,7 +254,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1235,
+      "line": 1239,
       "snippet": "q = quote[code]",
       "desc": "return后死代码",
       "fixable": 0
