@@ -13,8 +13,11 @@ def traceroute(host):
     try: r = subprocess.run(["tracert", "-h", "10", str(host)], shell=False, capture_output=True, text=True, timeout=60); return {"ok": True, "output": r.stdout[:3000]}
     except Exception as e: return {"ok": False, "error": str(e)}
 
+_DEFAULT_PING = "8.8.8.8"
+_DEFAULT_DNS = "google.com"
+
 def net_handle(action, **params):
-    h = {"ping": lambda: ping_host(params.get("host", "8.8.8.8"), params.get("count", 4)),
-         "dns": lambda: dns_lookup(params.get("host", "google.com")),
-         "traceroute": lambda: traceroute(params.get("host", "8.8.8.8"))}.get(action)
+    h = {"ping": lambda: ping_host(params.get("host", _DEFAULT_PING), params.get("count", 4)),
+         "dns": lambda: dns_lookup(params.get("host", _DEFAULT_DNS)),
+         "traceroute": lambda: traceroute(params.get("host", _DEFAULT_PING))}.get(action)
     return h() if h else {"ok": False, "error": f"Unknown: {action}"}
