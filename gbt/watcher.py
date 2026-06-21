@@ -8,6 +8,9 @@ from collections import deque
 
 L = logging.getLogger("GBT.Watcher")
 
+# 模块级单例引用 — 供外部通过 from gbt.watcher import watcher 获取
+watcher = None
+
 class Alert:
     """告警记录"""
     def __init__(self, source, level, message, detail=""):
