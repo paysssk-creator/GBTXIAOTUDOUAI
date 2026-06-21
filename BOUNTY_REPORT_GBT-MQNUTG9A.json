@@ -1,0 +1,1045 @@
+{
+  "report_id": "GBT-MQNUTG9A",
+  "timestamp": "2026-06-21T14:00:35.471Z",
+  "target": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
+  "hunter": "GBT小土豆全能开发者",
+  "disclaimer": "⚠️ CVSS和赏金为参考估算值, 非真实漏洞评估。仅供安全学习参考。",
+  "findings": [
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 107,
+      "snippet": "return (\"GBT全能开发者工具:\\n\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 175,
+      "snippet": "reports = mirror_run(project, fix_in_mirror)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 181,
+      "snippet": "return f\"❌ 仍有{count}个虚假代码，禁止部署\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 182,
+      "snippet": "return f\"未知操作: {action}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "agents\\gbt_agent.py",
+      "line": 207,
+      "snippet": "kw = {}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 209,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 210,
+      "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 901,
+      "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 445,
+      "snippet": "return \"\",204",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 459,
+      "snippet": "return \"\", 204",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 875,
+      "snippet": "import urllib.request, urllib.parse",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1010,
+      "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1021,
+      "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1029,
+      "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1125,
+      "snippet": "sig = trader.analyze_with_ai(code, quotes[code])",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1150,
+      "snippet": "return jsonify(trader.execute_trade(code, action, shares, price))",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1193,
+      "snippet": "return jsonify(trader.get_status())",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1218,
+      "snippet": "return jsonify({\"ok\": False, \"error\": \"会话不存在\"})",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1227,
+      "snippet": "return jsonify(trader.open_stock_page(code))",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1238,
+      "snippet": "return jsonify(trader.fetch_kline(code, scale, datalen))",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1252,
+      "snippet": "result = se.analyze(kline.get(\"closes\", []), kline.get(\"highs\"),",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1265,
+      "snippet": "quote = trader.fetch_quote([code])",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 1268,
+      "snippet": "q = quote[code]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\account.py",
+      "line": 42,
+      "snippet": "pos = self.positions[code]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agent.py",
+      "line": 55,
+      "snippet": "tools_desc = self.tool_registry.get_tools_description()",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agent.py",
+      "line": 58,
+      "snippet": "return (base + \"\\n\\n## 可用工具\\n\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 660,
+      "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netst",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 281,
+      "snippet": "subprocess.run([\"nircmd\",\"changesysvolume\",\"2000\"],capture_output=True,timeout=3",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 374,
+      "snippet": "code = m.group(1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 390,
+      "snippet": "return f\"{name}({code}): 数据解析异常\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 399,
+      "snippet": "return \"交易引擎未就绪\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 406,
+      "snippet": "return \"交易引擎未就绪\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 594,
+      "snippet": "return f\"文件不存在: {fpath}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 595,
+      "snippet": "return \"请指定要读取的文件路径\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 840,
+      "snippet": "ws = self.watcher.get_status()",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\brain.py",
+      "line": 87,
+      "snippet": "self.running = True",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\brain.py",
+      "line": 539,
+      "snippet": "return self.router.route(text)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\brain.py",
+      "line": 545,
+      "snippet": "ctx = self.router.get_capability_context()",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 47,
+      "snippet": "code = m.group(1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 61,
+      "snippet": "return f\"未找到 {code} 的行情数据\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 89,
+      "snippet": "wl = getattr(trader, 'watchlist', {}) or {}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 92,
+      "snippet": "lines = [\"📋 自选股:\"]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 134,
+      "snippet": "ws = watcher.get_status()",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 165,
+      "snippet": "code = m.group(1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 297,
+      "snippet": "return f\"文件不存在: {fpath}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 298,
+      "snippet": "return \"请指定要读取的文件路径\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 330,
+      "snippet": "return \"请提供要执行的代码或命令 (用 ```python ... ``` 或 执行: ...)\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 356,
+      "snippet": "return f\"OCR失败: {r.get('error', '未知错误')}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 388,
+      "snippet": "return f\"⚠ 未检测到登录 (置信度 {r['confidence']}) | 找到: {r.get('found_keywords', [])} | ",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\capabilities.py",
+      "line": 465,
+      "snippet": "return f\"⚠ 流水线: {r['phase']} — {r.get('message', r.get('error', ''))}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\connectors\\github.py",
+      "line": 47,
+      "snippet": "return {\"ok\": False, \"error\": \"GitHub: 未登录gh CLI，请指定owner参数\"}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\connectors\\github.py",
+      "line": 81,
+      "snippet": "return _gh([\"search\", \"repos\", \"stars:>1000\", \"--sort\", \"stars\", \"--limit\", \"10\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\connectors\\network.py",
+      "line": 17,
+      "snippet": "h = {\"ping\": lambda: ping_host(params.get(\"host\", \"8.8.8.8\"), params.get(\"count\", 4)),",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\connectors\\network.py",
+      "line": 19,
+      "snippet": "\"traceroute\": lambda: traceroute(params.get(\"host\", \"8.8.8.8\"))}.get(action)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\connectors\\registry.py",
+      "line": 177,
+      "snippet": "c = self._connectors[conn_id]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\connectors\\registry.py",
+      "line": 196,
+      "snippet": "c.status = \"connected\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\database.py",
+      "line": 350,
+      "snippet": "return c.execute(\"SELECT COUNT(*) FROM signals\").fetchone()[0]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\database.py",
+      "line": 407,
+      "snippet": "rows = c.execute(\"SELECT * FROM daily_stats ORDER BY date DESC LIMIT ?\", (limit,",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\database.py",
+      "line": 440,
+      "snippet": "return default",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\evolve.py",
+      "line": 506,
+      "snippet": "size /= 1024",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\ai_trader.py",
+      "line": 120,
+      "snippet": "return \"switch_failed\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\ai_trader.py",
+      "line": 121,
+      "snippet": "return \"ok\"  # 看不出就继续, 不重复切",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\ai_trader.py",
+      "line": 132,
+      "snippet": "self._last_trade_key = key",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\gcc_runner.py",
+      "line": 267,
+      "snippet": "return None",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\gcc_runner.py",
+      "line": 278,
+      "snippet": "result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\gcc_runner.py",
+      "line": 283,
+      "snippet": "return None",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\screenshot_reasoner.py",
+      "line": 55,
+      "snippet": "return {\"ok\": True, \"raw\": raw}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\self_reflection.py",
+      "line": 77,
+      "snippet": "return {\"success\": True, \"reasoning\": raw[:200], \"next_action\": \"continue\"}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\self_reflection.py",
+      "line": 95,
+      "snippet": "time.sleep(1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\skill_curation.py",
+      "line": 43,
+      "snippet": "success_rate = self.success_count / total",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\skill_curation.py",
+      "line": 367,
+      "snippet": "skill = self.skills[skill_name]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\skill_curation.py",
+      "line": 407,
+      "snippet": "total_usage = sum(s.usage for s in self.skills.values())",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\gcc\\skill_curation.py",
+      "line": 438,
+      "snippet": "return len(a & b) / len(a | b)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\guard.py",
+      "line": 148,
+      "snippet": "return pre, self.post_action_check(action)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\llm.py",
+      "line": 103,
+      "snippet": "return None",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\mcp.py",
+      "line": 72,
+      "snippet": "return \"\\n\".join(f\"- **{s.name}**: {s.description}\" for s in self._s.values())",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\memory.py",
+      "line": 81,
+      "snippet": "return None",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\memory.py",
+      "line": 105,
+      "snippet": "lines = [\"## 相关记忆\"]",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\protocol.py",
+      "line": 76,
+      "snippet": "return True, \"default: valid dict with data\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\protocol.py",
+      "line": 178,
+      "snippet": "missing = []",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\protocol.py",
+      "line": 184,
+      "snippet": "return True, f\"{len(cap.requires)} deps ready\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\protocol.py",
+      "line": 190,
+      "snippet": "ok_count = sum(1 for h in self._history if h[\"ok\"])",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\reasoner.py",
+      "line": 348,
+      "snippet": "best = max(results, key=lambda x: x.confidence)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\risk_ctrl.py",
+      "line": 29,
+      "snippet": "max_shares = max(0, int(self.total_capital * self.max_single_pct / 100 / price /",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\risk_ctrl.py",
+      "line": 42,
+      "snippet": "loss_pct = round((entry_price - current_price) / entry_price * 100, 2)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\risk_ctrl.py",
+      "line": 55,
+      "snippet": "gain_pct = round((current_price - entry_price) / entry_price * 100, 2)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\scraper.py",
+      "line": 208,
+      "snippet": "return {\"ok\": False, \"error\": \"无法获取资讯\", \"code\": code}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\strategies.py",
+      "line": 79,
+      "snippet": "return round(100 - 100 / (1 + avg_g / avg_l), 1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\tech_analysis.py",
+      "line": 16,
+      "snippet": "return round(sum(values[-period:]) / period, 2)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\tech_analysis.py",
+      "line": 23,
+      "snippet": "k = 2 / (period + 1)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\tool.py",
+      "line": 58,
+      "snippet": "return False",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\tool.py",
+      "line": 90,
+      "snippet": "lines = []",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\trader.py",
+      "line": 434,
+      "snippet": "return TradeSignal(code, quote.name, \"hold\", quote.price, reason=f\"异常:{e}\", conf",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\trader.py",
+      "line": 663,
+      "snippet": "self.running = True",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\trader.py",
+      "line": 795,
+      "snippet": "return {\"ok\": False, \"error\": f\"未知: {platform_name}\"}",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 175,
+      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"1\", \"-w\", \"2000\", \"8.8.8.8\"],",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 475,
+      "snippet": "r = subprocess.run([\"ping\", \"-n\", \"2\", \"8.8.8.8\"], capture_output=True, text=True, timeout=6, errors='replace')",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\watcher_agent.py",
+      "line": 594,
+      "snippet": "return self.agent.detect_hallucination(response_text, source)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\winctl.py",
+      "line": 79,
+      "snippet": "return WinResult(True,\"keyboard\",\"hotkey\",data=keys)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\winctl.py",
+      "line": 93,
+      "snippet": "return WinResult(True,\"mouse\",\"click\",data=button)",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "gbt\\winctl.py",
+      "line": 272,
+      "snippet": "return WinResult(True,\"clip\",\"set\",data=f\"复制{len(text)}字\")",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "start_demo.py",
+      "line": 25,
+      "snippet": "return \"<h1>GBT v2.0</h1>\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "medium",
+      "file": "tools\\mcp_tools.py",
+      "line": 15,
+      "snippet": "return f\"❌ {server}: {result.error}\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    }
+  ],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 103,
+    "estimated_bounty_range": "$100-$500"
+  }
+}
