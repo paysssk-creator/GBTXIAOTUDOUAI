@@ -1,0 +1,75 @@
+{
+  "report_id": "GBT-MQO2QEWV",
+  "timestamp": "2026-06-21T17:42:10.688Z",
+  "target": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
+  "hunter": "GBT小土豆全能开发者",
+  "disclaimer": "⚠️ CVSS和赏金为参考估算值, 非真实漏洞评估。仅供安全学习参考。",
+  "findings": [
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 209,
+      "snippet": "_H = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "desktop\\app.py",
+      "line": 902,
+      "snippet": "_PH = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\agents.py",
+      "line": 660,
+      "snippet": "_H = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\connectors\\network.py",
+      "line": 16,
+      "snippet": "_DEFAULT_PING = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 175,
+      "snippet": "_PH = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "file": "gbt\\watcher.py",
+      "line": 476,
+      "snippet": "_PH = \"8.8.8.8\"",
+      "cvss_estimate": "4.0-6.9 (估算参考)",
+      "bounty_estimate": "参考: $100-$500",
+      "remediation": "请根据上下文手动审查"
+    }
+  ],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 6,
+    "estimated_bounty_range": "$100-$500"
+  }
+}
