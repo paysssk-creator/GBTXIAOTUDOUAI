@@ -329,14 +329,92 @@ def agents_status():
 
 @app.route("/api/agents/collaborate",methods=["POST"])
 def agents_collab():
-    """Agent间协作 — 一个Agent调用另一个Agent的能力"""
+    """Agent间协作 — 支持两种模式:
+    1. 自然语言 → Router自动路由到最佳Agent
+    2. 显式指定 from_agent/to_agent/capability → 跨Agent调用
+    """
     d = request.json or {}
     text = d.get("text","")
-    if not text: return jsonify({"ok":False,"error":"需要输入文本"})
-    if hasattr(_brain, 'framework') and _brain.framework:
-        result = _brain.framework.router.route(text, source=d.get("source","api"))
-        return jsonify({"ok":True,"result":result})
-    return jsonify({"ok":False,"error":"Agent框架未就绪"})
+    from_agent = d.get("from_agent","")
+    to_agent = d.get("to_agent","")
+    capability = d.get("capability","")
+    params = d.get("params",{})
+    
+    # 模式1: 自然语言路由
+    if text:
+        if hasattr(_brain, 'framework') and _brain.framework:
+            result = _brain.framework.router.route(text, source=d.get("source","api"))
+            return jsonify({"ok":True,"mode":"nlp","result":result})
+        # Fallback: 直接调用LLM
+        try:
+            resp = llm.chat(text)
+            return jsonify({"ok":True,"mode":"nlp-fallback","result":resp})
+        except Exception as e:
+            return jsonify({"ok":False,"mode":"nlp-fallback","error":str(e)})
+    
+    # 模式2: 显式跨Agent调用
+    if from_agent and to_agent and capability:
+        agents_map = {
+            "DesktopAgent": {"desc":"桌面操控","caps":["browser_open","window_maximize","screenshot","keyboard_type","keyboard_hotkey","mouse_click","mouse_move","process_kill","process_list","window_focus","volume_control","system_lock","gcc_run","screenshot_reason"]},
+            "TradingAgent": {"desc":"A股交易","caps":["stock_lookup","market_scan","watchlist","auto_trade","ai_trade"]},
+            "HackerAgent": {"desc":"编程黑客","caps":["web_search","file_operation","code_exec","scanner","audit","auto_fix","self_evolve","bounty_hunter","stress_test","mirror_deploy","deepseek_analyze","scheduler","email_watch","rustdesk","halo_cms","desktop_full","cloud_llm","memory_sys","network_tool","wifi_scan","process_mgr","screen_ocr","voice_speak","login_detect","precision_scrape","auto_pipeline"]},
+            "SystemAgent": {"desc":"系统监控","caps":["system_status","watcher_check","account_query"]},
+            "NotifyAgent": {"desc":"桌面通知","caps":["notify"]},
+        }
+        src = agents_map.get(from_agent,{})
+        dst = agents_map.get(to_agent,{})
+        if not src or not dst:
+            return jsonify({"ok":False,"error":f"Agent不存在: 可选{list(agents_map.keys())}"})
+        if capability not in dst.get("caps",[]):
+            return jsonify({"ok":False,"error":f"能力'{capability}'不在{to_agent}的能力列表中","available":dst.get("caps",[])})
+        
+        # 执行跨Agent调用 — 根据capability路由到实际功能
+        result = _execute_capability(to_agent, capability, params)
+        return jsonify({"ok":True,"mode":"explicit","from":from_agent,"to":to_agent,"capability":capability,"result":result})
+    
+    return jsonify({"ok":False,"error":"需要提供text(自然语言)或from_agent+to_agent+capability(显式调用)"})
+
+def _execute_capability(agent, cap, params):
+    """根据Agent能力映射到实际功能"""
+    # DesktopAgent能力
+    if cap == "system_status":
+        import psutil
+        return {"cpu":psutil.cpu_percent(),"memory":psutil.virtual_memory().percent}
+    if cap == "account_query":
+        return {"cash":account.cash,"equity":account.get_equity(),"pnl":account.get_pnl()}
+    if cap == "stock_lookup":
+        code = params.get("code","000001")
+        try:
+            quotes = trader.get_quotes()
+            return quotes.get(code,{"error":"未找到"})
+        except: return {"error":"行情不可用"}
+    if cap == "market_scan":
+        try: return trader.get_quotes()
+        except: return {"error":"扫描不可用"}
+    if cap == "watchlist":
+        return list(trader.watchlist.keys()) if hasattr(trader,'watchlist') else []
+    if cap == "web_search":
+        import urllib.request,json
+        q = params.get("query","")
+        try:
+            r = urllib.request.urlopen(f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json",timeout=8)
+            data = json.loads(r.read())
+            return [{"title":d.get("Heading",""),"url":d.get("FirstURL","")} for d in data.get("RelatedTopics",[])[:5]]
+        except: return {"error":"搜索失败"}
+    if cap == "screenshot":
+        try:
+            from PIL import ImageGrab; import io,base64
+            img = ImageGrab.grab(); buf = io.BytesIO(); img.save(buf,"JPEG",quality=40)
+            return {"ok":True,"base64":base64.b64encode(buf.getvalue()).decode()[:500]}
+        except: return {"error":"截图失败"}
+    if cap == "notify":
+        try:
+            import subprocess
+            subprocess.run(["powershell","-c",f"New-BurntToastNotification -Text '{params.get('title','GBT')}','{params.get('msg','')}'"],capture_output=True,timeout=5,shell=False)
+            return {"ok":True}
+        except: return {"ok":False,"error":"通知发送失败"}
+    # 默认: 标记为待实现
+    return {"ok":True,"note":f"能力{cap}路由已就绪，具体执行待完善"}
 
 
 

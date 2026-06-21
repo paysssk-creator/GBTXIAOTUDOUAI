@@ -1,16 +1,16 @@
 # Scan Report v3
 
-**Time**:2026-06-21T11:34:05.539Z
+**Time**:2026-06-21T11:34:29.880Z
 **Deep**:Y
 
 ## Summary
 |Level|Count|
 |---|---|
 |critical|1|
-|medium|105|
+|medium|104|
 |low|5|
 |info|1|
-|Total|**112**|
+|Total|**111**|
 
 ## Findings
 - **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
@@ -20,24 +20,23 @@
 - **[MEDIUM]** agents\gbt_agent.py:207 — return后死代码
 - **[MEDIUM]** desktop\app.py:209 — 硬编码IP
 - **[MEDIUM]** desktop\app.py:210 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:888 — 硬编码IP
-- **[MEDIUM]** desktop\app.py:339 — return后死代码
-- **[MEDIUM]** desktop\app.py:367 — return后死代码
-- **[MEDIUM]** desktop\app.py:381 — return后死代码
-- **[MEDIUM]** desktop\app.py:516 — return后死代码
-- **[MEDIUM]** desktop\app.py:862 — return后死代码
-- **[MEDIUM]** desktop\app.py:997 — return后死代码
-- **[MEDIUM]** desktop\app.py:1008 — return后死代码
-- **[MEDIUM]** desktop\app.py:1016 — return后死代码
-- **[MEDIUM]** desktop\app.py:1112 — return后死代码
-- **[MEDIUM]** desktop\app.py:1137 — return后死代码
-- **[MEDIUM]** desktop\app.py:1180 — return后死代码
-- **[MEDIUM]** desktop\app.py:1205 — return后死代码
-- **[MEDIUM]** desktop\app.py:1214 — return后死代码
-- **[MEDIUM]** desktop\app.py:1225 — return后死代码
-- **[MEDIUM]** desktop\app.py:1239 — return后死代码
-- **[MEDIUM]** desktop\app.py:1252 — return后死代码
-- **[MEDIUM]** desktop\app.py:1255 — return后死代码
+- **[MEDIUM]** desktop\app.py:966 — 硬编码IP
+- **[MEDIUM]** desktop\app.py:445 — return后死代码
+- **[MEDIUM]** desktop\app.py:459 — return后死代码
+- **[MEDIUM]** desktop\app.py:594 — return后死代码
+- **[MEDIUM]** desktop\app.py:940 — return后死代码
+- **[MEDIUM]** desktop\app.py:1075 — return后死代码
+- **[MEDIUM]** desktop\app.py:1086 — return后死代码
+- **[MEDIUM]** desktop\app.py:1094 — return后死代码
+- **[MEDIUM]** desktop\app.py:1190 — return后死代码
+- **[MEDIUM]** desktop\app.py:1215 — return后死代码
+- **[MEDIUM]** desktop\app.py:1258 — return后死代码
+- **[MEDIUM]** desktop\app.py:1283 — return后死代码
+- **[MEDIUM]** desktop\app.py:1292 — return后死代码
+- **[MEDIUM]** desktop\app.py:1303 — return后死代码
+- **[MEDIUM]** desktop\app.py:1317 — return后死代码
+- **[MEDIUM]** desktop\app.py:1330 — return后死代码
+- **[MEDIUM]** desktop\app.py:1333 — return后死代码
 - **[MEDIUM]** gbt\account.py:42 — return后死代码
 - **[MEDIUM]** gbt\agent.py:55 — return后死代码
 - **[MEDIUM]** gbt\agent.py:58 — return后死代码
