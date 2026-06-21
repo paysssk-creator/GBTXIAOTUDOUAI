@@ -1,6 +1,6 @@
 # Scan Report v3
 
-**Time**:2026-06-21T12:10:06.850Z
+**Time**:2026-06-21T12:10:25.277Z
 **Deep**:Y
 
 ## Summary
@@ -109,8 +109,8 @@
 - **[MEDIUM]** gbt\trader.py:434 — return后死代码
 - **[MEDIUM]** gbt\trader.py:663 — return后死代码
 - **[MEDIUM]** gbt\trader.py:795 — return后死代码
-- **[MEDIUM]** gbt\watcher.py:172 — 硬编码IP
-- **[MEDIUM]** gbt\watcher.py:472 — 硬编码IP
+- **[MEDIUM]** gbt\watcher.py:175 — 硬编码IP
+- **[MEDIUM]** gbt\watcher.py:475 — 硬编码IP
 - **[MEDIUM]** gbt\watcher_agent.py:594 — return后死代码
 - **[MEDIUM]** gbt\winctl.py:79 — return后死代码
 - **[MEDIUM]** gbt\winctl.py:93 — return后死代码

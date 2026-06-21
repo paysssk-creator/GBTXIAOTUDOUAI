@@ -36,6 +36,9 @@ class NightWatcher:
         self._lock = threading.Lock()
         self.fix_log = deque(maxlen=100)
         self.auto_fix_enabled = True
+        # 注册为模块级单例
+        import gbt.watcher as _mod
+        _mod.watcher = self
         
         # 初始化所有监控状态
         for src in ["network", "process", "filesystem", "registry", "wifi", "logs", "disk", "connections"]:
