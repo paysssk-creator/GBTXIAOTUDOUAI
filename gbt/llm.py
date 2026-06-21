@@ -106,7 +106,7 @@ class GBTLLM:
             resp = self._client.chat.completions.create(
                 model=self.model, messages=messages,
                 temperature=t, max_tokens=mt, stream=False)
-            content = resp.choices[0].message.content or ""
+            content = (resp.choices[0].message.content or "") if resp.choices else ""
             print(f"✅ [{self.provider_name}] {(time.time()-start):.1f}s {len(content)}chars")
             return content
         except Exception as e:
