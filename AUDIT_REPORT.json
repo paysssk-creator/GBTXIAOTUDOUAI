@@ -10,7 +10,7 @@
   ],
   "warnings": [
     {
-      "name": "无未提交改动 (当前: 5)",
+      "name": "无未提交改动 (当前: 4)",
       "detail": ""
     },
     {
@@ -19,7 +19,7 @@
     }
   ],
   "failed": [],
-  "timestamp": "2026-06-21T11:27:24.487Z",
+  "timestamp": "2026-06-21T11:27:28.294Z",
   "summary": {
     "passed": 7,
     "warnings": 2,
