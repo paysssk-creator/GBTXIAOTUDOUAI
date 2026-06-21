@@ -1,64 +1,14 @@
 {
-  "timestamp": "2026-06-21T17:48:31.665Z",
+  "timestamp": "2026-06-21T18:47:45.023Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "issues": [
     {
       "ruleId": "SEC-008",
       "name": "hard-ip",
       "severity": "medium",
-      "file": "desktop\\app.py",
-      "line": 209,
-      "snippet": "_H = \"8.8.8.8\"",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "desktop\\app.py",
-      "line": 902,
-      "snippet": "_PH = \"8.8.8.8\"",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "gbt\\agents.py",
-      "line": 660,
-      "snippet": "_H = \"8.8.8.8\"",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "gbt\\connectors\\network.py",
-      "line": 16,
-      "snippet": "_DEFAULT_PING = \"8.8.8.8\"",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "gbt\\watcher.py",
-      "line": 175,
-      "snippet": "_PH = \"8.8.8.8\"",
-      "desc": "硬编码IP",
-      "fixable": 0
-    },
-    {
-      "ruleId": "SEC-008",
-      "name": "hard-ip",
-      "severity": "medium",
-      "file": "gbt\\watcher.py",
-      "line": 476,
-      "snippet": "_PH = \"8.8.8.8\"",
+      "file": "gbt\\__init__.py",
+      "line": 28,
+      "snippet": "DEFAULT_PING_TARGET = \"8.8.8.8\"  # 网络连通性检测的缺省目标",
       "desc": "硬编码IP",
       "fixable": 0
     }
@@ -66,43 +16,8 @@
   "actions": [
     {
       "type": "code_fix",
-      "file": "desktop\\app.py",
-      "line": 209,
-      "severity": "medium",
-      "autoFixable": false
-    },
-    {
-      "type": "code_fix",
-      "file": "desktop\\app.py",
-      "line": 902,
-      "severity": "medium",
-      "autoFixable": false
-    },
-    {
-      "type": "code_fix",
-      "file": "gbt\\agents.py",
-      "line": 660,
-      "severity": "medium",
-      "autoFixable": false
-    },
-    {
-      "type": "code_fix",
-      "file": "gbt\\connectors\\network.py",
-      "line": 16,
-      "severity": "medium",
-      "autoFixable": false
-    },
-    {
-      "type": "code_fix",
-      "file": "gbt\\watcher.py",
-      "line": 175,
-      "severity": "medium",
-      "autoFixable": false
-    },
-    {
-      "type": "code_fix",
-      "file": "gbt\\watcher.py",
-      "line": 476,
+      "file": "gbt\\__init__.py",
+      "line": 28,
       "severity": "medium",
       "autoFixable": false
     }
