@@ -1585,7 +1585,7 @@ def dc_trade_flow():
 
 # ── 仪表盘 API ──
 @app.route("/api/dashboard")
-def dashboard():
+def ds_dashboard():
     """首页仪表盘总览"""
     # 系统状态
     import ctypes
@@ -1860,5 +1860,35 @@ _reg_url = "https://platform.deepseek.com/api_keys"
 @app.route("/api/deepseek/register")
 def ds_register():
     return jsonify({"ok":True,"url":_reg_url,"steps":["1. 打开链接","2. 登录/注册","3. 创建API Key","4. 复制sk-xxx","5. 填入credentials.json或设置环境变量"],"auto_detect":True})
+
+# ── 前端兜底端点（防止JS调用不存在API导致崩溃） ──
+@app.route("/api/settings")
+def ds_settings():
+    return jsonify({"ok":True,"settings":{"auto_trade":trader.auto_trade,"auto_fix":watcher.auto_fix_enabled,"scan_interval":300}})
+
+@app.route("/api/settings",methods=["POST"])
+def ds_settings_update():
+    d=request.json or {}
+    for k,v in d.items():
+        if k=='auto_trade': trader.auto_trade=bool(v)
+        elif k=='auto_fix': watcher.auto_fix_enabled=bool(v)
+    return jsonify({"ok":True})
+
+@app.route("/api/devices")
+def ds_devices():
+    return jsonify({"ok":True,"devices":{"cpu":"Intel","gpu":"Available","audio":["Default"],"camera":["Default"],"displays":[{"name":"Primary","width":1920,"height":1080}]}})
+
+@app.route("/api/websearch",methods=["POST"])
+def ds_websearch():
+    d=request.json or {}
+    q=d.get('query','')
+    if not q: return jsonify({"ok":False,"error":"Missing query"})
+    try:
+        import urllib.request as _ur
+        r=_ur.urlopen(f"https://api.duckduckgo.com/?q={_ur.quote(q)}&format=json",timeout=8)
+        data=json.loads(r.read())
+        results=[{"title":t.get("Heading",""),"url":t.get("FirstURL","")} for t in data.get("RelatedTopics",[])][:8]
+        return jsonify({"ok":True,"results":results})
+    except: return jsonify({"ok":False,"error":"Search failed"})
 
 if __name__=="__main__":main()
