@@ -295,7 +295,7 @@ def hacker_exec_cap():
         try:
             from gbt.gcc.ai_trader import ai_trade
             from gbt.desktop_ctl import DesktopController
-            result = ai_trade(d.get("text",act), llm=llm.a if llm.a else None, desk=DesktopController())
+            result = ai_trade(d.get("text",act), llm=free_llm.a if free_llm.a else (llm.a if llm.a else None), desk=DesktopController())
             return jsonify({"ok":result.get("ok",False),"data":json.dumps(result,ensure_ascii=False)[:3000]})
         except Exception as e: return jsonify({"ok":False,"error":str(e)})
     if cid == "screenshot_reason":
