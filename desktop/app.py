@@ -3,6 +3,22 @@ LLM switching + failover + real 6-step evolve
 """
 import os,sys,threading,json,logging,time,subprocess
 
+# ── 自动注入已知API密钥（从credentials.json读取） ──
+_cred_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".cline", "data", "credentials.json")
+try:
+    with open(_cred_path, "r", encoding="utf-8") as f:
+        _creds = json.load(f)
+    for _svc, _info in _creds.get("services", {}).items():
+        _key = _info.get("apiKey", "")
+        if _key and len(_key) > 10:
+            _env_map = {"deepseek": "DEEPSEEK_API_KEY", "zhipu": "GLM_API_KEY",
+                        "gemini": "GEMINI_API_KEY", "qwen": "QWEN_API_KEY",
+                        "github": "GITHUB_TOKEN", "openai": "OPENAI_API_KEY"}
+            _env_name = _env_map.get(_svc, _svc.upper() + "_API_KEY")
+            os.environ[_env_name] = _key
+except Exception:
+    pass
+
 # ── 路径初始化 ──
 _here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0,_here)                          # exe同级目录

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-21T11:20:53.681Z",
+  "timestamp": "2026-06-21T11:21:36.246Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "issues": [
     {
@@ -7,7 +7,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 193,
+      "line": 209,
       "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -17,7 +17,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 194,
+      "line": 210,
       "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
       "desc": "硬编码IP",
       "fixable": 0
@@ -27,7 +27,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 872,
+      "line": 888,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -87,21 +87,21 @@
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 193,
+      "line": 209,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 194,
+      "line": 210,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 872,
+      "line": 888,
       "severity": "medium",
       "autoFixable": false
     },
