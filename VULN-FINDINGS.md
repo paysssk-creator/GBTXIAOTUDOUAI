@@ -1,16 +1,16 @@
 # Scan Report v3
 
-**Time**:2026-06-21T10:57:24.912Z
+**Time**:2026-06-21T10:57:44.554Z
 **Deep**:Y
 
 ## Summary
 |Level|Count|
 |---|---|
 |critical|1|
-|medium|104|
+|medium|106|
 |low|4|
 |info|1|
-|Total|**110**|
+|Total|**112**|
 
 ## Findings
 - **[MEDIUM]** agents\gbt_agent.py:107 — return后死代码
@@ -65,6 +65,8 @@
 - **[MEDIUM]** gbt\capabilities.py:356 — return后死代码
 - **[MEDIUM]** gbt\capabilities.py:388 — return后死代码
 - **[MEDIUM]** gbt\capabilities.py:465 — return后死代码
+- **[MEDIUM]** gbt\connectors\github.py:47 — return后死代码
+- **[MEDIUM]** gbt\connectors\github.py:81 — return后死代码
 - **[MEDIUM]** gbt\connectors\network.py:17 — 硬编码IP
 - **[MEDIUM]** gbt\connectors\network.py:19 — 硬编码IP
 - **[MEDIUM]** gbt\connectors\registry.py:177 — return后死代码

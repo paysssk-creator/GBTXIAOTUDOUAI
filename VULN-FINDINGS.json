@@ -1,10 +1,10 @@
 {
-  "time": "2026-06-21T10:57:24.912Z",
+  "time": "2026-06-21T10:57:44.554Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "summary": {
     "critical": 1,
     "high": 0,
-    "medium": 104,
+    "medium": 106,
     "low": 4,
     "info": 1
   },
@@ -526,6 +526,26 @@
       "file": "gbt\\capabilities.py",
       "line": 465,
       "snippet": "return f\"⚠ 流水线: {r['phase']} — {r.get('message', r.get('error', ''))}\"",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "gbt\\connectors\\github.py",
+      "line": 47,
+      "snippet": "return {\"ok\": False, \"error\": \"GitHub: 未登录gh CLI，请指定owner参数\"}",
+      "desc": "return后死代码",
+      "fixable": 0
+    },
+    {
+      "ruleId": "QUAL-007",
+      "name": "dead-code",
+      "severity": "medium",
+      "file": "gbt\\connectors\\github.py",
+      "line": 81,
+      "snippet": "return _gh([\"search\", \"repos\", \"stars:>1000\", \"--sort\", \"stars\", \"--limit\", \"10\"",
       "desc": "return后死代码",
       "fixable": 0
     },
