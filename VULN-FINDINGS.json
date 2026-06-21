@@ -1,5 +1,5 @@
 {
-  "time": "2026-06-21T10:39:59.884Z",
+  "time": "2026-06-21T10:41:09.857Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "summary": {
     "critical": 1,
@@ -84,7 +84,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 863,
+      "line": 868,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -124,7 +124,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 495,
+      "line": 500,
       "snippet": "gpus=[]",
       "desc": "return后死代码",
       "fixable": 0
@@ -134,7 +134,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 837,
+      "line": 842,
       "snippet": "import urllib.request, urllib.parse",
       "desc": "return后死代码",
       "fixable": 0
@@ -144,7 +144,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 972,
+      "line": 977,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -154,7 +154,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 983,
+      "line": 988,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -164,7 +164,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 991,
+      "line": 996,
       "snippet": "return jsonify({\"error\": \"多Agent框架未初始化\"}), 503",
       "desc": "return后死代码",
       "fixable": 0
@@ -174,7 +174,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1087,
+      "line": 1092,
       "snippet": "sig = trader.analyze_with_ai(code, quotes[code])",
       "desc": "return后死代码",
       "fixable": 0
@@ -184,7 +184,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1112,
+      "line": 1117,
       "snippet": "return jsonify(trader.execute_trade(code, action, shares, price))",
       "desc": "return后死代码",
       "fixable": 0
@@ -194,7 +194,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1155,
+      "line": 1160,
       "snippet": "return jsonify(trader.get_status())",
       "desc": "return后死代码",
       "fixable": 0
@@ -204,7 +204,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1180,
+      "line": 1185,
       "snippet": "return jsonify({\"ok\": False, \"error\": \"会话不存在\"})",
       "desc": "return后死代码",
       "fixable": 0
@@ -214,7 +214,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1189,
+      "line": 1194,
       "snippet": "return jsonify(trader.open_stock_page(code))",
       "desc": "return后死代码",
       "fixable": 0
@@ -224,7 +224,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1200,
+      "line": 1205,
       "snippet": "return jsonify(trader.fetch_kline(code, scale, datalen))",
       "desc": "return后死代码",
       "fixable": 0
@@ -234,7 +234,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1214,
+      "line": 1219,
       "snippet": "result = se.analyze(kline.get(\"closes\", []), kline.get(\"highs\"),",
       "desc": "return后死代码",
       "fixable": 0
@@ -244,7 +244,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1227,
+      "line": 1232,
       "snippet": "quote = trader.fetch_quote([code])",
       "desc": "return后死代码",
       "fixable": 0
@@ -254,7 +254,7 @@
       "name": "dead-code",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 1230,
+      "line": 1235,
       "snippet": "q = quote[code]",
       "desc": "return后死代码",
       "fixable": 0
