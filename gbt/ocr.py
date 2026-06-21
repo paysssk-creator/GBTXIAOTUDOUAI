@@ -4,7 +4,7 @@ Tesseract + Windows OCR + EasyOCR 三引擎自动降级
 让没有视觉能力的大模型也能\"看懂\"图片
 """
 
-import os, base64, tempfile, subprocess, logging
+import os, base64, tempfile, subprocess, logging, threading
 from typing import Optional, List, Tuple
 
 L = logging.getLogger("GBT.OCR")
@@ -131,10 +131,14 @@ class ImageToText:
 
 
 _ocr: Optional[ImageToText] = None
+_ocr_lock = threading.Lock()
 
 def get_ocr(lang: str="chi_sim+eng") -> ImageToText:
     global _ocr
-    if _ocr is None: _ocr = ImageToText(lang)
+    if _ocr is None:
+        with _ocr_lock:
+            if _ocr is None:
+                _ocr = ImageToText(lang)
     return _ocr
 
 def image_to_text(image) -> OCRResult:

@@ -11,6 +11,9 @@ run.py
 test_gbt_app.py
 screen.py
 .env
+.env.bak
+*.env.bak
+*.env.backup
 .env.example
 
 data/

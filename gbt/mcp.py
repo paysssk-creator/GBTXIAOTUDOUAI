@@ -156,13 +156,16 @@ class UniversalMCP:
 
 
 _universal: Optional[UniversalMCP] = None
+_mcp_lock = threading.Lock()
 
 def get_mcp() -> UniversalMCP:
     global _universal
-    if _universal is None: _universal = UniversalMCP()
+    if _universal is None:
+        with _mcp_lock:
+            if _universal is None:
+                _universal = UniversalMCP()
     return _universal
 
 def call_mcp(server: str, method: str = "", args: str = "", timeout: int = 60) -> MCPResult:
     return get_mcp().call(server, method, args, timeout=timeout)
-
 

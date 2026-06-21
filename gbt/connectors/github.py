@@ -9,7 +9,7 @@ def _gh_json(args, timeout=30):
     r = subprocess.run(["gh"] + args + ["--json"], capture_output=True, text=True, timeout=timeout)
     if r.returncode != 0: return {"ok": False, "error": r.stderr[:500]}
     try: return {"ok": True, "data": json.loads(r.stdout)}
-    except: return {"ok": True, "raw": r.stdout[:5000]}
+    except (json.JSONDecodeError, ValueError): return {"ok": True, "raw": r.stdout[:5000]}
 
 def list_repos(owner=None):
     args = ["repo", "list"] + (["--json", "name,url,language"] if owner else ["--limit", "20"])

@@ -12,7 +12,7 @@ def camera_snap():
 
 def camera_list():
     try: r = subprocess.run(["powershell","-NoProfile","-Command","Get-PnpDevice -Class Camera|Select FriendlyName"], shell=False, capture_output=True, text=True, timeout=10); return {"ok": True, "cameras": [l.strip() for l in r.stdout.split("\n") if l.strip()][1:]}
-    except: return {"ok": True, "cameras": ["Default Camera"]}
+    except Exception: return {"ok": True, "cameras": ["Default Camera"]}
 
 # ── Audio ──
 def audio_play(file=None):
@@ -25,10 +25,12 @@ def audio_list():
 # ── Display ──
 def display_screenshot():
     try: from PIL import ImageGrab; import io, base64; img = ImageGrab.grab(); buf = io.BytesIO(); img.save(buf, "PNG"); return {"ok": True, "data": base64.b64encode(buf.getvalue()).decode()}
-    except: return {"ok": False, "error": "pillow not installed"}
+    except ImportError: return {"ok": False, "error": "pillow not installed"}
+    except Exception as e: return {"ok": False, "error": f"screenshot failed: {e}"}
 def display_list():
     try: from screeninfo import get_monitors; return {"ok": True, "displays": [{"name": m.name, "width": m.width, "height": m.height} for m in get_monitors()]}
-    except: return {"ok": True, "displays": [{"name": "Primary", "width": 1920, "height": 1080}]}
+    except ImportError: return {"ok": True, "displays": [{"name": "Primary", "width": 1920, "height": 1080}]}
+    except Exception as e: return {"ok": True, "displays": [{"name": "Primary", "width": 1920, "height": 1080}]}
 
 # ── Process ──
 def process_list():

@@ -2,7 +2,7 @@
 Inspired by OpenHuman's Skills Runtime Engine + Integration layer.
 Each connector is a self-contained module with register/status/disconnect.
 """
-import os, sys, importlib, logging
+import os, sys, importlib, logging, threading
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
@@ -200,11 +200,14 @@ class ConnectorRegistry:
         if conn_id in self._connectors:
             self._connectors[conn_id].status = "disconnected"
 
-# Global singleton
+# Global singleton (thread-safe double-checked locking)
 _registry = None
+_registry_lock = threading.Lock()
 
 def get_registry() -> ConnectorRegistry:
     global _registry
     if _registry is None:
-        _registry = ConnectorRegistry()
+        with _registry_lock:
+            if _registry is None:
+                _registry = ConnectorRegistry()
     return _registry
