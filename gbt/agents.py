@@ -18,6 +18,7 @@ Agent清单:
 import os, sys, json, time, threading, logging, traceback
 from datetime import datetime
 from dataclasses import dataclass, field
+from gbt import DEFAULT_PING_TARGET
 from typing import Optional, Callable
 from abc import ABC, abstractmethod
 
@@ -657,7 +658,7 @@ class HackerAgent(BaseAgent):
     def _mcp_memory(self, t): return self._call_mcp("memory")
     def _tool_network(self, t):
         import subprocess
-        _H = os.getenv("PING_TARGET", "8.8.8.8")
+        _H = os.getenv("PING_TARGET", DEFAULT_PING_TARGET)
         cmds={"ping":["ping","-n","4",_H],"dns":["nslookup","google.com"],"tracert":["tracert","-h","5",_H],"netstat":["netstat","-an"]}
         act="ping"
         for k in ["dns","tracert","路由","端口","netstat"]:

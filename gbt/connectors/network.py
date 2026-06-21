@@ -13,7 +13,8 @@ def traceroute(host):
     try: r = subprocess.run(["tracert", "-h", "10", str(host)], shell=False, capture_output=True, text=True, timeout=60); return {"ok": True, "output": r.stdout[:3000]}
     except Exception as e: return {"ok": False, "error": str(e)}
 
-_DEFAULT_PING = os.getenv("PING_TARGET", "8.8.8.8")
+from gbt import DEFAULT_PING_TARGET
+_DEFAULT_PING = os.getenv("PING_TARGET", DEFAULT_PING_TARGET)
 _DEFAULT_DNS = "google.com"
 
 def net_handle(action, **params):
