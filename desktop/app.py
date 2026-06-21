@@ -403,7 +403,12 @@ def sw():
 def ml():
     d=AutoKeyConfig.scan();r={}
     for k,v in d.items():
-        if v["status"]=="available":r[k]={"name":v["config"]["name"],"models":v["config"]["models"],"default":v["config"]["default_model"]}
+        if v["status"] in ("available","check_port"):
+            r[k]={"name":v["config"]["name"],"models":v["config"]["models"],"default":v["config"]["default_model"]}
+    # 如果Ollama在运行但未被scan检测到，手动补充
+    if "ollama" not in r and AutoKeyConfig.check_ollama():
+        cfg=PROVIDERS.get("ollama",{})
+        r["ollama"]={"name":cfg.get("name","Ollama"),"models":cfg.get("models",[]),"default":cfg.get("default_model","")}
     return jsonify(r)
 
 @app.route("/api/mcp")
