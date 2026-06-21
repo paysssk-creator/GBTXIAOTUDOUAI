@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-20T23:21:51.346Z",
+  "timestamp": "2026-06-21T09:51:57.472Z",
   "project": "C:\\Users\\ADMIN\\GBTXIAOTUDOUAI",
   "issues": [
     {
@@ -7,7 +7,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 190,
+      "line": 193,
       "snippet": "cmds={\"ping\":[\"ping\",\"-n\",\"4\",\"8.8.8.8\"],\"dns\":[\"nslookup\",\"google.com\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -17,7 +17,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 191,
+      "line": 194,
       "snippet": "\"tracert\":[\"tracert\",\"-h\",\"5\",\"8.8.8.8\"],\"netstat\":[\"netstat\",\"-an\"]}",
       "desc": "硬编码IP",
       "fixable": 0
@@ -27,7 +27,7 @@
       "name": "hard-ip",
       "severity": "medium",
       "file": "desktop\\app.py",
-      "line": 860,
+      "line": 863,
       "snippet": "p = subprocess.run([\"ping\", \"-n\", \"3\", \"8.8.8.8\"] if platform.system()==\"Windows\" else [\"ping\",\"-c\",\"3\",\"8.8.8.8\"],",
       "desc": "硬编码IP",
       "fixable": 0
@@ -85,28 +85,23 @@
   ],
   "actions": [
     {
-      "type": "audit_fix",
-      "item": "无未提交改动 (当前: 6)",
-      "detail": ""
-    },
-    {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 190,
+      "line": 193,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 191,
+      "line": 194,
       "severity": "medium",
       "autoFixable": false
     },
     {
       "type": "code_fix",
       "file": "desktop\\app.py",
-      "line": 860,
+      "line": 863,
       "severity": "medium",
       "autoFixable": false
     },
