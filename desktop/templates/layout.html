@@ -709,7 +709,7 @@ async function init(){
     $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
   }catch(e){$('stx').textContent='离线'}
   await _getConns();
-  await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard(),loadAccount()]);
+  try{await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard(),loadAccount()])}catch(e){console.error('Load failed:',e)}
   loadProviders();
   loadMarket();
   loadSystem();
@@ -1175,5 +1175,5 @@ document.addEventListener('mousemove',function(e){
 });
 document.addEventListener('mouseup',function(){_drag.active=false;});
 
-init();
+init().catch(function(e){console.error('Init failed:',e)});
 </script>
