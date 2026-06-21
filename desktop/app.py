@@ -1704,7 +1704,7 @@ def launch():
                     win.toggle_fullscreen()
             def move(self,x,y): wv.windows[0].move(int(x),int(y))
             def close(self): wv.windows[0].destroy()
-        t=threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8877,debug=False,use_reloader=False),daemon=True)
+        t=threading.Thread(target=lambda:__import__('waitress').serve(app,host="127.0.0.1",port=8877),daemon=True)
         t.start();time.sleep(1.0)
         # 自动启动守夜人 + 操盘手
         # ── 数据库迁移 (内存 → SQLite) ──
@@ -1782,7 +1782,7 @@ def main():
             L.info("Browser mode initialized")
         except Exception as e:
             L.warning(f"Init partial: {e}")
-        L.info("http://localhost:8766");app.run(host="127.0.0.1",port=8766,debug=False)
+        L.info("http://localhost:8766");__import__('waitress').serve(app,host="127.0.0.1",port=8766)
     else:launch()
 
 # ── DeepSeek Agent 集成面板 ──
@@ -1861,4 +1861,4 @@ _reg_url = "https://platform.deepseek.com/api_keys"
 def ds_register():
     return jsonify({"ok":True,"url":_reg_url,"steps":["1. 打开链接","2. 登录/注册","3. 创建API Key","4. 复制sk-xxx","5. 填入credentials.json或设置环境变量"],"auto_detect":True})
 
-if __name__=="__main__":main()
+if __name__=="__m
