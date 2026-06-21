@@ -46,7 +46,39 @@ class UniversalMCP:
         try:
             with open(self.cfg, "r", encoding="utf-8") as f:
                 c = json.load(f)
+            # 智能解析 workspaceFolder: 搜索 .git 目录找到真正的项目根
             wd = os.getcwd()
+            # 策略: CWD子目录(项目) → CWD向上(子目录内) → 脚本上级目录
+            found = False
+            # 1. 优先搜索 CWD 的直接子目录 (常放多个项目)
+            try:
+                projects = []
+                for entry in os.scandir(wd):
+                    if entry.is_dir() and os.path.isdir(os.path.join(entry.path, ".git")):
+                        projects.append(entry.path)
+                if projects:
+                    # 如果有多个项目，选第一个 (通常是最常用的)
+                    wd = projects[0]; found = True
+            except OSError:
+                pass
+            # 2. 如果没找到，从 CWD 向上搜索 (处理 CWD 在项目子目录的情况)
+            if not found:
+                p = os.path.abspath(wd)
+                for _ in range(10):
+                    if os.path.isdir(os.path.join(p, ".git")) and p != os.path.expanduser("~"):
+                        wd = p; found = True; break
+                    parent = os.path.dirname(p)
+                    if parent == p: break
+                    p = parent
+            # 3. 从脚本所在目录向上搜索 (fallback)
+            if not found:
+                p = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                for _ in range(10):
+                    if os.path.isdir(os.path.join(p, ".git")):
+                        wd = p; found = True; break
+                    parent = os.path.dirname(p)
+                    if parent == p: break
+                    p = parent
             for n, cfg in c.get("mcpServers", {}).items():
                 args = [a.replace("${workspaceFolder}", wd) for a in cfg.get("args", [])]
                 env = {}
