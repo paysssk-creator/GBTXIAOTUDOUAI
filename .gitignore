@@ -34,8 +34,9 @@ VULN-FINDINGS.md
 CLEANUP_PLAN.md
 cleanup_files.txt
 
-# Runtime data
+# Runtime data (self-evolve memory, databases)
 data/
+store.json
 monitoring.db/
 
 # Temp dev scripts
