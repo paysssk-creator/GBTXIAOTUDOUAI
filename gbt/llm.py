@@ -137,7 +137,15 @@ class GBTLLM:
         mt = kwargs.get("max_tokens", self.max_tokens)
         print(f"🧠 [{self.provider_name}] {self.model}...")
         start = time.time()
-        prompt_text = " ".join(m.get("content","") for m in messages)
+        prompt_text = ""
+        try:
+            prompt_text = " ".join(
+                m.get("content","") if isinstance(m.get("content"), str)
+                else " ".join(c.get("text","") for c in m.get("content",[]) if c.get("type")=="text")
+                for m in messages
+            )
+        except Exception:
+            prompt_text = "<multimodal message>"
         try:
             resp = self._client.chat.completions.create(
                 model=self.model, messages=messages,
@@ -183,6 +191,21 @@ class GBTLLM:
         except Exception as e:
             print(f"\n❌ 中断: {e}")
         return full
+
+    def chat_with_vision(self, prompt: str, image_base64: str = "",
+                          system_prompt: str = "", **kwargs) -> str:
+        """Vision chat - send image+text to LLM (GPT-4V/GLM-4V/llava)"""
+        content = []
+        if image_base64:
+            content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{image_base64}"}
+            })
+        content.append({"type": "text", "text": prompt})
+        messages = [{"role": "user", "content": prompt, "images": [image_base64]}] if self.provider == "ollama" else [{"role": "user", "content": content}]
+        if system_prompt:
+            messages.insert(0, {"role": "system", "content": system_prompt})
+        return self.invoke(messages, **kwargs)
 
     def list_models(self) -> List[str]:
         return PROVIDERS.get(self.provider, {}).get("models", [])

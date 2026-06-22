@@ -125,30 +125,99 @@ class Autopilot:
     def analyze(self, screen: ScreenState, task: str) -> List[TradingAction]:
         if not self.llm:
             return self._mock_analyze(task)
-        prompt = f"""你是自主操盘AI。任务:{task}
-支持的action: click(x,y), type(text), hotkey(k1,k2), press(k), scroll(n), wait(s), navigate(url), search(text), tab(n)
-请基于屏幕截图分析,返回JSON: {{"observation":"...","actions":[{{"type":"...","params":{{}}}}]}}
-如任务完成返回: {{"done":true,"summary":"..."}}"""
+
+        # 加载A股操盘知识库
         try:
-            resp = self.llm.chat(prompt=prompt, image_base64=screen.base64)
-            plan = json.loads(resp) if isinstance(resp, str) else resp
+            from gbt.knowledge_base import get_system_prompt
+            kb = get_system_prompt()
+        except ImportError:
+            kb = ""
+
+        prompt = f"""你是桌面自主操盘AI。当前任务: {task}
+
+请分析当前屏幕截图，按以下步骤思考:
+1. 屏幕上是什么界面?(浏览器/交易软件/桌面?)
+2. 有哪些可操作的元素?(按钮/输入框/K线图/股票列表?)
+3. 基于知识库的技术指标，当前市场信号是什么?
+4. 下一步应该执行什么操作?
+
+返回JSON:
+{{"observation":"屏幕内容描述",
+  "decision":"buy/sell/hold/watch",
+  "reasoning":"基于技术分析的决策理由",
+  "confidence":0.0-1.0,
+  "actions":[{{"type":"click","params":{{"x":100,"y":200}}}}, ...]
+}}
+
+如果任务已完成,返回: {{"done":true,"summary":"完成描述"}}"""
+
+        try:
+            resp = self.llm.chat_with_vision(
+                prompt=prompt,
+                image_base64=screen.base64,
+                system_prompt=kb
+            )
+            # 提取JSON
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', resp)
+            if json_match:
+                plan = json.loads(json_match.group())
+            else:
+                plan = {"observation": resp[:200], "actions": []}
+
             if plan.get("done"):
                 self._stop = True; return []
+
+            obs = plan.get("observation", "")
+            dec = plan.get("decision", "")
+            reason = f"{obs} | 决策:{dec}"
+
             return [TradingAction(a.get("type",""),
+                    target=a.get("target",""),
                     params=a.get("params",{}),
-                    reasoning=plan.get("observation","")) for a in plan.get("actions",[])]
+                    reasoning=reason) for a in plan.get("actions",[])]
+
         except Exception as e:
-            L.error(f"analyze failed: {e}"); return []
+            L.error(f"LLM分析失败: {e}, 降级模拟模式")
+            return self._mock_analyze(task)
 
     def _mock_analyze(self, task: str) -> List[TradingAction]:
         acts = []
-        if "搜索" in task:
-            acts += [TradingAction("search", params={"text":"600519"}),
+        if "搜索" in task or "600519" in task or "贵州茅台" in task:
+            acts += [TradingAction("search", params={"text":"600519"},
+                     reasoning="搜索贵州茅台"),
                      TradingAction("wait", params={"seconds":2})]
-        if "买入" in task:
-            acts += [TradingAction("click", params={"x":800,"y":600}),
-                     TradingAction("wait", params={"seconds":1}),
-                     TradingAction("press", params={"key":"enter"})]
+        if "买入" in task or "buy" in task.lower():
+            acts += [
+                TradingAction("click", params={"x":700,"y":500},
+                    reasoning="点击买入按钮"),
+                TradingAction("wait", params={"seconds":0.8}),
+                TradingAction("type", params={"text":"100"},
+                    reasoning="输入数量100股"),
+                TradingAction("wait", params={"seconds":0.5}),
+                TradingAction("press", params={"key":"enter"},
+                    reasoning="确认下单"),
+            ]
+        if "卖出" in task or "sell" in task.lower():
+            acts += [
+                TradingAction("click", params={"x":800,"y":500},
+                    reasoning="点击卖出按钮"),
+                TradingAction("wait", params={"seconds":0.8}),
+                TradingAction("type", params={"text":"100"},
+                    reasoning="输入数量"),
+                TradingAction("press", params={"key":"enter"},
+                    reasoning="确认"),
+            ]
+        if "分析" in task or "走势" in task or "K线" in task:
+            acts += [
+                TradingAction("scroll", params={"clicks":-8},
+                     reasoning="向下滚动看K线图"),
+                TradingAction("wait", params={"seconds":1.5}),
+                TradingAction("scroll", params={"clicks":-5},
+                     reasoning="继续滚动查看更多K线"),
+            ]
+        if not acts:
+            acts = [TradingAction("wait", params={"seconds":2})]
         return acts
 
     def execute(self, action: TradingAction) -> Dict:
