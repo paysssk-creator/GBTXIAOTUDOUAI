@@ -191,7 +191,7 @@ window.addEventListener('unhandledrejection',function(e){fetch('/api/access_log?
       srvs.forEach(function(s){
         var sid=typeof s==='string'?s:(s.id||s.name||'');
         var sname=typeof s==='string'?s:(s.name||s.id||'');
-        mh+='<div class="d4-mcpi" data-mcp="'+esc(sid)+'" onclick="window._execMcp(''+esc(sid)+'',this)"><span class="d4-dot on"></span>'+esc(sname)+'</div>';
+        mh+='<div class="d4-mcpi" data-mcp="'+esc(sid)+'" onclick="window._execMcp(&quot;'+esc(sid)+'&quot;,this)"><span class="d4-dot on"></span>'+esc(sname)+'</div>';
       });
       q('d4-mcpgrid').innerHTML=mh||'<span style="color:var(--t4);font-size:10px">无MCP服务</span>';
       // 电脑
