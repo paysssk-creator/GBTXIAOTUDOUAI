@@ -321,6 +321,8 @@ def sanitize_json(raw):
         return json.loads(raw)
     except:
         pass
+    raw = __import__('re').sub(r'```\w*\s*', '', raw)
+    raw = __import__('re').sub(r'```', '', raw)
     m = __import__('re').search(r'\{[\s\S]*\}', raw)
     if m:
         s = m.group()
