@@ -130,21 +130,55 @@ class WindowsController:
 
     # ── 语音/音频 ──
     def _voice_listen(self, dur: int=5, lang: str="zh-CN") -> WinResult:
+        """语音识别: 自动探测WASAPI/MME麦克风 > Google/离线识别"""
         try:
             import speech_recognition as sr
+            import pyaudio as _pa
+
+            # 智能探测可用麦克风 (优先WASAPI真实麦克风 > 排除立体声混音)
+            mic_idx = None
+            p = _pa.PyAudio()
+            for host_api in [3, 0]:
+                for i in range(p.get_device_count()):
+                    info = p.get_device_info_by_index(i)
+                    if info.get("maxInputChannels", 0) > 0 and info.get("hostApi") == host_api:
+                        name = info.get("name", "")
+                        if "Stereo" not in name and "Mix" not in name and "混音" not in name:
+                            mic_idx = i
+                            L.info(f"Mic: [{i}] {name} (hostApi={host_api})")
+                            break
+                if mic_idx is not None:
+                    break
+            p.terminate()
+
+            if mic_idx is None:
+                return WinResult(False, "voice", "listen",
+                                 error="未检测到麦克风,请检查Windows隐私设置")
+
             r = sr.Recognizer()
-            with sr.Microphone() as s:
-                r.adjust_for_ambient_noise(s, 1)
-                print(f"🎤 监听{dur}s...")
-                audio = r.listen(s, timeout=dur, phrase_time_limit=dur)
-            try: txt = r.recognize_google(audio, language=lang)
+            try:
+                mic_dev = sr.Microphone(device_index=mic_idx)
+                with mic_dev as s:
+                    r.adjust_for_ambient_noise(s, duration=0.5)
+                    r.energy_threshold = 300
+                    audio = r.listen(s, timeout=dur + 2, phrase_time_limit=dur)
+            except AttributeError:
+                return WinResult(False, "voice", "listen",
+                    error="麦克风被Windows隐私设置锁定\n请打开: 设置>隐私和安全性>麦克风>允许桌面应用访问麦克风")
+            except OSError:
+                return WinResult(False, "voice", "listen",
+                    error="无法打开麦克风设备,请检查驱动或插入麦克风")
+            try:
+                txt = r.recognize_google(audio, language=lang)
             except Exception as e:
-                L.debug(f"Google语音识别失败，降级 Sphinx: {e}")
+                L.debug(f"Google识别失败,降级Sphinx: {e}")
                 txt = r.recognize_sphinx(audio)
-            return WinResult(True,"voice","listen",data=txt)
+            return WinResult(True, "voice", "listen", data=txt)
         except ImportError:
-            return WinResult(False,"voice","listen",error="pip install SpeechRecognition pyaudio")
-        except Exception as e: return WinResult(False,"voice","listen",error=str(e))
+            return WinResult(False, "voice", "listen",
+                             error="pip install SpeechRecognition pyaudio")
+        except Exception as e:
+            return WinResult(False, "voice", "listen", error=str(e))
 
     def _voice_speak(self, text: str="", rate: int=180) -> WinResult:
         """语音合成: edge-tts晓晓御姐音 > pyttsx3慧慧 > SAPI降级"""
