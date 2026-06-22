@@ -343,6 +343,39 @@ class WindowsController:
             shell=False, capture_output=True, text=True, timeout=10)
         return WinResult(True,"bt","status",data=r.stdout[:1000])
 
+    def _bt_pair(self, name: str="") -> WinResult:
+        try:
+            cmd = f"Get-PnpDevice -Class Bluetooth|Where FriendlyName -Like '*{name}*'|Select FriendlyName,Status"
+            out = self._ps(cmd)
+            return WinResult(True,"bt","pair",data=f"scan: {out[:300]}")
+        except Exception as e:
+            return WinResult(False,"bt","pair",error=str(e)[:200])
+
+    def _bt_connect(self, name: str="") -> WinResult:
+        if not name: return WinResult(False,"bt","connect",error="need device name")
+        try:
+            self._ps(f"$d=Get-PnpDevice -Class Bluetooth -FriendlyName '*{name}*'|Where Status -ne 'OK';if($d){{$d|Enable-PnpDevice -Confirm:$false;'connected'}}else{{'already_ok'}}")
+            return WinResult(True,"bt","connect",data=f"{name}: connected")
+        except Exception as e:
+            return WinResult(False,"bt","connect",error=str(e)[:200])
+
+    def _bt_disconnect(self, name: str="") -> WinResult:
+        if not name: return WinResult(False,"bt","disconnect",error="need device name")
+        try:
+            self._ps(f"Get-PnpDevice -Class Bluetooth -FriendlyName '*{name}*'|Where Status -eq 'OK'|Disable-PnpDevice -Confirm:$false")
+            return WinResult(True,"bt","disconnect",data=f"{name}: disconnected")
+        except Exception as e:
+            return WinResult(False,"bt","disconnect",error=str(e)[:200])
+
+    def _bt_remove(self, name: str="") -> WinResult:
+        if not name: return WinResult(False,"bt","remove",error="need device name")
+        try:
+            self._ps(f"Get-PnpDevice -Class Bluetooth -FriendlyName '*{name}*'|Remove-PnpDevice -Confirm:$false")
+            return WinResult(True,"bt","remove",data=f"{name}: removed")
+        except Exception as e:
+            return WinResult(False,"bt","remove",error=str(e)[:200])
+
+
     # ── 系统 ──
     def _lock_do(self) -> WinResult:
         subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"], shell=False)
