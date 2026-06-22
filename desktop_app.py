@@ -56,7 +56,15 @@ def hacker_exec_cap():
                 if cap.name==cid:
                     try: result=agent.execute(cid,act);return jsonify({"ok":result.ok,"data":str(result.data)[:3000] if result.data else "","agent":result.agent,"error":result.error})
                     except Exception as e:return jsonify({"ok":False,"error":str(e)})
-    except: pass;return jsonify({"ok":False,"error":f"Unknown:{cid}"})
+    except: pass
+    mcp_ids=["scanner","audit","auto-fix","self-evolve","bounty-hunter","stress-test","mirror-deploy","deepseek-analyzer","intelligent-scheduler","email-watcher","rustdesk","halo-cms","desktop-control","cloud-llm","memory"]
+    if cid in mcp_ids:
+        try:
+            from gbt.mcp import call_mcp
+            r=call_mcp(cid,timeout=3)
+            return jsonify({"ok":r.ok,"data":str(r.data)[:3000] if r.data else "","error":r.error})
+        except Exception as e:return jsonify({"ok":False,"error":f"MCP timeout: {str(e)[:50]}"})
+    return jsonify({"ok":False,"error":f"Unknown:{cid}"})
 
 @app.route("/api/providers")
 def prov():
