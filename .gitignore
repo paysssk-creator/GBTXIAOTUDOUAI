@@ -19,6 +19,7 @@ data/
 logs/
 *.log
 
+.clinerules
 # Cline / GBT internals
 .cline-memory.md
 .gbt/
