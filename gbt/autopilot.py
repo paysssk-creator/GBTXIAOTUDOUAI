@@ -317,6 +317,26 @@ def sanitize_json(raw):
     m = __import__('re').search(r'\{[\s\S]*\}', raw)
     if m:
         s = m.group()
+
+
+# ── OCR视觉降级 ──
+def ocr_screen_for_llm(img=None):
+    """OCR提取屏幕文字, 组合成文本描述发给LLM"""
+    if img is None:
+        img = ImageGrab.grab()
+    try:
+        from .ocr import ImageToText
+        ocr = ImageToText()
+        result = ocr.ocr_region(0, 0, img.width, img.height)
+        return result.text[:2000] if result else ""
+    except Exception:
+        # Fallback: pytesseract
+        try:
+            import pytesseract
+            return pytesseract.image_to_string(img, lang='chi_sim+eng')[:2000]
+        except Exception:
+            return "(OCR unavailable - screenshot only)"
+
         s = __import__('re').sub(r'//.*', '', s)
         s = __import__('re').sub(r',\s*}', '}', s)
         try:
