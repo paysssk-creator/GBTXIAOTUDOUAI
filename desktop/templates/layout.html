@@ -156,53 +156,47 @@ body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sa
 <div id="toast"></div>
 <script>
 
-// fetch polyfill for IE11
-if(typeof fetch==='undefined'){
-  window.fetch=function(url,opt){
-    return new Promise(function(resolve,reject){
-      var xhr=new XMLHttpRequest();
-      xhr.open((opt&&opt.method)||'GET',url,true);
-      if(opt&&opt.headers){for(var k in opt.headers){if(opt.headers.hasOwnProperty(k))xhr.setRequestHeader(k,opt.headers[k])}}
-      xhr.onload=function(){
-        resolve({status:xhr.status,json:function(){return Promise.resolve(JSON.parse(xhr.responseText))},text:function(){return Promise.resolve(xhr.responseText)}});
-      };
-      xhr.onerror=function(){reject(new Error('Network error'))};
-      xhr.ontimeout=function(){reject(new Error('Timeout'))};
-      xhr.send(opt&&opt.body||null);
-    });
-  };
-}
-// Promise polyfill if needed
-if(typeof Promise==='undefined'){
-  window.Promise=function(executor){
-    var callbacks=[],errbacks=[],resolved=false,rejected=false,value;
-    this.then=function(cb,eb){if(resolved)cb(value);else if(rejected&&eb)eb(value);else{callbacks.push(cb);if(eb)errbacks.push(eb)}return this};
-    this.catch=function(eb){if(rejected)eb(value);else errbacks.push(eb);return this};
-    function resolve(v){if(!resolved&&!rejected){resolved=true;value=v;callbacks.forEach(function(cb){cb(v)})}}
-    function reject(v){if(!resolved&&!rejected){rejected=true;value=v;errbacks.forEach(function(eb){eb(v)})}}
-    try{executor(resolve,reject)}catch(e){reject(e)}
-  };
-  window.Promise.resolve=function(v){return new Promise(function(r){r(v)})};
-}
-// Element.remove polyfill
-if(!('remove' in Element.prototype)){
-  Element.prototype.remove=function(){if(this.parentNode)this.parentNode.removeChild(this)};
-}
-}
-
-
-var currentTab='dash';
 var D=document;
 function $(id){return D.getElementById(id)}
-function toast(msg){
-  var t=$('toast');
-  if(!t)return;
-  var d=D.createElement('div');
-  d.className='toast';
-  d.textContent=msg;
-  t.appendChild(d);
-  setTimeout(function(){d.remove()},3000);
+
+// XHR helper - pure callback, no Promise
+function api(url,cb,method,body){
+  var x=new XMLHttpRequest();
+  x.open(method||'GET',url+'?_='+Date.now(),true);
+  if(body)x.setRequestHeader('Content-Type','application/json');
+  x.onreadystatechange=function(){
+    if(x.readyState===4){
+      if(x.status===200){
+        try{var d=JSON.parse(x.responseText);cb(d,null)}catch(e){cb(null,'Parse error')}
+      }else{cb(null,'HTTP '+x.status)}
+    }
+  };
+  x.onerror=function(){cb(null,'Network error')};
+  x.timeout=8000;
+  x.ontimeout=function(){cb(null,'Timeout')};
+  try{x.send(body||null)}catch(e){cb(null,String(e))}
 }
+
+function esc(t){
+  var e=D.createElement('span');e.textContent=t||'';return e.innerHTML;
+}
+
+var toastQ=[];
+function toast(msg){
+  toastQ.push(msg);
+  if(toastQ.length>5)toastQ.shift();
+  var t=$('toast');if(!t)return;
+  var h='';
+  for(var i=0;i<toastQ.length;i++)h+='<div class=toast>'+esc(toastQ[i])+'</div>';
+  t.innerHTML=h;
+  setTimeout(function(){
+    toastQ.shift();
+    var h2='';
+    for(var j=0;j<toastQ.length;j++)h2+='<div class=toast>'+esc(toastQ[j])+'</div>';
+    if(t)t.innerHTML=h2;
+  },3000);
+}
+
 function switchTab(tab){
   var tabs=['dash','hacker','trade','desktop'];
   for(var i=0;i<tabs.length;i++){
@@ -210,175 +204,173 @@ function switchTab(tab){
     if(el)el.style.display=tabs[i]===tab?'':'none';
   }
   var btns=D.querySelectorAll('.side-btn');
-  for(var i=0;i<btns.length;i++){
-    btns[i].className='side-btn';
-  }
-  if(tab==='dash')$('side-dash').className='side-btn on';
-  if(tab==='hacker'){$('side-hacker').className='side-btn on';loadHackerTab();}
-  if(tab==='trade'){$('side-trade').className='side-btn on';loadTradeTab();}
-  if(tab==='desktop'){$('side-desktop').className='side-btn on';loadDesktopTab();}
+  for(var j=0;j<btns.length;j++)btns[j].className='side-btn';
+  var active=$('side-'+tab);
+  if(active)active.className='side-btn on';
+  if(tab==='hacker')loadHacker();
+  if(tab==='trade')loadTrade();
+  if(tab==='desktop')loadDesktop();
   currentTab=tab;
 }
-function esc(t){
-  var e=D.createElement('span');
-  e.textContent=t||'';
-  return e.innerHTML;
-}
+
+// ── Dashboard refresh ──
 function refreshDash(){
-  fetch('/api/dashboard',{headers:{'X-No-Cache':Date.now()}}).then(function(r){return r.json()}).then(function(d){
+  api('/api/dashboard',function(d,err){
+    if(err){console.log('dash err:',err);return}
     // LLM
-    var lm=d.llm||{};
-    var tt=lm.totals||{};
-    var ct=lm.current||{};
-    var t=$('dash-tokens');if(t)t.textContent=(tt.tokens_total||0).toLocaleString();
-    var c=$('dash-cost');if(c)c.textContent='¥'+(tt.cost_rmb||0).toFixed(4);
-    var ca=$('dash-calls');if(ca)ca.textContent=(tt.requests||0).toLocaleString();
-    var cm=$('dash-model');if(cm)cm.textContent=ct.model||'--';
-    var cu=$('dash-uptime');if(cu)cu.textContent='⇧'+(lm.uptime_h||0).toFixed(1)+'h';
-    var hh='';
-    var hist=lm.history||[];
+    var lm=d.llm||{};var tt=lm.totals||{};var ct=lm.current||{};
+    setText('dash-tokens',(tt.tokens_total||0).toLocaleString());
+    setText('dash-cost','¥'+(tt.cost_rmb||0).toFixed(4));
+    setText('dash-calls',(tt.requests||0).toLocaleString());
+    setText('dash-model',ct.model||'--');
+    setText('dash-uptime','⇧'+(lm.uptime_h||0).toFixed(1)+'h');
+    var hh='';var hist=lm.history||[];
     for(var hi=Math.max(0,hist.length-10);hi<hist.length;hi++){
       var h=hist[hi];
-      hh='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>'+hh;
+      hh+='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>';
     }
-    var htel=$('dash-llmhist');if(htel)htel.innerHTML=hh||'<tr><td colspan=5 style=color:#64748b>无记录</td></tr>';
+    setHTML('dash-llmhist',hh||'<tr><td colspan=5 style=color:#64748b>无记录</td></tr>');
     // Trade
-    var td=d.trade||{};
-    var acct=td.account||{};
-    var dca=$('dash-cash');if(dca)dca.textContent='¥'+(acct.cash||0).toLocaleString();
-    var deq=$('dash-equity');if(deq)deq.textContent='¥'+(acct.equity||0).toLocaleString();
-    var pnl=acct.pnl||0;
-    var dpn=$('dash-pnl');
-    if(dpn){
-      dpn.textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
-      dpn.style.color=pnl>=0?'var(--g)':'var(--r)';
-    }
-    var dpo=$('dash-pos');if(dpo)dpo.textContent=(acct.positions||0);
-    var dts=$('dash-trade-status');if(dts)dts.textContent=td.auto_trade?'自主交易':'手动';
-    var wl='';
-    var watchlist=td.watchlist||[];
+    var td=d.trade||{};var acct=td.account||{};
+    setText('dash-cash','¥'+(acct.cash||0).toLocaleString());
+    setText('dash-equity','¥'+(acct.equity||0).toLocaleString());
+    var pnl=acct.pnl||0;setText('dash-pnl','¥'+(pnl>=0?'+':'')+Math.abs(pnl).toLocaleString());
+    var dpn=$('dash-pnl');if(dpn)dpn.style.color=pnl>=0?'var(--g)':'var(--r)';
+    setText('dash-pos',String(acct.positions||0));
+    setText('dash-trade-status',td.auto_trade?'自主交易':'手动');
+    var wl='';var watchlist=td.watchlist||[];
     for(var wi=0;wi<watchlist.length;wi++){
-      var w=watchlist[wi];
-      wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>';
+      var w=watchlist[wi];wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>';
     }
-    var dwl=$('dash-watchlist');if(dwl)dwl.innerHTML=wl||'<tr><td colspan=4 style=color:#64748b>暂无</td></tr>';
+    setHTML('dash-watchlist',wl||'<tr><td colspan=4 style=color:#64748b>暂无</td></tr>');
     // System
     var sy=d.system||{};
-    var dsh=$('dash-host');if(dsh)dsh.textContent=sy.host||'';
-    var cpu=sy.cpu||0;
-    var dcv=$('dash-cpuval');if(dcv)dcv.textContent=cpu.toFixed(1)+'%';
+    setText('dash-host',sy.host||'');
+    var cpu=sy.cpu||0;setText('dash-cpuval',cpu.toFixed(1)+'%');
     var dcb=$('dash-cpubar');if(dcb)dcb.style.width=cpu+'%';
-    var mem=sy.memory||0;
-    var dmv=$('dash-memval');if(dmv)dmv.textContent=mem.toFixed(1)+'%';
+    var mem=sy.memory||0;setText('dash-memval',mem.toFixed(1)+'%');
     var dmb=$('dash-membar');if(dmb)dmb.style.width=mem+'%';
-    var dsk=sy.disk||0;
-    var ddv=$('dash-diskval');if(ddv)ddv.textContent=dsk.toFixed(1)+'%';
+    var dsk=sy.disk||0;setText('dash-diskval',dsk.toFixed(1)+'%');
     var ddb=$('dash-diskbar');if(ddb)ddb.style.width=dsk+'%';
-    // Procs
-    var ph='';
-    var procs=(d.desktop||{}).top_processes||[];
+    var ph='';var procs=(d.desktop||{}).top_processes||[];
     for(var pi=0;pi<procs.length;pi++){
-      var p=procs[pi];
-      ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+(p.pid||'')+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>';
+      var p=procs[pi];ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+(p.pid||'')+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>';
     }
-    var dpr=$('dash-procs');if(dpr)dpr.innerHTML=ph||'<tr><td colspan=4 style=color:#64748b>无数据</td></tr>';
+    setHTML('dash-procs',ph||'<tr><td colspan=4 style=color:#64748b>无数据</td></tr>');
     // Services
-    var mcp=d.mcp||{};
-    var srvs=mcp.servers||[];
-    var dsc=$('dash-srvcnt');if(dsc)dsc.textContent=srvs.length+'服务';
+    var mcp=d.mcp||{};var srvs=mcp.servers||[];
+    setText('dash-srvcnt',srvs.length+'服务');
     var sh='';
     for(var si=0;si<srvs.length;si++){
-      var s=srvs[si];
-      var n=typeof s==='string'?s:(s.id||s.name||'');
+      var s=srvs[si];var n=typeof s==='string'?s:(s.id||s.name||'');
       sh+='<div class=cap-item><span class=cap-dot style=background:#22c55e></span>'+esc(n)+'</div>';
     }
-    var dsv=$('dash-services');if(dsv)dsv.innerHTML=sh||'<span style=color:#64748b;font-size:10px>无MCP服务</span>';
-    // Status sidebar
-    var sdot=D.getElementById('status-dot');if(sdot)sdot.className='dot on';
+    setHTML('dash-services',sh||'<span style=color:#64748b;font-size:10px>无MCP服务</span>');
+    // Status
+    var sdot=D.getElementById('status-dot');if(sdot){sdot.className='dot on'}
     var stxt=D.getElementById('status-text');if(stxt)stxt.textContent='在线';
     var ci=D.getElementById('cpu-info');if(ci)ci.textContent='CPU '+cpu.toFixed(0)+'% | MEM '+mem.toFixed(0)+'%';
-    // Market ticker
-    loadMarketTicker();
-  }).catch(function(e){console.log('dash error:',e)});
+    // Market
+    loadMarket();
+  });
 }
-function loadMarketTicker(){
-  fetch('/api/market').then(function(r){return r.json()}).then(function(d){
-    var mt=$('market-ticker');
-    if(!mt)return;
-    if(!d.ok){mt.innerHTML='<span style=color:#64748b;font-size:10px>行情接口未就绪</span>';return}
-    var html='';
-    var indices=d.indices||[];
-    for(var i=0;i<indices.length;i++){
-      var idx=indices[i];
-      var cls=idx.pct>=0?'green':'red';
-      html+='<div class=ticker-item><span class=ticker-name>'+esc(idx.name)+'</span><span class="ticker-val '+cls+'">'+esc(String(idx.price))+'</span><span class='+cls+'>'+(idx.pct>=0?'+':'')+(idx.pct||0).toFixed(2)+'%</span></div>';
+
+function setText(id,val){var el=$(id);if(el)el.textContent=val}
+function setHTML(id,val){var el=$(id);if(el)el.innerHTML=val}
+
+function loadMarket(){
+  api('/api/market',function(d,err){
+    var mt=$('market-ticker');if(!mt)return;
+    if(err||!d||!d.ok){mt.innerHTML='<span style=color:#64748b;font-size:10px>行情暂不可用</span>';return}
+    var h='';var idx=d.indices||[];
+    for(var i=0;i<idx.length;i++){
+      var x=idx[i];var cl=x.pct>=0?'green':'red';
+      h+='<div class=ticker-item><span class=ticker-name>'+esc(x.name)+'</span><span class="ticker-val '+cl+'">'+esc(String(x.price))+'</span><span class='+cl+'>'+(x.pct>=0?'+':'')+(x.pct||0).toFixed(2)+'%</span></div>';
     }
-    mt.innerHTML=html||'<span style=color:#64748b;font-size:10px>暂无行情</span>';
-  }).catch(function(){var mt=$('market-ticker');if(mt)mt.innerHTML='<span style=color:#64748b;font-size:10px>行情加载中...</span>'});
+    mt.innerHTML=h||'<span style=color:#64748b;font-size:10px>暂无行情</span>';
+  });
 }
-function loadHackerTab(){
-  fetch('/api/hacker/capabilities').then(function(r){return r.json()}).then(function(d){
-    var hc=$('hack-capcnt');if(hc)hc.textContent=d.total+'项';
-    var html='';
-    var caps=d.capabilities||[];
+
+// ── Hacker tab ──
+function loadHacker(){
+  api('/api/hacker/capabilities',function(d,err){
+    if(err)return;
+    setText('hack-capcnt',d.total+'项');
+    var h='';var caps=d.capabilities||[];
     for(var i=0;i<caps.length;i++){
       var c=caps[i];
-      html+='<div class=cap-item onclick=execCap("'+esc(c.id)+'") title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'#22c55e':'#6366f1')+'"></span>'+esc(c.id)+'</div>';
+      h+='<div class=cap-item onclick="execCap(''+esc(c.id)+'')" title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'#22c55e':'#6366f1')+'"></span>'+esc(c.id)+'</div>';
     }
-    var hg=$('hack-grid');if(hg)hg.innerHTML=html;
-  }).catch(function(){});
+    setHTML('hack-grid',h);
+  });
 }
+
 function execCap(cid){
-  var log=$('hack-log');
-  if(log)log.textContent='执行: '+cid+'...';
-  fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})}).then(function(r){return r.json()}).then(function(d){
-    if(log)log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+  var log=$('hack-log');if(log)log.textContent='执行: '+cid+'...';
+  api('/api/hacker/exec',function(d,err){
+    if(log){
+      var tm=new Date().toLocaleTimeString();
+      if(err)log.textContent='['+tm+'] ERR '+cid+' '+err+'
+'+log.textContent;
+      else log.textContent='['+tm+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
 '+(d.data||d.error||'')+'
 ---
 '+log.textContent;
-    toast((d.ok?'✔ ':'✘ ')+cid+(d.ok?' 执行成功':' '+d.error));
-  }).catch(function(e){if(log)log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
-'+log.textContent});
+    }
+    toast((d&&d.ok?'✅ ':'❌ ')+cid+(d&&d.ok?' 成功':' '+(d?d.error:err||'')));
+  },'POST',JSON.stringify({id:cid,action:'run'}));
 }
-function loadTradeTab(){
-  fetch('/api/hacker/capabilities').then(function(r){return r.json()}).then(function(d){
+
+// ── Trade tab ──
+function loadTrade(){
+  api('/api/hacker/capabilities',function(d){
+    if(!d)return;
+    var caps=(d.capabilities||[]).filter||function(fn){var r=[];for(var i=0;i<this.length;i++)if(fn(this[i]))r.push(this[i]);return r;};
+    // IE11 compatible filter
     var tradeCaps=[];
-    var caps=d.capabilities||[];
-    for(var i=0;i<caps.length;i++){if(caps[i].cat==='trade')tradeCaps.push(caps[i])}
-    var html='<div class=cap-grid>';
-    for(var j=0;j<tradeCaps.length;j++){html+='<div class=cap-item onclick=execCap("'+esc(tradeCaps[j].id)+'")><span class=cap-dot style=background:#6366f1></span>'+esc(tradeCaps[j].id)+'</div>'}
-    html+='</div>';
-    var tq=$('trade-quotes');if(tq)tq.innerHTML=html;
-    fetch('/api/dashboard').then(function(r){return r.json()}).then(function(dd){
-      var td=dd.trade||{};
-      var wh='';
-      var wl=td.watchlist||[];
-      for(var k=0;k<wl.length;k++){wh+='<tr><td>'+esc(wl[k][0])+'</td><td>'+esc(wl[k][1])+'</td><td>--</td><td>--</td><td>--</td></tr>'}
-      var tw=$('trade-watchlist');if(tw)tw.innerHTML=wh||'<tr><td colspan=5 style=color:#64748b>暂无</td></tr>';
-    }).catch(function(){});
-  }).catch(function(){});
+    for(var i=0;i<d.capabilities.length;i++){if(d.capabilities[i].cat==='trade')tradeCaps.push(d.capabilities[i])}
+    var h='<div class=cap-grid>';
+    for(var j=0;j<tradeCaps.length;j++)h+='<div class=cap-item onclick="execCap(''+esc(tradeCaps[j].id)+'')"><span class=cap-dot style=background:#6366f1></span>'+esc(tradeCaps[j].id)+'</div>';
+    h+='</div>';setHTML('trade-quotes',h);
+    api('/api/dashboard',function(dd){
+      if(!dd)return;var td=dd.trade||{};var wh='';var wl=td.watchlist||[];
+      for(var k=0;k<wl.length;k++)wh+='<tr><td>'+esc(wl[k][0])+'</td><td>'+esc(wl[k][1])+'</td><td>--</td><td>--</td><td>--</td></tr>';
+      setHTML('trade-watchlist',wh||'<tr><td colspan=5 style=color:#64748b>暂无</td></tr>');
+    });
+  });
 }
-function loadDesktopTab(){
-  var actions=['screenshot','browser_open','window_maximize','keyboard_type','keyboard_hotkey','mouse_click','process_list','process_kill','window_focus','volume_control','system_lock'];
-  var html='';
-  for(var i=0;i<actions.length;i++){html+='<div class=cap-item onclick=execCapDesktop("'+actions[i]+'")><span class=cap-dot style=background:#6366f1></span>'+actions[i]+'</div>'}
-  var da=$('desk-actions');if(da)da.innerHTML=html;
-  fetch('/api/system').then(function(r){return r.json()}).then(function(d){
+
+// ── Desktop tab ──
+function loadDesktop(){
+  var acts=['screenshot','browser_open','window_maximize','keyboard_type','keyboard_hotkey','mouse_click','process_list','process_kill','window_focus','volume_control','system_lock'];
+  var h='';
+  for(var i=0;i<acts.length;i++)h+='<div class=cap-item onclick="execCapDesktop(''+acts[i]+'')"><span class=cap-dot style=background:#6366f1></span>'+acts[i]+'</div>';
+  setHTML('desk-actions',h);
+  api('/api/system',function(d){
+    if(!d)return;
     var di=$('desk-info');if(di)di.textContent='CPU '+d.cpu.toFixed(1)+'% | MEM '+d.memory.toFixed(1)+'% | '+d.host;
-  }).catch(function(){});
+  });
 }
+
 function execCapDesktop(cid){
-  var log=$('desk-log');
-  if(log)log.textContent='执行: '+cid+'...';
-  fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})}).then(function(r){return r.json()}).then(function(d){
-    if(log)log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+  var log=$('desk-log');if(log)log.textContent='执行: '+cid+'...';
+  api('/api/hacker/exec',function(d,err){
+    if(log){
+      var tm=new Date().toLocaleTimeString();
+      if(err)log.textContent='['+tm+'] ERR '+cid+' '+err+'
+'+log.textContent;
+      else log.textContent='['+tm+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
 '+(d.data||d.error||'')+'
 ---
 '+log.textContent;
-    toast((d.ok?'✔ ':'✘ ')+cid);
-  }).catch(function(e){if(log)log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
-'+log.textContent});
+    }
+    toast((d&&d.ok?'✅ ':'❌ ')+cid);
+  },'POST',JSON.stringify({id:cid,action:'run'}));
 }
+
+// Note: sidebar buttons set onclick directly in HTML (onclick="switchTab('dash')")
+// The read HTML already has these inline handlers
+var currentTab='dash';
 refreshDash();
 setInterval(refreshDash,5000);
 
