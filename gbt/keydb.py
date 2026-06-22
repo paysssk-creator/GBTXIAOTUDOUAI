@@ -53,6 +53,16 @@ class KeyDB:
         if r:
             try: return self._dec(r[0])
             except: pass
+        # cloud fallback
+        try:
+            from gbt.cloud_kv import CloudKV
+            cv = CloudKV()
+            if cv.connect():
+                v = cv.get(pid)
+                if v:
+                    self.save(pid, v, free=True, note="cloud")
+                    return v
+        except: pass
         return None
 
 
