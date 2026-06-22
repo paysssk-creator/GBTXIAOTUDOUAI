@@ -88,7 +88,7 @@ class UniversalMCP:
                     args=args, description=cfg.get("description", ""), env=env)
             print(f"🔌 MCP: {len(self._s)}个服务器")
         except Exception as e:
-            print(f"❌ MCP加载失败: {e}")
+            print(f"FAIL MCP加载失败: {e}")
 
     def list_servers(self) -> List[str]:
         return list(self._s.keys())
@@ -119,7 +119,7 @@ class UniversalMCP:
             if args: full.extend(args.split())
             parts = [srv.command] + full
             cmd = " ".join(f'"{p}"' if " " in p else p for p in parts)
-            print(f"🔌 {server} {' '.join(full[:2])}")
+            print(f"MCP {server} {' '.join(full[:2])}")
             env = os.environ.copy(); env.update(srv.env)
             r = subprocess.run(parts, shell=False, capture_output=True,
                 text=True, timeout=timeout, encoding='utf-8', errors='replace',
@@ -134,7 +134,7 @@ class UniversalMCP:
         except subprocess.TimeoutExpired:
             srv.status = MCPStatus.ERROR
             return MCPResult(ok=False, server=server, method=method,
-                error="⏱️超时", duration=time.time()-t0)
+                error="Timeout", duration=time.time()-t0)
         except Exception as e:
             srv.status = MCPStatus.ERROR
             return MCPResult(ok=False, server=server, method=method,
@@ -168,7 +168,7 @@ class UniversalMCP:
         for n, s in self._s.items():
             scr = s.args[0] if s.args else ""
             if not os.path.exists(scr):
-                h[n] = "⚪"
+                h[n] = "OFF"
                 continue
             try:
                 r = subprocess.run(
@@ -176,11 +176,11 @@ class UniversalMCP:
                     capture_output=True, text=True, timeout=3,
                     cwd=os.path.expanduser("~/.cline"),
                     env={**os.environ, **s.env})
-                h[n] = "🟢" if r.returncode == 0 else "🟡"
+                h[n] = "OK" if r.returncode == 0 else "WARN"
             except subprocess.TimeoutExpired:
-                h[n] = "🟡"
+                h[n] = "WARN"
             except Exception:
-                h[n] = "🔴"
+                h[n] = "ERR"
         return h
 
     def refresh(self):
