@@ -1,8 +1,18 @@
 """GBT Pro v2.1 — PyInstaller Frozen Entry Point
 Replaces app_launcher.py for standalone .exe builds.
 No .venv detection, no nanobrowser dependency.
+Includes single-instance lock to prevent duplicate launches.
 """
-import sys, os, time, threading, urllib.request
+import sys, os, time, threading, urllib.request, ctypes
+
+# ── Single-instance lock (Windows named mutex) ──
+MUTEX_NAME = "Local\\GBT_Pro_v2.1_SingleInstance"
+kernel32 = ctypes.windll.kernel32
+mutex = kernel32.CreateMutexW(None, False, MUTEX_NAME)
+if kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+    import tkinter.messagebox as mb
+    mb.showwarning("GBT Pro", "GBT Pro is already running!\nCheck your system tray or taskbar.")
+    sys.exit(0)
 
 # ── Determine base path (frozen or dev) ──
 if getattr(sys, 'frozen', False):
