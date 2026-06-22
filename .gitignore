@@ -1,50 +1,53 @@
-# Logs
-*.log
-
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
 
-# Build artifacts
-build/
-dist/
-GBT.spec
-*.spec
-gbt_agent_framework.egg-info/
+# Virtual environment
+.venv/
+venv/
+
+# Environment secrets
+.env
+.env.bak
+!.env.example
+
+# Runtime data
+paper_account.json
+store.json
+data/
+logs/
+*.log
+
+# Cline / GBT internals
+.cline-memory.md
+.gbt/
+monitoring.db/
+
+# Generated reports
+BOUNTY_REPORT_*.json
+BOUNTY_REPORT_*.md
+AUDIT_REPORT.json
+AUTO_FIX_PLAN.json
+VULN-FINDINGS.json
+VULN-FINDINGS.md
+
+# Bounty reports directory
+reports/
 
 # Screenshots
 screenshots/
 screen.png
 
-# Environment secrets
-.env
-.env.bak
-*.env.bak
-*.env.backup
-!.env.example
+# Build artifacts
+build/
+dist/
+*.spec
+*.egg-info/
 
-# Backup files
+# Backup / temp
 *.bak
 
-# Generated reports
-AUDIT_REPORT.json
-AUTO_FIX_PLAN.json
-VULN-FINDINGS.json
-VULN-FINDINGS.md
-CLEANUP_PLAN.md
-cleanup_files.txt
-
-# Runtime data (self-evolve memory, databases)
-data/
-store.json
-monitoring.db/
-
-# Virtual environment
-.venv/
-
-
-# Temp dev scripts
-check.py
-run.py
-test_gbt_app.py
-screen.py
+# IDE
+.vscode/
+.idea/
