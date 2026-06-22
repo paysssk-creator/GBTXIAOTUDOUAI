@@ -81,7 +81,7 @@ logo_file = ROOT / "desktop" / "GBT_logo.png"
 # ── Exclude problematic modules ──
 excludes = [
     'tkinter.test', 'unittest', 'test', 'pydoc',
-    'distutils', 'setuptools', 'pip',
+    'pip',
     'matplotlib', 'numpy', 'scipy', 'pandas',
     'notebook', 'jupyter', 'ipykernel',
     'tensorflow', 'torch',
