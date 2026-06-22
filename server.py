@@ -135,10 +135,15 @@ def dashboard_data():
         from gbt.trader import trader
         ts = trader.get_status() if trader else {}
         wl = getattr(trader,"watchlist",{}) or {}
+        account = {"cash":100000,"equity":100000,"pnl":0,"positions":0}
+        try:
+            pa = __pa.get_status()
+            account = pa
+        except:
+            pass
         data["trade"] = {"auto_trade": ts.get("auto_trade",False),
                          "watchlist_count": len(wl), "watchlist": list(wl.items())[:10],
-                         try:pa=__pa.get_status();data["trade"]["account"]=pa
-                         except:data["trade"]["account"]={"cash":100000,"equity":100000,"pnl":0,"positions":0}
+                         "account": account}
     except: data["trade"] = {"error": "trader not ready"}
     try:
         mcp = get_mcp()

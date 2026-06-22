@@ -222,8 +222,7 @@ def update_dashboard(d):
     tr_pnl.config(text=("+" if pnl >= 0 else "") + str(pnl), fg=G if pnl >= 0 else R)
     tr_wl.delete(1.0, tk.END)
     for w in (td.get("watchlist", []) or [])[:10]:
-        tr_wl.insert(tk.END, str(w[0]) + " " + str(w[1]) + "
-")
+        tr_wl.insert(tk.END, str(w[0]) + " " + str(w[1]) + "\n")
     # System
     sy = d.get("system", {}) or {}
     cpu = sy.get("cpu", 0)
@@ -246,8 +245,7 @@ def update_dashboard(d):
         pid = p.get("pid", 0)
         cp = p.get("cpu_percent", 0) or 0
         mp = p.get("memory_percent", 0) or 0
-        sys_procs.insert(tk.END, nm.ljust(32) + " PID:" + str(pid).rjust(6) + " CPU:" + str(round(cp,1)).rjust(5) + " MEM:" + str(round(mp,1)).rjust(5) + "
-")
+        sys_procs.insert(tk.END, nm.ljust(32) + " PID:" + str(pid).rjust(6) + " CPU:" + str(round(cp,1)).rjust(5) + " MEM:" + str(round(mp,1)).rjust(5) + "\n")
     # Services
     mcp = d.get("mcp", {}) or {}
     srvs = mcp.get("servers", []) or []
@@ -255,8 +253,7 @@ def update_dashboard(d):
     srv_list.delete(1.0, tk.END)
     for s in srvs:
         n = s if isinstance(s, str) else (s.get("id", "") or s.get("name", ""))
-        srv_list.insert(tk.END, "[ON] " + n + "
-")
+        srv_list.insert(tk.END, "[ON] " + n + "\n")
     # Status bar
     host = sy.get("host", "")
     status_text.config(text="Online | " + host)
@@ -291,17 +288,14 @@ hack_log = scrolledtext.ScrolledText(hack_view, height=6, bg=C2, fg=T2,
 hack_log.pack(fill=tk.X, padx=8, pady=(4, 8))
 
 def exec_cap(cid):
-    hack_log.insert(1.0, "Run: " + cid + "...
-")
+    hack_log.insert(1.0, "Run: " + cid + "...\n")
     def cb(d):
         if d:
             ok = d.get("ok", False)
             dt = str(d.get("data", "") or d.get("error", ""))[:200]
-            hack_log.insert(1.0, ("OK " if ok else "FAIL ") + cid + ": " + dt + "
-")
+            hack_log.insert(1.0, ("OK " if ok else "FAIL ") + cid + ": " + dt + "\n")
         else:
-            hack_log.insert(1.0, "ERR " + cid + "
-")
+            hack_log.insert(1.0, "ERR " + cid + "\n")
     api_post("/api/hacker/exec", {"id": cid, "action": "run"}, cb)
 
 def load_hacker():
@@ -354,19 +348,16 @@ def load_trade():
 def show_market(d):
     tr_quotes.delete(1.0, tk.END)
     if not d:
-        tr_quotes.insert(tk.END, "Market data unavailable
-")
+        tr_quotes.insert(tk.END, "Market data unavailable\n")
         return
     if d.get("ok"):
         for idx in (d.get("indices", []) or []):
             nm = idx.get("name", "")
             pr = idx.get("price", 0)
             pct = idx.get("pct", 0)
-            tr_quotes.insert(tk.END, nm.ljust(12) + str(pr).rjust(12) + ("  +" if pct >= 0 else "  ") + str(round(pct, 2)).rjust(7) + "%
-")
+            tr_quotes.insert(tk.END, nm.ljust(12) + str(pr).rjust(12) + ("  +" if pct >= 0 else "  ") + str(round(pct, 2)).rjust(7) + "%\n")
     else:
-        tr_quotes.insert(tk.END, "Error: " + str(d.get("error", "")) + "
-")
+        tr_quotes.insert(tk.END, "Error: " + str(d.get("error", "")) + "\n")
 
 # === DESKTOP VIEW ===
 desk_view = views["desktop"]
@@ -396,15 +387,12 @@ desk_actions = [
 ]
 
 def desk_action(cid):
-    desk_log.insert(1.0, "Run: " + cid + "...
-")
+    desk_log.insert(1.0, "Run: " + cid + "...\n")
     def cb(d):
         if d and d.get("ok"):
-            desk_log.insert(1.0, "OK " + cid + "
-")
+            desk_log.insert(1.0, "OK " + cid + "\n")
         else:
-            desk_log.insert(1.0, "FAIL " + cid + "
-")
+            desk_log.insert(1.0, "FAIL " + cid + "\n")
     api_post("/api/hacker/exec", {"id": cid, "action": "run"}, cb)
 
 def load_desktop():
@@ -418,8 +406,7 @@ def load_desktop():
         btn.pack(side=tk.LEFT, padx=2, pady=3)
     api_get("/api/system", lambda d: desk_log.insert(1.0,
         "System: CPU " + str((d or {}).get("cpu", 0)) + "% MEM " + str(
-            (d or {}).get("memory", 0)) + "%
-") if d else None)
+            (d or {}).get("memory", 0)) + "%\n") if d else None)
 
 # === FLASK STARTER + MAIN LOOP ===
 flask_proc = None
