@@ -9,6 +9,7 @@ FG0="#e6e8ec";FG1="#8b949e";ACC="#39d353";ACC2="#58a6ff";ERR="#f85149"
 class GBTWorkstation:
  def __init__(s):
   s.r=tk.Tk();s.r.title("GBT Workstation v4");s.r.geometry("1100x700");s.r.configure(bg=BG0)
+  s.r.attributes("-topmost",True);s.r.after(500,lambda:s.r.attributes("-topmost",False))
   s._c={};s._build();s._ctr()
  def _ctr(s):
   s.r.update_idletasks();x=s.r.winfo_width();y=s.r.winfo_height()
