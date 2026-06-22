@@ -43,6 +43,7 @@ screen.png
 # Build artifacts
 build/
 dist/
+build_log.txt
 *.spec
 !GBT_Desktop.spec
 *.egg-info/
