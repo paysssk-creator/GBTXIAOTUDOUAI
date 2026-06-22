@@ -8,6 +8,8 @@ from flask import Flask,render_template_string,jsonify,request
 
 DP=os.path.join(os.path.dirname(__file__),"desktop","templates","layout.html")
 DASH_HTML=open(DP,"r",encoding="utf-8").read() if os.path.exists(DP) else "<h1>GBT Pro</h1>"
+from gbt.knowledge.inject import inject_knowledge
+inject_knowledge()
 app=Flask(__name__)
 
 @app.route("/")
