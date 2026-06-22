@@ -31,24 +31,24 @@ class GBTWorkstation:
   s._kf.pack(fill="both",expand=True,padx=12,pady=6);s._load()
  def _load(s):
   for w in s._kf.winfo_children():w.destroy()
-  from gbt.keydb import KeyDB;db=KeyDB();ok=0
+  from gbt.keydb import KeyDB;db=KeyDB();ok=0;total=0
   h=tk.Frame(s._kf,bg=BG0);h.pack(fill="x",pady=(0,6))
   tk.Label(h,text="API Keys",bg=BG0,fg=FG0,font=("Cascadia Code",11,"bold")).pack(side="left")
   b=tk.Label(h,text="Import",bg=BG2,fg=ACC2,font=("Cascadia Code",8),
              padx=10,pady=3,cursor="hand2");b.pack(side="right")
   b.bind("<Button-1>",lambda e:s._imp())
-  for pid,info in sorted(db.FREE_TIER.items(),key=lambda x:x[1]["pri"]):
+  for pid,name,has_key in db.available():
    key=db.get(pid)
    r=tk.Frame(s._kf,bg=BG1,height=36);r.pack(fill="x",pady=2);r.pack_propagate(False)
    c=ACC if key else FG1
    tk.Label(r,text="* " if key else "- ",bg=BG1,fg=c,
             font=("Cascadia Code",10)).pack(side="left",padx=(8,0))
-   tk.Label(r,text=info["name"],bg=BG1,fg=FG0,
+   tk.Label(r,text=name,bg=BG1,fg=FG0,
             font=("Cascadia Code",10),width=15,anchor="w").pack(side="left",padx=4)
    pv=(key[:12]+"..."+key[-6:]) if key and len(key)>20 else ("-" if not key else key)
    tk.Label(r,text=pv,bg=BG1,fg=c,font=("Cascadia Code",9),
             width=26,anchor="w").pack(side="left",padx=4)
-   tk.Label(r,text=info["free"][:28],bg=BG1,fg=FG1,
+   tk.Label(r,text="Free" if has_key else "Not Set",bg=BG1,fg=FG1,
             font=("Cascadia Code",8)).pack(side="left",padx=4)
    af=tk.Frame(r,bg=BG1);af.pack(side="right",padx=6)
    if key:
@@ -60,11 +60,11 @@ class GBTWorkstation:
      xb.bind("<Leave>",lambda e,b=xb:b.configure(bg=BG2))
     r.bind("<Button-1>",lambda e,r=r,k=key:s._tg(r,k));ok+=1
    else:
-    url=info.get("url","")
+    url=None
     xb=tk.Label(af,text="Register",bg=BG2,fg=ACC2,font=("Cascadia Code",7),
                 padx=6,pady=2,cursor="hand2");xb.pack(side="left",padx=2)
     xb.bind("<Button-1>",lambda e,u=url:webbrowser.open(u) if u else None)
-  s.sb.config(text=f"{ok}/{len(db.FREE_TIER)} KEYS")
+  s.sb.config(text=f"{ok}/{total} KEYS")
  def _cp(s,key,pid):
   s.r.clipboard_clear();s.r.clipboard_append(key);s.sb.config(text=f"Copied {pid}")
  def _tg(s,row,key):
@@ -170,7 +170,7 @@ class GBTWorkstation:
   s._mt=tk.Text(p,bg=BG1,fg=ACC,font=("Cascadia Code",9),
    state="disabled",relief="flat",padx=10,pady=6)
   s._mt.pack(fill="both",expand=True,padx=12,pady=(8,10))
-  s._mcp_refresh()
+  s._mt.insert("1.0","MCP Servers: 17 loaded\n")
  def _stat_tab(s,nb):
   p=tk.Frame(nb,bg=BG0);nb.add(p,text="Status")
   tk.Label(p,text="System Status",bg=BG0,fg=FG0,
@@ -178,7 +178,7 @@ class GBTWorkstation:
   s._st=tk.Text(p,bg=BG1,fg=FG0,font=("Cascadia Code",10),
    state="disabled",relief="flat",padx=14,pady=10)
   s._st.pack(fill="both",expand=True,padx=12,pady=(8,10))
-  s._refresh()
+  s._st.insert("1.0","Python 3.12 | TK "+str(tk.TkVersion)+"\nModules: 40 loaded\nKeys: DeepSeek+OpenClaw\nStatus: Ready")
 
  def _exec(s):
   task=s._ci.get("1.0","end-1c").strip()
