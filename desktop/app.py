@@ -279,8 +279,19 @@ def dashboard_data():
 @app.route("/api/hacker/exec",methods=["POST"])
 def hacker_exec_cap():
     d=request.json or {};cid=d.get("id","");act=d.get("action","run")
-    # 优先通过框架路由: 如果Agent有该能力,直接调用
-    if _framework:
+    # 优先通过框架路由: 用capability的keywords匹配+直接ID执行
+    if _framework and cid:
+        # 先尝试按capability name直接查找agent执行
+        for agent_name, agent in _framework.router.agents.items():
+            for cap in agent.capabilities:
+                if cap.name == cid:
+                    try:
+                        result = agent.execute(cid, act)
+                        return jsonify({"ok":result.ok,"data":str(result.data)[:3000] if result.data else "",
+                                       "agent":result.agent,"error":result.error})
+                    except Exception as e:
+                        return jsonify({"ok":False,"error":str(e),"agent":agent_name})
+        # Fallback: 用Router的keyword分类
         result = _framework.router.route(cid, act)
         if result and result.get("protocol",{}).get("ok"):
             return jsonify({"ok":True,"data":result.get("conclusion","")[:3000],"agent":result.get("agent","")})
