@@ -156,6 +156,41 @@ body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sa
 <div id="toast"></div>
 <script>
 
+// fetch polyfill for IE11
+if(typeof fetch==='undefined'){
+  window.fetch=function(url,opt){
+    return new Promise(function(resolve,reject){
+      var xhr=new XMLHttpRequest();
+      xhr.open((opt&&opt.method)||'GET',url,true);
+      if(opt&&opt.headers){for(var k in opt.headers){if(opt.headers.hasOwnProperty(k))xhr.setRequestHeader(k,opt.headers[k])}}
+      xhr.onload=function(){
+        resolve({status:xhr.status,json:function(){return Promise.resolve(JSON.parse(xhr.responseText))},text:function(){return Promise.resolve(xhr.responseText)}});
+      };
+      xhr.onerror=function(){reject(new Error('Network error'))};
+      xhr.ontimeout=function(){reject(new Error('Timeout'))};
+      xhr.send(opt&&opt.body||null);
+    });
+  };
+}
+// Promise polyfill if needed
+if(typeof Promise==='undefined'){
+  window.Promise=function(executor){
+    var callbacks=[],errbacks=[],resolved=false,rejected=false,value;
+    this.then=function(cb,eb){if(resolved)cb(value);else if(rejected&&eb)eb(value);else{callbacks.push(cb);if(eb)errbacks.push(eb)}return this};
+    this.catch=function(eb){if(rejected)eb(value);else errbacks.push(eb);return this};
+    function resolve(v){if(!resolved&&!rejected){resolved=true;value=v;callbacks.forEach(function(cb){cb(v)})}}
+    function reject(v){if(!resolved&&!rejected){rejected=true;value=v;errbacks.forEach(function(eb){eb(v)})}}
+    try{executor(resolve,reject)}catch(e){reject(e)}
+  };
+  window.Promise.resolve=function(v){return new Promise(function(r){r(v)})};
+}
+// Element.remove polyfill
+if(!('remove' in Element.prototype)){
+  Element.prototype.remove=function(){if(this.parentNode)this.parentNode.removeChild(this)};
+}
+}
+
+
 var currentTab='dash';
 var D=document;
 function $(id){return D.getElementById(id)}
