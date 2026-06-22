@@ -2,7 +2,7 @@
 gcc_runner.py — General Computer Control Runner
 借鉴 Cradle (BAAI-Agents/Cradle): 截图→分析→规划→执行→自省
 """
-import os, time, json, base64, logging
+import os, sys, time, json, base64, logging
 try: import pyautogui; HAS_PYAUTOGUI = True
 except ImportError: HAS_PYAUTOGUI = False
 from io import BytesIO
