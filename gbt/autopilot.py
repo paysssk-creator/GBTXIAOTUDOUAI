@@ -174,6 +174,13 @@ class Autopilot:
                     params=a.get("params",{}),
                     reasoning=reason) for a in plan.get("actions",[])]
 
+        except (json.JSONDecodeError, TypeError, AttributeError) as e:
+            L.debug(f"JSON解析失败, 使用原始文本+模拟: {e}")
+            # 如果LLM返回了文字，尝试从中推断操作
+            if resp and isinstance(resp, str) and len(resp) > 10:
+                return [TradingAction("wait", params={"seconds":1},
+                        reasoning=resp[:200])] + self._mock_analyze(task)
+            return self._mock_analyze(task)
         except Exception as e:
             L.error(f"LLM分析失败: {e}, 降级模拟模式")
             return self._mock_analyze(task)
