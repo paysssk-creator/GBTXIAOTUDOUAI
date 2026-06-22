@@ -27,13 +27,13 @@ class GBTWorkstation:
            bg=BG1,fg=FG1,font=("Cascadia Code",7)).pack(side="left",padx=10)
  def _load(s):
   for w in s._kf.winfo_children():w.destroy()
-  from gbt.keydb import KeyDB;db=KeyDB();ok=0
+  from gbt.keydb import KeyDB,FREE_TIER;db=KeyDB();ok=0
   h=tk.Frame(s._kf,bg=BG0);h.pack(fill="x",pady=(0,6))
   tk.Label(h,text="API Keys",bg=BG0,fg=FG0,font=("Cascadia Code",11,"bold")).pack(side="left")
   b=tk.Label(h,text="Import",bg=BG2,fg=ACC2,font=("Cascadia Code",8),
              padx=10,pady=3,cursor="hand2");b.pack(side="right")
   b.bind("<Button-1>",lambda e:s._imp())
-  for pid,info in sorted(db.FREE_TIER.items(),key=lambda x:x[1]["pri"]):
+  for pid,info in sorted(FREE_TIER.items(),key=lambda x:x[1]["pri"]):
    key=db.get(pid)
    r=tk.Frame(s._kf,bg=BG1,height=36);r.pack(fill="x",pady=2);r.pack_propagate(False)
    c=ACC if key else FG1
@@ -60,7 +60,7 @@ class GBTWorkstation:
     xb=tk.Label(af,text="Register",bg=BG2,fg=ACC2,font=("Cascadia Code",7),
                 padx=6,pady=2,cursor="hand2");xb.pack(side="left",padx=2)
     xb.bind("<Button-1>",lambda e,u=url:webbrowser.open(u) if u else None)
-  s.sb.config(text=f"{ok}/{len(db.FREE_TIER)} KEYS")
+  s.sb.config(text=f"{ok}/{len(FREE_TIER)} KEYS")
  def _cp(s,key,pid):
   s.r.clipboard_clear();s.r.clipboard_append(key);s.sb.config(text=f"Copied {pid}")
  def _tg(s,row,key):
