@@ -1,379 +1,92 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GBT Pro v2.1 - Production Dashboard</title>
-<style>
-:root{--bg:#0a0e17;--c1:#111827;--c2:#1f2937;--b:#2d3748;--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;--g:#22c55e;--r:#ef4444;--a:#6366f1;--a2:#818cf8;--y:#eab308}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sans-serif;overflow:hidden;height:100vh}
-#app{display:grid;grid-template-columns:280px 1fr;height:100vh}
-#side{background:var(--c1);border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
-.side-h{padding:16px;border-bottom:1px solid var(--b)}
-.side-h h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.side-h .ver{font-size:10px;color:var(--t3);margin-top:2px}
-.side-m{padding:10px 12px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
-.side-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 6px;border-radius:6px;border:none;background:none;color:var(--t2);font-size:12px;cursor:pointer;text-align:left;width:calc(100%-12px)}
-.side-btn:hover{background:var(--c2);color:var(--t1)}
-.side-btn.on{background:rgba(99,102,241,.15);color:var(--a2)}
-.side-btn .dot{width:6px;height:6px;border-radius:50%}
-.side-btn .dot.on{background:var(--g);box-shadow:0 0 6px var(--g)}
-.side-btn .dot.off{background:var(--t3)}
-.side-foot{padding:12px;border-top:1px solid var(--b);font-size:10px;color:var(--t3);margin-top:auto}
-#main{padding:20px;overflow-y:auto;overflow-x:hidden}
-#main::-webkit-scrollbar{width:4px}#main::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:var(--c1);border:1px solid var(--b);border-radius:10px;overflow:hidden}
-.card.full{grid-column:1/-1}
-.ch{padding:12px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
-.ch .st{font-size:10px;color:var(--t3);margin-left:auto}
-.cb{padding:14px 16px}
-.stat-row{display:flex;gap:16px;flex-wrap:wrap}
-.stat-item{flex:1;min-width:80px;text-align:center}
-.stat-val{font-size:22px;font-weight:700;color:var(--t1)}
-.stat-label{font-size:9px;color:var(--t3);margin-top:2px}
-.progress-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin:6px 0 10px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;transition:width .5s}
-.pc{background:var(--a)}.pm{background:#a855f7}.pd{background:#06b6d4}
-.tbl{width:100%;border-collapse:collapse;font-size:10px}
-.tbl th{text-align:left;color:var(--t3);font-weight:500;padding:4px 6px;border-bottom:1px solid var(--b)}
-.tbl td{padding:3px 6px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.03)}
-.green{color:var(--g)}.red{color:var(--r)}.up{background:rgba(34,197,94,.08)}.down{background:rgba(239,68,68,.06)}
-.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;max-height:400px;overflow-y:auto}
-.cap-item{padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);cursor:pointer;font-size:10px;display:flex;align-items:center;gap:4px;transition:all .15s}
-.cap-item:hover{border-color:var(--a);background:rgba(99,102,241,.1)}
-.cap-item:active{opacity:.6}
-.cap-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-#toast{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:6px}
-.toast{background:var(--c2);border:1px solid var(--b);padding:10px 16px;border-radius:8px;font-size:11px;color:var(--t2);animation:slideIn .2s ease;max-width:350px}
-@keyframes slideIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
-.market-ticker{display:flex;gap:16px;padding:8px 0;overflow-x:auto;font-size:11px}
-.ticker-item{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.ticker-name{color:var(--t3)}
-.ticker-val{font-weight:600}
-</style>
-</head>
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GBT Pro v2.2</title><link rel="stylesheet" href="/styles.css"></head>
 <body>
 <div id="app">
 <aside id="side">
-<div class="side-h"><h1>GBT Pro v2.1</h1><div class="ver">A股集成编程AI框架</div></div>
-<div class="side-m">能力面板</div>
-<button class="side-btn on" id="side-dash" onclick="switchTab('dash')"><span class="dot on"></span>仪表盘</button>
-<button class="side-btn" id="side-hacker" onclick="switchTab('hacker')"><span class="dot on"></span>黑客全能力 (49)</button>
-<button class="side-btn" id="side-trade" onclick="switchTab('trade')"><span class="dot on"></span>A股操盘</button>
-<button class="side-btn" id="side-desktop" onclick="switchTab('desktop')"><span class="dot on"></span>电脑操控</button>
-<div class="side-foot">
-<div style="display:flex;align-items:center;gap:6px"><span class="dot on" id="status-dot"></span><span id="status-text">在线</span></div>
-<div style="margin-top:4px;font-size:9px" id="cpu-info">CPU --</div>
-<div>开发者: 自由的风 | v2.1</div>
+<div class="s-logo"><div class="icon">G</div><div class="txt"><h2>GBT Pro</h2><span>v2.2 Production</span></div></div>
+<div class="s-nav">
+<div class="sec">Overview</div>
+<div class="n-item active" data-tab="dash"><div class="dot" style="background:var(--a)"></div>Dashboard</div>
+<div class="n-item" data-tab="llm"><div class="dot" style="background:var(--c1)"></div>LLM Hub<span class="badge" id="llm-badge">0</span></div>
+<div class="sec">Trading</div>
+<div class="n-item" data-tab="trade"><div class="dot" style="background:var(--g)"></div>A-Share Market</div>
+<div class="n-item" data-tab="account"><div class="dot" style="background:var(--y)"></div>Account</div>
+<div class="sec">Operations</div>
+<div class="n-item" data-tab="hacker"><div class="dot" style="background:var(--r)"></div>Hacker 49</div>
+<div class="n-item" data-tab="desktop"><div class="dot" style="background:#8b5cf6"></div>Desktop Control</div>
+<div class="n-item" data-tab="mcp"><div class="dot" style="background:var(--c1)"></div>MCP Servers<span class="badge" id="mcp-badge">0</span></div>
 </div>
+<div class="s-foot"><div class="status"><div class="live"></div><span id="status-txt">Online</span></div><div id="sys-info">CPU -- | MEM --</div><div style="margin-top:2px">paysssk-creator</div></div>
 </aside>
-<main id="main">
-<!-- Dashboard Tab -->
-<div id="tab-dash">
-<div class="market-ticker" id="market-ticker">
-<span style="color:var(--t3);font-size:10px">加载行情中...</span>
+<div id="main">
+<div id="topbar"><h1 id="page-title">Dashboard</h1><div class="ticker" id="ticker"></div></div>
+<div id="content">
+<div class="tab-panel active" id="panel-dash">
+<div class="grid3" style="margin-bottom:16px">
+<div class="card"><div class="card-header">Tokens<span class="st">LLM</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-tokens">--</div><div class="lbl">Total</div></div><div class="stat-box"><div class="val" id="d-cost">--</div><div class="lbl">Cost</div></div><div class="stat-box"><div class="val" id="d-calls">--</div><div class="lbl">Calls</div></div><div class="stat-box"><div class="val" id="d-model">--</div><div class="lbl">Model</div></div></div></div></div>
+<div class="card"><div class="card-header">System<span class="st" id="d-host">--</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-cpu">--</div><div class="lbl">CPU</div><div class="progress"><div class="fill p-cpu" id="d-cpubar" style="width:0"></div></div></div><div class="stat-box"><div class="val" id="d-mem">--</div><div class="lbl">RAM</div><div class="progress"><div class="fill p-mem" id="d-membar" style="width:0"></div></div></div><div class="stat-box"><div class="val" id="d-disk">--</div><div class="lbl">Disk</div><div class="progress"><div class="fill p-disk" id="d-diskbar" style="width:0"></div></div></div></div></div></div>
+<div class="card"><div class="card-header">Account<span class="st">A-Share</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-cash">--</div><div class="lbl">Cash</div></div><div class="stat-box"><div class="val" id="d-equity">--</div><div class="lbl">Equity</div></div><div class="stat-box"><div class="val" id="d-pnl">--</div><div class="lbl">P&amp;L</div></div><div class="stat-box"><div class="val" id="d-pos">--</div><div class="lbl">Positions</div></div></div></div></div>
 </div>
-<div class="grid">
-<div class="card">
-<div class="ch">🤖 LLM 消耗 <span class="st" id="dash-uptime">--</span></div>
-<div class="cb">
-<div class="stat-row">
-<div class="stat-item"><div class="stat-val" id="dash-tokens">--</div><div class="stat-label">总Tokens</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-cost">¥--</div><div class="stat-label">累计成本</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-calls">--</div><div class="stat-label">调用次数</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-model">--</div><div class="stat-label">当前模型</div></div>
-</div>
-<table class="tbl"><thead><tr><th>时间</th><th>模型</th><th>In</th><th>Out</th><th>成本</th></tr></thead><tbody id="dash-llmhist"></tbody></table>
-</div></div>
-<div class="card">
-<div class="ch">📊 A股操盘 <span id="dash-trade-status" class="st">手动</span></div>
-<div class="cb">
-<div class="stat-row">
-<div class="stat-item"><div class="stat-val" id="dash-cash">¥--</div><div class="stat-label">现金</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-equity">¥--</div><div class="stat-label">总资产</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-pnl">--</div><div class="stat-label">盈亏</div></div>
-<div class="stat-item"><div class="stat-val" id="dash-pos">--</div><div class="stat-label">持仓数</div></div>
-</div>
-<table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>现价</th><th>涨跌%</th></tr></thead><tbody id="dash-watchlist"></tbody></table>
-</div></div>
-<div class="card">
-<div class="ch">🖥️ 系统资源 <span id="dash-host" class="st">--</span></div>
-<div class="cb">
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">CPU</div><div style="font-size:14px;font-weight:600" id="dash-cpuval">--</div><div class="progress-bar"><div class="progress-fill pc" id="dash-cpubar" style="width:0%"></div></div></div>
-<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">内存</div><div style="font-size:14px;font-weight:600" id="dash-memval">--</div><div class="progress-bar"><div class="progress-fill pm" id="dash-membar" style="width:0%"></div></div></div>
-<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">磁盘</div><div style="font-size:14px;font-weight:600" id="dash-diskval">--</div><div class="progress-bar"><div class="progress-fill pd" id="dash-diskbar" style="width:0%"></div></div></div>
-</div>
-<table class="tbl"><thead><tr><th>进程</th><th>PID</th><th>CPU%</th><th>MEM%</th></tr></thead><tbody id="dash-procs"></tbody></table>
-</div></div>
-<div class="card">
-<div class="ch">🔌 核心服务 <span id="dash-srvcnt" class="st">--</span></div>
-<div class="cb"><div class="cap-grid" id="dash-services"></div></div>
+<div class="grid2">
+<div class="card"><div class="card-header">LLM Activity</div><div class="card-body"><table class="data"><thead><tr><th>Time</th><th>Model</th><th>In</th><th>Out</th><th>Cost</th></tr></thead><tbody id="d-llmhist"></tbody></table></div></div>
+<div class="card"><div class="card-header">Watchlist<span class="st">A-Share</span></div><div class="card-body"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Price</th><th>Change</th></tr></thead><tbody id="d-watch"></tbody></table></div></div>
 </div>
 </div>
+<div class="tab-panel" id="panel-llm">
+<div class="grid2"><div class="card"><div class="card-header">Providers</div><div class="card-body"><div id="llm-list" style="display:flex;flex-direction:column;gap:6px"></div></div></div>
+<div class="card"><div class="card-header">Chat</div><div class="card-body"><textarea id="llm-input" placeholder="Enter prompt..." style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:10px;resize:none;font:12px Segoe UI;height:80px"></textarea><button onclick="sendChat()" style="margin-top:8px;width:100%;padding:10px;background:var(--a);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">Send</button></div></div></div>
+<div class="card" style="margin-top:16px"><div class="card-header">Output</div><div class="card-body"><div class="log-box" id="llm-out" style="max-height:300px">Ready...</div></div></div>
 </div>
-<!-- Hacker Tab -->
-<div id="tab-hacker" style="display:none">
-<div class="card"><div class="ch">💀 黑客全能力 (49项) <span class="st" id="hack-capcnt">--</span></div>
-<div class="cb"><div class="cap-grid" id="hack-grid"></div></div>
+<div class="tab-panel" id="panel-trade">
+<div class="grid2"><div class="card"><div class="card-header">Market Indices</div><div class="card-body"><div id="trade-idx" style="font:11px Consolas,monospace;color:var(--t2)">Loading...</div></div></div>
+<div class="card"><div class="card-header">Watchlist</div><div class="card-body"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Price</th><th>Change</th></tr></thead><tbody id="trade-wl"></tbody></table></div></div></div>
 </div>
-<div class="card" style="margin-top:12px"><div class="ch">📋 执行日志</div>
-<div class="cb" id="hack-log" style="max-height:200px;overflow-y:auto;font-size:10px;color:var(--t2);font-family:monospace">等待执行...</div>
-</div>
-</div>
-<!-- Trade Tab -->
-<div id="tab-trade" style="display:none">
-<div class="grid">
-<div class="card"><div class="ch">📊 实时行情</div><div class="cb" id="trade-quotes" style="font-size:10px;color:var(--t2)">加载中...</div></div>
-<div class="card"><div class="ch">💰 账户</div><div class="cb">
-<div class="stat-row">
-<div class="stat-item"><div class="stat-val" id="trade-cash">¥100,000</div><div class="stat-label">现金</div></div>
-<div class="stat-item"><div class="stat-val" id="trade-pnl">¥0</div><div class="stat-label">盈亏</div></div>
-</div>
-</div></div>
-</div>
-<div class="card full" style="margin-top:12px">
-<div class="ch">📋 自选股</div>
-<div class="cb"><table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>现价</th><th>涨跌</th><th>涨跌%</th></tr></thead><tbody id="trade-watchlist"></tbody></table></div>
+<div class="tab-panel" id="panel-account">
+<div class="grid3"><div class="card"><div class="card-header">Balance</div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="a-cash">--</div><div class="lbl">Cash</div></div><div class="stat-box"><div class="val" id="a-equity">--</div><div class="lbl">Equity</div></div><div class="stat-box"><div class="val" id="a-pnl">--</div><div class="lbl">P&amp;L</div></div></div></div></div>
+<div class="card"><div class="card-header">Trade Status</div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="a-pos">--</div><div class="lbl">Positions</div></div><div class="stat-box"><div class="val" id="a-mode">Manual</div><div class="lbl">Mode</div></div><div class="stat-box"><div class="val" id="a-conn">--</div><div class="lbl">Connectors</div></div></div></div></div>
 </div>
 </div>
-<!-- Desktop Tab -->
-<div id="tab-desktop" style="display:none">
-<div class="grid">
-<div class="card full"><div class="ch">🖥️ 电脑操控 <span class="st" id="desk-info">--</span></div>
-<div class="cb">
-<div class="cap-grid" id="desk-actions"></div>
-</div></div>
+<div class="tab-panel" id="panel-hacker">
+<div class="card"><div class="card-header">All 49 Capabilities<span class="st" id="hack-cnt">--</span></div><div class="card-body"><div class="grid-btn" id="hack-grid"></div></div></div>
+<div class="card" style="margin-top:12px"><div class="card-header">Execution Log</div><div class="card-body"><div class="log-box" id="hack-log">Idle</div></div></div>
 </div>
-<div class="card full" style="margin-top:12px"><div class="ch">📋 执行日志</div>
-<div class="cb" id="desk-log" style="max-height:200px;overflow-y:auto;font-size:10px;color:var(--t2);font-family:monospace">等待...</div>
+<div class="tab-panel" id="panel-desktop">
+<div class="card"><div class="card-header">Control Actions</div><div class="card-body"><div class="grid-btn" id="desk-grid"></div></div></div>
+<div class="card" style="margin-top:12px"><div class="card-header">Log</div><div class="card-body"><div class="log-box" id="desk-log">Idle</div></div></div>
 </div>
+<div class="tab-panel" id="panel-mcp">
+<div class="card"><div class="card-header">MCP Servers<span class="st" id="mcp-cnt">--</span></div><div class="card-body"><div class="grid-btn" id="mcp-grid"></div></div></div>
 </div>
-</main>
-</div>
+</div></div></div>
 <div id="toast"></div>
 <script>
-
-var D=document;
+var D=document,currentTab="dash",titles={dash:"Dashboard",llm:"LLM Hub",trade:"A-Share",account:"Account",hacker:"Hacker 49",desktop:"Desktop",mcp:"MCP"};
 function $(id){return D.getElementById(id)}
+function qs(sel){return D.querySelectorAll(sel)}
+function api(url,cb,method,body){var x=new XMLHttpRequest();x.open(method||"GET",url+"?_="+Date.now(),true);if(body)x.setRequestHeader("Content-Type","application/json");x.onreadystatechange=function(){if(x.readyState===4){try{var d=JSON.parse(x.responseText);cb(d,null)}catch(e){cb(null,"Parse")}}};x.onerror=function(){cb(null,"Net")};x.timeout=8000;x.ontimeout=function(){cb(null,"Timeout")};try{x.send(body||null)}catch(e){cb(null,String(e))}}
+function esc(s){var e=D.createElement("span");e.textContent=s||"";return e.innerHTML}
 
-// XHR helper - pure callback, no Promise
-function api(url,cb,method,body){
-  var x=new XMLHttpRequest();
-  x.open(method||'GET',url+'?_='+Date.now(),true);
-  if(body)x.setRequestHeader('Content-Type','application/json');
-  x.onreadystatechange=function(){
-    if(x.readyState===4){
-      if(x.status===200){
-        try{var d=JSON.parse(x.responseText);cb(d,null)}catch(e){cb(null,'Parse error')}
-      }else{cb(null,'HTTP '+x.status)}
-    }
-  };
-  x.onerror=function(){cb(null,'Network error')};
-  x.timeout=8000;
-  x.ontimeout=function(){cb(null,'Timeout')};
-  try{x.send(body||null)}catch(e){cb(null,String(e))}
-}
+qs(".n-item").forEach(function(el){el.onclick=function(){switchTab(this.dataset.tab)}})
+function switchTab(tab){currentTab=tab;D.getElementById("page-title").textContent=titles[tab]||tab;qs(".n-item").forEach(function(e){e.classList.toggle("active",e.dataset.tab===tab)});qs(".tab-panel").forEach(function(e){e.classList.toggle("active",e.id==="panel-"+tab)});if(tab==="hacker")loadHacker();if(tab==="trade")loadTrade();if(tab==="desktop")loadDesktop();if(tab==="mcp")loadMCP();if(tab==="llm")loadLLM();if(tab==="account")loadAccount()}
 
-function esc(t){
-  var e=D.createElement('span');e.textContent=t||'';return e.innerHTML;
-}
+var toastQ=[];function toast(msg){toastQ.push(msg);if(toastQ.length>5)toastQ.shift();var t=$("toast"),h="";for(var i=0;i<toastQ.length;i++)h+='<div class="tst">'+esc(toastQ[i])+'</div>';t.innerHTML=h;setTimeout(function(){toastQ.shift();var h2="";for(var j=0;j<toastQ.length;j++)h2+='<div class="tst">'+esc(toastQ[j])+'</div>';t.innerHTML=h2},3000)}
 
-var toastQ=[];
-function toast(msg){
-  toastQ.push(msg);
-  if(toastQ.length>5)toastQ.shift();
-  var t=$('toast');if(!t)return;
-  var h='';
-  for(var i=0;i<toastQ.length;i++)h+='<div class=toast>'+esc(toastQ[i])+'</div>';
-  t.innerHTML=h;
-  setTimeout(function(){
-    toastQ.shift();
-    var h2='';
-    for(var j=0;j<toastQ.length;j++)h2+='<div class=toast>'+esc(toastQ[j])+'</div>';
-    if(t)t.innerHTML=h2;
-  },3000);
-}
+function refresh(){api("/api/dashboard",function(d){if(!d)return;var lm=d.llm||{},tt=lm.totals||{},ct=lm.current||{};$("d-tokens").textContent=(tt.tokens_total||0).toLocaleString();$("d-cost").textContent="\u00a5"+(tt.cost_rmb||0).toFixed(4);$("d-calls").textContent=(tt.requests||0).toLocaleString();$("d-model").textContent=ct.model||"--";var hh="",hist=lm.history||[];for(var hi=Math.max(0,hist.length-10);hi<hist.length;hi++){var h=hist[hi];hh+="<tr><td>"+esc(h.time||"")+"</td><td>"+esc(h.model||"")+"</td><td>"+(h.tokens_in||0)+"</td><td>"+(h.tokens_out||0)+"</td><td>\u00a5"+(h.cost_rmb||0).toFixed(4)+"</td></tr>"}$("d-llmhist").innerHTML=hh||"<tr><td colspan=5 style=color:var(--t3)>No activity</td></tr>";var td=d.trade||{},acct=td.account||{};$("d-cash").textContent="\u00a5"+(acct.cash||0).toLocaleString();$("d-equity").textContent="\u00a5"+(acct.equity||0).toLocaleString();var pnl=acct.pnl||0;$("d-pnl").textContent=(pnl>=0?"+":"")+pnl.toLocaleString();$("d-pnl").style.color=pnl>=0?"var(--g)":"var(--r)";$("d-pos").textContent=acct.positions||"0";var wl="",wl2="",watchlist=td.watchlist||[];for(var wi=0;wi<watchlist.length;wi++){var w=watchlist[wi];wl+="<tr><td>"+esc(w[0]||"")+"</td><td>"+esc(w[1]||"")+"</td><td>--</td><td>--</td></tr>";wl2+="<tr><td>"+esc(w[0]||"")+"</td><td>"+esc(w[1]||"")+"</td><td>--</td><td>--</td></tr>"}$("d-watch").innerHTML=wl||"<tr><td colspan=4 style=color:var(--t3)>No data</td></tr>";$("trade-wl").innerHTML=wl2||"<tr><td colspan=4 style=color:var(--t3)>No data</td></tr>";var sy=d.system||{};var cpu=sy.cpu||0,mem=sy.memory||0,dsk=sy.disk||0;$("d-cpu").textContent=cpu.toFixed(1)+"%";$("d-cpubar").style.width=cpu+"%";$("d-mem").textContent=mem.toFixed(1)+"%";$("d-membar").style.width=mem+"%";$("d-disk").textContent=dsk.toFixed(1)+"%";$("d-diskbar").style.width=dsk+"%";$("d-host").textContent=sy.host||"";$("sys-info").textContent="CPU "+cpu.toFixed(0)+"% | MEM "+mem.toFixed(0)+"%";var srvs=(d.mcp||{}).servers||[];$("mcp-cnt").textContent=srvs.length+" online";$("mcp-badge").textContent=srvs.length;loadMarket()})}
 
-function switchTab(tab){
-  var tabs=['dash','hacker','trade','desktop'];
-  for(var i=0;i<tabs.length;i++){
-    var el=$('tab-'+tabs[i]);
-    if(el)el.style.display=tabs[i]===tab?'':'none';
-  }
-  var btns=D.querySelectorAll('.side-btn');
-  for(var j=0;j<btns.length;j++)btns[j].className='side-btn';
-  var active=$('side-'+tab);
-  if(active)active.className='side-btn on';
-  if(tab==='hacker')loadHacker();
-  if(tab==='trade')loadTrade();
-  if(tab==='desktop')loadDesktop();
-  currentTab=tab;
-}
+function loadMarket(){api("/api/market",function(d){var mt=$("ticker");if(!mt||!d||!d.ok){if(mt)mt.innerHTML="<span style=color:var(--t3)>Market offline</span>";return}var h="",idx=d.indices||[];for(var i=0;i<idx.length;i++){var x=idx[i],cl=x.pct>=0?"g":"r";h+='<div class="t-item"><span class="t-name">'+esc(x.name)+'</span><span class="t-val '+cl+'">'+x.price+'</span><span class="'+cl+'" style="font-size:10px">'+(x.pct>=0?"+":"")+x.pct.toFixed(2)+"%</span></div>"}mt.innerHTML=h||"<span style=color:var(--t3)>No data</span>";var ti=$("trade-idx");if(ti)ti.innerHTML=h||"No indices"})}
 
-// ── Dashboard refresh ──
-function refreshDash(){
-  api('/api/dashboard',function(d,err){
-    if(err){console.log('dash err:',err);return}
-    // LLM
-    var lm=d.llm||{};var tt=lm.totals||{};var ct=lm.current||{};
-    setText('dash-tokens',(tt.tokens_total||0).toLocaleString());
-    setText('dash-cost','¥'+(tt.cost_rmb||0).toFixed(4));
-    setText('dash-calls',(tt.requests||0).toLocaleString());
-    setText('dash-model',ct.model||'--');
-    setText('dash-uptime','⇧'+(lm.uptime_h||0).toFixed(1)+'h');
-    var hh='';var hist=lm.history||[];
-    for(var hi=Math.max(0,hist.length-10);hi<hist.length;hi++){
-      var h=hist[hi];
-      hh+='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>';
-    }
-    setHTML('dash-llmhist',hh||'<tr><td colspan=5 style=color:#64748b>无记录</td></tr>');
-    // Trade
-    var td=d.trade||{};var acct=td.account||{};
-    setText('dash-cash','¥'+(acct.cash||0).toLocaleString());
-    setText('dash-equity','¥'+(acct.equity||0).toLocaleString());
-    var pnl=acct.pnl||0;setText('dash-pnl','¥'+(pnl>=0?'+':'')+Math.abs(pnl).toLocaleString());
-    var dpn=$('dash-pnl');if(dpn)dpn.style.color=pnl>=0?'var(--g)':'var(--r)';
-    setText('dash-pos',String(acct.positions||0));
-    setText('dash-trade-status',td.auto_trade?'自主交易':'手动');
-    var wl='';var watchlist=td.watchlist||[];
-    for(var wi=0;wi<watchlist.length;wi++){
-      var w=watchlist[wi];wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>';
-    }
-    setHTML('dash-watchlist',wl||'<tr><td colspan=4 style=color:#64748b>暂无</td></tr>');
-    // System
-    var sy=d.system||{};
-    setText('dash-host',sy.host||'');
-    var cpu=sy.cpu||0;setText('dash-cpuval',cpu.toFixed(1)+'%');
-    var dcb=$('dash-cpubar');if(dcb)dcb.style.width=cpu+'%';
-    var mem=sy.memory||0;setText('dash-memval',mem.toFixed(1)+'%');
-    var dmb=$('dash-membar');if(dmb)dmb.style.width=mem+'%';
-    var dsk=sy.disk||0;setText('dash-diskval',dsk.toFixed(1)+'%');
-    var ddb=$('dash-diskbar');if(ddb)ddb.style.width=dsk+'%';
-    var ph='';var procs=(d.desktop||{}).top_processes||[];
-    for(var pi=0;pi<procs.length;pi++){
-      var p=procs[pi];ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+(p.pid||'')+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>';
-    }
-    setHTML('dash-procs',ph||'<tr><td colspan=4 style=color:#64748b>无数据</td></tr>');
-    // Services
-    var mcp=d.mcp||{};var srvs=mcp.servers||[];
-    setText('dash-srvcnt',srvs.length+'服务');
-    var sh='';
-    for(var si=0;si<srvs.length;si++){
-      var s=srvs[si];var n=typeof s==='string'?s:(s.id||s.name||'');
-      sh+='<div class=cap-item><span class=cap-dot style=background:#22c55e></span>'+esc(n)+'</div>';
-    }
-    setHTML('dash-services',sh||'<span style=color:#64748b;font-size:10px>无MCP服务</span>');
-    // Status
-    var sdot=D.getElementById('status-dot');if(sdot){sdot.className='dot on'}
-    var stxt=D.getElementById('status-text');if(stxt)stxt.textContent='在线';
-    var ci=D.getElementById('cpu-info');if(ci)ci.textContent='CPU '+cpu.toFixed(0)+'% | MEM '+mem.toFixed(0)+'%';
-    // Market
-    loadMarket();
-  });
-}
+function loadHacker(){api("/api/hacker/capabilities",function(d){if(!d)return;$("hack-cnt").textContent=d.total+" caps";var h="",caps=d.capabilities||[];for(var i=0;i<caps.length;i++){var c=caps[i];h+='<div class="btn-cap" onclick="execCap(\''+esc(c.id)+'\')"><div class="c-dot" style="background:'+(c.mcp?"var(--g)":"var(--a)")+'"></div>'+esc(c.id)+"</div>"}$("hack-grid").innerHTML=h})}
+function execCap(cid){var log=$("hack-log");if(log)log.textContent="> "+cid+"...";api("/api/hacker/exec",function(d){var tm=new Date().toLocaleTimeString();if(log)log.textContent="["+tm+"] "+(d&&d.ok?"OK":"FAIL")+" "+cid+"\n"+(d?d.data||d.error||"":"")+"\n---\n"+log.textContent;toast((d&&d.ok?"OK ":"FAIL ")+cid)},"POST",JSON.stringify({id:cid,action:"run"}))}
 
-function setText(id,val){var el=$(id);if(el)el.textContent=val}
-function setHTML(id,val){var el=$(id);if(el)el.innerHTML=val}
+function loadDesktop(){var acts=["screenshot","browser_open","window_maximize","keyboard_type","keyboard_hotkey","mouse_click","process_list","process_kill","window_focus","volume_control","system_lock"];var h="";for(var i=0;i<acts.length;i++)h+='<div class="btn-cap" onclick="execDesk(\''+acts[i]+'\')"><div class="c-dot" style="background:var(--a)"></div>'+acts[i]+"</div>";$("desk-grid").innerHTML=h}
+function execDesk(cid){var log=$("desk-log");if(log)log.textContent="> "+cid+"...";api("/api/hacker/exec",function(d){var tm=new Date().toLocaleTimeString();if(log)log.textContent="["+tm+"] "+(d&&d.ok?"OK":"FAIL")+" "+cid+"\n"+(d?d.data||d.error||"":"")+"\n---\n"+log.textContent;toast((d&&d.ok?"OK ":"FAIL ")+cid)},"POST",JSON.stringify({id:cid,action:"run"}))}
 
-function loadMarket(){
-  api('/api/market',function(d,err){
-    var mt=$('market-ticker');if(!mt)return;
-    if(err||!d||!d.ok){mt.innerHTML='<span style=color:#64748b;font-size:10px>行情暂不可用</span>';return}
-    var h='';var idx=d.indices||[];
-    for(var i=0;i<idx.length;i++){
-      var x=idx[i];var cl=x.pct>=0?'green':'red';
-      h+='<div class=ticker-item><span class=ticker-name>'+esc(x.name)+'</span><span class="ticker-val '+cl+'">'+esc(String(x.price))+'</span><span class='+cl+'>'+(x.pct>=0?'+':'')+(x.pct||0).toFixed(2)+'%</span></div>';
-    }
-    mt.innerHTML=h||'<span style=color:#64748b;font-size:10px>暂无行情</span>';
-  });
-}
+function loadMCP(){api("/api/dashboard",function(d){var srvs=(d&&d.mcp||{}).servers||[];var h="";for(var i=0;i<srvs.length;i++){var s=srvs[i],n=typeof s==="string"?s:(s.id||s.name||"");h+='<div class="btn-cap"><div class="c-dot" style="background:var(--g)"></div>'+esc(n)+"</div>"}$("mcp-grid").innerHTML=h||"<span style=color:var(--t3)>No servers</span>"})}
 
-// ── Hacker tab ──
-function loadHacker(){
-  api('/api/hacker/capabilities',function(d,err){
-    if(err)return;
-    setText('hack-capcnt',d.total+'项');
-    var h='';var caps=d.capabilities||[];
-    for(var i=0;i<caps.length;i++){
-      var c=caps[i];
-      h+='<div class=cap-item onclick="execCap(''+esc(c.id)+'')" title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'#22c55e':'#6366f1')+'"></span>'+esc(c.id)+'</div>';
-    }
-    setHTML('hack-grid',h);
-  });
-}
+function loadLLM(){api("/api/dashboard",function(d){if(!d)return;var lm=d.llm||{},tt=lm.totals||{},ct=lm.current||{};var h="",hist=lm.history||[];for(var hi=Math.max(0,hist.length-20);hi<hist.length;hi++){var hh=hist[hi];h+="<tr><td>"+esc(hh.time||"")+"</td><td>"+esc(hh.model||"")+"</td><td>"+(hh.tokens_in||0)+"</td><td>"+(hh.tokens_out||0)+"</td><td>\u00a5"+(hh.cost_rmb||0).toFixed(4)+"</td></tr>"}$("d-llmhist").innerHTML=h||"<tr><td colspan=5 style=color:var(--t3)>No activity</td></tr>";var pd="";for(var k in lm){if(lm[k]&&lm[k].model)pd+=lm[k].model+" | "};$("llm-list").innerHTML=pd||"<span style=color:var(--t3)>No providers</span>"})}
+function sendChat(){var inp=$("llm-input"),out=$("llm-out"),txt=inp.value.trim();if(!txt)return;out.textContent="Sending...";api("/api/chat",function(d){out.textContent=(d&&d.ok?d.response:"Error: "+(d?d.error||"":"no response"))},"POST",JSON.stringify({text:txt}))}
+function loadAccount(){api("/api/dashboard",function(d){if(!d)return;var td=d.trade||{},acct=td.account||{};$("a-cash").textContent="\u00a5"+(acct.cash||0).toLocaleString();$("a-equity").textContent="\u00a5"+(acct.equity||0).toLocaleString();var pnl=acct.pnl||0;$("a-pnl").textContent=(pnl>=0?"+":"")+pnl.toLocaleString();$("a-pnl").style.color=pnl>=0?"var(--g)":"var(--r)";$("a-pos").textContent=acct.positions||"0"})}
+function loadTrade(){loadMarket()}
 
-function execCap(cid){
-  var log=$('hack-log');if(log)log.textContent='执行: '+cid+'...';
-  api('/api/hacker/exec',function(d,err){
-    if(log){
-      var tm=new Date().toLocaleTimeString();
-      if(err)log.textContent='['+tm+'] ERR '+cid+' '+err+'
-'+log.textContent;
-      else log.textContent='['+tm+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
-'+(d.data||d.error||'')+'
----
-'+log.textContent;
-    }
-    toast((d&&d.ok?'✅ ':'❌ ')+cid+(d&&d.ok?' 成功':' '+(d?d.error:err||'')));
-  },'POST',JSON.stringify({id:cid,action:'run'}));
-}
-
-// ── Trade tab ──
-function loadTrade(){
-  api('/api/hacker/capabilities',function(d){
-    if(!d)return;
-    var caps=(d.capabilities||[]).filter||function(fn){var r=[];for(var i=0;i<this.length;i++)if(fn(this[i]))r.push(this[i]);return r;};
-    // IE11 compatible filter
-    var tradeCaps=[];
-    for(var i=0;i<d.capabilities.length;i++){if(d.capabilities[i].cat==='trade')tradeCaps.push(d.capabilities[i])}
-    var h='<div class=cap-grid>';
-    for(var j=0;j<tradeCaps.length;j++)h+='<div class=cap-item onclick="execCap(''+esc(tradeCaps[j].id)+'')"><span class=cap-dot style=background:#6366f1></span>'+esc(tradeCaps[j].id)+'</div>';
-    h+='</div>';setHTML('trade-quotes',h);
-    api('/api/dashboard',function(dd){
-      if(!dd)return;var td=dd.trade||{};var wh='';var wl=td.watchlist||[];
-      for(var k=0;k<wl.length;k++)wh+='<tr><td>'+esc(wl[k][0])+'</td><td>'+esc(wl[k][1])+'</td><td>--</td><td>--</td><td>--</td></tr>';
-      setHTML('trade-watchlist',wh||'<tr><td colspan=5 style=color:#64748b>暂无</td></tr>');
-    });
-  });
-}
-
-// ── Desktop tab ──
-function loadDesktop(){
-  var acts=['screenshot','browser_open','window_maximize','keyboard_type','keyboard_hotkey','mouse_click','process_list','process_kill','window_focus','volume_control','system_lock'];
-  var h='';
-  for(var i=0;i<acts.length;i++)h+='<div class=cap-item onclick="execCapDesktop(''+acts[i]+'')"><span class=cap-dot style=background:#6366f1></span>'+acts[i]+'</div>';
-  setHTML('desk-actions',h);
-  api('/api/system',function(d){
-    if(!d)return;
-    var di=$('desk-info');if(di)di.textContent='CPU '+d.cpu.toFixed(1)+'% | MEM '+d.memory.toFixed(1)+'% | '+d.host;
-  });
-}
-
-function execCapDesktop(cid){
-  var log=$('desk-log');if(log)log.textContent='执行: '+cid+'...';
-  api('/api/hacker/exec',function(d,err){
-    if(log){
-      var tm=new Date().toLocaleTimeString();
-      if(err)log.textContent='['+tm+'] ERR '+cid+' '+err+'
-'+log.textContent;
-      else log.textContent='['+tm+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
-'+(d.data||d.error||'')+'
----
-'+log.textContent;
-    }
-    toast((d&&d.ok?'✅ ':'❌ ')+cid);
-  },'POST',JSON.stringify({id:cid,action:'run'}));
-}
-
-// Note: sidebar buttons set onclick directly in HTML (onclick="switchTab('dash')")
-// The read HTML already has these inline handlers
-var currentTab='dash';
-refreshDash();
-setInterval(refreshDash,5000);
-
+refresh();setInterval(refresh,5000)
 </script>
-</body>
-</html>
+</body></html>

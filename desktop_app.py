@@ -98,6 +98,13 @@ def api_connectors():return jsonify({"connectors":[],"total":0})
 def api_logo():return '<svg width="32" height="32"><rect width="32" height="32" rx="6" fill="#6366f1"/><text x="16" y="22" text-anchor="middle" fill="white" font-size="16" font-weight="bold">G</text></svg>',200,{'Content-Type':'image/svg+xml'}
 @app.route("/api/access_log")
 def api_access_log():return jsonify({"ok":True})
+@app.route("/styles.css")
+def styles():
+    import os
+    sp=os.path.join(os.path.dirname(__file__),"desktop","templates","styles.css")
+    if os.path.exists(sp):return open(sp,"r",encoding="utf-8").read(),200,{"Content-Type":"text/css"}
+    return "",404
+
 @app.route("/favicon.ico")
 def favicon():return "",204
 
