@@ -118,6 +118,7 @@ def dashboard():
 
 @app.route("/api/dashboard")
 def dashboard_data():
+    import gbt.paper_account as __pa
     import psutil
     data = {}
     try:
@@ -136,7 +137,8 @@ def dashboard_data():
         wl = getattr(trader,"watchlist",{}) or {}
         data["trade"] = {"auto_trade": ts.get("auto_trade",False),
                          "watchlist_count": len(wl), "watchlist": list(wl.items())[:10],
-                         "account": {"cash":100000,"equity":100000,"pnl":0,"positions":0}}
+                         try:pa=__pa.get_status();data["trade"]["account"]=pa
+                         except:data["trade"]["account"]={"cash":100000,"equity":100000,"pnl":0,"positions":0}
     except: data["trade"] = {"error": "trader not ready"}
     try:
         mcp = get_mcp()
@@ -248,7 +250,8 @@ def api_trader_status():
 
 @app.route("/api/account")
 def api_account():
-    return jsonify({"cash":100000,"equity":100000,"pnl":0,"positions":0})
+    try:pa=__pa.get_status();data["trade"]["account"]=pa
+    except:data["trade"]["account"]={"cash":100000,"equity":100000,"pnl":0,"positions":0}
 
 @app.route("/api/connectors")
 def api_connectors():

@@ -40,7 +40,11 @@ def dashboard_data():
     except: data["system"]={}
     try: from gbt.mcp import get_mcp;data["mcp"]={"servers":get_mcp().list_servers()}
     except: data["mcp"]={"servers":[]}
-    data["trade"]={"account":{"cash":100000},"watchlist":[]};data["desktop"]={};data["watcher"]={"running":False}
+    try:
+        import gbt.paper_account as __pa
+        pa=__pa.get_status()
+        data["trade"]={"account":pa,"watchlist":data.get("trade",{}).get("watchlist",[])}
+    except: data["trade"]={"account":{"cash":100000,"equity":100000,"pnl":0},"watchlist":[]}
     return jsonify(data)
 
 @app.route("/api/hacker/capabilities")
@@ -93,7 +97,7 @@ def api_watcher_status():return jsonify({"running":False})
 @app.route("/api/trader/status")
 def api_trader_status():return jsonify({"auto_trade":False})
 @app.route("/api/account")
-def api_account():return jsonify({"cash":100000,"equity":100000,"pnl":0,"positions":0})
+def api_account():import gbt.paper_account as __pa;return jsonify(__pa.get_status())
 @app.route("/api/connectors")
 def api_connectors():return jsonify({"connectors":[],"total":0})
 @app.route("/api/logo")
