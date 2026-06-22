@@ -44,6 +44,7 @@ screen.png
 build/
 dist/
 *.spec
+!GBT_Desktop.spec
 *.egg-info/
 
 # Backup / temp
