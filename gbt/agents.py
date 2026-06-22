@@ -276,11 +276,21 @@ class DesktopAgent(BaseAgent):
             return "窗口已切换"
     def _volume_control(self, text):
         import subprocess
-        if "静音" in text:
-            subprocess.run(["nircmd","mutesysvolume","1"],capture_output=True,timeout=3)
-            return "已静音"
-        subprocess.run(["nircmd","changesysvolume","2000"],capture_output=True,timeout=3)
-        return "音量已调节"
+        try:
+            if "静音" in text:
+                subprocess.run(["powershell","-c","(New-Object -ComObject WScript.Shell).SendKeys([char]173)"],
+                              capture_output=True,timeout=5,shell=False)
+                return "已静音"
+            key = "[char]175" if any(x in text for x in ["+","加","大","增"]) else "[char]174"
+            cmd = f"(New-Object -ComObject WScript.Shell).SendKeys({key})"
+            subprocess.run(["powershell","-c",cmd],capture_output=True,timeout=5,shell=False)
+            return "音量已调节"
+        except Exception:
+            try:
+                import os;os.system("sndvol 2>nul")
+                return "音量面板已弹出"
+            except:
+                return "音量调节: 请使用系统快捷键"
     def _system_lock(self, text):
         import subprocess
         subprocess.run(["rundll32","user32.dll,LockWorkStation"],capture_output=True,timeout=3)
