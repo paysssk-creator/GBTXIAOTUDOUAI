@@ -1,1299 +1,297 @@
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
-<script>
-window.onerror=function(m,s,l,c,e){fetch('/api/access_log?err='+encodeURIComponent(m+' @ '+s+':'+l))};
-window.addEventListener('unhandledrejection',function(e){fetch('/api/access_log?err='+encodeURIComponent('Promise: '+e.reason))});
-</script>
-
-<div id="tb">
-  <div class="logo"><img src="/api/logo" alt="GBT" class="logo-img"><span>Pro v2.1</span></div>
-  <div class="btns">
-    <button class="tbb" onclick="w.min()"><i class="ph ph-minus"></i></button>
-    <button class="tbb" onclick="w.max()"><i class="ph ph-square"></i></button>
-    <button class="tbb cl" onclick="w.close()"><i class="ph ph-x"></i></button>
-  </div>
-</div>
-
-<div id="app">
-  <nav id="sb">
-    <div class="sb-head">
-      <div class="sb-id">
-        <div class="sb-av">G</div>
-        <div><h2>GBT Pro</h2><div class="ver">DeepSeek v4-pro</div></div>
-      </div>
-    </div>
-    <div class="sb-nav">
-      <button class="ni active" data-v="chat" onclick="go('chat',this)"><i class="ph ph-chat-circle-dots"></i><span>对话</span><span class="kb">Ctrl+1</span></button>
-      <button class="ni" data-v="reason" onclick="go('reason',this)"><i class="ph ph-brain"></i><span>深度推理</span><span class="kb">Ctrl+2</span></button>
-      <div class="sb-div"></div>
-      <div class="sb-label">工具</div>
-      <button class="ni" onclick="mcp('scanner')"><i class="ph ph-scan"></i><span>代码扫描</span></button>
-      <button class="ni" onclick="mcp('audit')"><i class="ph ph-shield-check"></i><span>安全审计</span></button>
-      <button class="ni" onclick="mcp('auto-fix')"><i class="ph ph-wrench"></i><span>自动修复</span></button>
-      <button class="ni" onclick="evo()"><i class="ph ph-arrows-clockwise"></i><span>自我进化</span></button>
-      <button class="ni" data-v="hacker" onclick="go('hacker',this)"><i class="ph ph-skull"></i><span>黑客全能力</span><span class="kb">Ctrl+4</span></button>
-      <div class="sb-div"></div>
-      <div class="sb-label">操盘</div>
-      <button class="ni" data-v="trade" onclick="go('trade',this)"><i class="ph ph-chart-line-up"></i><span>A股操盘</span><span class="kb">Ctrl+3</span></button>
-      <button class="ni" onclick="openSettings()"><i class="ph ph-gear"></i><span>设置</span></button>
-    </div>
-    <div class="sb-foot">
-      <div style="font-size:9px;color:var(--t4);text-align:center;margin-bottom:4px">开发者: 自由的风</div>
-      <span class="sb-dot" id="sd"></span><span id="stx">连接中</span>
-    </div>
-  </nav>
-
-  <div id="mn">
-    <button class="pt" id="pt" onclick="togglePanel()" title="切换面板"><i class="ph ph-sidebar-simple"></i></button>
-
-    <div class="card" id="card">
-      <!-- 对话视图 -->
-      <div class="chat-area" id="cv" style="display:none">
-        <div class="msg-list" id="ml"></div>
-        <div class="input-area">
-          <div class="input-card">
-            <textarea id="ci" placeholder="给 GBT 发消息…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chat()}"></textarea>
-            <div class="input-actions">
-              <div class="ia-left"><button class="ia-btn"><i class="ph ph-paperclip"></i></button></div>
-              <div class="ia-right">
-                <select class="mdl" id="ms" onchange="switchProv()"><option>加载中…</option></select>
-                <button class="send" onclick="chat()"><i class="ph ph-arrow-up"></i></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      
-      <!-- 仪表盘 4面板 -->
-      <div class="welcome" id="wc">
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GBT Pro v2.1 - Production Dashboard</title>
 <style>
-.d4g{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;text-align:left}
-.d4p{background:var(--bg-card);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
-.d4p .phd{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-shrink:0}
-.d4p .phd h3{font-size:11.5px;font-weight:600;color:var(--t2);margin:0}
-.d4p .pbd{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;font-size:10.5px}
-.d4p .pbd::-webkit-scrollbar{width:3px}
-.d4-mrow{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-.d4-m{text-align:center;min-width:50px}
-.d4-m .mv{font-size:15px;font-weight:700;color:var(--t1)}
-.d4-m .ml{font-size:8px;color:var(--t4);margin-top:1px}
-.d4-tbl{width:100%;border-collapse:collapse;font-size:9px}
-.d4-tbl th{text-align:left;color:var(--t4);font-weight:500;padding:2px 3px;border-bottom:1px solid var(--b-def);position:sticky;top:0;background:var(--bg-card)}
-.d4-tbl td{padding:2px 3px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap}
-.d4-barw{height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin:2px 0 5px;overflow:hidden}
-.d4-barf{height:100%;border-radius:3px;transition:width .4s}
-.d4-barf.cpu{background:var(--accent)}
-.d4-barf.mem{background:#a855f7}
-.d4-barf.disk{background:#06b6d4}
-.d4-mcpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:4px}
-.d4-mcpi{padding:5px 7px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--t2);transition:all .12s}
-.d4-mcpi:hover{border-color:var(--accent);background:rgba(255,255,255,.06)}
-.d4-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.d4-dot.on{background:var(--green);box-shadow:0 0 5px rgba(34,197,94,.4)}
-.d4-dot.off{background:var(--t4)}
-.d4-badge{padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600}
-.d4-badge.on{background:rgba(34,197,94,.12);color:var(--green)}
-.d4-badge.off{background:rgba(239,68,68,.1);color:var(--red)}
-.d4-stat{font-size:18px;font-weight:700;color:var(--t1)}
-.d4-sub{font-size:9px;color:var(--t4)}
+:root{--bg:#0a0e17;--c1:#111827;--c2:#1f2937;--b:#2d3748;--t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;--g:#22c55e;--r:#ef4444;--a:#6366f1;--a2:#818cf8;--y:#eab308}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sans-serif;overflow:hidden;height:100vh}
+#app{display:grid;grid-template-columns:280px 1fr;height:100vh}
+#side{background:var(--c1);border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
+.side-h{padding:16px;border-bottom:1px solid var(--b)}
+.side-h h1{font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.side-h .ver{font-size:10px;color:var(--t3);margin-top:2px}
+.side-m{padding:10px 12px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.side-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 6px;border-radius:6px;border:none;background:none;color:var(--t2);font-size:12px;cursor:pointer;text-align:left;width:calc(100%-12px)}
+.side-btn:hover{background:var(--c2);color:var(--t1)}
+.side-btn.on{background:rgba(99,102,241,.15);color:var(--a2)}
+.side-btn .dot{width:6px;height:6px;border-radius:50%}
+.side-btn .dot.on{background:var(--g);box-shadow:0 0 6px var(--g)}
+.side-btn .dot.off{background:var(--t3)}
+.side-foot{padding:12px;border-top:1px solid var(--b);font-size:10px;color:var(--t3);margin-top:auto}
+#main{padding:20px;overflow-y:auto;overflow-x:hidden}
+#main::-webkit-scrollbar{width:4px}#main::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--c1);border:1px solid var(--b);border-radius:10px;overflow:hidden}
+.card.full{grid-column:1/-1}
+.ch{padding:12px 16px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.ch .st{font-size:10px;color:var(--t3);margin-left:auto}
+.cb{padding:14px 16px}
+.stat-row{display:flex;gap:16px;flex-wrap:wrap}
+.stat-item{flex:1;min-width:80px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:var(--t1)}
+.stat-label{font-size:9px;color:var(--t3);margin-top:2px}
+.progress-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin:6px 0 10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s}
+.pc{background:var(--a)}.pm{background:#a855f7}.pd{background:#06b6d4}
+.tbl{width:100%;border-collapse:collapse;font-size:10px}
+.tbl th{text-align:left;color:var(--t3);font-weight:500;padding:4px 6px;border-bottom:1px solid var(--b)}
+.tbl td{padding:3px 6px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.03)}
+.green{color:var(--g)}.red{color:var(--r)}.up{background:rgba(34,197,94,.08)}.down{background:rgba(239,68,68,.06)}
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;max-height:400px;overflow-y:auto}
+.cap-item{padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);cursor:pointer;font-size:10px;display:flex;align-items:center;gap:4px;transition:all .15s}
+.cap-item:hover{border-color:var(--a);background:rgba(99,102,241,.1)}
+.cap-item:active{opacity:.6}
+.cap-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:6px}
+.toast{background:var(--c2);border:1px solid var(--b);padding:10px 16px;border-radius:8px;font-size:11px;color:var(--t2);animation:slideIn .2s ease;max-width:350px}
+@keyframes slideIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.market-ticker{display:flex;gap:16px;padding:8px 0;overflow-x:auto;font-size:11px}
+.ticker-item{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.ticker-name{color:var(--t3)}
+.ticker-val{font-weight:600}
 </style>
-<div class="d4g">
-  <div class="d4p">
-    <div class="phd"><h3>🤖 LLM消耗</h3><span class="d4-sub" id="d4-uptime">--</span></div>
-    <div class="pbd">
-      <div><span class="d4-stat" id="d4-provider">--</span><span class="d4-sub" style="margin-left:6px" id="d4-model"></span></div>
-      <div class="d4-mrow">
-        <div class="d4-m"><div class="mv" id="d4-tokens">--</div><div class="ml">Tokens</div></div>
-        <div class="d4-m"><div class="mv" id="d4-cost">¥--</div><div class="ml">成本</div></div>
-        <div class="d4-m"><div class="mv" id="d4-rpm">--</div><div class="ml">RPM</div></div>
-        <div class="d4-m"><div class="mv" id="d4-lat">--s</div><div class="ml">延迟</div></div>
-      </div>
-      <table class="d4-tbl"><thead><tr><th>时间</th><th>模型</th><th>In</th><th>Out</th><th>延迟</th><th>¥</th></tr></thead><tbody id="d4-llmhist"></tbody></table>
-    </div>
-  </div>
-  <div class="d4p">
-    <div class="phd"><h3>📊 A股操盘</h3><span class="d4-badge off" id="d4-autotrade">手动</span></div>
-    <div class="pbd">
-      <div class="d4-mrow">
-        <div class="d4-m"><div class="mv" id="d4-cash">¥--</div><div class="ml">现金</div></div>
-        <div class="d4-m"><div class="mv" id="d4-equity">¥--</div><div class="ml">总资产</div></div>
-        <div class="d4-m"><div class="mv" id="d4-pnl">--</div><div class="ml">盈亏</div></div>
-        <div class="d4-m"><div class="mv" id="d4-pos">--</div><div class="ml">持仓</div></div>
-      </div>
-      <table class="d4-tbl"><thead><tr><th>代码</th><th>名称</th><th style="text-align:right">现价</th><th style="text-align:right">涨跌%</th></tr></thead><tbody id="d4-watchlist"><tr><td colspan="4" style="color:var(--t4);text-align:center">加载中...</td></tr></tbody></table>
-    </div>
-  </div>
-  <div class="d4p">
-    <div class="phd"><h3>💀 黑客全能力</h3><span class="d4-sub" id="d4-mcpcount">--</span></div>
-    <div class="pbd"><div class="d4-mcpg" id="d4-mcpgrid"></div></div>
-  </div>
-  <div class="d4p">
-    <div class="phd"><h3>🖥️ 电脑操控</h3><span class="d4-sub" id="d4-host">--</span></div>
-    <div class="pbd">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px">
-        <div><div style="font-size:9px;color:var(--t4)">CPU <span id="d4-cpu">--</span></div><div class="d4-barw"><div class="d4-barf cpu" id="d4-cpubar" style="width:0%"></div></div></div>
-        <div><div style="font-size:9px;color:var(--t4)">内存 <span id="d4-mem">--</span></div><div class="d4-barw"><div class="d4-barf mem" id="d4-membar" style="width:0%"></div></div></div>
-        <div><div style="font-size:9px;color:var(--t4)">磁盘 <span id="d4-disk">--</span></div><div class="d4-barw"><div class="d4-barf disk" id="d4-diskbar" style="width:0%"></div></div></div>
-      </div>
-      <table class="d4-tbl"><thead><tr><th>进程</th><th>PID</th><th style="text-align:right">CPU%</th><th style="text-align:right">MEM%</th></tr></thead><tbody id="d4-procs"></tbody></table>
-    </div>
-  </div>
+</head>
+<body>
+<div id="app">
+<aside id="side">
+<div class="side-h"><h1>GBT Pro v2.1</h1><div class="ver">A股集成编程AI框架</div></div>
+<div class="side-m">能力面板</div>
+<button class="side-btn on" onclick="switchTab('dash')"><span class="dot on"></span>仪表盘</button>
+<button class="side-btn" onclick="switchTab('hacker')"><span class="dot on"></span>黑客全能力 (49)</button>
+<button class="side-btn" onclick="switchTab('trade')"><span class="dot on"></span>A股操盘</button>
+<button class="side-btn" onclick="switchTab('desktop')"><span class="dot on"></span>电脑操控</button>
+<div class="side-foot">
+<div style="display:flex;align-items:center;gap:6px"><span class="dot on" id="status-dot"></span><span id="status-text">在线</span></div>
+<div style="margin-top:4px;font-size:9px" id="cpu-info">CPU --</div>
+<div>开发者: 自由的风 | v2.1</div>
+</div>
+</aside>
+<main id="main">
+<!-- Dashboard Tab -->
+<div id="tab-dash">
+<div class="market-ticker" id="market-ticker">
+<span style="color:var(--t3);font-size:10px">加载行情中...</span>
+</div>
+<div class="grid">
+<div class="card">
+<div class="ch">🤖 LLM 消耗 <span class="st" id="dash-uptime">--</span></div>
+<div class="cb">
+<div class="stat-row">
+<div class="stat-item"><div class="stat-val" id="dash-tokens">--</div><div class="stat-label">总Tokens</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-cost">¥--</div><div class="stat-label">累计成本</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-calls">--</div><div class="stat-label">调用次数</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-model">--</div><div class="stat-label">当前模型</div></div>
+</div>
+<table class="tbl"><thead><tr><th>时间</th><th>模型</th><th>In</th><th>Out</th><th>成本</th></tr></thead><tbody id="dash-llmhist"></tbody></table>
+</div></div>
+<div class="card">
+<div class="ch">📊 A股操盘 <span id="dash-trade-status" class="st">手动</span></div>
+<div class="cb">
+<div class="stat-row">
+<div class="stat-item"><div class="stat-val" id="dash-cash">¥--</div><div class="stat-label">现金</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-equity">¥--</div><div class="stat-label">总资产</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-pnl">--</div><div class="stat-label">盈亏</div></div>
+<div class="stat-item"><div class="stat-val" id="dash-pos">--</div><div class="stat-label">持仓数</div></div>
+</div>
+<table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>现价</th><th>涨跌%</th></tr></thead><tbody id="dash-watchlist"></tbody></table>
+</div></div>
+<div class="card">
+<div class="ch">🖥️ 系统资源 <span id="dash-host" class="st">--</span></div>
+<div class="cb">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">CPU</div><div style="font-size:14px;font-weight:600" id="dash-cpuval">--</div><div class="progress-bar"><div class="progress-fill pc" id="dash-cpubar" style="width:0%"></div></div></div>
+<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">内存</div><div style="font-size:14px;font-weight:600" id="dash-memval">--</div><div class="progress-bar"><div class="progress-fill pm" id="dash-membar" style="width:0%"></div></div></div>
+<div><div style="font-size:10px;color:var(--t3);margin-bottom:2px">磁盘</div><div style="font-size:14px;font-weight:600" id="dash-diskval">--</div><div class="progress-bar"><div class="progress-fill pd" id="dash-diskbar" style="width:0%"></div></div></div>
+</div>
+<table class="tbl"><thead><tr><th>进程</th><th>PID</th><th>CPU%</th><th>MEM%</th></tr></thead><tbody id="dash-procs"></tbody></table>
+</div></div>
+<div class="card">
+<div class="ch">🔌 核心服务 <span id="dash-srvcnt" class="st">--</span></div>
+<div class="cb"><div class="cap-grid" id="dash-services"></div></div>
 </div>
 </div>
+</div>
+<!-- Hacker Tab -->
+<div id="tab-hacker" style="display:none">
+<div class="card"><div class="ch">💀 黑客全能力 (49项) <span class="st" id="hack-capcnt">--</span></div>
+<div class="cb"><div class="cap-grid" id="hack-grid"></div></div>
+</div>
+<div class="card" style="margin-top:12px"><div class="ch">📋 执行日志</div>
+<div class="cb" id="hack-log" style="max-height:200px;overflow-y:auto;font-size:10px;color:var(--t2);font-family:monospace">等待执行...</div>
+</div>
+</div>
+<!-- Trade Tab -->
+<div id="tab-trade" style="display:none">
+<div class="grid">
+<div class="card"><div class="ch">📊 实时行情</div><div class="cb" id="trade-quotes" style="font-size:10px;color:var(--t2)">加载中...</div></div>
+<div class="card"><div class="ch">💰 账户</div><div class="cb">
+<div class="stat-row">
+<div class="stat-item"><div class="stat-val" id="trade-cash">¥100,000</div><div class="stat-label">现金</div></div>
+<div class="stat-item"><div class="stat-val" id="trade-pnl">¥0</div><div class="stat-label">盈亏</div></div>
+</div>
+</div></div>
+</div>
+<div class="card full" style="margin-top:12px">
+<div class="ch">📋 自选股</div>
+<div class="cb"><table class="tbl"><thead><tr><th>代码</th><th>名称</th><th>现价</th><th>涨跌</th><th>涨跌%</th></tr></thead><tbody id="trade-watchlist"></tbody></table></div>
+</div>
+</div>
+<!-- Desktop Tab -->
+<div id="tab-desktop" style="display:none">
+<div class="grid">
+<div class="card full"><div class="ch">🖥️ 电脑操控 <span class="st" id="desk-info">--</span></div>
+<div class="cb">
+<div class="cap-grid" id="desk-actions"></div>
+</div></div>
+</div>
+<div class="card full" style="margin-top:12px"><div class="ch">📋 执行日志</div>
+<div class="cb" id="desk-log" style="max-height:200px;overflow-y:auto;font-size:10px;color:var(--t2);font-family:monospace">等待...</div>
+</div>
+</div>
+</main>
+</div>
+<div id="toast"></div>
 <script>
-(function(){
-  var q=function(id){return document.getElementById(id)};
-  var esc=function(t){var e=document.createElement('span');e.textContent=t||'';return e.innerHTML};
-  
-  async function refresh(){
+var currentTab='dash';
+var D=document;
+function $(id){return D.getElementById(id)}
+function toast(msg){var t=$('toast');var d=D.createElement('div');d.className='toast';d.textContent=msg;t.appendChild(d);setTimeout(function(){d.remove()},3000)}
+function switchTab(tab){
+  ['dash','hacker','trade','desktop'].forEach(function(t){
+    var el=$('tab-'+t);if(el)el.style.display=t===tab?'':'none'
+  });
+  D.querySelectorAll('.side-btn').forEach(function(b,i){
+    b.className=b.textContent.indexOf(tab)!==-1||(tab==='dash'&&b.textContent.indexOf('仪表盘')!==-1)?'side-btn on':'side-btn'
+  });
+  currentTab=tab;
+  if(tab==='hacker')loadHackerTab();
+  if(tab==='trade')loadTradeTab();
+  if(tab==='desktop')loadDesktopTab();
+}
+// ── Dashboard refresh ──
+async function refreshDash(){
+  try{
+    var r=await fetch('/api/dashboard');var d=await r.json();
+    // LLM
+    var lm=d.llm||{};var tt=lm.totals||{};var ct=lm.current||{};
+    $('dash-tokens').textContent=(tt.tokens_total||0).toLocaleString();
+    $('dash-cost').textContent='¥'+(tt.cost_rmb||0).toFixed(4);
+    $('dash-calls').textContent=(tt.requests||0).toLocaleString();
+    $('dash-model').textContent=ct.model||'--';
+    $('dash-uptime').textContent='↑'+(lm.uptime_h||0).toFixed(1)+'h';
+    var hh='';(lm.history||[]).slice(-10).reverse().forEach(function(h){hh+='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>'});
+    $('dash-llmhist').innerHTML=hh||'<tr><td colspan=5 style=color:var(--t3)>无记录</td></tr>';
+    // Trade
+    var td=d.trade||{};var acct=td.account||{};
+    $('dash-cash').textContent='¥'+(acct.cash||0).toLocaleString();
+    $('dash-equity').textContent='¥'+(acct.equity||0).toLocaleString();
+    var pnl=acct.pnl||0;$('dash-pnl').textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
+    $('dash-pnl').style.color=pnl>=0?'var(--g)':'var(--r)';
+    $('dash-pos').textContent=(acct.positions||0);
+    $('dash-trade-status').textContent=td.auto_trade?'自主交易':'手动';
+    var wl='';(td.watchlist||[]).forEach(function(w){wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>'});
+    $('dash-watchlist').innerHTML=wl||'<tr><td colspan=4 style=color:var(--t3)>暂无</td></tr>';
+    // System
+    var sy=d.system||{};$('dash-host').textContent=sy.host||'';
+    var cpu=sy.cpu||0;$('dash-cpuval').textContent=cpu.toFixed(1)+'%';$('dash-cpubar').style.width=cpu+'%';
+    var mem=sy.memory||0;$('dash-memval').textContent=mem.toFixed(1)+'%';$('dash-membar').style.width=mem+'%';
+    var dsk=sy.disk||0;$('dash-diskval').textContent=dsk.toFixed(1)+'%';$('dash-diskbar').style.width=dsk+'%';
+    var ph='';(d.desktop||{}).top_processes&&(d.desktop.top_processes||[]).forEach(function(p){ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+esc(p.pid||0)+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>'});
+    $('dash-procs').innerHTML=ph||'<tr><td colspan=4 style=color:var(--t3)>无数据</td></tr>';
+    // Services
+    var mcp=d.mcp||{};var srvs=mcp.servers||[];$('dash-srvcnt').textContent=srvs.length+'服务';
+    var sh='';srvs.forEach(function(s){var n=typeof s==='string'?s:(s.id||s.name||'');sh+='<div class=cap-item><span class=cap-dot style=background:var(--g)></span>'+esc(n)+'</div>'});
+    $('dash-services').innerHTML=sh||'<span style=color:var(--t3);font-size:10px>无MCP服务</span>';
+    // Status
+    D.getElementById('status-dot').className='dot on';
+    D.getElementById('status-text').textContent='在线';
+    D.getElementById('cpu-info').textContent='CPU '+cpu.toFixed(0)+'% | MEM '+mem.toFixed(0)+'%';
+    // Market ticker
+    loadMarketTicker();
+  }catch(e){console.error('dash:',e)}
+}
+// ── Market ticker ──
+async function loadMarketTicker(){
+  try{
+    var r=await fetch('/api/market');var d=await r.json();
+    if(!d.ok){$('market-ticker').innerHTML='<span style=color:var(--t3);font-size:10px>行情接口未就绪</span>';return}
+    var html='';(d.indices||[]).forEach(function(i){
+      var cls=i.change>=0?'green':'red';html+='<div class=ticker-item><span class=ticker-name>'+esc(i.name)+'</span><span class="ticker-val '+cls+'">'+esc(i.price)+'</span><span class='+cls+'>'+(i.change>=0?'+':'')+i.change.toFixed(2)+' ('+(i.pct>=0?'+':'')+i.pct.toFixed(2)+'%)'+'</span></div>'
+    });
+    $('market-ticker').innerHTML=html||'<span style=color:var(--t3);font-size:10px>暂无行情</span>'
+  }catch(e){$('market-ticker').innerHTML='<span style=color:var(--t3);font-size:10px'>行情加载中...</span>'}
+}
+// ── Hacker tab ──
+async function loadHackerTab(){
+  try{
+    var r=await fetch('/api/hacker/capabilities');var d=await r.json();
+    $('hack-capcnt').textContent=d.total+'项';
+    var html='';(d.capabilities||[]).forEach(function(c){
+      html+='<div class=cap-item onclick=execCap("'+esc(c.id)+'") title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'var(--g)':'var(--a)')+'"></span>'+esc(c.id)+'</div>';
+    });
+    $('hack-grid').innerHTML=html;
+  }catch(e){$('hack-grid').innerHTML='加载失败'}
+}
+async function execCap(cid){
+  var log=$('hack-log');log.textContent='执行: '+cid+'...';
+  try{
+    var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})});
+    var d=await r.json();
+    log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+'+(d.data||d.error||'')+'
+---
+'+log.textContent;
+    toast((d.ok?'✔ ':'✘ ')+cid+(d.ok?' 执行成功':' '+d.error));
+  }catch(e){log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
+'+log.textContent;toast('✘ '+cid+' '+e)}
+}
+// ── Trade tab ──
+async function loadTradeTab(){
+  try{
+    var r=await fetch('/api/hacker/capabilities');var d=await r.json();
+    var tradeCaps=(d.capabilities||[]).filter(function(c){return c.cat==='trade'});
+    var html='<div class=cap-grid>';
+    tradeCaps.forEach(function(c){html+='<div class=cap-item onclick=execCapTrade("'+esc(c.id)+'")><span class=cap-dot style=background:var(--a)></span>'+esc(c.id)+'</div>'});
+    html+='</div>';
+    $('trade-quotes').innerHTML=html;
+    // Watchlist
     try{
-      var r=await fetch('/api/dashboard');var d=await r.json();
-      // LLM
-      var lm=d.llm||{},ct=lm.current||{},tt=lm.totals||{};
-      q('d4-provider').textContent=ct.provider||'--';
-      q('d4-model').textContent=ct.model||'';
-      q('d4-tokens').textContent=(tt.tokens_total||0).toLocaleString();
-      q('d4-cost').textContent='¥'+(tt.cost_rmb||0).toFixed(4);
-      q('d4-rpm').textContent=(lm.rpm||0).toFixed(1);
-      q('d4-lat').textContent=(tt.avg_latency_s||0).toFixed(1)+'s';
-      q('d4-uptime').textContent='↑'+(lm.uptime_h||0).toFixed(1)+'h';
-      var hist=lm.history||[];
-      var hh='';
-      hist.slice(-15).reverse().forEach(function(h){
-        hh+='<tr><td>'+esc(h.time)+'</td><td>'+esc(h.model)+'</td><td style="text-align:right">'+(h.tokens_in||0)+'</td><td style="text-align:right">'+(h.tokens_out||0)+'</td><td style="text-align:right">'+(h.latency_s||0)+'s</td><td style="text-align:right">'+(h.cost_rmb||0).toFixed(4)+'</td></tr>';
-      });
-      q('d4-llmhist').innerHTML=hh||'<tr><td colspan="6" style="color:var(--t4);text-align:center">无记录</td></tr>';
-      // A股
-      var td=d.trade||{},acct=td.account||{};
-      var at=td.auto_trade;
-      q('d4-autotrade').textContent=at?'自主交易':'手动';
-      q('d4-autotrade').className='d4-badge '+(at?'on':'off');
-      q('d4-cash').textContent='¥'+(acct.cash||0).toLocaleString();
-      q('d4-equity').textContent='¥'+(acct.equity||0).toLocaleString();
-      var pnl=acct.pnl||0;
-      var pnlEl=q('d4-pnl');
-      pnlEl.textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
-      pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
-      q('d4-pos').textContent=(acct.positions||0);
-      var wl=td.watchlist||[];
-      var wh='';
-      wl.forEach(function(w){
-        wh+='<tr><td>'+esc(w[0])+'</td><td>'+esc(w[1])+'</td><td style="text-align:right">--</td><td style="text-align:right">--</td></tr>';
-      });
-      q('d4-watchlist').innerHTML=wh||'<tr><td colspan="4" style="color:var(--t4);text-align:center">暂无自选股</td></tr>';
-      // 黑客
-      var mcp=d.mcp||{},srvs=mcp.servers||[];
-      q('d4-mcpcount').textContent=srvs.length+'服务';
-      var mh='';
-      srvs.forEach(function(s){
-        var sid=typeof s==='string'?s:(s.id||s.name||'');
-        var sname=typeof s==='string'?s:(s.name||s.id||'');
-        mh+='<div class="d4-mcpi" data-mcp="'+esc(sid)+'" onclick="window._execMcp(&quot;'+esc(sid)+'&quot;,this)"><span class="d4-dot on"></span>'+esc(sname)+'</div>';
-      });
-      q('d4-mcpgrid').innerHTML=mh||'<span style="color:var(--t4);font-size:10px">无MCP服务</span>';
-      // 电脑
-      var sys=d.system||{};
-      q('d4-host').textContent=sys.host||'';
-      var cpu=sys.cpu||0;q('d4-cpu').textContent=cpu.toFixed(0)+'%';q('d4-cpubar').style.width=cpu+'%';
-      var mem=sys.memory||0;q('d4-mem').textContent=mem.toFixed(0)+'%';q('d4-membar').style.width=mem+'%';
-      var dsk=sys.disk||0;q('d4-disk').textContent=dsk.toFixed(0)+'%';q('d4-diskbar').style.width=dsk+'%';
-      var procs=(d.desktop||{}).top_processes||[];
-      var ph='';
-      procs.forEach(function(p){ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+esc(p.pid||'')+'</td><td style="text-align:right">'+(p.cpu_percent||0).toFixed(1)+'</td><td style="text-align:right">'+(p.memory_percent||0).toFixed(1)+'</td></tr>'});
-      q('d4-procs').innerHTML=ph||'<tr><td colspan="4" style="color:var(--t4);text-align:center">无进程</td></tr>';
-    }catch(e){console.error('d4:',e)}
-  }
-  
-  window._execMcp=async function(id,el){
-    try{el.style.opacity='0.5';el.textContent='⏳ '+id;
-      var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
-      var d=await r.json();
-      if(window.toast)window.toast((d.ok?'✅ ':'❌ ')+id+(d.ok?' OK':' '+d.error));
-    }catch(e){if(window.toast)window.toast('❌ '+e.message)}
-    refresh();
-  };
-  
-  refresh();setInterval(refresh,5000);
-})();
-</script>
-<!-- 推理视图 -->
-      <div class="chat-area" id="rv" style="display:none">
-        <div class="rh">
-          <h3>深度推理引擎</h3>
-          <div class="sub">将复杂问题逐步分解，逻辑推导</div>
-          <div class="mps">
-            <button class="mp on" data-m="CHAIN" onclick="setMode('CHAIN',this)"><i class="ph ph-arrow-line-right"></i> 链式推理</button>
-            <button class="mp" data-m="TREE" onclick="setMode('TREE',this)"><i class="ph ph-tree-structure"></i> 树形推理</button>
-            <button class="mp" data-m="SWOT" onclick="setMode('SWOT',this)"><i class="ph ph-compass"></i> SWOT分析</button>
-            <button class="mp" data-m="ROOT_CAUSE" onclick="setMode('ROOT_CAUSE',this)"><i class="ph ph-question"></i> 根因分析</button>
-          </div>
-        </div>
-        <div class="msg-list" id="rl">
-          <div class="welcome"><h1 style="font-size:24px">深度推理</h1><p>输入复杂问题 — 引擎会逐步分析推导</p></div>
-        </div>
-        <div class="input-area">
-          <div class="input-card">
-            <textarea id="ri" placeholder="提出推理问题…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();reason()}"></textarea>
-            <div class="input-actions">
-              <div class="ia-left"></div>
-              <div class="ia-right"><button class="send" onclick="reason()"><i class="ph ph-arrow-up"></i></button></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 操盘视图 -->
-      <div class="chat-area" id="tv" style="display:none">
-        <div class="rh">
-          <h3>📊 A股自主操盘</h3>
-          <div class="sub">AI 策略分析 · 实时行情 · 一键交易</div>
-          <div class="mps">
-            <button class="mp" onclick="traderScan()"><i class="ph ph-radar"></i> AI扫描</button>
-            <button class="mp" onclick="traderOpen('东方财富')"><i class="ph ph-browser"></i> 东方财富</button>
-            <button class="mp" onclick="traderOpen('同花顺')"><i class="ph ph-browser"></i> 同花顺</button>
-            <button class="mp" onclick="traderOpen('东方财富交易')"><i class="ph ph-currency-cny"></i> 交易端</button>
-            <button class="mp" id="tAutoBtn" onclick="traderAutoToggle()" style="background:var(--green);color:#fff">▶ 自主交易:开</button>
-            <button class="mp" onclick="desktopTrade()"><i class="ph ph-desktop"></i> 电脑操控</button>
-            <button class="mp" onclick="traderTech()">📈 技术面</button>
-            <button class="mp" onclick="traderStrategy()">🧠 策略</button>
-            <button class="mp" onclick="traderJournal()">📒 日志</button>
-          </div>
-        </div>
-        <div class="msg-list" id="tl">
-          <div class="welcome"><h1 style="font-size:24px">A股操盘</h1><p>点击 AI扫描 获取交易信号 · 点击平台按钮打开交易终端</p></div>
-        </div>
-        <div class="input-area">
-          <div class="input-card">
-            <div style="display:flex;gap:8px;align-items:center;padding:4px">
-              <input id="tcode" placeholder="股票代码 (如 sh600519)" style="flex:1;background:var(--bg-input);color:var(--t1);border:1px solid var(--b-def);border-radius:var(--r2);padding:8px 12px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')traderDetailed()">
-              <button class="send" onclick="traderDetailed()" style="flex-shrink:0" title="6阶段精细分析"><i class="ph ph-steps"></i></button>
-              <button class="send" onclick="traderAnalyze()" style="flex-shrink:0;background:var(--bg3)" title="快速AI分析"><i class="ph ph-magnifying-glass"></i></button>
-            </div>
-            <div id="tquote" style="display:none;padding:6px 12px 0;font-size:12px;color:var(--t2)"></div>
-            <!-- 交易步骤面板 -->
-            <div id="tsteps" style="display:none;padding:8px 12px;max-height:300px;overflow-y:auto"></div>
-            <!-- 持仓面板 -->
-            <div id="tpf" style="display:none;padding:8px 12px">
-              <div style="padding:6px 0;border-bottom:1px solid var(--b);margin-bottom:6px;display:flex;justify-content:space-between"><b style="color:var(--accent)">📦 持仓</b><span id="tp-count" style="font-size:10px;color:var(--t4)"></span></div>
-              <div id="tpf-list" style="max-height:200px;overflow-y:auto;font-size:11px"></div>
-              <div id="tpf-sum" style="margin-top:8px;padding-top:6px;border-top:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;justify-content:space-between"></div>
-            </div>
-            <!-- 快讯 -->
-            <div id="talert" style="display:none;padding:8px 12px;margin-top:4px;border-radius:8px;background:var(--bg2);font-size:11px">
-              <b style="color:var(--yellow)">🔔 交易快讯</b>
-              <div id="talerts" style="margin-top:4px;max-height:120px;overflow-y:auto;font-size:10px;color:var(--t3)"></div>
-            </div>
-          </div>
-        </div>
-
-      <!-- 黑客全能力视图 -->
-      <div class="hacker-area" id="hv" style="display:none">
-        <div class="hacker-header">
-          <h1 style="margin:0"><i class="ph ph-skull" style="color:var(--accent)"></i> 黑客全能力面板</h1>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span id="hack-status" style="font-size:11px;color:var(--t3)"></span>
-            <button class="send" onclick="loadHackerCapabilities()" style="font-size:11px;padding:4px 10px"><i class="ph ph-arrow-clockwise"></i> 刷新</button>
-          </div>
-        </div>
-        <div id="hack-cat-tabs" style="display:flex;gap:4px;padding:8px 0;flex-wrap:wrap;border-bottom:1px solid var(--b);margin-bottom:8px"></div>
-        <div id="hack-grid" class="hack-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;overflow-y:auto;flex:1"></div>
-        <div id="hack-output" style="display:none;margin-top:8px;padding:12px;background:var(--bg-input);border-radius:8px;border:1px solid var(--b-def);max-height:300px;overflow-y:auto">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-            <b style="color:var(--accent)" id="hack-out-title">输出</b>
-            <button onclick="document.getElementById('hack-output').style.display='none'" style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:16px">&times;</button>
-          </div>
-          <pre id="hack-out-content" style="font-size:11px;color:var(--t2);white-space:pre-wrap;word-break:break-all;margin:0"></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 右侧面板 -->
-  <aside id="pn">
-    <!-- 守夜人 (放最上面) -->
-    <div class="ps">
-      <div class="ps-h">🛡️ 守夜人</div>
-      <div id="wt"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">AI 核心能力</div>
-      <div id="ai"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">电脑操控</div>
-      <div id="ctrl"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">安全攻防</div>
-      <div id="hack"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">A股行情</div>
-      <div id="mk"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">系统监控</div>
-      <div id="sy"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">连接状态</div>
-      <div id="cn"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">设备状态</div>
-      <div id="dv"></div>
-    </div>
-    <div class="ps">
-      <div class="ps-h">引擎信息</div>
-      <div id="ll"></div>
-    </div>
-  </aside>
-</div>
-
-<script>
-// ── K线迷你图渲染 ──
-function renderMiniChart(closes,width,height){
-  if(!closes||closes.length<3)return'<div style="text-align:center;padding:8px;color:var(--t4);font-size:10px">数据不足</div>';
-  var min=Math.min.apply(null,closes),max=Math.max.apply(null,closes),range=max-min||1;
-  var h='<svg width="'+width+'" height="'+height+'" style="display:block;overflow:visible">';
-  var stepX=width/(closes.length-1);
-  closes.forEach(function(v,i){
-    var x=i*stepX,y=height-(v-min)/range*height,barH=Math.max(1,(v-min)/range*height);
-    var color=v>=closes[Math.max(0,i-1)]?'#52c41a':'#ff4d4f';
-    h+='<rect x="'+(x-stepX*0.4)+'" y="'+y+'" width="'+Math.max(1,stepX*0.7)+'" height="'+Math.max(1,barH)+'" fill="'+color+'" opacity="0.65" rx="1"/>';
-  });
-  h+='</svg>';
-  return h;
-}
-var A='/api',D=document;
-var w={min:function(){try{window.pywebview.api.min()}catch(e){}},max:function(){try{window.pywebview.api.max()}catch(e){}},close:function(){try{window.pywebview.api.close()}catch(e){window.close()}}};
-var RM='CHAIN',ST={},pnOpen=true;
-var $=function(id){return D.getElementById(id)};
-var esc=function(t){var e=D.createElement('span');e.textContent=t;return e.innerHTML};
-var tfmt=function(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
-
-function togglePanel(){
-  pnOpen=!pnOpen;
-  if(pnOpen){$('pn').classList.remove('closed');$('pt').classList.add('on');$('card').classList.add('narrow')}
-  else{$('pn').classList.add('closed');$('pt').classList.remove('on');$('card').classList.remove('narrow')}
-}
-function go(v,btn){
-  D.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
-  var wc=$('wc');if(wc)wc.style.display=(v==='chat'||v==='reason')?'none':'flex';
-  var cv=$('cv');if(cv)cv.style.display=v==='chat'?'flex':'none';
-  var rv=$('rv');if(rv)rv.style.display=v==='reason'?'flex':'none';
-  var tv=$('tv');if(tv)tv.style.display=v==='trade'?'flex':'none';var hv=$('hv');if(hv)hv.style.display=v==='hacker'?'flex':'none';if(v==='hacker')loadHackerCapabilities();
-  if(v==='chat'){var ci=$('ci');if(ci)setTimeout(function(){ci.focus()},50);}
-  else if(v==='reason'){var ri=$('ri');if(ri)setTimeout(function(){ri.focus()},50);}
-}
-function setMode(m,btn){RM=m;D.querySelectorAll('.mp').forEach(function(b){b.classList.remove('on')});btn.classList.add('on')}
-function qchat(t){go('chat',D.querySelector('[data-v=chat]'));$('ci').value=t;chat()}
-function toast(t){var d=D.createElement('div');d.className='toast';d.textContent=t;D.body.appendChild(d);setTimeout(function(){d.remove()},2800)}
-
-function addMsg(role,txt,cid){
-  var c=$(cid||'ml'),g=D.createElement('div');g.className='mg';var u=role==='user';
-  g.innerHTML='<div class="av '+(u?'u':'a')+'">'+(u?'<i class="ph ph-user"></i>':'<i class="ph ph-sparkle"></i>')+'</div>'+
-    '<div class="mb"><div class="mh"><span class="mauth">'+(u?'你':'GBT')+'</span><span class="mtime">'+tfmt()+'</span></div>'+
-    '<div class="mc">'+esc(txt)+'</div></div>';
-  c.appendChild(g);c.scrollTop=c.scrollHeight;return g;
-}
-
-function chat(){
-  var t=$('ci').value.trim();if(!t)return;$('ci').value='';
-  $('wc').style.display='none';addMsg('user',t);var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  fetch(A+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})
-  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').textContent=r.response||r.error})
-  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'});
-}
-
-function reason(){
-  var t=$('ri').value.trim();if(!t)return;$('ri').value='';
-  var h=$('rl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
-  addMsg('user','['+RM+'] '+t,'rl');var g=addMsg('ai','','rl');g.querySelector('.mc').classList.add('thinking');
-  fetch(A+'/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:RM})})
-  .then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<div class="rc"><div class="rmt"><span class="rb">'+(r.mode||RM)+
-      '</span><span>'+(r.steps||0)+' 步</span><span>置信度: '+Math.round((r.confidence||0)*100)+'%</span></div>'+
-      '<div class="rbo">'+esc(r.conclusion||'无结论')+'</div></div>';h.scrollTop=h.scrollHeight})
-  .catch(function(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'});
-}
-
-function switchProv(){
-  var p=$('ms').value;if(!p)return;
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  fetch(A+'/switch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p})})
-  .then(function(r){return r.json()}).then(function(j){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').textContent=j.name?('已切换至 '+j.name+' ('+j.model+')'):'切换失败'});
-}
-
-function mcp(s){
-  go('chat',D.querySelector('[data-v=chat]'));
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  fetch(A+'/mcp/'+s,{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<b>['+s+']</b> '+(r.ok?'<span style="color:var(--green)">成功</span>':'<span style="color:var(--red)">失败</span>')+(r.data?'<br><small style="color:var(--t3)">'+(r.data||'').substring(0,300)+'</small>':'')});
-}
-
-function evo(){
-  go('chat',D.querySelector('[data-v=chat]'));
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(r){g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').textContent=r.ok?('进化成功\n'+r.summary+'\n步骤: '+r.steps):'进化失败'});
-}
-
-// ── 守夜人 ──
-var _WT={running:false,alerts:[],autoFix:true};
-
-function wtDot(s){
-  var cls='idle';if(s==='ok')cls='ok';else if(s==='warn')cls='warn';else if(s==='error')cls='err';
-  return '<span class="wt-dot '+cls+'"></span>';
-}
-
-function wtLevel(l){if(l==='critical')return'crit';if(l==='warn')return'warn';return'info'}
-
-async function loadWatcher(){
-  try{
-    var r=await fetch(A+'/watcher/status'),d=await r.json();
-    _WT.running=d.running;
-    var h='<div class="wt-header">';
-    h+='<span class="wt-badge '+(d.running?'on':'off')+'">'+(d.running?'运行中':'已停止')+'</span>';
-    h+='<span style="font-size:10px;color:var(--t4)">自动修复: '+(d.auto_fix?'开':'关')+'</span>';
-    h+='</div>';
-
-    // 监控网格
-    if(d.monitors){
-      var order=['network','process','filesystem','wifi','registry','disk','logs'];
-      var labels={network:'网络',process:'进程',filesystem:'文件',wifi:'WiFi',registry:'注册表',disk:'磁盘',logs:'日志'};
-      h+='<div class="wt-grid">';
-      order.forEach(function(k){
-        var m=d.monitors[k]||{status:'idle'};
-        h+='<div class="wt-item" title="'+(m.details||'')+'">'+wtDot(m.status)+labels[k]+'</div>';
-      });
-      h+='</div>';
-    }
-
-    // 最近告警
-    if(d.recent_alerts&&d.recent_alerts.length){
-      h+='<div style="margin-top:6px;font-size:10px;color:var(--t4);font-weight:600">最近告警</div>';
-      d.recent_alerts.slice(0,5).forEach(function(a){
-        h+='<div class="wt-alert '+wtLevel(a.level)+(a.fixed?' fixed':'')+'" title="'+(a.message||'')+'">';
-        h+='<div class="wa-h"><span class="wa-src">'+a.source+'</span><span style="font-size:9px;color:var(--t4)">'+a.time+'</span></div>';
-        h+='<div class="wa-msg">'+esc(a.message||'').substring(0,60)+'</div>';
-        if(a.fixed)h+='<div class="wa-fix">✅ 已自动修复</div>';
-        h+='</div>';
-      });
-    }
-
-    // 按钮
-    h+='<div class="wt-btn-row">';
-    if(d.running){
-      h+='<button class="wt-btn stop" onclick="wtStop()">⏹ 停止</button>';
-    }else{
-      h+='<button class="wt-btn start" onclick="wtStart()">▶ 启动</button>';
-    }
-    h+='<button class="wt-btn scan" onclick="wtScan()">🔍 扫描</button>';
-    h+='</div>';
-
-    $('wt').innerHTML=h;
-  }catch(e){$('wt').innerHTML='<span style="color:var(--t4);font-size:10px">守夜人离线</span>'}
-}
-
-async function wtStart(){
-  try{
-    var r=await fetch(A+'/watcher/start',{method:'POST'}),d=await r.json();
-    if(d.ok)toast('🛡️ 守夜人已启动 — '+d.monitors+'个监控点');
-    loadWatcher();
-  }catch(e){toast('启动失败: '+e.message)}
-}
-
-async function wtStop(){
-  try{
-    var r=await fetch(A+'/watcher/stop',{method:'POST'}),d=await r.json();
-    toast('守夜人已停止');
-    loadWatcher();
-  }catch(e){}
-}
-
-async function wtScan(){
-  toast('🛡️ 正在扫描...');
-  try{
-    var r=await fetch(A+'/watcher/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:'all'})}),
-        d=await r.json();
-    go('chat',D.querySelector('[data-v=chat]'));
-    var g=addMsg('ai','');g.querySelector('.mc').innerHTML='<b>🛡️ 守夜人扫描结果</b>';
-    for(var k in d){
-      var v=d[k];g.querySelector('.mc').innerHTML+='<div style="margin:4px 0;font-size:12px"><b>'+k+':</b> '+(v.ok?'<span style="color:var(--green)">正常</span>':'<span style="color:var(--red)">异常</span>')+' — '+esc(v.output||'')+'</div>';
-    }
-    loadWatcher();
-  }catch(e){}
-}
-
-// ── 面板数据 ──
-var _CONN=null;
-
-async function _getConns(){
-  if(_CONN)return _CONN;
-  try{var r=await fetch(A+'/connectors'),d=await r.json();_CONN=d.connectors||[];return _CONN}catch(e){return[]}
-}
-
-function _cDot(s){return s==='connected'?'<span class="cp-dot on"></span>':'<span class="cp-dot"></span>'}
-
-async function loadAI(){
-  try{
-    var items=[
-      {id:'chat',icon:'ph-chat-circle-dots',name:'LLM 对话',desc:'智能问答',act:'go',arg:'chat'},
-      {id:'reason',icon:'ph-brain',name:'深度推理',desc:'CoT/树形/SWOT/根因',act:'go',arg:'reason'},
-      {id:'scanner',icon:'ph-scan',name:'代码扫描',desc:'代码分析',act:'mcp',arg:'scanner'},
-      {id:'audit',icon:'ph-shield-check',name:'安全审计',desc:'全面评估',act:'mcp',arg:'audit'},
-      {id:'auto-fix',icon:'ph-wrench',name:'自动修复',desc:'漏洞修补',act:'mcp',arg:'auto-fix'},
-      {id:'evolve',icon:'ph-arrows-clockwise',name:'自我进化',desc:'自进化',act:'evolve'},
-      {id:'websearch',icon:'ph-globe',name:'网页搜索',desc:'实时搜索',act:'webSearch'}
-    ];
-    var h='<div class="cp-list">';
-    items.forEach(function(it){
-      h+='<div class="cp-item" onclick="aiAction(\''+it.id+'\',\''+it.act+'\',\''+it.arg+'\')" title="'+it.desc+'">';
-      h+='<i class="ph '+it.icon+' cp-icon ai"></i>';
-      h+='<span class="cp-name">'+it.name+'</span>';
-      h+='<span class="cp-sub">'+it.desc+'</span>';
-      h+='</div>';
-    });
-    h+='</div>';
-    $('ai').innerHTML=h;
-  }catch(e){$('ai').innerHTML='<span class="cp-err">-</span>'}
-}
-
-async function loadControl(){
-  try{
-    var items=[
-      {id:'filesystem',icon:'ph-folder-open',name:'文件系统',tools:'读写搜索'},
-      {id:'terminal',icon:'ph-terminal-window',name:'终端',tools:'命令执行'},
-      {id:'process',icon:'ph-cpu',name:'进程管理',tools:'列表/终止'},
-      {id:'registry',icon:'ph-database',name:'注册表',tools:'读写'},
-      {id:'git',icon:'ph-git-branch',name:'Git',tools:'状态/日志'},
-      {id:'display',icon:'ph-monitor',name:'显示',tools:'截图'}
-    ];
-    var h='<div class="cp-list">';
-    items.forEach(function(it){
-      var c=_CONN?_CONN.filter(function(x){return x.id===it.id})[0]:null;
-      var st=c?c.status:'off';
-      h+='<div class="cp-item" onclick="cnAction(\''+it.id+'\',\'toggle\')" title="'+it.tools+'">';
-      h+=_cDot(st);
-      h+='<i class="ph '+it.icon+' cp-icon ctrl"></i>';
-      h+='<span class="cp-name">'+it.name+'</span>';
-      h+='<span class="cp-sub">'+it.tools+'</span>';
-      h+='</div>';
-    });
-    h+='</div>';
-    $('ctrl').innerHTML=h;
-  }catch(e){$('ctrl').innerHTML='<span class="cp-err">-</span>'}
-}
-
-async function loadHack(){
-  try{
-    var r=await fetch(A+'/hacker/capabilities'),d=await r.json();
-    var caps=d.capabilities||[];
-    var h='<div class="cp-list" style="max-height:360px;overflow-y:auto">';
-    caps.forEach(function(c){
-      var lvl=c.cat==='security'?'high':c.cat==='core'?'mid':'low';
-      h+='<div class="cp-item hack-'+lvl+'" onclick="execCapability(\x27'+c.id+'\x27)" title="'+c.desc+'">';
-      h+='<i class="ph '+c.icon+' cp-icon hack"></i>';
-      h+='<span class="cp-name">'+c.name+'</span>';
-      h+='<span class="cp-sub">'+c.desc+'</span>';
-      h+='</div>';
-    });
-    h+='</div>';
-    $('hack').innerHTML=h;
-  }catch(e){$('hack').innerHTML='<span class="cp-err">?</span>'}
-}
-
-var _HCAPS=[];
-
-async function loadHackerCapabilities(){
-  try{
-    var r=await fetch(A+'/hacker/capabilities'),d=await r.json();
-    _HCAPS=d.capabilities||[];
-    $('hack-status').textContent=_HCAPS.length+'/'+d.total+' online';
-    var cats={};
-    _HCAPS.forEach(function(c){cats[c.cat]=(cats[c.cat]||0)+1});
-    var tabs='<button class="hack-tab active" onclick="filterHackCaps(\x27all\x27)">All ('+_HCAPS.length+')</button>';
-    for(var cat in cats){
-      tabs+='<button class="hack-tab" onclick="filterHackCaps(\x27'+cat+'\x27)">'+cat.toUpperCase()+' ('+cats[cat]+')</button>';
-    }
-    $('hack-cat-tabs').innerHTML=tabs;
-    renderHackGrid(_HCAPS);
-  }catch(e){$('hack-status').textContent='offline'}
-}
-
-function filterHackCaps(cat){
-  D.querySelectorAll('.hack-tab').forEach(function(b){b.classList.remove('active')});
-  var tabs=D.querySelectorAll('.hack-tab');
-  for(var i=0;i<tabs.length;i++){
-    if(tabs[i].textContent.toLowerCase().startsWith(cat.toLowerCase()))tabs[i].classList.add('active');
-  }
-  renderHackGrid(cat==='all'?_HCAPS:_HCAPS.filter(function(c){return c.cat===cat}));
-}
-
-function renderHackGrid(caps){
-  var g=$('hack-grid');
-  if(!caps.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--t4);padding:20px">???</div>';return}
-  var h='';
-  caps.forEach(function(c){
-    var catColors={security:'var(--red)',core:'var(--accent)',ai:'var(--purple)',devops:'var(--cyan)',control:'var(--blue)',monitor:'var(--amber)'};
-    var cc=catColors[c.cat]||'var(--t3)';
-    h+='<div class="hack-card" onclick="execCapability(\x27'+c.id+'\x27)" style="border-left:3px solid '+cc+'">';
-    h+='<div style="display:flex;align-items:center;gap:8px"><i class="ph '+c.icon+'" style="font-size:20px;color:'+cc+'"></i>';
-    h+='<div><div style="font-weight:600;font-size:13px">'+c.name+'</div>';
-    h+='<div style="font-size:10px;color:var(--t4);text-transform:uppercase">'+c.cat+'</div></div></div>';
-    h+='<div style="font-size:11px;color:var(--t3);margin-top:6px">'+c.desc+'</div>';
-    h+='<div style="margin-top:8px;display:flex;gap:4px">';
-    h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(\x27'+c.id+'\x27)">Run</button>';
-    if(c.mcp)h+='<button class="hack-act-btn" onclick="event.stopPropagation();execCapability(\x27'+c.id+'\x27,\x27info\x27)" style="background:var(--bg3)">Info</button>';
-    h+='</div></div>';
-  });
-  g.innerHTML=h;
-}
-
-async function execCapability(cid,act){
-  act=act||'run';
-  var out=$('hack-output'),con=$('hack-out-content'),tit=$('hack-out-title');
-  out.style.display='block';con.textContent='Running '+cid+'...';tit.textContent=cid;
-  try{
-    var r=await fetch(A+'/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:act})});
-    var d=await r.json();
-    if(d.ok){
-      con.textContent=d.data||d.output||JSON.stringify(d,null,2);
-      con.style.color='var(--green)';
-    }else{
-      con.textContent='FAIL: '+(d.error||'unknown');
-      con.style.color='var(--red)';
-    }
-  }catch(e){
-    con.textContent='Error: '+e.message;
-    con.style.color='var(--red)';
-  }
-}
-
-function cnAction(id,act){
-  if(act==='mcp'){mcp(id);return}
-  if(act==='netTool'){netTool(id);return}
-  if(act==='toggle'){
-    var c=_CONN?_CONN.filter(function(x){return x.id===id})[0]:null;
-    if(!c)return;
-    cnToggle(id,c.status)
-  }
-}
-
-async function loadConnectors(){
-  try{var cs=await _getConns();var on=cs.filter(function(c){return c.status==='connected'}).length;
-    var off=cs.filter(function(c){return c.status==='disconnected'}).length;
-    var h='<div class="cn-summary">';
-    h+='<div class="cn-stat"><span class="cn-num on">'+on+'</span> 活跃</div>';
-    h+='<div class="cn-stat"><span class="cn-num">'+off+'</span> 离线</div>';
-    h+='</div>';
-    h+='<div class="cn-quick">';
-    var cats={code:'代码',device:'设备',data:'数据',security:'安全',communication:'通信'};
-    for(var cat in cats){
-      var items=cs.filter(function(c){return c.category===cat});
-      var act=items.filter(function(c){return c.status==='connected'}).length;
-      h+='<div class="cn-cat-row">'+cats[cat]+': '+act+'/'+items.length+'</div>';
-    }
-    h+='</div>';
-    $('cn').innerHTML=h;
-  }catch(e){$('cn').innerHTML='离线'}
-}
-
-function cnToggle(id,status){
-  var ep=status==='connected'?'disconnect':'connect';
-  fetch(A+'/connectors/'+id+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    toast(j.ok?('成功: '+j.status):(j.error||'失败'));
-    _CONN=null;loadControl();loadConnectors();
-  });
-}
-
-async function loadMarket(){
-  try{var r=await fetch(A+'/market'),d=await r.json(),mk=$('mk');
-    if(!d.updated||!d.indices.length){mk.innerHTML='<span style="color:var(--t4);font-size:11px">休市中</span>';return}
-    var h='';d.indices.forEach(function(i){
-      var dir=i.change>=0?'mk-up':'mk-dn',arr=i.change>=0?'+':'';
-      h+='<div class="mkr"><span class="mkn">'+i.name+'</span><span class="mkp '+dir+'">'+i.price.toFixed(2)+'</span><span class="mkc '+dir+'">'+arr+i.changePct+'%</span></div>';
-    });
-    mk.innerHTML=h;
-  }catch(e){}
-}
-
-async function loadSystem(){
-  try{var r=await fetch(A+'/system'),d=await r.json(),sy=$('sy');
-    var h='<div class="sys-r"><div class="sr"><span>CPU</span><span class="sv">'+d.cpu.toFixed(1)+'%</span></div><div class="sbar"><div class="sf sf-cpu" style="width:'+d.cpu+'%"></div></div></div>';
-    h+='<div class="sys-r"><div class="sr"><span>内存 '+d.memory_used_gb+'/'+d.memory_total_gb+' GB</span><span class="sv">'+d.memory+'%</span></div><div class="sbar"><div class="sf sf-mem" style="width:'+d.memory+'%"></div></div></div>';
-    sy.innerHTML=h;
-    try{var rd=await fetch(A+'/devices'),dd=await rd.json();
-      if(dd.disk_c&&dd.disk_c.total_gb){
-        var du=dd.disk_c,pct=Math.round(du.used_gb/du.total_gb*100);
-        sy.innerHTML+='<div class="sys-r"><div class="sr"><span>C盘 '+du.used_gb+'/'+du.total_gb+' GB</span><span class="sv">'+pct+'%</span></div><div class="sbar"><div class="sf sf-disk" style="width:'+pct+'%"></div></div></div>';
-      }
+      var dr=await fetch('/api/dashboard');var dd=await dr.json();var td=dd.trade||{};
+      var wh='';(td.watchlist||[]).forEach(function(w){wh+='<tr><td>'+esc(w[0])+'</td><td>'+esc(w[1])+'</td><td>--</td><td>--</td><td>--</td></tr>'});
+      $('trade-watchlist').innerHTML=wh||'<tr><td colspan=5 style=color:var(--t3)>暂无</td></tr>'
     }catch(e){}
+  }catch(e){$('trade-quotes').innerHTML='加载失败'}
+}
+async function execCapTrade(cid){execCap(cid)}
+// ── Desktop tab ──
+async function loadDesktopTab(){
+  var actions=['screenshot','browser_open','window_maximize','keyboard_type','keyboard_hotkey','mouse_click','process_list','process_kill','window_focus','volume_control','system_lock'];
+  var html='';actions.forEach(function(a){html+='<div class=cap-item onclick=execCapDesktop("'+a+'")><span class=cap-dot style=background:var(--a)></span>'+a+'</div>'});
+  $('desk-actions').innerHTML=html;
+  try{
+    var r=await fetch('/api/system');var d=await r.json();
+    $('desk-info').textContent='CPU '+d.cpu.toFixed(1)+'% | MEM '+d.memory.toFixed(1)+'% | '+d.host
   }catch(e){}
 }
-
-async function loadDevices(){
-  try{var r=await fetch(A+'/devices'),d=await r.json(),dv=$('dv'),h='';
-    if(d.gpu&&d.gpu.length){d.gpu.forEach(function(g){h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> '+g.name+'</div><div class="dv-i">'+(g.ram_mb?'显存 '+g.ram_mb+' MB':'')+'</div></div>'})}
-    if(d.audio&&d.audio.length){var ac=d.audio.filter(function(a){return a.status==='OK'}).length;h+='<div class="dv-item"><div class="dv-n"><span class="dv-d"></span> 音频设备</div><div class="dv-i">'+ac+'/'+d.audio.length+' 设备</div></div>'}
-    dv.innerHTML=h||'无设备数据';
-  }catch(e){}
-}
-
-async function loadProviders(){
-  try{var r=await fetch(A+'/providers');ST.p=await r.json();var s=$('ms'),ll=$('ll');s.innerHTML='';var h='';
-  for(var k in ST.p){var v=ST.p[k],on=v.status==='available';
-    s.innerHTML+='<option value="'+k+'"'+(on?'':' disabled')+'>'+(on?'可用 ':'-- ')+v.name+'</option>';
-    var dots=on?'<span style="color:var(--green)">可用</span>':'<span style="color:var(--t4)">不可用</span>';
-    h+=dots+' '+v.name+'<br>';
-  }
-  ll.innerHTML=h||'无可用引擎';
-}catch(e){}}
-
-function aiAction(id,act,arg){
-  if(act==='go'){go(id,D.querySelector('[data-v='+id+']'));return}
-  if(act==='mcp'){mcp(arg);return}
-  if(act==='evolve'){runEvolve();return}
-  if(act==='webSearch'){runWebSearch();return}
-}
-
-function runEvolve(){
-  go('chat',D.querySelector('[data-v=chat]'));
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  g.querySelector('.mc').innerHTML='<b>正在运行自我进化...</b>';
-  fetch(A+'/evolve',{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    g.querySelector('.mc').classList.remove('thinking');
-    var c=j.ok?'#52c41a':'#ff4d4f';
-    g.querySelector('.mc').innerHTML='<div style="font-weight:600;color:'+c+'">'+(j.ok?'进化成功':'进化失败')+'</div>'
-      +'<p style="margin:4px 0;color:var(--t2)">摘要: '+(j.summary||'无')+'</p>'
-      +'<p style="margin:0;color:var(--t4)">步骤: '+(j.steps||0)+' | 回滚: '+(j.rollback||'否')+'</p>';
-  }).catch(function(e){
-    g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
-  });
-}
-
-function runWebSearch(){
-  var q=prompt('搜索关键词:');
-  if(!q||!q.trim())return;
-  go('chat',D.querySelector('[data-v=chat]'));
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  g.querySelector('.mc').innerHTML='<b>搜索中: '+esc(q)+'...</b>';
-  fetch(A+'/websearch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})})
-  .then(function(r){return r.json()}).then(function(j){
-    g.querySelector('.mc').classList.remove('thinking');
-    if(j.ok){
-      var h='<div><b style="color:var(--cyan)">搜索结果: '+esc(q)+'</b></div>';
-      h+='<div style="max-height:400px;overflow-y:auto;margin-top:8px">';
-      (j.results||[]).forEach(function(r){h+='<div style="margin:6px 0;padding:6px;background:var(--bg2);border-radius:6px"><a href="'+r.url+'" target="_blank" style="color:var(--cyan)">'+r.title+'</a><br><small style="color:var(--t3)">'+r.snippet+'</small></div>'});
-      h+='</div>';
-      g.querySelector('.mc').innerHTML=h;
-    }else{
-      g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+j.error+'</span>';
-    }
-  }).catch(function(e){
-    g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
-  });
-}
-
-function netTool(id){
-  go('chat',D.querySelector('[data-v=chat]'));
-  var g=addMsg('ai','');g.querySelector('.mc').classList.add('thinking');
-  var labels={network:'网络诊断',wifi:'WiFi扫描'};
-  g.querySelector('.mc').innerHTML='<b>正在运行 '+labels[id]+'...</b>';
-  var ep=id==='wifi'?'wifi-scan':'network-ping';
-  fetch(A+'/'+ep,{method:'POST'}).then(function(r){return r.json()}).then(function(j){
-    g.querySelector('.mc').classList.remove('thinking');
-    if(j.ok){
-      var h='<div style="font-weight:600;color:var(--green)">'+labels[id]+' 结果</div>';
-      h+='<pre style="margin:8px 0;padding:10px;background:var(--bg2);border-radius:6px;font-size:11px;max-height:300px;overflow:auto;white-space:pre-wrap">'+esc(j.output||'')+'</pre>';
-      g.querySelector('.mc').innerHTML=h;
-    }else{
-      g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+j.error+'</span>';
-    }
-  }).catch(function(e){
-    g.querySelector('.mc').classList.remove('thinking');
-    g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>';
-  });
-}
-
-async function init(){
-  $('pn').classList.remove('closed');$('pt').classList.add('on');$('card').classList.add('narrow');
-  try{var r=await fetch(A+'/status');ST=await r.json();
-    $('stx').textContent=ST.llm+' '+ST.model;$('sd').classList.add('on');
-  }catch(e){$('stx').textContent='离线'}
-  await _getConns();
-  try{await Promise.all([loadAI(),loadControl(),loadHack(),loadConnectors(),loadWatcher(),loadTrader(),loadDashboard(),loadAccount()])}catch(e){console.error('Load failed:',e)}
-  loadProviders();
-  loadMarket();
-  loadSystem();
-  loadDevices();
-  setInterval(function(){loadSystem();loadDevices();loadWatcher()},5000);
-  setInterval(loadMarket,30000);
-  // 加载操盘手状态
-  try{var tr=await fetch(A+'/trader/status'),td=await tr.json();
-    if(td.auto_trade){var b=$('tAutoBtn');b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
-  }catch(e){}
-}
-
-D.addEventListener('keydown',function(e){
-  if(e.ctrlKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-v=chat]'))}
-  if(e.ctrlKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-v=reason]'))}
-  if(e.ctrlKey&&e.key==='3'){e.preventDefault();go('trade',D.querySelector('[data-v=trade]'))}
-});
-
-// ── A股操盘 JS ──
-var _TR={autoTrade:true};
-
-function _tAdd(html){
-  var h=$('tl'),w=h.querySelector('.welcome');if(w)w.style.display='none';
-  var g=D.createElement('div');g.className='mg';
-  g.innerHTML='<div class="av a"><i class="ph ph-chart-line-up"></i></div><div class="mb"><div class="mh"><span class="mauth">操盘手</span><span class="mtime">'+tfmt()+'</span></div><div class="mc">'+html+'</div></div>';
-  h.appendChild(g);h.scrollTop=h.scrollHeight;return g;
-}
-
-async function traderScan(){
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>🔍 AI正在扫描全市场...</b>');g.querySelector('.mc').classList.add('thinking');
+async function execCapDesktop(cid){
+  var log=$('desk-log');log.textContent='执行: '+cid+'...';
   try{
-    var r=await fetch(A+'/trader/scan',{method:'POST'}),d=await r.json();
-    g.querySelector('.mc').classList.remove('thinking');
-    if(!d.signals||!d.signals.length){g.querySelector('.mc').innerHTML='<b>📊 扫描完成</b><p style="color:var(--t4)">暂无显著交易信号</p>';return}
-    var buy=d.signals.filter(function(s){return s.action==='buy'});
-    var sell=d.signals.filter(function(s){return s.action==='sell'});
-    var h='<div><b style="color:var(--cyan)">📊 AI扫描结果</b> ';
-    h+='<span style="color:var(--green)">买入信号:'+buy.length+'</span> ';
-    h+='<span style="color:var(--red)">卖出信号:'+sell.length+'</span></div>';
-    h+='<div style="max-height:400px;overflow-y:auto;margin-top:8px">';
-    d.signals.slice(0,15).forEach(function(s){
-      var clr=s.action==='buy'?'var(--green)':s.action==='sell'?'var(--red)':'var(--t3)';
-      var emoji=s.action==='buy'?'📈':s.action==='sell'?'📉':'➖';
-      h+='<div style="margin:4px 0;padding:6px 8px;background:var(--bg2);border-radius:6px;border-left:3px solid '+clr+'">';
-      h+='<div style="display:flex;justify-content:space-between"><b>'+s.name+'</b><span style="color:'+clr+';font-weight:700">'+emoji+' '+s.action.toUpperCase()+'</span></div>';
-      h+='<div style="font-size:11px;color:var(--t3)">'+s.code+' | ¥'+s.price+' | 置信度:'+s.confidence+'%</div>';
-      h+='<div style="font-size:11px;color:var(--t4)">策略:'+(s.strategy||'N/A')+' | '+(s.reason||'').substring(0,60)+'</div>';
-      h+='</div>';
-    });
-    h+='</div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">扫描异常: '+esc(e.message)+'</span>'}
-}
-
-async function traderAnalyze(){
-  var code=$('tcode').value.trim();if(!code){toast('请输入股票代码');return}
-  go('trade',D.querySelector('[data-v=trade]'));
-  // 显示实时行情
-  try{
-    var qr=await fetch(A+'/trader/quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes:[code]})});
-    var qd=await qr.json();
-    if(qd.quotes&&qd.quotes[code]){
-      var q=qd.quotes[code],dir=q.change>=0?'var(--green)':'var(--red)',arr=q.change>=0?'+':'';
-      $('tquote').style.display='block';
-      $('tquote').innerHTML='<b>'+q.name+'</b> ¥'+q.price+' <span style="color:'+dir+'">'+arr+q.change+' ('+arr+q.change_pct+'%)</span> | 最高'+q.high+' 最低'+q.low+' | 成交额'+q.amount+'万';
-    }
-  }catch(e){}
-  // AI分析
-  var g=_tAdd('<b>🤖 AI分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/trader/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
-    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
-    if(!d.ok){g.querySelector('.mc').innerHTML='<span style="color:var(--red)">'+d.error+'</span>';return}
-    var s=d.signal,clr=s.action==='buy'?'var(--green)':s.action==='sell'?'var(--red)':'var(--t3)';
-    var emoji=s.action==='buy'?'📈 买入':s.action==='sell'?'📉 卖出':'➖ 观望';
-    var h='<div style="border-left:3px solid '+clr+';padding-left:10px">';
-    h+='<div style="font-weight:700;color:'+clr+'">'+emoji+' | '+s.name+'('+s.code+')</div>';
-    h+='<div style="margin:4px 0">💰 现价: ¥'+s.price+' | 置信度: '+s.confidence+'%</div>';
-    h+='<div style="color:var(--t2)">📋 分析: '+esc(s.reason||'N/A')+'</div>';
-    h+='<div style="color:var(--t4)">🎯 策略: '+(s.strategy||'N/A')+'</div></div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">分析异常: '+esc(e.message)+'</span>'}
-}
-
-async function traderOpen(platform){
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>🌐 正在打开 '+platform+'...</b>');
-  try{
-    var r=await fetch(A+'/trader/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:platform})});
+    var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})});
     var d=await r.json();
-    g.querySelector('.mc').innerHTML=d.ok?('<b style="color:var(--green)">✅ 已打开 '+platform+'</b><br><small style="color:var(--t4)">'+d.url+'</small>'):('<span style="color:var(--red)">打开失败: '+d.error+'</span>');
-  }catch(e){g.querySelector('.mc').innerHTML='<span style="color:var(--red)">错误: '+esc(e.message)+'</span>'}
+    log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+'+(d.data||d.error||'')+'
+---
+'+log.textContent;
+    toast((d.ok?'✔ ':'✘ ')+cid);
+  }catch(e){log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
+'+log.textContent}
 }
-
-async function traderAutoToggle(){
-  _TR.autoTrade=!_TR.autoTrade;
-  var b=$('tAutoBtn');
-  try{
-    var ep=_TR.autoTrade?'/api/trader/autonomous/start':'/api/trader/autonomous/stop';
-    var r=await fetch(ep,{method:'POST'}),d=await r.json();
-    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开';toast('📊 自主交易已启动 — AI自动扫描+执行!')}
-    else{b.style.background='var(--red)';b.innerHTML='⏸ 自主交易:关';toast('自主交易已停止')}
-  }catch(e){toast('切换失败: '+e.message)}
-}
-
-async function traderDetailed(){
-  var code=$('tcode').value.trim();if(!code){toast('请输入股票代码');return}
-  go('trade',D.querySelector('[data-v=trade]'));
-  $('tsteps').style.display='block';
-  var stageNames={fetch:'📡 行情获取',analyze:'🤖 AI分析',signal:'📊 信号生成',decide:'🎯 交易决策',execute:'💻 电脑操控',confirm:'✅ 交易确认'};
-  var h='<div style="padding:8px;margin-top:4px;border-radius:8px;background:var(--bg2)">';
-  h+='<div style="font-weight:700;color:var(--cyan);margin-bottom:4px">⏳ 6阶段交易流水线: '+code+'</div>';
-  h+='<div id="tstep-list" style="display:flex;flex-direction:column;gap:2px">';
-  for(var s in stageNames){h+='<div class="ts-row" id="ts-'+s+'" style="padding:4px 8px;border-radius:4px;font-size:11px;color:var(--t4);background:var(--bg3)">'+stageNames[s]+'<span style="float:right;font-size:10px">等待</span></div>'}
-  h+='</div></div>';
-  $('tsteps').innerHTML=h;
-
-  function updateStep(stage,status,detail){
-    var el=D.getElementById('ts-'+stage);if(!el)return;
-    var icon=status==='done'?'✅':status==='error'?'❌':status==='running'?'⏳':'🕐';
-    var bg=status==='done'?'rgba(82,196,26,.1)':status==='error'?'rgba(255,77,79,.1)':status==='running'?'rgba(96,165,250,.1)':'var(--bg3)';
-    el.style.background=bg;el.style.color=status==='running'?'var(--cyan)':'var(--t2)';
-    el.innerHTML=stageNames[stage]+' <span style="float:right;font-size:10px">'+icon+' '+(detail||status)+'</span>';
-  }
-
-  try{
-    var r=await fetch(A+'/trader/pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
-    var d=await r.json();
-    if(!d.ok){toast(d.error);return}
-    var sess=d.session;
-    (sess.steps||[]).forEach(function(s){
-      updateStep(s.stage,s.status,s.result||s.action);
-      if(s.stage==='execute'&&s.status==='done'){
-        toast('💻 已打开交易平台 — 请确认订单');
-      }
-    });
-    var g=_tAdd('<b>✅ 6阶段流程完成</b>');
-    g.querySelector('.mc').innerHTML='<div style="border-left:3px solid var(--green);padding-left:10px"><b>'+sess.name+'('+sess.code+')</b><br><span style="color:var(--t4)">状态: '+sess.status+' | 执行: '+(sess.executed?'已执行':'跳过')+'</span></div>';
-  }catch(e){toast('流水线异常: '+e.message)}
-  loadTrader();
-}
-
-async function loadTrader(){
-  try{
-    var r=await fetch(A+'/trader/status'),d=await r.json();
-    _TR.autoTrade=d.auto_trade;
-    var b=$('tAutoBtn');
-    if(_TR.autoTrade){b.style.background='var(--green)';b.innerHTML='▶ 自主交易:开'}
-  }catch(e){}
-  loadPortfolio();
-}
-
-// 仪表盘+持仓30秒自动刷新
-setInterval(function(){
-  if(D.querySelector('[data-v="trade"].active'))loadPortfolio();
-  if(!D.querySelector('.welcome[style*="display:none"]')||D.querySelector('.welcome:not([style*="display:none"])')){loadDashboard();loadAccount();}
-},30000);
-
-// ── 持仓 ──
-async function loadPortfolio(){
-  try{
-    var r=await fetch(A+'/account'),d=await r.json();
-    if(!d.ok)return;
-    var pos=d.positions||[],a=d.account||{};
-    $('tp-count').textContent=pos.length+'只 · ¥'+(a.equity||0).toLocaleString();
-    var h='';pos.forEach(function(p){
-      color=p.pnl>=0?'var(--green)':'var(--red)';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dashed var(--b3)">';
-      h+='<span><b>'+esc(p.name||p.code)+'</b> <span style="font-size:10px;color:var(--t4)">'+esc(p.code)+'</span></span>';
-      h+='<span style="text-align:right"><b>¥'+(p.current_price||0).toFixed(2)+'</b><br><span style="font-size:9px;color:'+color+'">'+(p.pnl>=0?'+':'')+(p.pnl||0).toFixed(0)+'</span></span>';
-      h+='</div>';
-    });
-    $('tpf-list').innerHTML=h||'<div style="color:var(--t4);text-align:center;padding:12px">尚无持仓</div>';
-    $('tpf-sum').innerHTML='<span>💰 现金 ¥'+(a.cash||0).toLocaleString()+'</span><span style="color:'+(a.pnl>=0?'var(--green)':'var(--red)')+'">盈亏 '+(a.pnl>=0?'+':'')+(a.pnl||0).toLocaleString()+' ('+(a.pnl_pct||0)+'%)</span>';
-    $('tpf').style.display='block';
-    // 加载快讯
-    if(d.recent_log&&d.recent_log.length){
-      $('talert').style.display='block';
-      var ah='';d.recent_log.slice(0,5).forEach(function(l){
-        var c=l.action==='buy'?'var(--green)':'var(--red)';
-        ah+='<div style="padding:2px 0;border-bottom:1px dashed var(--b3)"><span style="color:'+c+'">'+l.action.toUpperCase()+'</span> '+esc(l.name||l.code)+' '+l.shares+'股 @ ¥'+(l.price||0).toFixed(2)+' <span style="float:right;font-size:9px;color:var(--t4)">'+((l.time||'').substring(5,16))+'</span></div>';
-      });
-      $('talerts').innerHTML=ah;
-    }
-  }catch(e){}
-}
-
-// ── 仪表盘 ──
-async function loadDashboard(){
-  try{
-    var r=await fetch(A+'/dashboard'),d=await r.json();
-    $('dv-llm').textContent=d.llm||'--';
-    $('dv-mcp').textContent=d.mcp_servers||0;
-    var w=d.watcher||{};
-    $('dv-watch').textContent=(w.monitors_ok||0)+'/'+(w.monitors_total||0);
-    $('dv-trade').textContent=(d.trader||{}).watchlist||0;
-    var h='🛡️ 守夜人: '+(w.running?'运行中':'已停止');
-    h+=' · 告警:'+(w.alerts||0)+' · 自动修复:'+(w.auto_fix?'开':'关');
-    h+=' · 📊 操盘手: '+((d.trader||{}).auto_trade?'自主交易开':'关')+' · 持仓:'+((d.trader||{}).positions||0);
-    $('dash-detail').textContent=h;
-  }catch(e){$('dash-detail').textContent='离线'}
-  loadRisk();
-}
-
-async function loadRisk(){
-  try{
-    var r=await fetch(A+'/risk/check',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-    var d=await r.json();
-    if(d.ok){
-      var c=d.config||{};
-      $('dv-risk').textContent=c.stop_loss_pct||7;
-      $('dv-profit').textContent=c.stop_profit_pct||15;
-      $('dv-cap').textContent=c.max_single_pct||20;
-      $('dv-daily').textContent=(d.daily||{}).trades_left||10;
-    }
-  }catch(e){}
-}
-
-async function loadAccount(){
-  try{
-    var r=await fetch(A+'/account'),d=await r.json();
-    if(d.ok){
-      var a=d.account||{};
-      $('dv-equity').textContent='¥'+(a.equity||0).toLocaleString();
-      var pnl=a.pnl||0;
-      $('dv-pnl').textContent=(pnl>=0?'+':'')+pnl.toLocaleString();
-      $('dv-pnl').style.color=pnl>=0?'var(--green)':'var(--red)';
-      $('dv-cash').textContent='¥'+(a.cash||0).toLocaleString();
-      $('dv-wr').textContent=(a.win_rate||0)+'%';
-    }
-  }catch(e){}
-}
-
-// ── 设置面板 ──
-async function openSettings(){
-  var g=_tAdd('<b>⚙️ 设置</b>');
-  g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/settings'),d=await r.json();
-    g.querySelector('.mc').classList.remove('thinking');
-    if(!d.ok){g.querySelector('.mc').innerHTML='❌ 加载失败';return}
-    var t=d.trader||{},rk=d.risk||{},ac=d.account||{};
-    var h='<div style="max-height:400px;overflow-y:auto;font-size:12px">';
-    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">📊 交易设置</div>';
-    h+=_sRow('自动交易','auto_trade',t.auto_trade?'开':'关','toggle');
-    h+=_sRow('置信度阈值%','confidence_threshold',t.confidence_threshold||70,'number');
-    h+=_sRow('扫描间隔(秒)','scan_interval',t.scan_interval||300,'number');
-    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">🛡️ 风控设置</div>';
-    h+=_sRow('止损%','stop_loss_pct',rk.stop_loss_pct||7,'number');
-    h+=_sRow('止盈%','stop_profit_pct',rk.stop_profit_pct||15,'number');
-    h+=_sRow('单票上限%','max_single_pct',rk.max_single_pct||20,'number');
-    h+=_sRow('日交易上限','max_daily_trades',rk.max_daily_trades||10,'number');
-    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">💰 账户</div>';
-    h+='<div style="color:var(--t3)">现金: ¥'+(ac.cash||0).toLocaleString()+' · 权益: ¥'+(ac.equity||0).toLocaleString()+'</div>';
-    h+='<div style="font-weight:700;color:var(--cyan);margin:8px 0 4px">📋 自选股 ('+(t.watchlist||[]).length+'只)</div>';
-    h+='<div style="display:flex;gap:4px;margin-bottom:6px">';
-    h+='<input id="s-add-code" placeholder="代码(sh600519)" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px">';
-    h+='<input id="s-add-name" placeholder="名称" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px">';
-    h+='<button onclick="addWatchlist()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--green);color:#fff;cursor:pointer;font-size:11px">添加</button>';
-    h+='</div>';
-    h+='<div id="wl-list" style="max-height:120px;overflow-y:auto">';
-    (t.watchlist||[]).forEach(function(c){h+='<div style="display:flex;justify-content:space-between;padding:2px 6px;font-size:10px;color:var(--t3)"><span>'+c+'</span><span style="color:var(--red);cursor:pointer" onclick="rmWatchlist(\''+c+'\')">✕</span></div>'});
-    h+='</div>';
-    h+='<button onclick="saveSettings()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700">💾 保存设置</button>';
-    h+='</div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
-}
-
-function _sRow(label,key,val,type){
-  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span style="color:var(--t3)">'+label+'</span>'+(
-    type==='toggle'?'<button id="sk-'+key+'" onclick="toggleSetting(\''+key+'\')" style="padding:3px 12px;border-radius:6px;border:none;background:'+(val==='开'?'var(--green)':'var(--bg3)')+';color:'+(val==='开'?'#fff':'var(--t4)')+';cursor:pointer;font-size:11px">'+val+'</button>':
-    '<input id="sk-'+key+'" value="'+val+'" style="width:80px;padding:3px 8px;border-radius:6px;border:1px solid var(--b);background:var(--bg);color:var(--t2);font-size:11px;text-align:right">'
-  )+'</div>';
-}
-
-function toggleSetting(key){
-  var b=$('sk-'+key);
-  var nv=b.textContent==='开'?'关':'开';
-  b.textContent=nv;
-  b.style.background=nv==='开'?'var(--green)':'var(--bg3)';
-  b.style.color=nv==='开'?'#fff':'var(--t4)';
-}
-
-async function saveSettings(){
-  var payload={trader:{},risk:{}};
-  ['confidence_threshold','scan_interval'].forEach(function(k){
-    var el=$('sk-'+k);var v=parseInt(el.value);if(!isNaN(v))payload.trader[k]=v;
-  });
-  var autoEl=$('sk-auto_trade');
-  payload.trader.auto_trade=autoEl.textContent==='开';
-  ['stop_loss_pct','stop_profit_pct','max_single_pct','max_daily_trades'].forEach(function(k){
-    var el=$('sk-'+k);var v=parseFloat(el.value);if(!isNaN(v))payload.risk[k]=v;
-  });
-  try{
-    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    var d=await r.json();if(d.ok){toast('✅ 设置已保存');loadDashboard()}
-    else toast('❌ '+d.error);
-  }catch(e){toast('保存失败')}
-}
-
-async function addWatchlist(){
-  var code=$('s-add-code').value.trim(),name=$('s-add-name').value.trim();
-  if(!code)return toast('请输入代码');
-  try{
-    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchlist_add:[{code:code,name:name||code}]})});
-    var d=await r.json();
-    if(d.ok){toast('✅ 已添加 '+code);openSettings()}
-    else toast('❌ 失败');
-  }catch(e){toast('异常')}
-}
-
-async function rmWatchlist(code){
-  try{
-    var r=await fetch(A+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchlist_remove:[code]})});
-    var d=await r.json();
-    if(d.ok){toast('已移除 '+code);openSettings()}
-    else toast('❌ 失败');
-  }catch(e){toast('异常')}
-}
-
-// ── 策略分析 ──
-async function traderStrategy(){
-  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>🧠 策略分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/trader/strategy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
-    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
-    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
-    var s=d.strategy||{};
-    var h='<div style="border-left:3px solid var(--cyan);padding-left:10px;margin-bottom:6px">';
-    h+='<b style="font-size:16px;color:'+(s.signal=='buy'?'var(--green)':'var(--red)')+'">'+s.signal.toUpperCase()+'</b>';
-    h+=' · 置信度 <b>'+s.confidence+'%</b></div>';
-    h+='<div style="display:flex;gap:6px;margin-bottom:6px">';
-    h+='<div style="flex:1;padding:6px;background:rgba(82,196,26,.08);border-radius:6px;text-align:center"><div style="color:var(--green);font-weight:700">'+s.buy_score+'</div><div style="font-size:9px;color:var(--t4)">买分</div></div>';
-    h+='<div style="flex:1;padding:6px;background:rgba(255,77,79,.08);border-radius:6px;text-align:center"><div style="color:var(--red);font-weight:700">'+s.sell_score+'</div><div style="font-size:9px;color:var(--t4)">卖分</div></div>';
-    h+='</div>';
-    (s.strategies||[]).forEach(function(st){
-      var bg=st.signal=='buy'?'rgba(82,196,26,.05)':st.signal=='sell'?'rgba(255,77,79,.05)':'var(--bg3)';
-      h+='<div style="padding:4px 8px;margin:2px 0;border-radius:4px;background:'+bg+';font-size:11px;color:var(--t3)"><b>'+st.strategy_name+'</b>: '+esc(st.reason||'')+'</div>';
-    });
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
-}
-
-// ── 技术分析 ──
-async function traderTech(){
-  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>📈 技术分析 '+code+'...</b>');g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/trader/tech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})});
-    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
-    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
-    var ta=d.analysis,ind=ta.indicators||{},sig=ta.signal||{};
-    var h='<div style="border-left:3px solid var(--cyan);padding-left:10px"><b>'+d.name+'('+code+')</b> ¥'+ta.price+'</div>';
-    var kcl=d.kline||{};if(kcl.closes&&kcl.closes.length)h+='<div style="margin:6px 0;border-radius:6px;background:var(--bg2);padding:4px;overflow:hidden">'+renderMiniChart(kcl.closes,280,56)+'</div>';
-    h+='<div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px">';
-    h+='<div class="ta-card">RSI <b style="color:var(--accent)">'+(ind.rsi||{}).rsi||'-'+'</b><br><span style="font-size:10px;color:var(--t4)">'+(ind.rsi||{}).zone||'-'+'</span></div>';
-    h+='<div class="ta-card">MACD<br><span style="font-size:11px">'+(ind.macd||{}).trend||'-'+'</span></div>';
-    h+='<div class="ta-card">布林<br><span style="font-size:11px">'+(ind.bollinger||{}).position||'-'+'</span></div>';
-    h+='<div class="ta-card">量能<br><span style="font-size:11px">'+(ind.volume||{}).trend||'-'+'</span></div>';
-    h+='<div class="ta-card" style="grid-column:1/3;background:rgba(130,170,255,.1)"><b>趋势:</b> '+esc(ta.trend||'-')+'</div>';
-    h+='<div class="ta-card" style="grid-column:1/3;text-align:center;font-size:14px">';
-    h+='<b style="color:'+(sig.direction=='buy'?'var(--green)':'var(--red)')+'">'+(sig.direction||'hold').toUpperCase()+'</b>';
-    h+=' · 置信度 <b>'+sig.confidence+'%</b> · 买'+sig.buy_signals+'/卖'+sig.sell_signals;
-    h+='</div>';
-    h+='</div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
-}
-
-// ── 交易日志 ──
-async function traderJournal(){
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>📒 交易日志</b>');g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/trader/journal'),d=await r.json();
-    g.querySelector('.mc').classList.remove('thinking');
-    if(!d.ok){g.querySelector('.mc').innerHTML='❌ '+esc(d.error);return}
-    var entries=d.journal||[];
-    if(!entries.length){g.querySelector('.mc').innerHTML='尚无交易记录';return}
-    var h='<div style="max-height:320px;overflow-y:auto">';
-    entries.forEach(function(e){
-      var a=e.action||'';var color='var(--t3)';
-      if(a.indexOf('buy')!==-1||a==='买入')color='var(--green)';
-      else if(a.indexOf('sell')!==-1||a==='卖出')color='var(--red)';
-      h+='<div style="padding:4px 8px;border-bottom:1px solid var(--b);font-size:11px;display:flex;justify-content:space-between">';
-      h+='<span><b style="color:'+color+'">'+a.toUpperCase()+'</b> '+esc(e.code||'')+' '+esc(e.name||'')+'</span>';
-      h+='<span style="color:var(--t4);font-size:10px">'+(e.time||'').substring(0,8)+' · '+(e.confidence||'')+'%</span>';
-      h+='</div>';
-    });
-    h+='</div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='异常: '+esc(e.message)}
-}
-
-// ── 桌面操控 ──
-async function desktopTrade(){
-  var code=$('tcode').value.trim();if(!code){toast('请输入代码');return}
-  go('trade',D.querySelector('[data-v=trade]'));
-  var g=_tAdd('<b>💻 正在操控电脑执行交易...</b>');g.querySelector('.mc').classList.add('thinking');
-  try{
-    var r=await fetch(A+'/desktop/trade-flow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,action:'buy',shares:100,price:0})});
-    var d=await r.json();g.querySelector('.mc').classList.remove('thinking');
-    var h='<b style="color:var(--green)">💻 电脑操控流程</b><div style="margin-top:6px">';
-    (d.steps||[]).forEach(function(s){h+='<div style="padding:3px 0;font-size:11px;color:var(--t3)">'+s.step+'. '+s.action+' — '+((s.result||'').substring(0,50))+'</div>'});
-    h+='</div>';
-    g.querySelector('.mc').innerHTML=h;
-  }catch(e){g.querySelector('.mc').classList.remove('thinking');g.querySelector('.mc').innerHTML='<span style="color:var(--red)">操控异常: '+esc(e.message)+'</span>'}
-}
-
-async function desktopType(text){
-  try{await fetch(A+'/desktop/type',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text})});toast('已输入: '+text)}
-  catch(e){toast('输入失败: '+e.message)}
-}
-
-async function desktopClick(){
-  try{await fetch(A+'/desktop/click',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({button:'left'})});toast('已点击')}
-  catch(e){toast('点击失败')}
-}
-
-async function desktopHotkey(keys){
-  try{await fetch(A+'/desktop/hotkey',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keys:keys})});toast('热键: '+keys.join('+'))}
-  catch(e){}
-}
-
-// ── 键盘快捷键 ──
-document.addEventListener('keydown',function(e){
-  // 跳过输入框内快捷键（Ctrl+Enter除外）
-  var tag = (e.target.tagName||'').toLowerCase();
-  var isInput = (tag==='input'||tag==='textarea'||e.target.isContentEditable);
-
-  // Ctrl+1 → Chat
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='1'){e.preventDefault();go('chat',D.querySelector('[data-v=chat]'));return;}
-  // Ctrl+2 → 深度推理
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='2'){e.preventDefault();go('reason',D.querySelector('[data-v=reason]'));return;}
-  // Ctrl+3 → A股操盘
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='3'){e.preventDefault();go('trade',D.querySelector('[data-v=trade]'));return;}
-  // Ctrl+S → 设置
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='s'){e.preventDefault();openSettings();return;}
-  // Ctrl+B → 切换面板
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='b'){e.preventDefault();togglePanel();return;}
-  // Ctrl+Enter → 发送消息（在输入框中）
-  if(e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='Enter'&&isInput){e.preventDefault();chat();return;}
-  // Escape → 关闭设置/面板弹窗
-  if(e.key==='Escape'){
-    var s=D.querySelector('#settings-panel');if(s&&s.style.display!=='none'){openSettings();return;}
-  }
-});
-
-// ── 窗口拖拽 ──
-var _drag={active:false,x:0,y:0};
-document.getElementById('tb').addEventListener('mousedown',function(e){
-  if(e.target.closest('.btns')||e.target.closest('button'))return;
-  _drag.active=true;_drag.x=e.screenX;_drag.y=e.screenY;e.preventDefault();
-});
-document.addEventListener('mousemove',function(e){
-  if(!_drag.active)return;
-  try{w.move?w.move(e.screenX-_drag.x,e.screenY-_drag.y):null;}catch(e){}
-});
-document.addEventListener('mouseup',function(){_drag.active=false;});
-
-init().catch(function(e){console.error('Init failed:',e)});
+function esc(t){var e=D.createElement('span');e.textContent=t||'';return e.innerHTML}
+// Init
+refreshDash();setInterval(refreshDash,5000);
 </script>
+</body>
+</html>
