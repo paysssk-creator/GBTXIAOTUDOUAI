@@ -2,7 +2,8 @@
 import sys,os,threading,time
 sys.path.insert(0,os.path.dirname(__file__))
 sys.path.insert(0,os.path.join(os.path.dirname(__file__),"desktop"))
-import webview
+try:import webview
+except:webview=None
 from flask import Flask,render_template_string,jsonify,request
 
 DP=os.path.join(os.path.dirname(__file__),"desktop","templates","layout.html")
