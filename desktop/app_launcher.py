@@ -3,12 +3,19 @@ import sys,os,subprocess,time,threading,json,urllib.request
 
 BASE=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(BASE)
+
+# Auto-detect venv and re-launch with it if not already using it
+_VENV_PY=os.path.join(BASE,".venv","Scripts","pythonw.exe")
+if os.path.exists(_VENV_PY) and ".venv" not in os.path.abspath(sys.executable):
+    subprocess.Popen([_VENV_PY,__file__],cwd=BASE)
+    sys.exit(0)
+
 sys.path.insert(0,BASE)
 sys.path.insert(0,os.path.join(BASE,"desktop"))
 
 # Pre-import flask to verify it works
 try:
-    import flask
+    from flask import Flask
 except Exception as e:
     import tkinter.messagebox as mb
     mb.showerror("GBT Pro","Flask not installed.\nRun: pip install flask psutil")
