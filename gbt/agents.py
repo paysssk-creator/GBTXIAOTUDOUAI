@@ -293,7 +293,10 @@ class DesktopAgent(BaseAgent):
                 return "音量调节: 请使用系统快捷键"
     def _system_lock(self, text):
         import subprocess
-        subprocess.run(["rundll32","user32.dll,LockWorkStation"],capture_output=True,timeout=3)
+        try:
+            subprocess.run(["rundll32","user32.dll,LockWorkStation"],capture_output=True,timeout=3)
+        except Exception:
+            subprocess.run(["powershell","-c","rundll32.exe user32.dll,LockWorkStation"],capture_output=True,timeout=3,shell=False)
         return "系统已锁定"
     def _gcc_run(self, text):
         """通用电脑控制: 截图→VLM分析→规划动作→执行→自省"""
