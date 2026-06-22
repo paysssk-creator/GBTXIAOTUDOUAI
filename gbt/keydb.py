@@ -1,23 +1,25 @@
 """
-keydb.py - GBT内置密钥数据库, 自动存储/读取免费API密钥
-免费: Gemini | Groq | Mistral | Kimi | StepFun | Doubao | Cohere | DeepSeek | Together
+keydb.py - GBT built-in key database
+Stores free API keys in AES-encrypted SQLite
+11 free providers pre-configured
 """
-import os, sys, base64, sqlite3, time, threading
+import os, sys, base64, sqlite3, time
 from typing import Optional, Dict, List, Tuple
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".gbt_keys.db")
 
 FREE_TIER = {
-    "gemini":  {"name":"Google Gemini","env":"GEMINI_API_KEY","url":"https://aistudio.google.com/apikey","free":"每天1500次,视觉免费","pri":1},
-    "groq":    {"name":"Groq","env":"GROQ_API_KEY","url":"https://console.groq.com/keys","free":"超高并发,支持llama","pri":2},
-    "mistral": {"name":"Mistral AI","env":"MISTRAL_API_KEY","url":"https://console.mistral.ai/api-keys","free":"免费套餐,codestral","pri":3},
-    "kimi":    {"name":"Kimi(Moonshot)","env":"MOONSHOT_API_KEY","url":"https://platform.moonshot.cn/console/api-keys","free":"送15元,128K上下文","pri":4},
-    "stepfun": {"name":"Step-2(阶跃)","env":"STEPFUN_API_KEY","url":"https://platform.stepfun.com","free":"免费额度","pri":5},
-    "doubao":  {"name":"豆包(火山)","env":"DOUBAO_API_KEY","url":"https://console.volcengine.com/ark","free":"免费50万tokens","pri":6},
-    "cohere":  {"name":"Cohere","env":"COHERE_API_KEY","url":"https://dashboard.cohere.com/api-keys","free":"试用额度","pri":7},
-    "deepseek":{"name":"DeepSeek","env":"DEEPSEEK_API_KEY","url":"https://platform.deepseek.com/api_keys","free":"送500万tokens","pri":8},
-    "zhipu":   {"name":"智谱GLM","env":"GLM_API_KEY","url":"https://open.bigmodel.cn/usercenter/apikeys","free":"送2000万tokens","pri":9},
-    "together":{"name":"Together AI","env":"TOGETHER_API_KEY","url":"https://api.together.xyz/settings/api-keys","free":"送$5信用额","pri":10},
+    "gemini":  {"name":"Google Gemini","env":"GEMINI_API_KEY","url":"https://aistudio.google.com/apikey","free":"1500/day, vision free","pri":1},
+    "groq":    {"name":"Groq","env":"GROQ_API_KEY","url":"https://console.groq.com/keys","free":"ultra-fast, llama support","pri":2},
+    "mistral": {"name":"Mistral AI","env":"MISTRAL_API_KEY","url":"https://console.mistral.ai/api-keys","free":"free tier, codestral","pri":3},
+    "kimi":    {"name":"Kimi(Moonshot)","env":"MOONSHOT_API_KEY","url":"https://platform.moonshot.cn/console/api-keys","free":"15 CNY, 128K context","pri":4},
+    "stepfun": {"name":"Step-2","env":"STEPFUN_API_KEY","url":"https://platform.stepfun.com","free":"free quota","pri":5},
+    "doubao":  {"name":"Doubao(Volcano)","env":"DOUBAO_API_KEY","url":"https://console.volcengine.com/ark","free":"500K free tokens","pri":6},
+    "cohere":  {"name":"Cohere","env":"COHERE_API_KEY","url":"https://dashboard.cohere.com/api-keys","free":"trial quota","pri":7},
+    "deepseek":{"name":"DeepSeek","env":"DEEPSEEK_API_KEY","url":"https://platform.deepseek.com/api_keys","free":"5M free tokens","pri":8},
+    "zhipu":   {"name":"GLM(Zhipu)","env":"GLM_API_KEY","url":"https://open.bigmodel.cn/usercenter/apikeys","free":"20M free tokens","pri":9},
+    "together":{"name":"Together AI","env":"TOGETHER_API_KEY","url":"https://api.together.xyz/settings/api-keys","free":"$5 credits","pri":10},
+    "openclaw":{"name":"OpenClaw/OpenRouter","env":"OPENCLAW_API_KEY","url":"https://openclaw.ai","free":"multi-model gateway","pri":11},
 }
 
 class KeyDB:
@@ -53,19 +55,7 @@ class KeyDB:
         if r:
             try: return self._dec(r[0])
             except: pass
-        # cloud fallback
-        try:
-            from gbt.cloud_kv import CloudKV
-            cv = CloudKV()
-            if cv.connect():
-                v = cv.get(pid)
-                if v:
-                    self.save(pid, v, free=True, note="cloud")
-                    return v
-        except: pass
         return None
-
-
     def all_info(self):
         rows = self.conn.execute("SELECT pid,ts,used,cnt,free,note FROM k").fetchall()
         res = {}
@@ -77,22 +67,18 @@ class KeyDB:
                 "calls": r[3], "free": bool(r[4]), "note": r[5],
                 "url": info.get("url", ""), "free_tier": info.get("free", "")}
         return res
-
     def available(self):
         av = []
         for pid in FREE_TIER:
             k = self.get(pid)
             if k: av.append((pid, FREE_TIER[pid]["name"], True))
         return sorted(av, key=lambda x: FREE_TIER[x[0]]["pri"])
-
     def mark(self, pid):
         self.conn.execute("UPDATE k SET used=?,cnt=cnt+1 WHERE pid=?", (time.time(), pid))
         self.conn.commit()
-
     def remove(self, pid):
         self.conn.execute("DELETE FROM k WHERE pid=?", (pid,))
         self.conn.commit()
-
     def table(self):
         lines = ["Provider       | Key? | Free Tier"]
         lines.append("-" * 52)
@@ -100,9 +86,7 @@ class KeyDB:
             lines.append(f"{pid:<15}| {'YES' if self.get(pid) else 'NO ':<3} | {info['free'][:30]}")
         return chr(10).join(lines)
 
-
 def get_keydb(): return KeyDB()
-
 def auto_import():
     db = KeyDB()
     for pid, info in FREE_TIER.items():
