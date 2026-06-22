@@ -172,30 +172,37 @@ except Exception as e:
 # ═══════════════════════════════════════════════
 # 黑客全能力 API
 # ═══════════════════════════════════════════════
+
 @app.route("/api/hacker/capabilities")
 def hacker_all_caps():
-    caps=[
-        {"id":"scanner","name":"代码扫描","icon":"ph-scan","cat":"security","desc":"全项目安全漏洞扫描","mcp":True},
-        {"id":"audit","name":"安全审计","icon":"ph-shield-check","cat":"security","desc":"10维度地毯式审计","mcp":True},
-        {"id":"auto-fix","name":"自动修复","icon":"ph-wrench","cat":"security","desc":"一键修复Bug","mcp":True},
-        {"id":"self-evolve","name":"自我进化","icon":"ph-arrows-clockwise","cat":"core","desc":"6步自进化闭环","mcp":True},
-        {"id":"bounty-hunter","name":"漏洞赏金","icon":"ph-bug-beetle","cat":"security","desc":"CVSS评分赏金报告","mcp":True},
-        {"id":"stress-test","name":"压力测试","icon":"ph-gauge","cat":"security","desc":"API负载压力测试","mcp":True},
-        {"id":"mirror-deploy","name":"镜像部署","icon":"ph-stack","cat":"devops","desc":"沙盒验证一键部署","mcp":True},
-        {"id":"deepseek-analyzer","name":"DeepSeek","icon":"ph-brain","cat":"ai","desc":"深度推理分析引擎","mcp":True},
-        {"id":"intelligent-scheduler","name":"智能调度","icon":"ph-clock-countdown","cat":"core","desc":"事件驱动自动调度","mcp":True},
-        {"id":"email-watcher","name":"邮箱监控","icon":"ph-envelope","cat":"monitor","desc":"邮件实时监控告警","mcp":True},
-        {"id":"rustdesk","name":"远程控制","icon":"ph-desktop-tower","cat":"control","desc":"RustDesk远程桌面","mcp":True},
-        {"id":"halo-cms","name":"Halo建站","icon":"ph-globe","cat":"devops","desc":"CMS博客快速建站","mcp":True},
-        {"id":"desktop-control","name":"桌面全控","icon":"ph-monitor","cat":"control","desc":"截图键鼠语音蓝牙","mcp":True},
-        {"id":"cloud-llm","name":"云端LLM","icon":"ph-cloud","cat":"ai","desc":"多模型云端调度","mcp":True},
-        {"id":"memory","name":"记忆系统","icon":"ph-cards","cat":"core","desc":"工作情景持久记忆","mcp":True},
-        {"id":"guard","name":"行动守卫","icon":"ph-shield","cat":"core","desc":"行动前强制扫描","mcp":False},
-        {"id":"reasoner","name":"深度推理","icon":"ph-graph","cat":"ai","desc":"8模式推理引擎","mcp":False},
-        {"id":"winctl","name":"Windows操控","icon":"ph-windows-logo","cat":"control","desc":"16类原生API","mcp":False},
-        {"id":"ai_trade","name":"AI操盘手","icon":"ph-robot","cat":"trade","desc":"截图→分析→决策→下单→自省","mcp":False},
-    ]
+    """动态读取框架全部49项能力"""
+    caps = []
+    # 图标映射
+    icons = {
+        "security":"ph-shield-check","core":"ph-gear","devops":"ph-stack",
+        "ai":"ph-brain","monitor":"ph-eye","control":"ph-monitor",
+        "trade":"ph-chart-line-up","desktop":"ph-desktop","hacker":"ph-skull"
+    }
+    mcp_ids = ["scanner","audit","auto-fix","self-evolve","bounty-hunter","stress-test",
+               "mirror-deploy","deepseek-analyzer","intelligent-scheduler","email-watcher",
+               "rustdesk","halo-cms","desktop-control","cloud-llm","memory"]
+    if _framework:
+        for agent in _framework.router.agents:
+            ag = _framework.router.agents[agent]
+            cat_map = {"DesktopAgent":"desktop","TradingAgent":"trade","HackerAgent":"hacker",
+                       "SystemAgent":"system","NotifyAgent":"control"}
+            cat = cat_map.get(agent, "core")
+            for cap in ag.capabilities:
+                is_mcp = cap.name in mcp_ids
+                caps.append({"id":cap.name,"name":cap.description,"icon":icons.get(cat,"ph-squares-four"),
+                            "cat":cat,"desc":", ".join(cap.keywords[:3]),"mcp":is_mcp,
+                            "agent":agent,"priority":cap.priority})
+    if not caps:
+        # Fallback 静态列表
+        caps=[{"id":"scanner","name":"代码扫描","icon":"ph-scan","cat":"security","desc":"全项目安全漏洞扫描","mcp":True}]
+    caps.sort(key=lambda x: -x.get("priority",5))
     return jsonify({"capabilities":caps,"total":len(caps)})
+
 
 @app.route("/api/dashboard")
 def dashboard_data():
@@ -272,6 +279,11 @@ def dashboard_data():
 @app.route("/api/hacker/exec",methods=["POST"])
 def hacker_exec_cap():
     d=request.json or {};cid=d.get("id","");act=d.get("action","run")
+    # 优先通过框架路由: 如果Agent有该能力,直接调用
+    if _framework:
+        result = _framework.router.route(cid, act)
+        if result and result.get("protocol",{}).get("ok"):
+            return jsonify({"ok":True,"data":result.get("conclusion","")[:3000],"agent":result.get("agent","")})
     mcp_caps=["scanner","audit","auto-fix","self-evolve","bounty-hunter","stress-test",
               "mirror-deploy","deepseek-analyzer","intelligent-scheduler","email-watcher",
               "rustdesk","halo-cms","desktop-control","cloud-llm","memory"]
