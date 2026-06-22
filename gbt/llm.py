@@ -55,6 +55,14 @@ class GBTLLM:
 
     def _find_key(self, cfg: dict) -> Optional[str]:
         """多源查找API密钥"""
+        try:
+            from gbt.keydb import get_keydb
+            db = get_keydb()
+            for ek in cfg["env_keys"]:
+                pid = ek.replace("_API_KEY","").lower()
+                val = db.get(pid)
+                if val: return val
+        except: pass
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
             if not v:
