@@ -39,6 +39,10 @@ data/
 store.json
 monitoring.db/
 
+# Virtual environment
+.venv/
+
+
 # Temp dev scripts
 check.py
 run.py
