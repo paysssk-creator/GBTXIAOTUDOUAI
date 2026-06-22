@@ -11,7 +11,14 @@ app=Flask(__name__)
 
 @app.route("/")
 @app.route("/dashboard")
-def dashboard(): return render_template_string(DASH_HTML)
+def dashboard():
+    dp=os.path.join(os.path.dirname(__file__),"desktop","templates","layout.html")
+    html=open(dp,"r",encoding="utf-8").read() if os.path.exists(dp) else "<h1>Dashboard not found</h1>"
+    resp=app.make_response(render_template_string(html))
+    resp.headers['Cache-Control']='no-cache,no-store,must-revalidate'
+    resp.headers['Pragma']='no-cache'
+    resp.headers['Expires']='0'
+    return resp
 
 @app.route("/api/status")
 def status():

@@ -59,10 +59,10 @@ body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sa
 <aside id="side">
 <div class="side-h"><h1>GBT Pro v2.1</h1><div class="ver">A股集成编程AI框架</div></div>
 <div class="side-m">能力面板</div>
-<button class="side-btn on" onclick="switchTab('dash')"><span class="dot on"></span>仪表盘</button>
-<button class="side-btn" onclick="switchTab('hacker')"><span class="dot on"></span>黑客全能力 (49)</button>
-<button class="side-btn" onclick="switchTab('trade')"><span class="dot on"></span>A股操盘</button>
-<button class="side-btn" onclick="switchTab('desktop')"><span class="dot on"></span>电脑操控</button>
+<button class="side-btn on" id="side-dash" onclick="switchTab('dash')"><span class="dot on"></span>仪表盘</button>
+<button class="side-btn" id="side-hacker" onclick="switchTab('hacker')"><span class="dot on"></span>黑客全能力 (49)</button>
+<button class="side-btn" id="side-trade" onclick="switchTab('trade')"><span class="dot on"></span>A股操盘</button>
+<button class="side-btn" id="side-desktop" onclick="switchTab('desktop')"><span class="dot on"></span>电脑操控</button>
 <div class="side-foot">
 <div style="display:flex;align-items:center;gap:6px"><span class="dot on" id="status-dot"></span><span id="status-text">在线</span></div>
 <div style="margin-top:4px;font-size:9px" id="cpu-info">CPU --</div>
@@ -155,143 +155,198 @@ body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,sa
 </div>
 <div id="toast"></div>
 <script>
+
 var currentTab='dash';
 var D=document;
 function $(id){return D.getElementById(id)}
-function toast(msg){var t=$('toast');var d=D.createElement('div');d.className='toast';d.textContent=msg;t.appendChild(d);setTimeout(function(){d.remove()},3000)}
-function switchTab(tab){
-  ['dash','hacker','trade','desktop'].forEach(function(t){
-    var el=$('tab-'+t);if(el)el.style.display=t===tab?'':'none'
-  });
-  D.querySelectorAll('.side-btn').forEach(function(b,i){
-    b.className=b.textContent.indexOf(tab)!==-1||(tab==='dash'&&b.textContent.indexOf('仪表盘')!==-1)?'side-btn on':'side-btn'
-  });
-  currentTab=tab;
-  if(tab==='hacker')loadHackerTab();
-  if(tab==='trade')loadTradeTab();
-  if(tab==='desktop')loadDesktopTab();
+function toast(msg){
+  var t=$('toast');
+  if(!t)return;
+  var d=D.createElement('div');
+  d.className='toast';
+  d.textContent=msg;
+  t.appendChild(d);
+  setTimeout(function(){d.remove()},3000);
 }
-// ── Dashboard refresh ──
-async function refreshDash(){
-  try{
-    var r=await fetch('/api/dashboard');var d=await r.json();
+function switchTab(tab){
+  var tabs=['dash','hacker','trade','desktop'];
+  for(var i=0;i<tabs.length;i++){
+    var el=$('tab-'+tabs[i]);
+    if(el)el.style.display=tabs[i]===tab?'':'none';
+  }
+  var btns=D.querySelectorAll('.side-btn');
+  for(var i=0;i<btns.length;i++){
+    btns[i].className='side-btn';
+  }
+  if(tab==='dash')$('side-dash').className='side-btn on';
+  if(tab==='hacker'){$('side-hacker').className='side-btn on';loadHackerTab();}
+  if(tab==='trade'){$('side-trade').className='side-btn on';loadTradeTab();}
+  if(tab==='desktop'){$('side-desktop').className='side-btn on';loadDesktopTab();}
+  currentTab=tab;
+}
+function esc(t){
+  var e=D.createElement('span');
+  e.textContent=t||'';
+  return e.innerHTML;
+}
+function refreshDash(){
+  fetch('/api/dashboard',{headers:{'X-No-Cache':Date.now()}}).then(function(r){return r.json()}).then(function(d){
     // LLM
-    var lm=d.llm||{};var tt=lm.totals||{};var ct=lm.current||{};
-    $('dash-tokens').textContent=(tt.tokens_total||0).toLocaleString();
-    $('dash-cost').textContent='¥'+(tt.cost_rmb||0).toFixed(4);
-    $('dash-calls').textContent=(tt.requests||0).toLocaleString();
-    $('dash-model').textContent=ct.model||'--';
-    $('dash-uptime').textContent='↑'+(lm.uptime_h||0).toFixed(1)+'h';
-    var hh='';(lm.history||[]).slice(-10).reverse().forEach(function(h){hh+='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>'});
-    $('dash-llmhist').innerHTML=hh||'<tr><td colspan=5 style=color:var(--t3)>无记录</td></tr>';
+    var lm=d.llm||{};
+    var tt=lm.totals||{};
+    var ct=lm.current||{};
+    var t=$('dash-tokens');if(t)t.textContent=(tt.tokens_total||0).toLocaleString();
+    var c=$('dash-cost');if(c)c.textContent='¥'+(tt.cost_rmb||0).toFixed(4);
+    var ca=$('dash-calls');if(ca)ca.textContent=(tt.requests||0).toLocaleString();
+    var cm=$('dash-model');if(cm)cm.textContent=ct.model||'--';
+    var cu=$('dash-uptime');if(cu)cu.textContent='⇧'+(lm.uptime_h||0).toFixed(1)+'h';
+    var hh='';
+    var hist=lm.history||[];
+    for(var hi=Math.max(0,hist.length-10);hi<hist.length;hi++){
+      var h=hist[hi];
+      hh='<tr><td>'+esc(h.time||'')+'</td><td>'+esc(h.model||'')+'</td><td>'+(h.tokens_in||0)+'</td><td>'+(h.tokens_out||0)+'</td><td>¥'+(h.cost_rmb||0).toFixed(4)+'</td></tr>'+hh;
+    }
+    var htel=$('dash-llmhist');if(htel)htel.innerHTML=hh||'<tr><td colspan=5 style=color:#64748b>无记录</td></tr>';
     // Trade
-    var td=d.trade||{};var acct=td.account||{};
-    $('dash-cash').textContent='¥'+(acct.cash||0).toLocaleString();
-    $('dash-equity').textContent='¥'+(acct.equity||0).toLocaleString();
-    var pnl=acct.pnl||0;$('dash-pnl').textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
-    $('dash-pnl').style.color=pnl>=0?'var(--g)':'var(--r)';
-    $('dash-pos').textContent=(acct.positions||0);
-    $('dash-trade-status').textContent=td.auto_trade?'自主交易':'手动';
-    var wl='';(td.watchlist||[]).forEach(function(w){wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>'});
-    $('dash-watchlist').innerHTML=wl||'<tr><td colspan=4 style=color:var(--t3)>暂无</td></tr>';
+    var td=d.trade||{};
+    var acct=td.account||{};
+    var dca=$('dash-cash');if(dca)dca.textContent='¥'+(acct.cash||0).toLocaleString();
+    var deq=$('dash-equity');if(deq)deq.textContent='¥'+(acct.equity||0).toLocaleString();
+    var pnl=acct.pnl||0;
+    var dpn=$('dash-pnl');
+    if(dpn){
+      dpn.textContent='¥'+(pnl>=0?'+':'')+pnl.toLocaleString();
+      dpn.style.color=pnl>=0?'var(--g)':'var(--r)';
+    }
+    var dpo=$('dash-pos');if(dpo)dpo.textContent=(acct.positions||0);
+    var dts=$('dash-trade-status');if(dts)dts.textContent=td.auto_trade?'自主交易':'手动';
+    var wl='';
+    var watchlist=td.watchlist||[];
+    for(var wi=0;wi<watchlist.length;wi++){
+      var w=watchlist[wi];
+      wl+='<tr><td>'+esc(w[0]||'')+'</td><td>'+esc(w[1]||'')+'</td><td>--</td><td>--</td></tr>';
+    }
+    var dwl=$('dash-watchlist');if(dwl)dwl.innerHTML=wl||'<tr><td colspan=4 style=color:#64748b>暂无</td></tr>';
     // System
-    var sy=d.system||{};$('dash-host').textContent=sy.host||'';
-    var cpu=sy.cpu||0;$('dash-cpuval').textContent=cpu.toFixed(1)+'%';$('dash-cpubar').style.width=cpu+'%';
-    var mem=sy.memory||0;$('dash-memval').textContent=mem.toFixed(1)+'%';$('dash-membar').style.width=mem+'%';
-    var dsk=sy.disk||0;$('dash-diskval').textContent=dsk.toFixed(1)+'%';$('dash-diskbar').style.width=dsk+'%';
-    var ph='';(d.desktop||{}).top_processes&&(d.desktop.top_processes||[]).forEach(function(p){ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+esc(p.pid||0)+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>'});
-    $('dash-procs').innerHTML=ph||'<tr><td colspan=4 style=color:var(--t3)>无数据</td></tr>';
+    var sy=d.system||{};
+    var dsh=$('dash-host');if(dsh)dsh.textContent=sy.host||'';
+    var cpu=sy.cpu||0;
+    var dcv=$('dash-cpuval');if(dcv)dcv.textContent=cpu.toFixed(1)+'%';
+    var dcb=$('dash-cpubar');if(dcb)dcb.style.width=cpu+'%';
+    var mem=sy.memory||0;
+    var dmv=$('dash-memval');if(dmv)dmv.textContent=mem.toFixed(1)+'%';
+    var dmb=$('dash-membar');if(dmb)dmb.style.width=mem+'%';
+    var dsk=sy.disk||0;
+    var ddv=$('dash-diskval');if(ddv)ddv.textContent=dsk.toFixed(1)+'%';
+    var ddb=$('dash-diskbar');if(ddb)ddb.style.width=dsk+'%';
+    // Procs
+    var ph='';
+    var procs=(d.desktop||{}).top_processes||[];
+    for(var pi=0;pi<procs.length;pi++){
+      var p=procs[pi];
+      ph+='<tr><td>'+esc(p.name||'')+'</td><td>'+(p.pid||'')+'</td><td>'+(p.cpu_percent||0).toFixed(1)+'</td><td>'+(p.memory_percent||0).toFixed(1)+'</td></tr>';
+    }
+    var dpr=$('dash-procs');if(dpr)dpr.innerHTML=ph||'<tr><td colspan=4 style=color:#64748b>无数据</td></tr>';
     // Services
-    var mcp=d.mcp||{};var srvs=mcp.servers||[];$('dash-srvcnt').textContent=srvs.length+'服务';
-    var sh='';srvs.forEach(function(s){var n=typeof s==='string'?s:(s.id||s.name||'');sh+='<div class=cap-item><span class=cap-dot style=background:var(--g)></span>'+esc(n)+'</div>'});
-    $('dash-services').innerHTML=sh||'<span style=color:var(--t3);font-size:10px>无MCP服务</span>';
-    // Status
-    D.getElementById('status-dot').className='dot on';
-    D.getElementById('status-text').textContent='在线';
-    D.getElementById('cpu-info').textContent='CPU '+cpu.toFixed(0)+'% | MEM '+mem.toFixed(0)+'%';
+    var mcp=d.mcp||{};
+    var srvs=mcp.servers||[];
+    var dsc=$('dash-srvcnt');if(dsc)dsc.textContent=srvs.length+'服务';
+    var sh='';
+    for(var si=0;si<srvs.length;si++){
+      var s=srvs[si];
+      var n=typeof s==='string'?s:(s.id||s.name||'');
+      sh+='<div class=cap-item><span class=cap-dot style=background:#22c55e></span>'+esc(n)+'</div>';
+    }
+    var dsv=$('dash-services');if(dsv)dsv.innerHTML=sh||'<span style=color:#64748b;font-size:10px>无MCP服务</span>';
+    // Status sidebar
+    var sdot=D.getElementById('status-dot');if(sdot)sdot.className='dot on';
+    var stxt=D.getElementById('status-text');if(stxt)stxt.textContent='在线';
+    var ci=D.getElementById('cpu-info');if(ci)ci.textContent='CPU '+cpu.toFixed(0)+'% | MEM '+mem.toFixed(0)+'%';
     // Market ticker
     loadMarketTicker();
-  }catch(e){console.error('dash:',e)}
+  }).catch(function(e){console.log('dash error:',e)});
 }
-// ── Market ticker ──
-async function loadMarketTicker(){
-  try{
-    var r=await fetch('/api/market');var d=await r.json();
-    if(!d.ok){$('market-ticker').innerHTML='<span style=color:var(--t3);font-size:10px>行情接口未就绪</span>';return}
-    var html='';(d.indices||[]).forEach(function(i){
-      var cls=i.change>=0?'green':'red';html+='<div class=ticker-item><span class=ticker-name>'+esc(i.name)+'</span><span class="ticker-val '+cls+'">'+esc(i.price)+'</span><span class='+cls+'>'+(i.change>=0?'+':'')+i.change.toFixed(2)+' ('+(i.pct>=0?'+':'')+i.pct.toFixed(2)+'%)'+'</span></div>'
-    });
-    $('market-ticker').innerHTML=html||'<span style=color:var(--t3);font-size:10px>暂无行情</span>'
-  }catch(e){$('market-ticker').innerHTML='<span style=color:var(--t3);font-size:10px'>行情加载中...</span>'}
+function loadMarketTicker(){
+  fetch('/api/market').then(function(r){return r.json()}).then(function(d){
+    var mt=$('market-ticker');
+    if(!mt)return;
+    if(!d.ok){mt.innerHTML='<span style=color:#64748b;font-size:10px>行情接口未就绪</span>';return}
+    var html='';
+    var indices=d.indices||[];
+    for(var i=0;i<indices.length;i++){
+      var idx=indices[i];
+      var cls=idx.pct>=0?'green':'red';
+      html+='<div class=ticker-item><span class=ticker-name>'+esc(idx.name)+'</span><span class="ticker-val '+cls+'">'+esc(String(idx.price))+'</span><span class='+cls+'>'+(idx.pct>=0?'+':'')+(idx.pct||0).toFixed(2)+'%</span></div>';
+    }
+    mt.innerHTML=html||'<span style=color:#64748b;font-size:10px>暂无行情</span>';
+  }).catch(function(){var mt=$('market-ticker');if(mt)mt.innerHTML='<span style=color:#64748b;font-size:10px>行情加载中...</span>'});
 }
-// ── Hacker tab ──
-async function loadHackerTab(){
-  try{
-    var r=await fetch('/api/hacker/capabilities');var d=await r.json();
-    $('hack-capcnt').textContent=d.total+'项';
-    var html='';(d.capabilities||[]).forEach(function(c){
-      html+='<div class=cap-item onclick=execCap("'+esc(c.id)+'") title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'var(--g)':'var(--a)')+'"></span>'+esc(c.id)+'</div>';
-    });
-    $('hack-grid').innerHTML=html;
-  }catch(e){$('hack-grid').innerHTML='加载失败'}
+function loadHackerTab(){
+  fetch('/api/hacker/capabilities').then(function(r){return r.json()}).then(function(d){
+    var hc=$('hack-capcnt');if(hc)hc.textContent=d.total+'项';
+    var html='';
+    var caps=d.capabilities||[];
+    for(var i=0;i<caps.length;i++){
+      var c=caps[i];
+      html+='<div class=cap-item onclick=execCap("'+esc(c.id)+'") title="'+esc(c.name)+'"><span class=cap-dot style=background:'+(c.mcp?'#22c55e':'#6366f1')+'"></span>'+esc(c.id)+'</div>';
+    }
+    var hg=$('hack-grid');if(hg)hg.innerHTML=html;
+  }).catch(function(){});
 }
-async function execCap(cid){
-  var log=$('hack-log');log.textContent='执行: '+cid+'...';
-  try{
-    var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})});
-    var d=await r.json();
-    log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+function execCap(cid){
+  var log=$('hack-log');
+  if(log)log.textContent='执行: '+cid+'...';
+  fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})}).then(function(r){return r.json()}).then(function(d){
+    if(log)log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
 '+(d.data||d.error||'')+'
 ---
 '+log.textContent;
     toast((d.ok?'✔ ':'✘ ')+cid+(d.ok?' 执行成功':' '+d.error));
-  }catch(e){log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
-'+log.textContent;toast('✘ '+cid+' '+e)}
+  }).catch(function(e){if(log)log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
+'+log.textContent});
 }
-// ── Trade tab ──
-async function loadTradeTab(){
-  try{
-    var r=await fetch('/api/hacker/capabilities');var d=await r.json();
-    var tradeCaps=(d.capabilities||[]).filter(function(c){return c.cat==='trade'});
+function loadTradeTab(){
+  fetch('/api/hacker/capabilities').then(function(r){return r.json()}).then(function(d){
+    var tradeCaps=[];
+    var caps=d.capabilities||[];
+    for(var i=0;i<caps.length;i++){if(caps[i].cat==='trade')tradeCaps.push(caps[i])}
     var html='<div class=cap-grid>';
-    tradeCaps.forEach(function(c){html+='<div class=cap-item onclick=execCapTrade("'+esc(c.id)+'")><span class=cap-dot style=background:var(--a)></span>'+esc(c.id)+'</div>'});
+    for(var j=0;j<tradeCaps.length;j++){html+='<div class=cap-item onclick=execCap("'+esc(tradeCaps[j].id)+'")><span class=cap-dot style=background:#6366f1></span>'+esc(tradeCaps[j].id)+'</div>'}
     html+='</div>';
-    $('trade-quotes').innerHTML=html;
-    // Watchlist
-    try{
-      var dr=await fetch('/api/dashboard');var dd=await dr.json();var td=dd.trade||{};
-      var wh='';(td.watchlist||[]).forEach(function(w){wh+='<tr><td>'+esc(w[0])+'</td><td>'+esc(w[1])+'</td><td>--</td><td>--</td><td>--</td></tr>'});
-      $('trade-watchlist').innerHTML=wh||'<tr><td colspan=5 style=color:var(--t3)>暂无</td></tr>'
-    }catch(e){}
-  }catch(e){$('trade-quotes').innerHTML='加载失败'}
+    var tq=$('trade-quotes');if(tq)tq.innerHTML=html;
+    fetch('/api/dashboard').then(function(r){return r.json()}).then(function(dd){
+      var td=dd.trade||{};
+      var wh='';
+      var wl=td.watchlist||[];
+      for(var k=0;k<wl.length;k++){wh+='<tr><td>'+esc(wl[k][0])+'</td><td>'+esc(wl[k][1])+'</td><td>--</td><td>--</td><td>--</td></tr>'}
+      var tw=$('trade-watchlist');if(tw)tw.innerHTML=wh||'<tr><td colspan=5 style=color:#64748b>暂无</td></tr>';
+    }).catch(function(){});
+  }).catch(function(){});
 }
-async function execCapTrade(cid){execCap(cid)}
-// ── Desktop tab ──
-async function loadDesktopTab(){
+function loadDesktopTab(){
   var actions=['screenshot','browser_open','window_maximize','keyboard_type','keyboard_hotkey','mouse_click','process_list','process_kill','window_focus','volume_control','system_lock'];
-  var html='';actions.forEach(function(a){html+='<div class=cap-item onclick=execCapDesktop("'+a+'")><span class=cap-dot style=background:var(--a)></span>'+a+'</div>'});
-  $('desk-actions').innerHTML=html;
-  try{
-    var r=await fetch('/api/system');var d=await r.json();
-    $('desk-info').textContent='CPU '+d.cpu.toFixed(1)+'% | MEM '+d.memory.toFixed(1)+'% | '+d.host
-  }catch(e){}
+  var html='';
+  for(var i=0;i<actions.length;i++){html+='<div class=cap-item onclick=execCapDesktop("'+actions[i]+'")><span class=cap-dot style=background:#6366f1></span>'+actions[i]+'</div>'}
+  var da=$('desk-actions');if(da)da.innerHTML=html;
+  fetch('/api/system').then(function(r){return r.json()}).then(function(d){
+    var di=$('desk-info');if(di)di.textContent='CPU '+d.cpu.toFixed(1)+'% | MEM '+d.memory.toFixed(1)+'% | '+d.host;
+  }).catch(function(){});
 }
-async function execCapDesktop(cid){
-  var log=$('desk-log');log.textContent='执行: '+cid+'...';
-  try{
-    var r=await fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})});
-    var d=await r.json();
-    log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
+function execCapDesktop(cid){
+  var log=$('desk-log');
+  if(log)log.textContent='执行: '+cid+'...';
+  fetch('/api/hacker/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cid,action:'run'})}).then(function(r){return r.json()}).then(function(d){
+    if(log)log.textContent='['+new Date().toLocaleTimeString()+'] '+(d.ok?'OK':'FAIL')+' '+cid+'
 '+(d.data||d.error||'')+'
 ---
 '+log.textContent;
     toast((d.ok?'✔ ':'✘ ')+cid);
-  }catch(e){log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
-'+log.textContent}
+  }).catch(function(e){if(log)log.textContent='['+new Date().toLocaleTimeString()+'] ERR '+cid+' '+e+'
+'+log.textContent});
 }
-function esc(t){var e=D.createElement('span');e.textContent=t||'';return e.innerHTML}
-// Init
-refreshDash();setInterval(refreshDash,5000);
+refreshDash();
+setInterval(refreshDash,5000);
+
 </script>
 </body>
 </html>
