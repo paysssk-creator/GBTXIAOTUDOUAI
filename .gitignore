@@ -54,3 +54,8 @@ build_log.txt
 # IDE
 .vscode/
 .idea/
+gbt_cradle/  
+_fix*.py  
+_patch*.py  
+_build*.py  
+_fix2.py 

@@ -152,18 +152,15 @@ class Autopilot:
 如果任务已完成,返回: {{"done":true,"summary":"完成描述"}}"""
 
         try:
+            # 视觉加速: 压缩图片再发给LLM
+            fast_b64 = compress_for_vision(screen.image, max_size=480)
             resp = self.llm.chat_with_vision(
                 prompt=prompt,
-                image_base64=screen.base64,
+                image_base64=fast_b64,
                 system_prompt=kb
             )
-            # 提取JSON
-            import re
-            json_match = re.search(r'\{[\s\S]*\}', resp)
-            if json_match:
-                plan = json.loads(json_match.group())
-            else:
-                plan = {"observation": resp[:200], "actions": []}
+            # JSON清洗
+            plan = sanitize_json(resp)
 
             if plan.get("done"):
                 self._stop = True; return []
@@ -292,4 +289,40 @@ def test_one_turn(task: str):
     print("📸 验证截图中...")
     after = ap.capture()
     print(f"   验证截图: {len(after.base64)//1024}KB")
+
+# ── 视觉加速 ──
+def compress_for_vision(img, max_size=640):
+    """压缩图片加速LLM推理 (JPEG quality 50)"""
+    w, h = img.size
+    ratio = max_size / max(w, h)
+    if ratio < 1:
+        img = img.resize((int(w*ratio), int(h*ratio)))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=50)
+    return base64.b64encode(buf.getvalue()).decode()
+
+def grab_region(x, y, w, h):
+    """截图指定区域"""
+    img = ImageGrab.grab(bbox=(x, y, x+w, y+h))
+    b64 = compress_for_vision(img)
+    return ScreenState(image=img, base64=b64, timestamp=time.time())
+
+# ── JSON清洗 ──
+def sanitize_json(raw):
+    """从LLM输出中提取JSON, 自动修正常见错误"""
+    try:
+        return json.loads(raw)
+    except:
+        pass
+    m = __import__('re').search(r'\{[\s\S]*\}', raw)
+    if m:
+        s = m.group()
+        s = __import__('re').sub(r'//.*', '', s)
+        s = __import__('re').sub(r',\s*}', '}', s)
+        try:
+            return json.loads(s)
+        except:
+            pass
+    return {"observation": raw[:300], "actions": []}
+
     return actions
