@@ -25,7 +25,7 @@ class GBTWorkstation:
   s.sb=tk.Label(bar,text="READY",bg=BG1,fg=ACC,font=("Cascadia Code",7));s.sb.pack(side="right",padx=10)
   tk.Label(bar,text="v4.0 | 7 tabs | 40 modules",bg=BG1,fg=FG1,font=("Cascadia Code",7)).pack(side="left",padx=10)
   s._keys_tab(nb);s._trade_tab(nb);s._desk_tab(nb)
-  s._ai_tab(nb);s._sec_tab(nb);s._mcp_tab(nb);s._stat_tab(nb)
+  s._ai_tab(nb);s._sec_tab(nb);s._mcp_tab(nb);s._stat_tab(nb);s._vision_tab(nb)
  def _keys_tab(s,nb):
   p=tk.Frame(nb,bg=BG0);nb.add(p,text="Keys");s._kf=tk.Frame(p,bg=BG0)
   s._kf.pack(fill="both",expand=True,padx=12,pady=6);s._load()
@@ -209,6 +209,26 @@ class GBTWorkstation:
   threading.Thread(target=loop,daemon=True).start()
  def _log(s,msg):
   s._co.config(state="normal");s._co.insert("end",msg+"\n")
-  s._co.see("end");s._co.config(state="disabled")
+  s._co.see("end");s._co.config(state="disabled") def _vision_tab(s,nb):
+  p=tk.Frame(nb,bg=BG0);nb.add(p,text="Vision")
+  tk.Label(p,text="AI Vision Control",bg=BG0,fg=FG0,font=("Cascadia Code",12,"bold")).pack(anchor="w",padx=12,pady=8)
+  info=tk.Label(p,text="Status: initializing...",bg=BG0,fg=FG1,font=("Cascadia Code",9),justify="left")
+  info.pack(anchor="w",padx=12,pady=4)
+  def refresh():
+   try:
+    from gbt.vision import VisionService
+    v=VisionService()
+    img=v.screenshot()
+    size=str(img.size) if img else "FAIL"
+    ocr=v.ocr(img) if img else {"ok":False,"error":"screenshot failed"}
+    ocrok="OK" if ocr.get("ok") else "FAIL"
+    txt="Vision Status\nScreenshot: "+size+"\nOCR: "+ocrok+" | chars="+str(len(ocr.get("text","")))
+    info.config(text=txt)
+   except Exception as e:
+    info.config(text="Vision error: "+str(e))
+  b=tk.Label(p,text="Refresh / Screenshot",bg=BG2,fg=ACC2,font=("Cascadia Code",9),padx=12,pady=4,cursor="hand2")
+  b.pack(anchor="w",padx=12,pady=6)
+  b.bind("<Button-1>",lambda e:refresh())
+  refresh()
 def run_app():GBTWorkstation().r.mainloop()
 if __name__=="__main__":run_app()
