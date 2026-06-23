@@ -1,0 +1,51 @@
+﻿name: GBT CI/CD
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  release:
+    types: [created]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run skill standalone tests
+        run: |
+          python -m gbt.skills.system_status
+          python -m gbt.skills.screenpipe_monitor status
+          python -m gbt.skills.cradle_task "open chrome"
+      - name: Build Windows EXE
+        run: python build_exe.py
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GBTWorkstation
+          path: dist/GBTWorkstation/
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        run: docker build -t gbt-ai-workstation:latest .
+      - name: Test container health
+        run: |
+          docker run -d --name gbt-ci -p 8765:8765 gbt-ai-workstation:latest
+          sleep 15
+          curl -f http://127.0.0.1:8765/api/health || exit 1
+          docker stop gbt-ci && docker rm gbt-ci
