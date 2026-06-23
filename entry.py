@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """GBT Packaging Entry - Launches GBT Workstation + Web API"""
 import sys, os, threading, webbrowser
 
@@ -39,7 +39,8 @@ def start_web_api():
     """Start Web API service in background"""
     try:
         from gbt.web_api import run_server
-        run_server(host="127.0.0.1", port=8765, debug=False)
+        host = "0.0.0.0" if os.environ.get("GBT_DOCKER") else "127.0.0.1"
+        run_server(host=host, port=8765, debug=False)
     except Exception as e:
         print(f"[WebAPI] startup failed: {e}")
 
@@ -48,7 +49,10 @@ from gbt.desktop_app import GBTWorkstation
 if __name__ == '__main__':
     print("GBT Workstation v4 -- Starting...")
     print("[WebAPI] starting at http://127.0.0.1:8765 ...")
-    threading.Thread(target=start_web_api, daemon=True).start()
-
-    threading.Thread(target=lambda: webbrowser.open('http://127.0.0.1:8765/'), daemon=True).start()
-    GBTWorkstation().r.mainloop()
+    if os.environ.get("GBT_DOCKER"):
+        print("[Docker] headless mode: running Web API only")
+        start_web_api()
+    else:
+        threading.Thread(target=start_web_api, daemon=True).start()
+        threading.Thread(target=lambda: webbrowser.open('http://127.0.0.1:8765/'), daemon=True).start()
+        GBTWorkstation().r.mainloop()

@@ -39,3 +39,7 @@ node_modules/
 output/
 screenshots/
 workspace/
+data/
+gbt/screenshots/
+*.spec
+.gitmodules
