@@ -40,3 +40,8 @@ check_env.py
 *.msi
 *.dll
 *.pyd
+data/
+gbt/screenshots/
+*.log
+build/
+dist/

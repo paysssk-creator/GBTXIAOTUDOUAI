@@ -34,7 +34,7 @@ a{color:var(--accent);text-decoration:none}
 </head>
 <body>
 <header>
-  <h1>🧠 GBT AI Workstation <span>v4.0.4 · Nanobrowser + Cradle · 19 capabilities</span></h1>
+  <h1>🧠 GBT AI Workstation <span>v4.0.7 · Nanobrowser + Cradle · 19 capabilities</span></h1>
   <div class="status"><span class="dot"></span>Online</div>
 </header>
 
@@ -112,6 +112,22 @@ a{color:var(--accent);text-decoration:none}
   </div>
 
   <div class="card">
+    <h3><span class="icon">📹</span>Screenpipe 24/7 监控</h3>
+    <div class="row">
+      <select id="sp-mode">
+        <option value="screen">屏幕</option>
+        <option value="audio">音频</option>
+        <option value="both">屏幕+音频</option>
+      </select>
+      <button class="btn primary" onclick="spStart()">开始监控</button>
+      <button class="btn" onclick="api("/api/screenpipe/stop","sp-log",{method:"POST"})">停止</button>
+      <button class="btn" onclick="api("/api/screenpipe/status","sp-log")">状态</button>
+      <button class="btn" onclick="api("/api/screenpipe/recent?limit=5","sp-log")">最近</button>
+    </div>
+    <pre id="sp-log" class="log"></pre>
+  </div>
+
+  <div class="card">
     <h3><span class="icon">⚡</span>Capabilities (<span id="cc">0</span>)</h3>
     <div id="caps" class="row" style="max-height:160px;overflow:auto"></div>
     <button class="btn" onclick="loadCaps()" style="margin-top:8px">刷新</button>
@@ -130,7 +146,7 @@ a{color:var(--accent);text-decoration:none}
 </div>
 
 <div class="footer">
-  GBT AI Workstation v4.0.4 · <a href="https://github.com/paysssk-creator/GBTXIAOTUDOUAI" target="_blank">GitHub</a> · WebAPI: http://127.0.0.1:8765
+  GBT AI Workstation v4.0.7 · <a href="https://github.com/paysssk-creator/GBTXIAOTUDOUAI" target="_blank">GitHub</a> · WebAPI: http://127.0.0.1:8765
 </div>
 
 <script>
@@ -181,6 +197,11 @@ async function cradleRun(){
 }
 loadCaps();
 api('/api/health','sys-log');
+async function spStart(){
+  const mode=document.getElementById("sp-mode").value;
+  const d=await api("/api/screenpipe/start","sp-log",{method:"POST",body:JSON.stringify({mode:mode,interval:2.0})});
+  log("sp-log",d);
+}
 </script>
 </body>
 </html>

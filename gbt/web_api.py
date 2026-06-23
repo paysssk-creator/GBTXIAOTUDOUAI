@@ -78,7 +78,7 @@ def init_router_deps():
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify(ok({"status": "running", "version": "v4.0.4"}))
+    return jsonify(ok({"status": "running", "version": "v4.0.7"}))
 
 
 
@@ -370,6 +370,28 @@ def cradle_run():
 def cradle_status():
     from gbt.adapters import cradle
     return jsonify(ok(cradle.status()))
+
+@app.route("/api/screenpipe/start", methods=["POST"])
+def screenpipe_start():
+    from gbt.adapters import screenpipe
+    data = request.get_json(force=True, silent=True) or {}
+    return jsonify(ok(screenpipe.start(mode=data.get("mode", "screen"), interval=data.get("interval", 2.0))))
+
+@app.route("/api/screenpipe/stop", methods=["POST"])
+def screenpipe_stop():
+    from gbt.adapters import screenpipe
+    return jsonify(ok(screenpipe.stop()))
+
+@app.route("/api/screenpipe/status", methods=["GET"])
+def screenpipe_status():
+    from gbt.adapters import screenpipe
+    return jsonify(ok(screenpipe.status()))
+
+@app.route("/api/screenpipe/recent", methods=["GET"])
+def screenpipe_recent():
+    from gbt.adapters import screenpipe
+    limit = request.args.get("limit", 10, type=int)
+    return jsonify(ok(screenpipe.recent(limit=limit)))
 
 
 def run_server(host="127.0.0.1", port=8765, debug=False):

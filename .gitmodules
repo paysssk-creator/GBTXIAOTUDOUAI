@@ -4,3 +4,6 @@
 [submodule "vendor/cradle"]
 	path = vendor/cradle
 	url = https://github.com/paysssk-creator/Cradle.git
+[submodule "vendor/screenpipe"]
+	path = vendor/screenpipe
+	url = https://github.com/paysssk-creator/diannaopingmujiankong.git
