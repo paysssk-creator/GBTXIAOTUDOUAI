@@ -45,3 +45,4 @@ gbt/screenshots/
 *.log
 build/
 dist/
+venv_cradle/

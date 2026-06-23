@@ -363,8 +363,18 @@ def nb_status():
 @app.route("/api/cradle/run", methods=["POST"])
 def cradle_run():
     from gbt.adapters import cradle
+    from gbt.task_engine import TaskEngine
     data = request.get_json(force=True, silent=True) or {}
-    return jsonify(ok(cradle.run_task(task=data.get("task", ""), env_config=data.get("env_config", ""))))
+    task = data.get("task", "")
+    env_config = data.get("env_config", "")
+    result = cradle.run_task(task=task, env_config=env_config)
+    if not result.get("ok"):
+        engine = TaskEngine(max_steps=data.get("max_steps", 5), safe_mode=False)
+        result = engine.run(task)
+        result["source"] = "task_engine_fallback"
+    else:
+        result["source"] = "cradle"
+    return jsonify(ok(result))
 
 @app.route("/api/cradle/status", methods=["GET"])
 def cradle_status():

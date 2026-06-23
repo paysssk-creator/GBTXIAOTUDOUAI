@@ -37,6 +37,7 @@ _SKILL_MODULES = [
     "gbt.skills.precision_scrape",
     "gbt.skills.auto_pipeline",
     "gbt.skills.screenpipe_monitor",
+    "gbt.skills.cradle_task",
 ]
 
 

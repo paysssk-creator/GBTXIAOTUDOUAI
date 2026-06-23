@@ -22,3 +22,10 @@ psutil>=5.9,<7.0.0
 # win10toast>=0.9
 tiktoken>=0.7,<1.0
 mss>=9.0
+ahk==1.7.6
+ahk-binary==2023.9.0
+pydirectinput==1.0.4
+opencv-python==4.8.1.78
+mss==9.0.1
+dill==0.3.8
+dataclass-wizard==0.22.3
