@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """gbt/llm_reasoner.py - lightweight LLM action reasoner for TaskEngine.
-Uses KeyDB keys first, then env vars, then fallback rules.
+Uses gbt.key_manager to retrieve keys (env / KeyDB for free / UI prompt for paid).
 """
 import os, json, logging
 from typing import Dict
@@ -17,8 +17,11 @@ If the task is finished, set action_type to "done" and params to {{"message": ".
 
 # Provider configs (OpenAI-compatible endpoints)
 PROVIDERS = [
-    {"pid": "deepseek", "env": "DEEPSEEK_API_KEY", "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat"},
-    {"pid": "openclaw", "env": "OPENCLAW_API_KEY", "base_url": "https://openclaw.ai/v1", "model": "gpt-4o-mini"},
+    {"pid": "deepseek", "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat"},
+    {"pid": "openclaw", "base_url": "https://openclaw.ai/v1", "model": "gpt-4o-mini"},
+    {"pid": "openai",   "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini"},
+    {"pid": "gemini",   "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-1.5-flash"},
+    {"pid": "groq",     "base_url": "https://api.groq.com/openai/v1", "model": "llama3-8b-8192"},
 ]
 
 
@@ -30,26 +33,14 @@ class LLMActionReasoner:
         self._init_client()
 
     def _init_client(self):
-        # 1) Try KeyDB first
-        try:
-            from gbt.keydb import KeyDB
-            db = KeyDB()
-            for prov in PROVIDERS:
-                key = db.get(prov["pid"])
-                if key:
-                    self._setup_client(key, prov["base_url"], prov["model"])
-                    L.info("LLM client initialized from KeyDB: %s", prov["pid"])
-                    return
-        except Exception as e:
-            L.debug("KeyDB load failed: %s", e)
-
-        # 2) Fallback to environment variables
+        from gbt.key_manager import get_key
         for prov in PROVIDERS:
-            key = os.environ.get(prov["env"])
+            key = get_key(prov["pid"], prompt=False, allow_save=False)
             if key:
                 self._setup_client(key, prov["base_url"], prov["model"])
-                L.info("LLM client initialized from env: %s", prov["pid"])
+                L.info("LLM client initialized: %s", prov["pid"])
                 return
+        L.info("No LLM key available; will use fallback rules")
 
     def _setup_client(self, key: str, base_url: str, model: str):
         try:

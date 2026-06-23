@@ -42,6 +42,22 @@ import pyttsx3, speech_recognition
 import flask, requests
 import tkinter
 
+def ensure_paid_api_keys():
+    """Prompt for paid API keys via native window if missing (non-headless only)."""
+    if os.environ.get("GBT_DOCKER"):
+        return
+    try:
+        from gbt.key_manager import get_key, set_env_key, PROVIDER_REGISTRY
+        for pid, meta in PROVIDER_REGISTRY.items():
+            if not meta.get("free"):
+                key = get_key(pid, prompt=False, allow_save=False)
+                if not key:
+                    key = get_key(pid, prompt=True, allow_save=False)
+                if key:
+                    set_env_key(pid, key)
+    except Exception as e:
+        print(f"[Entry] key prompt skipped: {e}")
+
 def start_web_api():
     """Start Web API service in background"""
     try:
@@ -54,6 +70,7 @@ def start_web_api():
 # Start desktop workstation
 from gbt.desktop_app import GBTWorkstation
 if __name__ == '__main__':
+    ensure_paid_api_keys()
     print("GBT Workstation v4 -- Starting...")
     print("[WebAPI] starting at http://127.0.0.1:8765 ...")
     if os.environ.get("GBT_DOCKER"):
