@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """GBT Packaging Entry - Launches GBT Workstation + Web API"""
 import sys, os, threading
 
@@ -49,4 +49,4 @@ if __name__ == '__main__':
     print("GBT Workstation v4 -- Starting...")
     print("[WebAPI] starting at http://127.0.0.1:8765 ...")
     threading.Thread(target=start_web_api, daemon=True).start()
-    GBTWorkstation().r.mainnloop()
+    GBTWorkstation().r.mainloop()
