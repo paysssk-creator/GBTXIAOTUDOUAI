@@ -217,3 +217,6 @@ class AIDeviceOperator:
 # 全局实例
 ai_operator = AIDeviceOperator(safe_mode=False)
 
+
+def get_ai_operator():
+    return ai_operator
