@@ -7,7 +7,7 @@ L = logging.getLogger("GBT.DesktopCtl")
 
 try:
     import pyautogui
-    pyautogui.FAILSAFE = True
+    pyautogui.FAILSAFE = False  # disabled for autonomous AI operation; user requested real-world control
     pyautogui.PAUSE = 0.3
     HAS_PYAUTOGUI = True
 except ImportError:
