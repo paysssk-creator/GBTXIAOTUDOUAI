@@ -1,0 +1,6 @@
+[submodule "vendor/nanobrowser"]
+	path = vendor/nanobrowser
+	url = https://github.com/paysssk-creator/nanobrowser.git
+[submodule "vendor/cradle"]
+	path = vendor/cradle
+	url = https://github.com/paysssk-creator/Cradle.git

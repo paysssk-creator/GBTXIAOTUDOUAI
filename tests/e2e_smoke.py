@@ -15,6 +15,8 @@ def main():
         ("chat browser", lambda: requests.post(f"{BASE}/api/chat", json={"text":"打开百度"})),
         ("chat stock", lambda: requests.post(f"{BASE}/api/chat", json={"text":"查股票600519"})),
         ("hacker screen_ocr", lambda: requests.post(f"{BASE}/api/hacker/exec", json={"id":"screen_ocr","action":"run"})),
+        ("nanobrowser status", lambda: requests.get(f"{BASE}/api/nanobrowser/status")),
+        ("cradle status", lambda: requests.get(f"{BASE}/api/cradle/status")),
     ]
     for name, fn in tests:
         try:

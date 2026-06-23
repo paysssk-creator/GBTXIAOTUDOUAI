@@ -345,6 +345,33 @@ def keys_import():
         return fail("keys import failed", str(e), 500)
 
 
+@app.route("/api/nanobrowser/start", methods=["POST"])
+def nb_start():
+    from gbt.adapters import nanobrowser
+    return jsonify(ok(nanobrowser.start()))
+
+@app.route("/api/nanobrowser/stop", methods=["POST"])
+def nb_stop():
+    from gbt.adapters import nanobrowser
+    return jsonify(ok(nanobrowser.stop()))
+
+@app.route("/api/nanobrowser/status", methods=["GET"])
+def nb_status():
+    from gbt.adapters import nanobrowser
+    return jsonify(ok(nanobrowser.status()))
+
+@app.route("/api/cradle/run", methods=["POST"])
+def cradle_run():
+    from gbt.adapters import cradle
+    data = request.get_json(force=True, silent=True) or {}
+    return jsonify(ok(cradle.run_task(task=data.get("task", ""), env_config=data.get("env_config", ""))))
+
+@app.route("/api/cradle/status", methods=["GET"])
+def cradle_status():
+    from gbt.adapters import cradle
+    return jsonify(ok(cradle.status()))
+
+
 def run_server(host="127.0.0.1", port=8765, debug=False):
     L.info(f"GBT Web API starting at http://{host}:{port}")
     app.run(host=host, port=port, debug=debug, use_reloader=False)

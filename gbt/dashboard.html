@@ -92,6 +92,26 @@ a{color:var(--accent);text-decoration:none}
   </div>
 
   <div class="card">
+    <h3><span class="icon">🌐</span>Nanobrowser</h3>
+    <div class="row">
+      <button class="btn primary" onclick="nb('start')">启动 Nanobrowser</button>
+      <button class="btn" onclick="nb('stop')">停止</button>
+      <button class="btn" onclick="nb('status')">状态</button>
+    </div>
+    <pre id="nb-log" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🎮</span>Cradle 自主操控</h3>
+    <div class="row">
+      <input id="cradle-task" placeholder="任务描述，如：打开Chrome搜索GBT">
+      <button class="btn primary" onclick="cradleRun()">执行</button>
+      <button class="btn" onclick="api('/api/cradle/status','cradle-log')">状态</button>
+    </div>
+    <pre id="cradle-log" class="log"></pre>
+  </div>
+
+  <div class="card">
     <h3><span class="icon">⚡</span>Capabilities (<span id="cc">0</span>)</h3>
     <div id="caps" class="row" style="max-height:160px;overflow:auto"></div>
     <button class="btn" onclick="loadCaps()" style="margin-top:8px">刷新</button>
@@ -149,6 +169,15 @@ async function loadCaps(){
 }
 function fillCmd(name){
   document.getElementById('cmd').value=name;
+}
+async function nb(action){
+  const d=await api('/api/nanobrowser/'+action,{method:'POST'});
+  log('nb-log',d);
+}
+async function cradleRun(){
+  const t=document.getElementById('cradle-task').value||'打开Chrome搜索GBT';
+  const d=await api('/api/cradle/run',{method:'POST',body:JSON.stringify({task:t})});
+  log('cradle-log',d);
 }
 loadCaps();
 api('/api/health','sys-log');
