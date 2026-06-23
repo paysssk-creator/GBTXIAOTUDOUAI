@@ -48,7 +48,19 @@ class AIDeviceOperator:
 
     def observe(self, region: tuple = None, save_path: str = None, use_llm: bool = False) -> Dict:
         """Observe screen: screenshot + OCR + optional vision LLM."""
-        return self.vision.observe(region=region, save_path=save_path, use_llm=use_llm)
+        img = self.vision.screenshot(region=region, save_path=save_path)
+        if img is None:
+            return {"ok": False, "error": "screenshot failed"}
+        ocr = self.screen.read_text(image=img)
+        result = {"ok": True, "image_size": img.size, "timestamp": time.time(), "ocr": ocr}
+        if use_llm:
+            p = "Detailed screen description in Chinese."
+            llm = self.vision.describe(img, prompt=p)
+            result["llm"] = llm
+            result["description"] = llm.get("description", "") if llm.get("ok") else ocr.get("text", "")
+        else:
+            result["description"] = ocr.get("text", "")
+        return result
 
     def find_text(self, text: str, region: tuple = None) -> List[Dict]:
         return self.screen.find_text_on_screen(text, region=region)
@@ -99,6 +111,14 @@ class AIDeviceOperator:
                 return self.screen.read_text(region=p.get("region"))
             elif t == "voice_speak":
                 return self.voice.speak(p.get("text", ""))
+            elif t == "launch_app":
+                # Launch via Windows Run dialog: Win+R, type app name, press Enter
+                desk.hotkey("win", "r")
+                time.sleep(0.5)
+                desk.type_text(p.get("app_name", ""), interval=0.01)
+                time.sleep(0.3)
+                desk.press_key("enter")
+                return {"ok": True, "action": "launch_app", "app": p.get("app_name", "")}
             elif t == "wait":
                 time.sleep(p.get("seconds", 1.0))
                 return {"ok": True, "action": "wait"}

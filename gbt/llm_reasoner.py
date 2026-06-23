@@ -1,6 +1,6 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """gbt/llm_reasoner.py - lightweight LLM action reasoner for TaskEngine.
-Uses available LLM keys or returns a fallback action if none configured.
+Uses KeyDB keys first, then env vars, then fallback rules.
 """
 import os, json, logging
 from typing import Dict
@@ -15,22 +15,49 @@ Return a single JSON object with keys: action_type, params, reasoning.
 If the task is finished, set action_type to "done" and params to {{"message": "..."}}.
 """
 
+# Provider configs (OpenAI-compatible endpoints)
+PROVIDERS = [
+    {"pid": "deepseek", "env": "DEEPSEEK_API_KEY", "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat"},
+    {"pid": "openclaw", "env": "OPENCLAW_API_KEY", "base_url": "https://openclaw.ai/v1", "model": "gpt-4o-mini"},
+]
+
+
 class LLMActionReasoner:
     def __init__(self):
         self.client = None
+        self.model = None
         self._llm_failed = False
         self._init_client()
 
     def _init_client(self):
-        key = os.environ.get("OPENAI_API_KEY") or os.environ.get("GLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
-        if not key:
-            return
+        # 1) Try KeyDB first
+        try:
+            from gbt.keydb import KeyDB
+            db = KeyDB()
+            for prov in PROVIDERS:
+                key = db.get(prov["pid"])
+                if key:
+                    self._setup_client(key, prov["base_url"], prov["model"])
+                    L.info("LLM client initialized from KeyDB: %s", prov["pid"])
+                    return
+        except Exception as e:
+            L.debug("KeyDB load failed: %s", e)
+
+        # 2) Fallback to environment variables
+        for prov in PROVIDERS:
+            key = os.environ.get(prov["env"])
+            if key:
+                self._setup_client(key, prov["base_url"], prov["model"])
+                L.info("LLM client initialized from env: %s", prov["pid"])
+                return
+
+    def _setup_client(self, key: str, base_url: str, model: str):
         try:
             import openai
-            base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-            self.client = openai.OpenAI(api_key=key, base_url=base)
+            self.client = openai.OpenAI(api_key=key, base_url=base_url)
+            self.model = model
         except Exception as e:
-            L.warning("LLM client init failed: %s", e)
+            L.warning("LLM client setup failed: %s", e)
 
     def reason(self, task: str, observation: str, history: list) -> Dict:
         if self.client is None or self._llm_failed:
@@ -40,7 +67,7 @@ class LLMActionReasoner:
         )
         try:
             resp = self.client.chat.completions.create(
-                model=os.environ.get("GBT_LLM_MODEL", "gpt-4o-mini"),
+                model=self.model or os.environ.get("GBT_LLM_MODEL", "gpt-4o-mini"),
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
             )

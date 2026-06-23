@@ -23,7 +23,7 @@ class TaskEngine:
         history: List[Dict] = []
         for step in range(self.max_steps):
             obs = self.operator.observe(use_llm=False)
-            obs_summary = obs.get("text", "")[:500]
+            obs_summary = (obs.get("description", "") or obs.get("ocr", {}).get("text", ""))[:500]
             action = self.reasoner.reason(task, obs_summary, history)
             if action.get("action_type") == "done" or action.get("done"):
                 history.append({"step": step, "observation": obs_summary, "action": "done", "result": action})
