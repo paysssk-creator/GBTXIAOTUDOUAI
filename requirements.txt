@@ -29,3 +29,5 @@ opencv-python==4.8.1.78
 mss==9.0.1
 dill==0.3.8
 dataclass-wizard==0.22.3
+winrt-Windows.Globalization
+winrt-Windows.Media.Ocr
