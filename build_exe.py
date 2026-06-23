@@ -1,25 +1,38 @@
 """
-build_exe.py — 打包 GBT AI Workstation 为 Windows 桌面 EXE
-输出: dist/GBTWorkstation.exe
+build_exe.py - Package GBT AI Workstation as Windows desktop EXE
+Output: dist/GBTWorkstation.exe
+Run: python build_exe.py
 """
 import os, sys, subprocess
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 NAME = "GBTWorkstation"
 ENTRY = os.path.join(ROOT, "entry.py")
-ICON = os.path.join(ROOT, "gbt", "icon.ico")  # 如果有图标文件
+ICON = os.path.join(ROOT, "gbt", "icon.ico")
+
+# Force Python 3.12 which has PyInstaller installed
+PYTHON = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
+if not os.path.exists(PYTHON):
+    PYTHON = sys.executable
 
 cmd = [
-    sys.executable, "-m", "PyInstaller",
+    PYTHON, "-m", "PyInstaller",
     "--name", NAME,
     "--onefile",
-    "--windowed",
+    "--console",
     "--clean",
     "--noconfirm",
+    "--noupx",
     "--hidden-import", "gbt.web_api",
     "--hidden-import", "gbt.capabilities",
     "--hidden-import", "gbt.skills",
     "--hidden-import", "gbt.adapters",
+    "--collect-submodules", "gbt.skills",
+    "--exclude-module", "torch",
+    "--exclude-module", "torchvision",
+    "--exclude-module", "torchaudio",
+    "--exclude-module", "tensorflow",
+    "--exclude-module", "jax",
     "--add-data", os.path.join(ROOT, "gbt", "dashboard.html") + ";gbt",
     "--add-data", os.path.join(ROOT, "README.md") + ";.",
     "--add-data", os.path.join(ROOT, ".env.example") + ";.",
@@ -27,11 +40,10 @@ cmd = [
     "--add-data", os.path.join(ROOT, "vendor", "cradle") + ";vendor\\cradle",
     ENTRY,
 ]
-
 if os.path.exists(ICON):
     cmd.extend(["--icon", ICON])
 
-print("Building EXE with command:")
+print("Building EXE...")
 print(" ".join(cmd))
 subprocess.check_call(cmd)
 print(f"\nBuild complete: {os.path.join(ROOT, 'dist', NAME+'.exe')}")
