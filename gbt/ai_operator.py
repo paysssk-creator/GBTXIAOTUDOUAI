@@ -33,33 +33,22 @@ class AIDeviceOperator:
     def _init_modules(self):
         from gbt.desktop_ctl import DesktopController
         from gbt.screen_ai import ScreenOCR, Voice
+        from gbt.vision import VisionService
         from gbt.autopilot import Autopilot
         from gbt.gcc.ai_trader import AITrader
 
         self.desktop = DesktopController()
         self.screen = ScreenOCR()
+        self.vision = VisionService()
         self.voice = Voice()
         self.autopilot = Autopilot(llm_provider=self.llm)
         self.ai_trader = AITrader(llm=self.llm, desk=self.desktop)
         L.info("AIDeviceOperator ready")
 
 
-    def observe(self, region: tuple = None, save_path: str = None) -> Dict:
-        """观察屏幕：截图 + OCR"""
-        img = self.screen.capture(region=region, save_path=save_path)
-        if img is None:
-            return {"ok": False, "error": "截图失败"}
-        ocr_result = self.screen.read_text(image=img)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG", optimize=True)
-        b64 = base64.b64encode(buf.getvalue()).decode()
-        return {
-            "ok": True,
-            "image_size": img.size,
-            "base64": b64,
-            "ocr": ocr_result,
-            "timestamp": time.time()
-        }
+    def observe(self, region: tuple = None, save_path: str = None, use_llm: bool = False) -> Dict:
+        """Observe screen: screenshot + OCR + optional vision LLM."""
+        return self.vision.observe(region=region, save_path=save_path, use_llm=use_llm)
 
     def find_text(self, text: str, region: tuple = None) -> List[Dict]:
         return self.screen.find_text_on_screen(text, region=region)
