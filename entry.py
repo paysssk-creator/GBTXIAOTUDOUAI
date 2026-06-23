@@ -17,6 +17,13 @@ os.makedirs(root_dir, exist_ok=True)
 
 sys.path.insert(0, root_dir)
 
+# Load .env so providers can read API keys without manual export
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(root_dir, ".env"), override=False)
+except Exception as e:
+    print(f"[Entry] .env load skipped: {e}")
+
 # All top-level imports for PyInstaller dependency tracking
 import gbt
 import gbt.llm, gbt.providers, gbt.router, gbt.reasoner

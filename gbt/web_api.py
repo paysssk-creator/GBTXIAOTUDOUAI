@@ -8,6 +8,13 @@ from typing import Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load .env so API keys are available to providers
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"), override=False)
+except Exception as e:
+    logging.warning(f"[WebAPI] .env load skipped: {e}")
+
 # 纭繚鑳藉姏娉ㄥ唽鍒拌矾鐢卞櫒
 import gbt.capabilities  # noqa: F401
 
