@@ -1,0 +1,49 @@
+# GBT CI/CD — 全家桶自动构建 + 发布
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build EXE (全家桶)
+        run: pyinstaller --clean --noconfirm gbt.spec
+
+      - name: Install Inno Setup
+        uses: Minionguyjpro/Inno-Setup-Action@v1
+        with:
+          path: installer\gbt.iss
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GBT-Windows-EXE
+          path: dist/GBT.exe
+
+      - name: Upload Installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GBT-Windows-Installer
+          path: dist/installer/GBT-Setup-*.exe
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/GBT.exe
+            dist/installer/GBT-Setup-*.exe
+          generate_release_notes: true

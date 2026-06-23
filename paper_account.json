@@ -1,0 +1,11 @@
+{
+  "cash": 100000.0,
+  "equity": 100000.0,
+  "pnl": 0.0,
+  "pnl_pct": 0.0,
+  "positions": {},
+  "orders": [],
+  "trade_history": [],
+  "created": "2026-06-23T01:04:07.872641",
+  "last_prices": {}
+}

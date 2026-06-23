@@ -1,0 +1,42 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Build artifacts
+build/
+dist/
+*.spec.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+build_*.log
+build_log.txt
+build_done.txt
+
+# Local data
+.env
+.gbt_keys.db
+data/gbt.db
+screenshots/*.png
+
+# Generated
+version_info.txt
+check_env.py
+
+# Large binaries
+*.exe
+*.msi
+*.dll
+*.pyd
