@@ -1,6 +1,6 @@
 """
-build_exe.py - Package GBT AI Workstation as Windows desktop EXE
-Output: dist/GBTWorkstation.exe
+build_exe.py - Package GBT AI Workstation as Windows desktop EXE (onedir slim build)
+Output: dist/GBTWorkstation/GBTWorkstation.exe
 Run: python build_exe.py
 """
 import os, sys, subprocess
@@ -10,15 +10,24 @@ NAME = "GBTWorkstation"
 ENTRY = os.path.join(ROOT, "entry.py")
 ICON = os.path.join(ROOT, "gbt", "icon.ico")
 
-# Force Python 3.12 which has PyInstaller installed
 PYTHON = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 if not os.path.exists(PYTHON):
     PYTHON = sys.executable
 
+EXCLUDES = [
+    "torch", "torchvision", "torchaudio",
+    "tensorflow", "jax", "jaxlib",
+    "sklearn", "skimage", "easyocr",
+    "numba", "matplotlib", "pyarrow",
+    "botocore", "boto3", "sqlalchemy",
+    "pytest", "lxml", "openpyxl",
+    "PIL._tkinter_finder",
+]
+
 cmd = [
     PYTHON, "-m", "PyInstaller",
     "--name", NAME,
-    "--onefile",
+    "--onedir",
     "--console",
     "--clean",
     "--noconfirm",
@@ -28,11 +37,11 @@ cmd = [
     "--hidden-import", "gbt.skills",
     "--hidden-import", "gbt.adapters",
     "--collect-submodules", "gbt.skills",
-    "--exclude-module", "torch",
-    "--exclude-module", "torchvision",
-    "--exclude-module", "torchaudio",
-    "--exclude-module", "tensorflow",
-    "--exclude-module", "jax",
+]
+for mod in EXCLUDES:
+    cmd.extend(["--exclude-module", mod])
+
+cmd += [
     "--add-data", os.path.join(ROOT, "gbt", "dashboard.html") + ";gbt",
     "--add-data", os.path.join(ROOT, "README.md") + ";.",
     "--add-data", os.path.join(ROOT, ".env.example") + ";.",
@@ -43,7 +52,7 @@ cmd = [
 if os.path.exists(ICON):
     cmd.extend(["--icon", ICON])
 
-print("Building EXE...")
+print("Building EXE (onedir slim)...")
 print(" ".join(cmd))
 subprocess.check_call(cmd)
-print(f"\nBuild complete: {os.path.join(ROOT, 'dist', NAME+'.exe')}")
+print(f"\nBuild complete: {os.path.join(ROOT, 'dist', NAME, NAME+'.exe')}")
