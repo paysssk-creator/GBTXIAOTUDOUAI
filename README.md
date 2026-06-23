@@ -1,125 +1,154 @@
-# 🛠️ GBT Pro — AI驱动A股自主交易终端
+﻿# 🧠 GBT AI Workstation v4 — 全能型 AI 智能体桌面应用
 
-[![Version](https://img.shields.io/badge/version-v2.1-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
+[![Version](https://img.shields.io/badge/version-v4.0.4-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
 [![Python](https://img.shields.io/badge/python-3.12-green)](https://python.org)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
-[![Developer](https://img.shields.io/badge/开发者-自由的风-orange)](https://github.com/paysssk-creator)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Docker-blue)](https://github.com/paysssk-creator/GBTXIAOTUDOUAI)
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
-> 桌面AI自主交易终端 — 实时A股行情 + 事件驱动AI大脑 + 4策略引擎 + 7×24守夜人安全监控
+> 以 **Nanobrowser** 为浏览器框架、**Cradle** 为电脑自主操控核心，融合 GBT 原有全部能力，打造的端对端全能 AI 智能体工作站。
 
 ## 🏗️ 架构
 
 ```
-agent-framework/
-├── gbt/                    核心引擎 (14模块, ~3500行)
-│   ├── providers.py        13大模型配置 + 自主密钥发现
-│   ├── llm.py              LLM统一抽象层 (OpenAI兼容)
-│   ├── message.py          消息/历史/配置
-│   ├── tool.py             工具注册表
-│   ├── agent.py            SimpleAgent基类
-│   ├── react.py            ReAct推理循环
-│   ├── memory.py           记忆系统 (工作/情景/持久)
-│   ├── evolve.py           6步自进化闭环引擎
-│   ├── guard.py            行动前强制全扫描守卫
-│   ├── mirror.py           镜像空间 (沙盒→验证→部署)
-│   ├── mcp.py              万能MCP客户端 (18 Server)
-│   ├── reasoner.py         深度推理引擎 (8模式)
-│   ├── winctl.py           Windows原生操控 (16类)
-│   └── ocr.py              图片转文字 (3引擎)
-├── agents/gbt_agent.py     GBT全能开发者Agent
-├── tools/mcp_tools.py      万能MCP工具注册
-├── desktop/app.py          桌面APP (GUI + Web双模式)
-└── main.py                 CLI入口
+GBTXIAOTUDOUAI/
+├── gbt/                    核心引擎 (40+ 模块)
+│   ├── web_api.py          Web API / 现代仪表盘
+│   ├── skills/             模块化能力目录 (借鉴 open-strix)
+│   ├── dashboard.html      新版 Web 控制面板
+│   ├── ai_operator.py      AI 设备操控总入口
+│   ├── desktop_ctl.py      Windows 原生操控
+│   ├── vision.py           AI 视觉 (截图 + OCR + 多模态)
+│   ├── screen_ai.py        屏幕文字识别
+│   ├── router.py           自然语言能力路由
+│   ├── capabilities.py     19 项能力注册表
+│   ├── providers.py        13 大模型配置
+│   ├── trader.py           A 股交易引擎
+│   ├── brain.py            自主 AI 大脑
+│   ├── watcher.py          7×24 守夜人安全监控
+│   ├── guard.py            行动前强制扫描
+│   ├── mirror.py           镜像空间沙盒
+│   ├── evolve.py           6 步自进化闭环
+│   ├── mcp.py              万能 MCP 客户端
+│   └── ...
+├── agents/                 Agent 封装
+├── tools/                  工具链
+├── desktop/app.py          桌面启动器（旧 GUI + Web 双模式）
+├── entry.py                v4 统一入口（自动打开 Web 面板）
+├── Dockerfile              生产级多阶段 Docker 打包
+├── docker-compose.yml      一键云端/本地部署
+└── README.md               本文件
 ```
 
 ## 🚀 快速开始
 
+### 1. 本地开发
+
 ```bash
+# 克隆
+git clone https://github.com/paysssk-creator/GBTXIAOTUDOUAI.git
+cd GBTXIAOTUDOUAI
+
 # 安装
 pip install -e .
 
 # 配置密钥
 cp .env.example .env
-# 编辑.env填入任意模型API密钥
+# 编辑 .env 填入任意模型 API 密钥
 
-# CLI模式
-python main.py
+# 启动 Web 工作台（自动打开浏览器面板）
+python entry.py
+```
 
-# 桌面APP (GUI)
-python desktop/app.py
+### 2. Docker 部署
 
-# Web API模式
-python desktop/app.py --web
+```bash
+cp .env.example .env
+# 编辑 .env
+docker compose up -d
 # → http://localhost:8765
 ```
 
-## 🧠 13大模型
+### 3. 打包桌面 EXE
 
-| 模型 | provider | 特点 |
-|------|----------|------|
-| 智谱 GLM-5.1 | zhipu | 国产最强 |
-| OpenAI GPT-4o | openai | 全能 |
-| DeepSeek V3 | deepseek | 推理强 |
-| Claude 3.5 | anthropic | 安全 |
-| Ollama本地 | ollama | 隐私 |
-| 文心一言 | baidu | 中文 |
-| 通义千问 | qwen | 阿里 |
-| 月之暗面 | moonshot | 长文本 |
-| 零一万物 | lingyi | 多模态 |
-| 百川 | baichuan | 中文 |
-| 讯飞星火 | xinghuo | 语音 |
-| MiniMax | minimax | 对话 |
-| 硅基流动 | siliconflow | 流式 |
-
-## 🔧 核心能力
-
-```python
-from agents.gbt_agent import GBTAgent
-
-agent = GBTAgent(provider="auto")
-
-# 对话
-agent.chat("分析这个项目")
-
-# 深度推理 (8模式)
-agent.deep_reason("如何优化？", mode="decision")
-
-# 6步自进化闭环
-agent.evolve("性能优化")
-
-# 行动前守卫
-agent.guard_scan()
-
-# 镜像空间部署
-agent.mirror_deploy()
-
-# 万能MCP
-agent.call_mcp("scanner")
-
-# Windows操控
-agent.winctl("screen", "capture")
-agent.winctl("voice", "listen")
-
-# OCR图片转文字
-agent.winctl("ocr", "screen")
+```bash
+pip install pyinstaller
+python build_exe.py
+# 输出 dist/GBTWorkstation.exe
 ```
 
-## 🛡️ 6步自进化闭环
+## 🌐 Web 控制面板
 
-1. **Step1 自查** → 行动前守卫全项目扫描 (零跳过)
-2. **Step2 发现** → scanner.js安全扫描
-3. **Step3 备份** → git自动备份
-4. **Step4 修复** → auto-fix修复
-5. **Step5 审查** → audit.js审查 (FAIL自动回滚)
-6. **Step6 进化** → memory记录 + git提交
+启动后访问 http://127.0.0.1:8765，新面板包含：
 
-## 📦 依赖
+- **Command Center** — 自然语言输入，调用任意能力
+- **AI Vision** — 一键截图 + OCR / 截图 + GLM-4V 多模态理解
+- **Capabilities** — 19 项能力实时展示
+- **System** — 服务状态、版本、一键重载
 
-- Python >= 3.10
-- Ollama (可选, 本地模型)
-- Tesseract (可选, OCR增强)
-- Node.js (MCP Server)
-- Git (版本控制)
+## 🧩 19 项核心能力
+
+| 能力 | 说明 |
+|------|------|
+| 文件系统 | 读/写/搜索/压缩 |
+| 浏览器控制 | 导航、点击、输入、提取 |
+| 代码执行 | Python / Shell 沙盒执行 |
+| 数据库 | SQLite / JSON 查询 |
+| HTTP API | 任意 REST 调用 |
+| 进程管理 | 启动、监控、结束 |
+| Windows 操控 | 鼠标、键盘、窗口、热键 |
+| AI 视觉 | 截图、OCR、多模态理解 |
+| 语音交互 | TTS / 语音识别 |
+| A 股交易 | 行情、分析、下单流程 |
+| 数据分析 | Pandas / 图表 |
+| 黑客工具集 | 扫描、枚举、信息收集 |
+| MCP 客户端 | 18+ Server 即插即用 |
+| 自进化 | 6 步闭环持续改进 |
+| 镜像空间 | 沙盒 → 验证 → 部署 |
+| 守夜人 | 7×24 安全监控 |
+| 守卫 | 行动前全扫描 |
+| 记忆系统 | 工作 / 情景 / 持久记忆 |
+| 深度推理 | 8 模式推理引擎 |
+
+## 📡 API 速查
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/` | GET | Web 控制面板 |
+| `/api/health` | GET | 健康检查 |
+| `/api/capabilities` | GET | 能力列表 |
+| `/api/chat` | POST | 自然语言执行 |
+| `/api/desk/observe` | POST | 截图+OCR |
+| `/api/desk/act` | POST | 执行设备动作 |
+| `/api/desk/run_task` | POST | 自主任务流 |
+| `/api/hacker/exec` | POST | 黑客工具调用 |
+| `/api/trade/analyze` | POST | 股票分析 |
+| `/api/trade/execute` | POST | 股票执行 |
+
+## 🧪 测试
+
+```bash
+# 端对端测试
+python tests/e2e_smoke.py
+
+# 压力测试
+python tests/stress_test.py
+```
+
+## 📦 发布
+
+```bash
+# 构建 Docker 镜像
+docker build -t ghcr.io/paysssk-creator/gbt-ai-workstation:v4.0.4 .
+
+# 推送到 GitHub Container Registry
+docker push ghcr.io/paysssk-creator/gbt-ai-workstation:v4.0.4
+```
+
+## 🙏 致谢
+
+- [nanobrowser](https://github.com/paysssk-creator/nanobrowser) — 浏览器框架
+- [Cradle](https://github.com/paysssk-creator/Cradle) — 电脑自主操控核心
+- [openhuman](https://github.com/paysssk-creator/openhuman) — 打包与发布参考
 
 ## 📄 License
 

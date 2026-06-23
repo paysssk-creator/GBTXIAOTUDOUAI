@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GBT AI Workstation v4 — 全能智能体面板</title>
+<style>
+:root{--bg:#05080c;--panel:#0d1117;--border:#1c2433;--accent:#58a6ff;--ok:#39d353;--warn:#d29922;--danger:#da3633;--text:#e6edf3;--muted:#8b949e;}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:10;padding:14px 24px;background:rgba(13,17,23,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+header h1{margin:0;font-size:18px;color:var(--accent)}header h1 span{font-weight:400;color:var(--muted);font-size:13px}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ok)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.container{padding:24px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card h3{margin:0 0 14px;font-size:15px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.card h3 .icon{font-size:16px}
+.row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+input,select{flex:1;min-width:120px;background:#161b22;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{background:#21262d;border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:.15s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn.ok{background:#238636;border-color:#238636;color:#fff}
+.btn.warn{background:var(--warn);color:#000;border-color:var(--warn)}
+.log{background:#000;border-radius:8px;padding:12px;height:160px;overflow:auto;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,Liberation Mono,monospace;font-size:12px;color:var(--muted);white-space:pre-wrap;border:1px solid var(--border)}
+.cap{display:inline-block;background:#161b22;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:20px;font-size:12px;margin:4px 4px 0 0;cursor:pointer}
+.cap:hover{border-color:var(--accent);color:var(--accent)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.footer{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 GBT AI Workstation <span>v4.0.4 · Nanobrowser + Cradle · 19 capabilities</span></h1>
+  <div class="status"><span class="dot"></span>Online</div>
+</header>
+
+<div class="container">
+  <div class="card" style="grid-column:1/-1">
+    <h3><span class="icon">💬</span>Command Center</h3>
+    <div class="row">
+      <input id="cmd" placeholder="输入自然语言指令，例如：截图、打开百度、查股票600519、开始操盘..." onkeydown="if(event.key==='Enter')send()">
+      <button class="btn primary" onclick="send()">执行</button>
+      <button class="btn" onclick="document.getElementById('cmd').value=''">清空</button>
+    </div>
+    <pre id="resp" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">👁️</span>AI Vision</h3>
+    <div class="row">
+      <button class="btn ok" onclick="callSkill('screen_ocr')">截图 + OCR</button>
+      <button class="btn ok" onclick="callSkill('screen_ocr')">截图 + AI 理解</button>
+      <button class="btn" onclick="callSkill('screenshot')">仅截图</button>
+    </div>
+    <pre id="vision-log" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🖥️</span>桌面操控</h3>
+    <div class="row">
+      <button class="btn" onclick="callSkill('browser_open','打开百度')">打开百度</button>
+      <button class="btn" onclick="callSkill('maximize')">最大化窗口</button>
+      <button class="btn" onclick="callSkill('notify','GBT 通知测试')">测试通知</button>
+      <button class="btn" onclick="callSkill('voice_speak','GBT 已就绪')">语音朗读</button>
+    </div>
+    <pre id="desk-log" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">📈</span>交易与操盘</h3>
+    <div class="row">
+      <input id="stock-code" placeholder="股票代码 如 600519" value="600519">
+      <button class="btn ok" onclick="stock()">查行情</button>
+      <button class="btn warn" onclick="callSkill('auto_pipeline')">自动操盘</button>
+    </div>
+    <pre id="trade-log" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🛠️</span>黑客工具集</h3>
+    <div class="row">
+      <input id="hack-query" placeholder="搜索/抓取关键词">
+      <button class="btn" onclick="hacker('web_search')">搜索</button>
+      <button class="btn" onclick="hacker('precision_scrape')">精准抓取</button>
+      <button class="btn" onclick="callSkill('code_exec')">代码沙盒</button>
+    </div>
+    <pre id="hack-log" class="log"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">⚡</span>Capabilities (<span id="cc">0</span>)</h3>
+    <div id="caps" class="row" style="max-height:160px;overflow:auto"></div>
+    <button class="btn" onclick="loadCaps()" style="margin-top:8px">刷新</button>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🏥</span>System</h3>
+    <div class="row">
+      <button class="btn" onclick="api('/api/health','sys-log')">Health</button>
+      <button class="btn" onclick="callSkill('system_status')">系统状态</button>
+      <button class="btn" onclick="callSkill('watcher_check')">守夜人</button>
+      <button class="btn" onclick="callSkill('account_query')">账户</button>
+    </div>
+    <pre id="sys-log" class="log"></pre>
+  </div>
+</div>
+
+<div class="footer">
+  GBT AI Workstation v4.0.4 · <a href="https://github.com/paysssk-creator/GBTXIAOTUDOUAI" target="_blank">GitHub</a> · WebAPI: http://127.0.0.1:8765
+</div>
+
+<script>
+const base='';
+function log(id,o){document.getElementById(id).textContent=JSON.stringify(o,null,2)}
+async function api(path,opts={}){
+  const r=await fetch(base+path,{headers:{'Content-Type':'application/json'},...opts});
+  return r.json();
+}
+async function send(){
+  const t=document.getElementById('cmd').value;
+  if(!t)return;
+  const d=await api('/api/chat',{method:'POST',body:JSON.stringify({text:t})});
+  log('resp',d);
+}
+async function callSkill(name,text=''){
+  const target=name==='system_status'?'sys-log':name==='watcher_check'?'sys-log':name==='account_query'?'sys-log':name==='screen_ocr'?'vision-log':name==='screenshot'?'vision-log':'desk-log';
+  const d=await api('/api/hacker/exec',{method:'POST',body:JSON.stringify({id:name,action:'run',text:text||document.getElementById('cmd').value})});
+  log(target,d);
+}
+async function stock(){
+  const code=document.getElementById('stock-code').value;
+  const d=await api('/api/chat',{method:'POST',body:JSON.stringify({text:'查股票'+code})});
+  log('trade-log',d);
+}
+async function hacker(name){
+  const q=document.getElementById('hack-query').value;
+  const d=await api('/api/hacker/exec',{method:'POST',body:JSON.stringify({id:name,action:'run',text:q})});
+  log('hack-log',d);
+}
+async function loadCaps(){
+  const d=await api('/api/capabilities');
+  const list=d.data||[];
+  document.getElementById('cc').textContent=list.length;
+  document.getElementById('caps').innerHTML=list.map(c=>'<span class="cap" onclick="fillCmd(\''+c.name+'\')">'+c.name+'</span>').join('');
+}
+function fillCmd(name){
+  document.getElementById('cmd').value=name;
+}
+loadCaps();
+api('/api/health','sys-log');
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# GBT AI Workstation — Docker Compose for self-hosted cloud deploy.
+#
+# Brings up the headless GBT Web API on :8765, persists workspace to a named
+# volume, and reads secrets/config from a `.env` file next to this compose file.
+#
+# Usage:
+#   1. cp .env.example .env  (then edit values — at minimum LLM API keys)
+#   2. docker compose up -d
+#   3. curl http://localhost:8765/api/health
+#
+# The image is built from the repo Dockerfile. To pin a published image
+# instead of building, replace `build:` with `image: ghcr.io/.../gbt-ai-workstation:<tag>`.
+
+services:
+  gbt-ai-workstation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gbt-ai-workstation:local
+    container_name: gbt-ai-workstation
+    restart: unless-stopped
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "${GBT_PORT:-8765}:8765"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Bind to 0.0.0.0 inside the container so port-forwarding works.
+      GBT_HOST: "0.0.0.0"
+      GBT_PORT: "8765"
+    volumes:
+      - gbt-workspace:/app/workspace
+
+volumes:
+  gbt-workspace:

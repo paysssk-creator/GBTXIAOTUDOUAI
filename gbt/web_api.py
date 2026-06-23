@@ -1,6 +1,6 @@
-"""
-web_api.py — GBT 全能能力 Web API 服务 v1.0
-监听 127.0.0.1:8765，把所有能力暴露给 nanobrowser 前端。
+﻿"""
+web_api.py 鈥?GBT 鍏ㄨ兘鑳藉姏 Web API 鏈嶅姟 v1.0
+鐩戝惉 127.0.0.1:8765锛屾妸鎵€鏈夎兘鍔涙毚闇茬粰 nanobrowser 鍓嶇銆?
 """
 import os, sys, json, logging
 from datetime import datetime
@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# 确保能力注册到路由器
+# 纭繚鑳藉姏娉ㄥ唽鍒拌矾鐢卞櫒
 import gbt.capabilities  # noqa: F401
 
 from flask import Flask, request, jsonify, make_response
@@ -16,7 +16,7 @@ from flask import Flask, request, jsonify, make_response
 L = logging.getLogger("GBT.WebAPI")
 app = Flask(__name__)
 
-# 手动 CORS，避免依赖 flask_cors
+# 鎵嬪姩 CORS锛岄伩鍏嶄緷璧?flask_cors
 @app.after_request
 def after_request(resp):
     resp.headers.add("Access-Control-Allow-Origin", "*")
@@ -30,7 +30,7 @@ def ok(data=None, message=""):
 def fail(message, error="", code=400):
     return jsonify({"ok": False, "message": message, "error": error, "time": datetime.now().isoformat()}), code
 
-# 延迟加载的全局对象
+# 寤惰繜鍔犺浇鐨勫叏灞€瀵硅薄
 _ai_operator = None
 _trader = None
 _router_inited = False
@@ -50,7 +50,7 @@ def get_trader():
     return _trader
 
 def init_router_deps():
-    """把 trader/brain/watcher/account 等依赖注入路由器"""
+    """鎶?trader/brain/watcher/account 绛変緷璧栨敞鍏ヨ矾鐢卞櫒"""
     global _router_inited
     if _router_inited:
         return
@@ -62,27 +62,39 @@ def init_router_deps():
         from gbt.account import Account
         router.set_dependency("account", Account())
     except Exception as e:
-        L.debug(f"Account 注入跳过: {e}")
+        L.debug(f"Account 娉ㄥ叆璺宠繃: {e}")
     try:
         from gbt.brain import AutonomousBrain
         router.set_dependency("brain", AutonomousBrain(trader=trader))
     except Exception as e:
-        L.debug(f"Brain 注入跳过: {e}")
+        L.debug(f"Brain 娉ㄥ叆璺宠繃: {e}")
     try:
         from gbt.watcher import NightWatcher
         router.set_dependency("watcher", NightWatcher())
     except Exception as e:
-        L.debug(f"Watcher 注入跳过: {e}")
+        L.debug(f"Watcher 娉ㄥ叆璺宠繃: {e}")
     _router_inited = True
 
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify(ok({"status": "running", "version": "1.5.1"}))
+    return jsonify(ok({"status": "running", "version": "v4.0.4"}))
 
+
+
+@app.route('/')
+def dashboard_html():
+    try:
+        p = os.path.join(os.path.dirname(__file__), 'dashboard.html')
+        if os.path.exists(p):
+            return open(p, 'r', encoding='utf-8').read()
+        return '<h1>GBT AI Workstation v4</h1><p>Open http://127.0.0.1:8765/api/health</p>'
+    except Exception as e:
+        return f'<h1>Error</h1><p>{e}</p>'
 
 @app.route("/api/dashboard", methods=["GET"])
-def dashboard():
+def dashboard_api():
+
     try:
         llm_status = {}
         try:
@@ -143,7 +155,7 @@ def chat():
     data = request.get_json(force=True, silent=True) or {}
     text = data.get("text", data.get("message", ""))
     if not text:
-        return fail("缺少 text/message")
+        return fail("缂哄皯 text/message")
     try:
         init_router_deps()
         from gbt.router import router
@@ -154,7 +166,7 @@ def chat():
 
 
 def _serialize_route_result(result: Dict) -> Dict:
-    """把 router.route 的结果转为可 JSON 序列化的字典"""
+    """鎶?router.route 鐨勭粨鏋滆浆涓哄彲 JSON 搴忓垪鍖栫殑瀛楀吀"""
     import copy
     out = copy.deepcopy(result)
     cls = out.get("classification")
@@ -184,7 +196,7 @@ def desk_act():
     action_type = data.get("action_type", data.get("action", ""))
     params = data.get("params", {})
     if not action_type:
-        return fail("缺少 action_type")
+        return fail("缂哄皯 action_type")
     try:
         from gbt.ai_operator import DeviceAction
         op = get_ai_operator()
@@ -201,7 +213,7 @@ def desk_run_task():
     task = data.get("task", "")
     max_steps = int(data.get("max_steps", 10))
     if not task:
-        return fail("缺少 task")
+        return fail("缂哄皯 task")
     try:
         op = get_ai_operator()
         result = op.run_task(task, max_steps=max_steps)
@@ -219,7 +231,7 @@ def trade_analyze():
         from gbt.ai_operator import get_ai_operator
         op = get_ai_operator()
         b64 = op.ai_trader.capture()
-        analysis = op.ai_trader.analyze_screen(b64, focus=code) if b64 else {"error": "无法截图"}
+        analysis = op.ai_trader.analyze_screen(b64, focus=code) if b64 else {"error": "鏃犳硶鎴浘"}
         return jsonify(ok(analysis))
     except Exception as e:
         return fail("trade analyze failed", str(e), 500)
@@ -245,7 +257,15 @@ def hacker_exec():
     cmd = data.get("command", data.get("id", ""))
     action = data.get("action", "run")
     try:
-        if action == "search" or "搜索" in cmd:
+        if cmd == "screen_ocr":
+            op = get_ai_operator()
+            result = op.observe(use_llm=False)
+            return jsonify(ok(result))
+        if cmd == "screen_ai":
+            op = get_ai_operator()
+            result = op.observe(use_llm=True)
+            return jsonify(ok(result))
+        if action == "search" or "鎼滅储" in cmd:
             from gbt.scraper import precision_lookup
             result = precision_lookup(cmd)
         elif action == "run" and cmd.strip().startswith(("python", "py")):
@@ -273,7 +293,7 @@ def mcp_call():
 @app.route("/api/evolve", methods=["POST"])
 def evolve():
     data = request.get_json(force=True, silent=True) or {}
-    goal = data.get("goal", "优化项目")
+    goal = data.get("goal", "浼樺寲椤圭洰")
     try:
         from gbt.evolve import run_evolve
         result = run_evolve(goal)
@@ -320,7 +340,7 @@ def keys_import():
     try:
         from gbt.keydb import auto_import
         auto_import()
-        return jsonify(ok({}, "API keys 导入完成"))
+        return jsonify(ok({}, "API keys 瀵煎叆瀹屾垚"))
     except Exception as e:
         return fail("keys import failed", str(e), 500)
 

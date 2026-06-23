@@ -1,6 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 """GBT Packaging Entry - Launches GBT Workstation + Web API"""
-import sys, os, threading
+import sys, os, threading, webbrowser
 
 # Force UTF-8 to avoid Chinese mojibake in Windows EXE
 os.environ.setdefault("PYTHONUTF8", "1")
@@ -49,4 +49,6 @@ if __name__ == '__main__':
     print("GBT Workstation v4 -- Starting...")
     print("[WebAPI] starting at http://127.0.0.1:8765 ...")
     threading.Thread(target=start_web_api, daemon=True).start()
+
+    threading.Thread(target=lambda: webbrowser.open('http://127.0.0.1:8765/'), daemon=True).start()
     GBTWorkstation().r.mainloop()
