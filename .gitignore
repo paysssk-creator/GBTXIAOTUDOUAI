@@ -46,3 +46,5 @@ gbt/screenshots/
 build/
 dist/
 venv_cradle/
+venv_cradle_py310/
+cradle_py310_*_log.txt
