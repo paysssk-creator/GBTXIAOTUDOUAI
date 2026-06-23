@@ -1,4 +1,4 @@
-﻿name: GBT CI/CD
+name: GBT CI/CD
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
     branches: [master, main]
   release:
     types: [created]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
@@ -35,15 +39,39 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        if: github.event_name == 'release'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
       - name: Build Docker image
-        run: docker build -t gbt-ai-workstation:latest .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name == 'release' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - name: Test container health
+        if: github.event_name != 'release'
         run: |
           docker run -d --name gbt-ci -p 8765:8765 gbt-ai-workstation:latest
           sleep 15
