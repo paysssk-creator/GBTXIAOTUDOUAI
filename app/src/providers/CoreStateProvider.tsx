@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchJSON } from "../lib/api";
+import { fetchData } from "../lib/api";
 import { useAppStore } from "../store";
 
 interface CoreState {
@@ -18,14 +18,15 @@ export function CoreStateProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = async () => {
     try {
-      const status = (await fetchJSON("/api/status")) as {
+      const status = await fetchData<{
         api_key_set?: boolean;
         model?: string;
         version?: string;
-      };
+      }>("/api/status");
       setProfile({
         apiKeySet: !!status.api_key_set,
         model: status.model || "",
+        version: status.version || "",
       });
     } catch {
       // backend might not be ready yet
@@ -46,7 +47,7 @@ export function CoreStateProvider({ children }: { children: React.ReactNode }) {
         initialized,
         apiKeySet: profile.apiKeySet,
         model: profile.model,
-        version: profile.model,
+        version: profile.version,
         refresh,
       }}>
       {children}

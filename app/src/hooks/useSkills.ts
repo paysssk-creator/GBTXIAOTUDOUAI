@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchJSON, postJSON } from "../lib/api";
+import { fetchData, postData } from "../lib/api";
 
 export interface Skill {
   name: string;
@@ -14,7 +14,7 @@ export function useSkills() {
   const fetchSkills = useCallback(async () => {
     setLoading(true);
     try {
-      const result = (await fetchJSON("/api/skills")) as { skills?: Skill[] };
+      const result = await fetchData<{ skills: Skill[] }>("/api/skills");
       setSkills(result.skills || []);
     } catch {
       // Fallback skill list if endpoint doesn't exist yet
@@ -48,7 +48,7 @@ export function useSkills() {
 
   const invokeSkill = useCallback(async (name: string, params?: unknown) => {
     try {
-      const result = await postJSON(`/api/skill/${name}`, params ?? {});
+      const result = await postData<Record<string, unknown>>(`/api/skill/${name}`, params ?? {});
       return { ok: true, result };
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) };

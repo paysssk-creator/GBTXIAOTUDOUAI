@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { check } from "@tauri-apps/plugin-updater";
 import { useBackend } from "../providers/BackendProvider";
 import { useAppStore } from "../store";
-import { fetchJSON, postJSON } from "../lib/api";
+import { fetchData, postJSON } from "../lib/api";
 import { isTauri } from "../lib/tauri";
 
 const PROVIDER_OPTIONS = [
@@ -23,11 +24,11 @@ export default function Settings() {
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
 
   useEffect(() => {
-    fetchJSON("/api/status")
-      .then((s) => {
-        const status = s as { api_key_set?: boolean };
+    fetchData<{ api_key_set?: boolean }>("/api/status")
+      .then((status) => {
         if (status.api_key_set) setMessage("API Key 已配置");
       })
       .catch(() => {});
@@ -50,6 +51,20 @@ export default function Settings() {
   const openDataDir = async () => {
     if (isTauri()) {
       await invoke("open_data_dir");
+    }
+  };
+
+  const checkForUpdate = async () => {
+    if (!isTauri()) {
+      setUpdateMessage("当前环境不支持自动更新");
+      return;
+    }
+    setUpdateMessage("正在检查更新...");
+    try {
+      const update = await check();
+      setUpdateMessage(update ? `发现新版本 ${update.version}，重启后安装` : "当前已是最新版本");
+    } catch (err) {
+      setUpdateMessage(`检查失败: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -114,6 +129,14 @@ export default function Settings() {
               打开数据目录
             </button>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-title">更新</div>
+          <p className="text-sm text-dim mb-3">{updateMessage || "自动更新会在启动时静默检查"}</p>
+          <button className="btn btn-ghost" onClick={checkForUpdate}>
+            检查更新
+          </button>
         </div>
 
         <div className="card">

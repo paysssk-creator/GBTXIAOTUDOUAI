@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchJSON, postJSON } from "../lib/api";
+import { fetchData, postData } from "../lib/api";
 
 export interface DeviceCapability {
   id: string;
@@ -28,16 +28,16 @@ export function useDeviceCaps() {
   const probe = useCallback(async () => {
     setLoading(true);
     try {
-      const result = (await fetchJSON("/api/device/probe")) as {
-        capabilities?: Record<string, { available: boolean; detail?: string }>;
-      };
-      const map = result.capabilities || {};
+      const map = await fetchData<Record<string, { available: boolean; detail?: string }>>("/api/device/probe");
       setCaps((prev) =>
-        prev.map((c) => ({
-          ...c,
-          available: map[c.id]?.available ?? null,
-          detail: map[c.id]?.detail,
-        }))
+        prev.map((c) => {
+          const source = c.id === "keyboard" || c.id === "mouse" ? map["keyboard_mouse"] : map[c.id];
+          return {
+            ...c,
+            available: source?.available ?? null,
+            detail: source?.detail,
+          };
+        })
       );
     } catch (err) {
       setCaps((prev) => prev.map((c) => ({ ...c, available: false, detail: String(err) })));
@@ -48,7 +48,7 @@ export function useDeviceCaps() {
 
   const invoke = useCallback(async (id: string, params?: unknown) => {
     try {
-      const result = await postJSON(`/api/device/${id}`, params ?? {});
+      const result = await postData<Record<string, unknown>>(`/api/device/${id}`, params ?? {});
       return { ok: true, result };
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) };

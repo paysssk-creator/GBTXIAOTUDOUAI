@@ -22,7 +22,7 @@ export function AppUpdatePrompt() {
         {(phase === "ready_to_install" || phase === "error") && (
           <button
             className="btn btn-ghost btn-sm"
-            onClick={phase === "error" ? reset : () => {}}
+            onClick={reset}
             aria-label="关闭更新提示"
           >
             ✕
@@ -41,7 +41,7 @@ export function AppUpdatePrompt() {
               <button className="btn btn-primary" onClick={install}>
                 立即重启
               </button>
-              <button className="btn btn-ghost" onClick={() => {}}>
+              <button className="btn btn-ghost" onClick={reset}>
                 稍后
               </button>
             </div>

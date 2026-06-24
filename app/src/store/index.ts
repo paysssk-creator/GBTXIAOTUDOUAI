@@ -12,6 +12,7 @@ export interface BackendInfo {
 export interface UserProfile {
   apiKeySet: boolean;
   model: string;
+  version: string;
   freeTier: boolean;
 }
 
@@ -56,6 +57,7 @@ export const useAppStore = create<AppState>((set) => ({
   profile: {
     apiKeySet: false,
     model: "",
+    version: "",
     freeTier: true,
   },
   setProfile: (profile) =>

@@ -1,11 +1,23 @@
 import { useEffect, useState } from "react";
-import { fetchJSON } from "../lib/api";
+import { fetchData } from "../lib/api";
+
+interface MetricsSnapshot {
+  current?: { provider?: string; model?: string };
+  totals?: {
+    requests?: number;
+    tokens_in?: number;
+    tokens_out?: number;
+    cost_rmb?: number;
+    avg_latency_s?: number;
+  };
+}
 
 interface Metrics {
   requests?: number;
   tokensIn?: number;
   tokensOut?: number;
-  costUsd?: number;
+  costRmb?: number;
+  avgLatency?: number;
   model?: string;
 }
 
@@ -16,8 +28,15 @@ export function LLMMetricsPanel() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const result = (await fetchJSON("/api/metrics")) as Metrics;
-      setMetrics(result);
+      const result = await fetchData<MetricsSnapshot>("/api/metrics");
+      setMetrics({
+        requests: result.totals?.requests,
+        tokensIn: result.totals?.tokens_in,
+        tokensOut: result.totals?.tokens_out,
+        costRmb: result.totals?.cost_rmb,
+        avgLatency: result.totals?.avg_latency_s,
+        model: result.current?.model,
+      });
     } catch {
       setMetrics({});
     } finally {
@@ -32,10 +51,10 @@ export function LLMMetricsPanel() {
   }, []);
 
   const items = [
-    { label: "今日请求", value: metrics.requests ?? "-" },
+    { label: "累计请求", value: metrics.requests ?? "-" },
     { label: "输入 Token", value: metrics.tokensIn ?? "-" },
     { label: "输出 Token", value: metrics.tokensOut ?? "-" },
-    { label: "预估费用", value: metrics.costUsd !== undefined ? `$${metrics.costUsd.toFixed(4)}` : "-" },
+    { label: "预估费用", value: metrics.costRmb !== undefined ? `¥${metrics.costRmb.toFixed(4)}` : "-" },
   ];
 
   return (

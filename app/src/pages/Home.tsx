@@ -7,7 +7,7 @@ import { LLMMetricsPanel } from "../components/LLMMetricsPanel";
 export default function Home() {
   const navigate = useNavigate();
   const { status } = useBackend();
-  const { apiKeySet, model } = useCoreState();
+  const { apiKeySet, model, version } = useCoreState();
 
   const isReady = status === "healthy";
 
@@ -17,6 +17,7 @@ export default function Home() {
         <h1 className="page-title">欢迎回来</h1>
         <p className="page-subtitle">
           {isReady ? "GBT 后端运行正常" : "GBT 后端未就绪"}
+          {version ? ` · ${version}` : ""}
           {model ? ` · 当前模型 ${model}` : ""}
         </p>
       </div>

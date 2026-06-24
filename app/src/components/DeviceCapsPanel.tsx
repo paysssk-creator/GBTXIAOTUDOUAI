@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDeviceCaps } from "../hooks/useDeviceCaps";
+import { postData } from "../lib/api";
 
 const ICONS: Record<string, () => JSX.Element> = {
   voice: VoiceIcon,
@@ -26,13 +27,29 @@ export function DeviceCapsPanel() {
         res = await invoke("speak", { text: "GBT 设备能力测试" });
         break;
       case "microphone":
-        res = await invoke("mic", { duration: 3 });
+        res = await invoke("mic", { seconds: 3 });
         break;
       case "camera":
-        res = await invoke("camera", { frames: 1 });
+        res = await invoke("camera", { index: 0 });
         break;
       case "notifications":
         res = await invoke("notify", { title: "GBT", message: "通知测试" });
+        break;
+      case "desktop":
+        try {
+          await postData<Record<string, unknown>>("/api/desk/observe", {});
+          res = { ok: true, result: "桌面观察完成" };
+        } catch (err) {
+          res = { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+        break;
+      case "browser":
+        try {
+          await postData<Record<string, unknown>>("/api/skill/browser_open", { text: "https://www.google.com" });
+          res = { ok: true, result: "浏览器已打开" };
+        } catch (err) {
+          res = { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
         break;
       default:
         res = { ok: true, result: `${name} 可用` };
