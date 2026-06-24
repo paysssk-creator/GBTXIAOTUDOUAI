@@ -92,19 +92,36 @@ jobs:
         working-directory: app
         run: pnpm install --frozen-lockfile
 
-      - name: Build Tauri
+      - name: Build Tauri (macOS signed)
+        if: matrix.platform == 'macos-latest' && inputs.sign-macos == true
         working-directory: app
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # macOS signing is opt-in; unsigned builds avoid breaking CI when APPLE_CERTIFICATE
-          # is missing or invalid. Set sign-macos=true and configure APPLE_* secrets to sign.
-          APPLE_CERTIFICATE: ${{ inputs.sign-macos == true && secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ inputs.sign-macos == true && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ inputs.sign-macos == true && secrets.APPLE_SIGNING_IDENTITY || '' }}
-          APPLE_ID: ${{ inputs.sign-macos == true && secrets.APPLE_ID || '' }}
-          APPLE_TEAM_ID: ${{ inputs.sign-macos == true && secrets.APPLE_TEAM_ID || '' }}
-          APPLE_PASSWORD: ${{ inputs.sign-macos == true && secrets.APPLE_PASSWORD || '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+
+      - name: Build Tauri (macOS unsigned)
+        if: matrix.platform == 'macos-latest' && inputs.sign-macos != true
+        working-directory: app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+
+      - name: Build Tauri (non-macOS)
+        if: matrix.platform != 'macos-latest'
+        working-directory: app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
 
