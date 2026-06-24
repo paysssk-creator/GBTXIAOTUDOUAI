@@ -73,7 +73,7 @@ HIDDEN_IMPORTS = [
     # Device capability libraries required for voice/mic/bluetooth/WiFi/camera/keyboard/mouse
     'cv2','bleak','pycaw','pycaw.pycaw','screeninfo','win10toast',
     'pyaudio','edge_tts','comtypes','comtypes.client',
-    'pywin32','win32api','win32con','win32gui',
+    'win32api','win32con','win32gui',
     'winrt','winrt.windows.devices.bluetooth','winrt.windows.devices.bluetooth.advertisement',
     'winrt.windows.devices.bluetooth.genericattributeprofile','winrt.windows.devices.enumeration',
     'winrt.windows.devices.radios','winrt.windows.foundation','winrt.windows.foundation.collections',
