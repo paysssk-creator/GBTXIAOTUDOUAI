@@ -278,6 +278,14 @@ async fn backend_status(state: State<'_, BackendHandle>) -> Result<BackendStatus
     })
 }
 
+#[tauri::command]
+fn open_data_dir() -> Result<(), String> {
+    let dir = data_dir().map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("无法创建数据目录: {}", e))?;
+    opener::open(dir).map_err(|e| format!("无法打开数据目录: {}", e))?;
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -288,8 +296,9 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(BackendHandle::default())
-        .invoke_handler(tauri::generate_handler![start_backend, stop_backend, restart_backend, backend_status])
+        .invoke_handler(tauri::generate_handler![start_backend, stop_backend, restart_backend, backend_status, open_data_dir])
         .setup(|_app| {
             #[cfg(any(windows, target_os = "linux"))]
             {

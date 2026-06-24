@@ -1,6 +1,6 @@
 [package]
 name = "gbt-app"
-version = "1.5.1"
+version = "1.5.2"
 description = "GBT AI Workstation desktop shell"
 authors = ["GBTxiaotudou"]
 edition = "2021"
@@ -20,6 +20,7 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon", "devtools"] }
 tauri-plugin-updater = "2"
 tauri-plugin-deep-link = "2"
+tauri-plugin-process = "2"
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -28,6 +29,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 directories = "5"
 anyhow = "1"
 thiserror = "1"
+opener = "0.7"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_System_Threading", "Win32_Foundation"] }

@@ -17,6 +17,7 @@ except Exception as e:
 
 # 纭繚鑳藉姏娉ㄥ唽鍒拌矾鐢卞櫒
 import gbt.capabilities  # noqa: F401
+from gbt.skills import registry  # noqa: F401
 
 from flask import Flask, request, jsonify, make_response
 
@@ -490,6 +491,138 @@ def device_mic():
     except Exception as e:
         return fail("mic record failed", str(e), 500)
 
+
+# ── Config / .env helpers ───────────────────────────────────────────────────
+
+def _env_path() -> str:
+    """Locate the active .env file (GBT_HOME in Tauri sidecar, else project root)."""
+    home = os.environ.get("GBT_HOME")
+    if home:
+        return os.path.join(home, ".env")
+    return os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+
+
+def _read_env_dict() -> Dict[str, str]:
+    path = _env_path()
+    out: Dict[str, str] = {}
+    if not os.path.exists(path):
+        return out
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    out[k.strip()] = v.strip().strip('"\'')
+    except Exception as e:
+        L.warning(f"[WebAPI] read .env failed: {e}")
+    return out
+
+
+def _write_env_values(updates: Dict[str, str]) -> None:
+    path = _env_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    current = _read_env_dict()
+    current.update(updates)
+    lines = []
+    for k, v in sorted(current.items()):
+        if " " in v or "#" in v:
+            v = f'"{v}"'
+        lines.append(f"{k}={v}")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    # Apply to current process so subsequent calls see the new keys immediately.
+    for k, v in updates.items():
+        os.environ[k] = v
+
+
+# ── New desktop SPA endpoints ───────────────────────────────────────────────
+
+@app.route("/api/status", methods=["GET"])
+def status():
+    try:
+        from gbt.providers import detect_keys
+        from gbt.router import router
+        keys = detect_keys()
+        ready_providers = [p for p, info in keys.items() if info.get("status") == "available"]
+        cfg = _read_env_dict()
+        active_provider = None
+        for pid, info in keys.items():
+            if info.get("status") == "available" and info.get("found_keys"):
+                active_provider = pid
+                break
+        api_key_set = bool(active_provider) or any(
+            cfg.get(k) for k in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GLM_API_KEY", "ZHIPUAI_API_KEY",
+                                 "GEMINI_API_KEY", "DEEPSEEK_API_KEY", "QWEN_API_KEY", "GROK_API_KEY",
+                                 "MISTRAL_API_KEY", "MOONSHOT_API_KEY"]
+        )
+        data = {
+            "version": "v4.0.7",
+            "status": "running",
+            "time": datetime.now().isoformat(),
+            "providers": {
+                "ready": ready_providers,
+                "active": active_provider,
+                "total": len(keys),
+            },
+            "capabilities": len(router.capabilities),
+            "skills": len(registry.skills),
+            "has_api_key": api_key_set,
+            "api_key_set": api_key_set,
+        }
+        return jsonify(ok(data))
+    except Exception as e:
+        return fail("status failed", str(e), 500)
+
+
+@app.route("/api/config", methods=["GET", "POST"])
+def config():
+    if request.method == "GET":
+        try:
+            cfg = _read_env_dict()
+            masked = {}
+            for k, v in cfg.items():
+                if "key" in k.lower() or "secret" in k.lower() or "token" in k.lower():
+                    masked[k] = f"{v[:4]}...{v[-4:]}" if len(v) > 12 else "***"
+                else:
+                    masked[k] = v
+            return jsonify(ok({"path": _env_path(), "env": masked}))
+        except Exception as e:
+            return fail("config read failed", str(e), 500)
+
+    data = request.get_json(force=True, silent=True) or {}
+    updates = data.get("env", data)
+    if not isinstance(updates, dict):
+        return fail("env object required")
+    try:
+        _write_env_values({k: str(v) for k, v in updates.items()})
+        return jsonify(ok({}, "配置已保存"))
+    except Exception as e:
+        return fail("config save failed", str(e), 500)
+
+
+@app.route("/api/skills", methods=["GET"])
+def skills_list():
+    try:
+        return jsonify(ok(registry.list()))
+    except Exception as e:
+        return fail("skills list failed", str(e), 500)
+
+
+@app.route("/api/skill/<name>", methods=["POST"])
+def skill_run(name: str):
+    data = request.get_json(force=True, silent=True) or {}
+    text = data.get("text", data.get("message", data.get("input", "")))
+    try:
+        result = registry.run(name, text, **data.get("params", {}))
+        return jsonify(ok(result.to_dict()))
+    except Exception as e:
+        return fail(f"skill {name} failed", str(e), 500)
+
+
+# ── Server bootstrap ────────────────────────────────────────────────────────
 
 def run_server(host="127.0.0.1", port=8765, debug=False):
     L.info(f"GBT Web API starting at http://{host}:{port}")
