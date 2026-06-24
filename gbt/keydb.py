@@ -6,7 +6,7 @@ Stores free API keys in AES-encrypted SQLite
 import os, sys, base64, sqlite3, time
 from typing import Optional, Dict, List, Tuple
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".gbt_keys.db")
+DB_PATH = os.path.join(os.environ.get("GBT_HOME", os.path.dirname(os.path.dirname(__file__))), ".gbt_keys.db")
 
 FREE_TIER = {
     "gemini":  {"name":"Google Gemini","env":"GEMINI_API_KEY","url":"https://aistudio.google.com/apikey","free":"1500/day, vision free","pri":1},

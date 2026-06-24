@@ -209,7 +209,8 @@ class GBTWorkstation:
   threading.Thread(target=loop,daemon=True).start()
  def _log(s,msg):
   s._co.config(state="normal");s._co.insert("end",msg+"\n")
-  s._co.see("end");s._co.config(state="disabled") def _vision_tab(s,nb):
+  s._co.see("end");s._co.config(state="disabled")
+ def _vision_tab(s,nb):
   p=tk.Frame(nb,bg=BG0);nb.add(p,text="Vision")
   tk.Label(p,text="AI Vision Control",bg=BG0,fg=FG0,font=("Cascadia Code",12,"bold")).pack(anchor="w",padx=12,pady=8)
   info=tk.Label(p,text="Status: initializing...",bg=BG0,fg=FG1,font=("Cascadia Code",9),justify="left")

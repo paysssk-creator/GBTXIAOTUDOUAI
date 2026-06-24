@@ -17,10 +17,14 @@ os.makedirs(root_dir, exist_ok=True)
 
 sys.path.insert(0, root_dir)
 
+# Use GBT_HOME (set by Tauri host to a persistent data dir) for .env and keys
+home_dir = os.environ.get("GBT_HOME") or root_dir
+os.makedirs(home_dir, exist_ok=True)
+
 # Load .env so providers can read API keys without manual export
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(root_dir, ".env"), override=False)
+    load_dotenv(os.path.join(home_dir, ".env"), override=False)
 except Exception as e:
     print(f"[Entry] .env load skipped: {e}")
 
@@ -44,7 +48,7 @@ import tkinter
 
 def ensure_paid_api_keys():
     """Prompt for paid API keys via native window if missing (non-headless only)."""
-    if os.environ.get("GBT_DOCKER"):
+    if os.environ.get("GBT_DOCKER") or os.environ.get("GBT_TAURI"):
         return
     try:
         from gbt.key_manager import get_key, set_env_key, PROVIDER_REGISTRY
@@ -73,7 +77,10 @@ if __name__ == '__main__':
     ensure_paid_api_keys()
     print("GBT Workstation v4 -- Starting...")
     print("[WebAPI] starting at http://127.0.0.1:8765 ...")
-    if os.environ.get("GBT_DOCKER"):
+    if os.environ.get("GBT_TAURI"):
+        print("[Tauri] sidecar mode: running Web API in main thread")
+        start_web_api()
+    elif os.environ.get("GBT_DOCKER"):
         print("[Docker] headless mode: running Web API only")
         start_web_api()
     else:

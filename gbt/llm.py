@@ -3,11 +3,13 @@ llm.py — GBT全模型LLM抽象层
 基于 hello-agents 模式，支持13大模型 + 自动降级
 """
 
-import os, sys, time, socket
+import os, sys, time, socket, logging
 from typing import Optional, List, Dict, Any, Iterator
 from openai import OpenAI
 
 from .providers import PROVIDERS, AutoKeyConfig
+
+L = logging.getLogger("GBT.LLM")
 
 
 class GBTLLM:
@@ -54,19 +56,19 @@ class GBTLLM:
         print(f"✅ LLM: {cfg['name']} | {self.model}")
 
     def _find_key(self, cfg: dict) -> Optional[str]:
-        """多源查找API密钥"""
+        """Unified key lookup: key_manager (env / KeyDB free keys / UI prompt) -> .env fallback."""
         try:
-            from gbt.keydb import get_keydb
-            db = get_keydb()
-            for ek in cfg["env_keys"]:
-                pid = ek.replace("_API_KEY","").lower()
-                val = db.get(pid)
-                if val: return val
-        except: pass
+            from gbt.key_manager import get_key
+            key = get_key(self.provider, prompt=False, allow_save=False)
+            if key:
+                return key
+        except Exception as e:
+            L.debug("key_manager lookup failed: %s", e)
+
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
             if not v:
-                # Fallback: 直接读 .env
+                # Fallback: read .env files when dotenv has not been loaded
                 for _p in [os.path.join(os.path.dirname(sys.executable),".env"),
                           os.path.join(sys._MEIPASS,".env") if getattr(sys,'frozen',False) else "",
                           os.path.join(os.path.dirname(__file__),"..",".env"),
@@ -83,7 +85,7 @@ class GBTLLM:
                                             v=vv.strip().strip('"').strip("'")
                                             break
                         except Exception:
-                            pass  # .env读取失败降级到环境变量
+                            pass
                         if v: break
             if v:
                 return v
