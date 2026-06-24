@@ -134,6 +134,32 @@ a{color:var(--accent);text-decoration:none}
   </div>
 
   <div class="card">
+    <h3><span class="icon">📊</span>大模型消耗</h3>
+    <div class="grid-2" id="metrics-totals" style="font-size:13px;color:var(--muted)">
+      <div>请求: <b id="m-reqs" style="color:var(--text)">-</b></div>
+      <div>Token: <b id="m-tokens" style="color:var(--text)">-</b></div>
+      <div>成本: <b id="m-cost" style="color:var(--text)">-</b></div>
+      <div>延迟: <b id="m-lat" style="color:var(--text)">-</b></div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+      当前: <span id="m-current">-</span> · 运行 <span id="m-uptime">-</span>h · RPM <span id="m-rpm">-</span>
+    </div>
+    <pre id="metrics-log" class="log" style="height:100px;margin-top:10px"></pre>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">🎙️</span>设备能力</h3>
+    <div class="row">
+      <button class="btn" onclick="loadDeviceCaps()">探测全部</button>
+      <button class="btn" onclick="apiTo('/api/device/speak','device-log',{method:'POST',body:JSON.stringify({text:'设备能力正常'})})">语音</button>
+      <button class="btn" onclick="apiTo('/api/device/notify','device-log',{method:'POST',body:JSON.stringify({title:'GBT',message:'通知测试'})})">通知</button>
+      <button class="btn" onclick="apiTo('/api/device/camera','device-log',{method:'POST',body:JSON.stringify({index:0})})">摄像头</button>
+      <button class="btn" onclick="apiTo('/api/device/mic','device-log',{method:'POST',body:JSON.stringify({seconds:2})})">麦克风</button>
+    </div>
+    <pre id="device-log" class="log" style="height:120px"></pre>
+  </div>
+
+  <div class="card">
     <h3><span class="icon">🏥</span>System</h3>
     <div class="row">
       <button class="btn" onclick="api('/api/health','sys-log')">Health</button>
@@ -155,6 +181,24 @@ function log(id,o){document.getElementById(id).textContent=JSON.stringify(o,null
 async function api(path,opts={}){
   const r=await fetch(base+path,{headers:{'Content-Type':'application/json'},...opts});
   return r.json();
+}
+async function apiTo(path,target,opts={}){
+  const d=await api(path,opts);
+  if(target) log(target,d);
+  return d;
+}
+async function loadDeviceCaps(){
+  const d=await api('/api/device/probe');
+  const data=d.data||{};
+  const lines=[];
+  for(const [k,v] of Object.entries(data)){
+    if(k==='elapsed_ms') continue;
+    const status=v.available?'✅':'❌';
+    const detail=v.methods?`(${v.methods.join(', ')})`:(v.devices?`${v.devices.length}台`:(v.error||''));
+    lines.push(`${status} ${k}: ${detail}`);
+  }
+  lines.push(`⏱️ 探测耗时: ${data.elapsed_ms||0}ms`);
+  document.getElementById('device-log').textContent=lines.join('\n');
 }
 async function send(){
   const t=document.getElementById('cmd').value;
@@ -186,6 +230,23 @@ async function loadCaps(){
 function fillCmd(name){
   document.getElementById('cmd').value=name;
 }
+async function loadMetrics(){
+  const d=await api('/api/metrics');
+  const m=d.data||{};
+  const t=m.totals||{};
+  document.getElementById('m-reqs').textContent=t.requests||0;
+  document.getElementById('m-tokens').textContent=(t.tokens_total||0).toLocaleString();
+  document.getElementById('m-cost').textContent='¥'+(t.cost_rmb||0);
+  document.getElementById('m-lat').textContent=(t.avg_latency_s||0)+'s';
+  const cur=m.current||{};
+  document.getElementById('m-current').textContent=(cur.provider||'-')+'/'+(cur.model||'-');
+  document.getElementById('m-uptime').textContent=m.uptime_h||0;
+  document.getElementById('m-rpm').textContent=m.rpm||0;
+  const hist=(m.history||[]).slice().reverse();
+  document.getElementById('metrics-log').textContent=hist.map(r=>
+    `[${r.time}] ${r.provider} ${r.model} · in:${r.tokens_in} out:${r.tokens_out} · ¥${r.cost_rmb} · ${r.latency_s}s`
+  ).join('\n')||'暂无调用记录';
+}
 async function nb(action){
   const d=await api('/api/nanobrowser/'+action,{method:'POST'});
   log('nb-log',d);
@@ -196,6 +257,8 @@ async function cradleRun(){
   log('cradle-log',d);
 }
 loadCaps();
+loadMetrics();
+setInterval(loadMetrics, 5000);
 api('/api/health','sys-log');
 async function spStart(){
   const mode=document.getElementById("sp-mode").value;

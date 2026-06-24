@@ -129,6 +129,32 @@ if ($procs) {{
             self._ps_hotkey(["win", "up"])
         return {"ok": True}
 
+    def notify(self, title, message):
+        """发送 Windows 桌面通知"""
+        try:
+            ps = f'''
+Add-Type -AssemblyName System.Windows.Forms
+$n = New-Object System.Windows.Forms.NotifyIcon
+$n.Icon = [System.Drawing.SystemIcons]::Information
+$n.Visible = $true
+$n.ShowBalloonTip(5000, "{title}", "{message}", "Info")
+'''
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                          capture_output=True, timeout=5, text=True, errors='replace')
+            return {"ok": True, "title": title, "message": message}
+        except Exception as e:
+            L.warning(f"桌面通知失败: {e}")
+            return {"ok": False, "error": str(e)}
+
+    def speak(self, text):
+        """Windows TTS 语音朗读"""
+        try:
+            from gbt.screen_ai import Voice
+            return Voice.speak(text)
+        except Exception as e:
+            L.warning(f"语音朗读失败: {e}")
+            return {"ok": False, "error": str(e)}
+
     # ── 浏览器操控 ──
     def browser_navigate(self, url):
         """浏览器导航: 打开新标签+输入URL"""

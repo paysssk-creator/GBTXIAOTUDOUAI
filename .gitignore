@@ -28,7 +28,11 @@ build_done.txt
 # Local data
 .env
 .gbt_keys.db
+.gbt/
 data/gbt.db
+
+# Test reports
+tests/capability_stress_report.json
 screenshots/*.png
 
 # Generated

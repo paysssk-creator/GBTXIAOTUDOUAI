@@ -17,8 +17,8 @@ class VoiceSpeakSkill(Skill):
     def run(self, text: str = "", **kwargs) -> SkillResult:
         try:
             from gbt.desktop_ctl import desktop_ctl
-            desktop_ctl.speak(text)
-            return SkillResult(True, data=result, message="语音朗读")
+            result = desktop_ctl.speak(text)
+            return SkillResult(result.get("ok", True), data=result, message="语音朗读")
         except Exception as e:
             return SkillResult(False, error=str(e))
 

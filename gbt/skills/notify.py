@@ -17,8 +17,8 @@ class NotifySkill(Skill):
     def run(self, text: str = "", **kwargs) -> SkillResult:
         try:
             from gbt.desktop_ctl import desktop_ctl
-            desktop_ctl.notify('GBT', text)
-            return SkillResult(True, data=result, message="通知已发送")
+            result = desktop_ctl.notify('GBT', text)
+            return SkillResult(result.get("ok", True), data=result, message="通知已发送")
         except Exception as e:
             return SkillResult(False, error=str(e))
 

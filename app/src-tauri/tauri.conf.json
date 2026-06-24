@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "gbt-app",
+  "version": "1.5.1",
+  "identifier": "com.gbtxiaotudou.gbt",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm run build:app",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "GBT AI Workstation",
+        "width": 1280,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 600,
+        "visible": true,
+        "decorations": true,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' 'unsafe-inline' data: blob: https: http://127.0.0.1:8765 http://localhost:8765; img-src 'self' data: blob: https: http://127.0.0.1:8765; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:* http://localhost:* http://127.0.0.1:8765 http://localhost:8765 ws://127.0.0.1:* ws://localhost:* https: wss: data: blob:; frame-src 'self' http://127.0.0.1:8765 http://localhost:8765; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://127.0.0.1:8765; style-src 'self' 'unsafe-inline' http://127.0.0.1:8765"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "deb", "nsis", "msi", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": ["binaries/gbt-sidecar"],
+    "createUpdaterArtifacts": true,
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "entitlements": "entitlements.sidecar.plist"
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libgtk-3-0", "libwebkit2gtk-4.1-0", "libx11-6"]
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZDMTc3OTYwNDREODZFMUYKUldRZmJ0aEVZSGtYL0xaSFYreUxjTTZhY2I3VjFkN2Z5bSs3Z1hOdnJZRkpydy9wSnNJSHpSbGYK",
+      "endpoints": [
+        "https://github.com/paysssk-creator/GBTXIAOTUDOUAI/releases/latest/download/latest.json"
+      ]
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": ["gbt"]
+      }
+    }
+  }
+}

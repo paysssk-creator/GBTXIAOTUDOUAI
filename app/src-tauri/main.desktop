@@ -1,0 +1,9 @@
+[Desktop Entry]
+Categories=Development;AI;
+Comment=GBT AI Workstation desktop app
+Exec=gbt-app %U
+Icon=gbt-app
+Name=GBT AI Workstation
+Terminal=false
+Type=Application
+MimeType=x-scheme-handler/gbt;

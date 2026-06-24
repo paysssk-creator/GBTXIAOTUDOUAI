@@ -88,6 +88,15 @@ def health():
     return jsonify(ok({"status": "running", "version": "v4.0.7"}))
 
 
+@app.route("/api/metrics", methods=["GET"])
+def metrics():
+    try:
+        from gbt.llm_metrics import get_llm_metrics
+        return jsonify(ok(get_llm_metrics()))
+    except Exception as e:
+        return fail("metrics failed", str(e), 500)
+
+
 
 @app.route('/')
 def dashboard_html():
@@ -303,7 +312,20 @@ def evolve():
     goal = data.get("goal", "浼樺寲椤圭洰")
     try:
         from gbt.evolve import run_evolve
-        result = run_evolve(goal)
+        # 在 Tauri sidecar 中运行时，源码位于 PyInstaller 临时目录，
+        # 禁止自动写入/提交，使用 dry_run 模式做只读扫描。
+        project = os.path.dirname(os.path.dirname(__file__))
+        is_sidecar = os.environ.get("GBT_TAURI") == "1"
+        report = run_evolve(project=project, desc=goal, dry=is_sidecar, strong=False)
+        result = {
+            "success": report.success,
+            "rollback": report.rollback,
+            "summary": report.summary,
+            "steps": [
+                {"name": s.name, "status": s.status.value, "output": s.output, "error": s.error}
+                for s in report.steps
+            ],
+        }
         return jsonify(ok(result))
     except Exception as e:
         return fail("evolve failed", str(e), 500)
@@ -411,9 +433,68 @@ def screenpipe_recent():
     return jsonify(ok(screenpipe.recent(limit=limit)))
 
 
+@app.route("/api/device/probe", methods=["GET"])
+def device_probe():
+    try:
+        from gbt.device_caps import probe_all
+        return jsonify(ok(probe_all()))
+    except Exception as e:
+        return fail("device probe failed", str(e), 500)
+
+
+@app.route("/api/device/speak", methods=["POST"])
+def device_speak():
+    data = request.get_json(force=True, silent=True) or {}
+    text = data.get("text", "")
+    if not text:
+        return fail("缺少 text")
+    try:
+        from gbt.device_caps import safe_speak
+        return jsonify(ok(safe_speak(text)))
+    except Exception as e:
+        return fail("speak failed", str(e), 500)
+
+
+@app.route("/api/device/notify", methods=["POST"])
+def device_notify():
+    data = request.get_json(force=True, silent=True) or {}
+    title = data.get("title", "GBT")
+    message = data.get("message", data.get("text", ""))
+    if not message:
+        return fail("缺少 message/text")
+    try:
+        from gbt.device_caps import safe_notify
+        return jsonify(ok(safe_notify(title, message)))
+    except Exception as e:
+        return fail("notify failed", str(e), 500)
+
+
+@app.route("/api/device/camera", methods=["POST"])
+def device_camera():
+    data = request.get_json(force=True, silent=True) or {}
+    index = int(data.get("index", 0))
+    try:
+        from gbt.device_caps import safe_camera_snapshot
+        return jsonify(ok(safe_camera_snapshot(index=index)))
+    except Exception as e:
+        return fail("camera failed", str(e), 500)
+
+
+@app.route("/api/device/mic", methods=["POST"])
+def device_mic():
+    data = request.get_json(force=True, silent=True) or {}
+    seconds = float(data.get("seconds", 3.0))
+    try:
+        from gbt.device_caps import safe_audio_record
+        return jsonify(ok(safe_audio_record(seconds=seconds)))
+    except Exception as e:
+        return fail("mic record failed", str(e), 500)
+
+
 def run_server(host="127.0.0.1", port=8765, debug=False):
     L.info(f"GBT Web API starting at http://{host}:{port}")
-    app.run(host=host, port=port, debug=debug, use_reloader=False)
+    # 多线程模式：避免设备能力（语音/摄像头/蓝牙）等耗时调用阻塞其他请求
+    app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
 
 
 if __name__ == "__main__":
