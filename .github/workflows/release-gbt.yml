@@ -146,8 +146,8 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${VERSION#v}"
-          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          RELEASE_URL="https://github.com/${REPO}/releases/download/v${VERSION}"
+          export PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          export RELEASE_URL="https://github.com/${REPO}/releases/download/v${VERSION}"
 
           python3 - <<'PY'
           import os, json, glob
