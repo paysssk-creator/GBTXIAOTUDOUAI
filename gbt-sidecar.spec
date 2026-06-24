@@ -3,35 +3,39 @@
 # Builds a console-less onefile executable meant to be bundled as a Tauri sidecar.
 # Usage: pyinstaller gbt-sidecar.spec
 import os, sys
-from PyInstaller.utils.win32.versioninfo import VSVersionInfo, FixedFileInfo, StringFileInfo, StringTable, StringStruct, VarFileInfo, VarStruct
 
 ROOT = os.path.abspath(SPECPATH)
 
-VERSION_INFO = VSVersionInfo(
-    ffi=FixedFileInfo(
-        filevers=(1, 5, 1, 0),
-        prodvers=(1, 5, 1, 0),
-        mask=0x3f,
-        flags=0x0,
-        OS=0x40004,
-        fileType=0x1,
-        subtype=0x0,
-        date=(0, 0)
-    ),
-    kids=[
-        StringFileInfo([StringTable(u'040904B0', [
-            StringStruct(u'CompanyName', u'GBTxiaotudou'),
-            StringStruct(u'FileDescription', u'GBT AI Workstation Sidecar'),
-            StringStruct(u'FileVersion', u'1.5.1.0'),
-            StringStruct(u'InternalName', u'GBT'),
-            StringStruct(u'LegalCopyright', u'MIT (C) 2026 GBTxiaotudou'),
-            StringStruct(u'OriginalFilename', u'gbt-sidecar.exe'),
-            StringStruct(u'ProductName', u'GBT xiaotudou'),
-            StringStruct(u'ProductVersion', u'1.5.1'),
-        ])]),
-        VarFileInfo([VarStruct(u'Translation', [0x0409, 0x04B0])]),
-    ]
-)
+# Windows-specific version info is only available on Windows
+if sys.platform == 'win32':
+    from PyInstaller.utils.win32.versioninfo import VSVersionInfo, FixedFileInfo, StringFileInfo, StringTable, StringStruct, VarFileInfo, VarStruct
+    VERSION_INFO = VSVersionInfo(
+        ffi=FixedFileInfo(
+            filevers=(1, 5, 1, 0),
+            prodvers=(1, 5, 1, 0),
+            mask=0x3f,
+            flags=0x0,
+            OS=0x40004,
+            fileType=0x1,
+            subtype=0x0,
+            date=(0, 0)
+        ),
+        kids=[
+            StringFileInfo([StringTable(u'040904B0', [
+                StringStruct(u'CompanyName', u'GBTxiaotudou'),
+                StringStruct(u'FileDescription', u'GBT AI Workstation Sidecar'),
+                StringStruct(u'FileVersion', u'1.5.1.0'),
+                StringStruct(u'InternalName', u'GBT'),
+                StringStruct(u'LegalCopyright', u'MIT (C) 2026 GBTxiaotudou'),
+                StringStruct(u'OriginalFilename', u'gbt-sidecar.exe'),
+                StringStruct(u'ProductName', u'GBT xiaotudou'),
+                StringStruct(u'ProductVersion', u'1.5.1'),
+            ])]),
+            VarFileInfo([VarStruct(u'Translation', [0x0409, 0x04B0])]),
+        ]
+    )
+else:
+    VERSION_INFO = None
 
 # Exclude heavy ML/desktop-only libs not needed for the Web API sidecar
 EXCLUDES = [
@@ -71,15 +75,19 @@ HIDDEN_IMPORTS = [
     'speech_recognition','flask','requests','dotenv','numpy',
     'json','threading','logging','sqlite3','asyncio',
     # Device capability libraries required for voice/mic/bluetooth/WiFi/camera/keyboard/mouse
-    'cv2','bleak','pycaw','pycaw.pycaw','screeninfo','win10toast',
-    'pyaudio','edge_tts','comtypes','comtypes.client',
-    'win32api','win32con','win32gui',
-    'winrt','winrt.windows.devices.bluetooth','winrt.windows.devices.bluetooth.advertisement',
-    'winrt.windows.devices.bluetooth.genericattributeprofile','winrt.windows.devices.enumeration',
-    'winrt.windows.devices.radios','winrt.windows.foundation','winrt.windows.foundation.collections',
-    'winrt.windows.storage.streams',
-    'ahk','pydirectinput',
-]
+    'cv2','bleak','screeninfo',
+    'pyaudio','edge_tts',
+] + (
+    [
+        'pycaw','pycaw.pycaw','win10toast','comtypes','comtypes.client',
+        'win32api','win32con','win32gui',
+        'winrt','winrt.windows.devices.bluetooth','winrt.windows.devices.bluetooth.advertisement',
+        'winrt.windows.devices.bluetooth.genericattributeprofile','winrt.windows.devices.enumeration',
+        'winrt.windows.devices.radios','winrt.windows.foundation','winrt.windows.foundation.collections',
+        'winrt.windows.storage.streams',
+        'ahk','pydirectinput',
+    ] if sys.platform == 'win32' else []
+)
 
 ICON_PATH = os.path.join(ROOT, 'gbt.ico')
 if not os.path.exists(ICON_PATH):
