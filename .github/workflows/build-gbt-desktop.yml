@@ -6,11 +6,19 @@ on:
       publish:
         type: boolean
         default: false
+      sign-macos:
+        type: boolean
+        default: false
+        description: 'Sign macOS bundles with Apple certificates (requires APPLE_* secrets)'
   workflow_dispatch:
     inputs:
       publish:
         type: boolean
         default: false
+      sign-macos:
+        type: boolean
+        default: false
+        description: 'Sign macOS bundles with Apple certificates (requires APPLE_* secrets)'
 
 jobs:
   build:
@@ -89,12 +97,14 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # macOS signing is opt-in; unsigned builds avoid breaking CI when APPLE_CERTIFICATE
+          # is missing or invalid. Set sign-macos=true and configure APPLE_* secrets to sign.
+          APPLE_CERTIFICATE: ${{ inputs.sign-macos == true && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ inputs.sign-macos == true && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ inputs.sign-macos == true && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_ID: ${{ inputs.sign-macos == true && secrets.APPLE_ID || '' }}
+          APPLE_TEAM_ID: ${{ inputs.sign-macos == true && secrets.APPLE_TEAM_ID || '' }}
+          APPLE_PASSWORD: ${{ inputs.sign-macos == true && secrets.APPLE_PASSWORD || '' }}
         run: |
           pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
 

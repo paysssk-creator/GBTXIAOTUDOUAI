@@ -290,11 +290,11 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(BackendHandle::default())
         .invoke_handler(tauri::generate_handler![start_backend, stop_backend, restart_backend, backend_status])
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(any(windows, target_os = "linux"))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
-                let _ = app.deep_link().register("gbt");
+                let _ = _app.deep_link().register("gbt");
             }
             Ok(())
         })
