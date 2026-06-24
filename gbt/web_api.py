@@ -562,6 +562,7 @@ def status():
             "version": "v4.0.7",
             "status": "running",
             "time": datetime.now().isoformat(),
+            "model": active_provider or "",
             "providers": {
                 "ready": ready_providers,
                 "active": active_provider,
@@ -606,7 +607,7 @@ def config():
 @app.route("/api/skills", methods=["GET"])
 def skills_list():
     try:
-        return jsonify(ok(registry.list()))
+        return jsonify(ok({"skills": registry.list()}))
     except Exception as e:
         return fail("skills list failed", str(e), 500)
 
