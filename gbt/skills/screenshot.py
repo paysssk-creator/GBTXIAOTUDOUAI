@@ -21,7 +21,7 @@ class ScreenshotSkill(Skill):
             os.makedirs(ss_dir, exist_ok=True)
             fp = os.path.join(ss_dir, f'screenshot_{time.strftime("%Y%m%d_%H%M%S")}.png')
             pyautogui.screenshot(fp)
-            return SkillResult(True, data=result, message="截图已保存")
+            return SkillResult(True, data={"path": fp}, message="截图已保存")
         except Exception as e:
             return SkillResult(False, error=str(e))
 
