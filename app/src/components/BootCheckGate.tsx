@@ -38,7 +38,7 @@ export function BootCheckGate({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <div className="flex gap-2" style={{ justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="boot-actions">
           {status === "failed" && (
             <button className="btn btn-primary" onClick={start}>
               重试启动

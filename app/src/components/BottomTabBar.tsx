@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const TABS = [
@@ -50,18 +51,42 @@ const ICONS: Record<string, () => JSX.Element> = {
 export function BottomTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const activeIndex = TABS.findIndex((tab) => location.pathname.startsWith(tab.path));
+
+  useEffect(() => {
+    refs.current = refs.current.slice(0, TABS.length);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const nextIndex = e.key === "ArrowLeft"
+      ? (index - 1 + TABS.length) % TABS.length
+      : (index + 1) % TABS.length;
+    const nextTab = TABS[nextIndex];
+    refs.current[nextIndex]?.focus();
+    navigate(nextTab.path);
+  };
 
   return (
     <div className="tabbar-shell">
-      <nav className="tabbar">
-        {TABS.map((tab) => {
+      <nav className="tabbar" role="tablist" aria-label="底部导航">
+        {TABS.map((tab, index) => {
           const Icon = ICONS[tab.id];
-          const active = location.pathname.startsWith(tab.path);
+          const active = index === activeIndex;
           return (
             <button
               key={tab.id}
+              ref={(el) => { refs.current[index] = el; }}
               className={`tabbar-item ${active ? "active" : ""}`}
+              role="tab"
+              aria-selected={active}
+              aria-current={active ? "page" : undefined}
+              tabIndex={active ? 0 : -1}
               onClick={() => navigate(tab.path)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
             >
               <Icon />
               <span>{tab.label}</span>

@@ -160,13 +160,29 @@ a {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
   background: var(--bg-2);
   color: var(--fg);
+  outline: none;
+  user-select: none;
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
 .btn:hover {
   background: var(--bg-3);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -174,8 +190,12 @@ a {
   color: #fff;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-light);
+}
+
+.btn-primary:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-light);
 }
 
 .btn-ghost {
@@ -184,7 +204,7 @@ a {
   color: var(--fg-dim);
 }
 
-.btn-ghost:hover {
+.btn-ghost:hover:not(:disabled) {
   background: var(--bg-2);
   color: var(--fg);
 }
@@ -228,10 +248,12 @@ a {
   color: var(--fg);
   font-size: 13px;
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(215, 119, 87, 0.18);
 }
 
 .input::placeholder {
@@ -290,6 +312,13 @@ a {
   margin-bottom: 20px;
 }
 
+.boot-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .spinner {
   width: 24px;
   height: 24px;
@@ -336,25 +365,36 @@ a {
   gap: 6px;
   padding: 9px 13px;
   border-radius: 11px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--fg-dim);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+  outline: none;
+  user-select: none;
 }
 
-.tabbar-item:hover {
+.tabbar-item:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent);
+}
+
+.tabbar-item:hover:not(.active) {
   background: var(--bg-2);
   color: var(--fg);
+}
+
+.tabbar-item:active:not(.active) {
+  transform: scale(0.96);
 }
 
 .tabbar-item.active {
-  background: var(--bg-2);
-  color: var(--fg);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(215, 119, 87, 0.28);
 }
 
 .tabbar-item svg {
@@ -586,12 +626,22 @@ a {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+  outline: none;
+  user-select: none;
 }
 
-.skill-category-tab:hover {
+.skill-category-tab:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+.skill-category-tab:hover:not(.active) {
   background: var(--bg-2);
   color: var(--fg);
+}
+
+.skill-category-tab:active:not(.active) {
+  transform: scale(0.96);
 }
 
 .skill-category-tab.active {

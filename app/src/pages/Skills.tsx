@@ -109,6 +109,7 @@ export default function Skills() {
             key={c}
             className={`skill-category-tab ${category === c ? "active" : ""}`}
             onClick={() => setCategory(c)}
+            aria-pressed={category === c}
           >
             {CATEGORY_LABELS[c] || c}
           </button>
