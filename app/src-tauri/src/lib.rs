@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::async_runtime::JoinHandle;
-use tauri::{AppHandle, Emitter, Manager, RunEvent, State};
+use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WebviewWindow};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex as TokioMutex;
@@ -15,6 +15,7 @@ use tokio::time::{interval, sleep};
 const HEALTH_URL: &str = "http://127.0.0.1:8765/api/health";
 const BACKEND_PORT: u16 = 8765;
 const MAX_LOG_LINES: usize = 200;
+const HEALTH_MAX_FAILS: u32 = 40;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -38,25 +39,26 @@ struct BackendStatusResp {
     logs: Vec<String>,
 }
 
-struct BackendHandle {
-    child: TokioMutex<Option<Child>>,
-    status: AtomicU8,
-    logs: Arc<Mutex<Vec<String>>>,
-    health_task: TokioMutex<Option<JoinHandle<()>>>,
+#[derive(Serialize, Clone)]
+struct BackendStatusEvent {
+    status: String,
+    error: Option<String>,
 }
 
-impl Default for BackendHandle {
-    fn default() -> Self {
+/// Shared state that can be cheaply cloned into background tasks.
+struct SharedState {
+    status: AtomicU8,
+    logs: Mutex<Vec<String>>,
+}
+
+impl SharedState {
+    fn new() -> Self {
         Self {
-            child: TokioMutex::new(None),
             status: AtomicU8::new(BackendStatus::Idle as u8),
-            logs: Arc::new(Mutex::new(Vec::new())),
-            health_task: TokioMutex::new(None),
+            logs: Mutex::new(Vec::new()),
         }
     }
-}
 
-impl BackendHandle {
     fn push_log(&self, line: String) {
         let mut logs = self.logs.lock().unwrap();
         logs.push(line);
@@ -84,6 +86,38 @@ impl BackendHandle {
     }
 }
 
+struct BackendHandle {
+    shared: Arc<SharedState>,
+    child: Arc<TokioMutex<Option<Child>>>,
+    health_task: TokioMutex<Option<JoinHandle<()>>>,
+    exit_watcher: TokioMutex<Option<JoinHandle<()>>>,
+}
+
+impl Default for BackendHandle {
+    fn default() -> Self {
+        Self {
+            shared: Arc::new(SharedState::new()),
+            child: Arc::new(TokioMutex::new(None)),
+            health_task: TokioMutex::new(None),
+            exit_watcher: TokioMutex::new(None),
+        }
+    }
+}
+
+impl BackendHandle {
+    fn get_logs(&self) -> Vec<String> {
+        self.shared.get_logs()
+    }
+
+    fn set_status(&self, status: BackendStatus) {
+        self.shared.set_status(status);
+    }
+
+    fn get_status(&self) -> BackendStatus {
+        self.shared.get_status()
+    }
+}
+
 fn data_dir() -> Result<std::path::PathBuf> {
     ProjectDirs::from("com", "gbtxiaotudou", "GBT")
         .map(|d| d.data_dir().to_path_buf())
@@ -91,18 +125,42 @@ fn data_dir() -> Result<std::path::PathBuf> {
 }
 
 fn port_in_use(port: u16) -> bool {
-    TcpStream::connect_timeout(&std::net::SocketAddr::from(([127, 0, 0, 1], port)), Duration::from_millis(300)).is_ok()
+    TcpStream::connect_timeout(
+        &std::net::SocketAddr::from(([127, 0, 0, 1], port)),
+        Duration::from_millis(300),
+    )
+    .is_ok()
 }
 
 fn sidecar_path(app: &AppHandle) -> Result<std::path::PathBuf> {
     let current = tauri::process::current_binary(&app.env())?;
-    let parent = current.parent().context("failed to resolve current binary directory")?;
-    let name = if cfg!(windows) { "gbt-sidecar.exe" } else { "gbt-sidecar" };
+    let parent = current
+        .parent()
+        .context("failed to resolve current binary directory")?;
+    let name = if cfg!(windows) {
+        "gbt-sidecar.exe"
+    } else {
+        "gbt-sidecar"
+    };
     Ok(parent.join(name))
 }
 
 fn emit_log(app: &AppHandle, line: String) {
     let _ = app.emit("backend-log", line.clone());
+}
+
+fn emit_status(app: &AppHandle, status: BackendStatus, error: Option<String>) {
+    let payload = BackendStatusEvent {
+        status: match status {
+            BackendStatus::Idle => "idle",
+            BackendStatus::Starting => "starting",
+            BackendStatus::Healthy => "healthy",
+            BackendStatus::Failed => "failed",
+        }
+        .to_string(),
+        error,
+    };
+    let _ = app.emit("backend-status", payload);
 }
 
 #[tauri::command]
@@ -117,6 +175,7 @@ async fn start_backend(app: AppHandle, state: State<'_, BackendHandle>) -> Resul
     }
 
     state.set_status(BackendStatus::Starting);
+    emit_status(&app, BackendStatus::Starting, None);
 
     let data_dir = data_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&data_dir).map_err(|e| format!("无法创建数据目录: {}", e))?;
@@ -144,44 +203,84 @@ async fn start_backend(app: AppHandle, state: State<'_, BackendHandle>) -> Resul
         .map_err(|e| format!("启动 sidecar 失败: {}", e))?;
 
     let app_clone = app.clone();
-    let state_clone: Arc<BackendHandle> = Arc::new(BackendHandle {
-        child: TokioMutex::new(None),
-        status: AtomicU8::new(state.get_status() as u8),
-        logs: state.logs.clone(),
-        health_task: TokioMutex::new(None),
-    });
+    let shared = state.shared.clone();
 
+    // Stream stdout logs.
     if let Some(stdout) = child.stdout.take() {
-        let logs = state.logs.clone();
+        let shared = shared.clone();
         let app = app_clone.clone();
         tokio::spawn(async move {
             let reader = BufReader::new(stdout);
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
-                logs.lock().unwrap().push(line.clone());
+                shared.push_log(line.clone());
                 emit_log(&app, line);
             }
         });
     }
 
+    // Stream stderr logs.
     if let Some(stderr) = child.stderr.take() {
-        let logs = state.logs.clone();
+        let shared = shared.clone();
         let app = app_clone.clone();
         tokio::spawn(async move {
             let reader = BufReader::new(stderr);
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
-                logs.lock().unwrap().push(line.clone());
+                shared.push_log(line.clone());
                 emit_log(&app, line);
             }
         });
     }
 
+    // Watch for unexpected child exit.
+    let exit_shared = state.shared.clone();
+    let exit_app = app_clone.clone();
+    let child_for_exit = Arc::clone(&state.child);
+    let exit_handle = tauri::async_runtime::spawn(async move {
+        let mut ticker = interval(Duration::from_millis(500));
+        loop {
+            ticker.tick().await;
+            let mut lock = child_for_exit.lock().await;
+            match lock.as_mut() {
+                Some(child) => match child.try_wait() {
+                    Ok(Some(status)) => {
+                        // Child exited. If we never reached Healthy, mark as failed.
+                        if matches!(
+                            exit_shared.get_status(),
+                            BackendStatus::Starting | BackendStatus::Idle
+                        ) {
+                            let code = status.code().unwrap_or(-1);
+                            let msg = format!("后端进程意外退出 (exit code: {})", code);
+                            exit_shared.push_log(msg.clone());
+                            emit_log(&exit_app, msg);
+                            exit_shared.set_status(BackendStatus::Failed);
+                            emit_status(&exit_app, BackendStatus::Failed, Some(format!("后端进程意外退出 (exit code: {})", code)));
+                        }
+                        *lock = None;
+                        break;
+                    }
+                    Ok(None) => {
+                        // Still running.
+                    }
+                    Err(e) => {
+                        exit_shared.push_log(format!("[Error] sidecar try_wait error: {}", e));
+                    }
+                },
+                None => break,
+            }
+        }
+    });
+
     *child_lock = Some(child);
     drop(child_lock);
 
-    let health_handle = tauri::async_runtime::spawn(poll_health(app_clone.clone(), state_clone));
+    let health_handle = tauri::async_runtime::spawn(poll_health(
+        app_clone.clone(),
+        state.shared.clone(),
+    ));
     *state.health_task.lock().await = Some(health_handle);
+    *state.exit_watcher.lock().await = Some(exit_handle);
 
     Ok(BackendInfo {
         port: BACKEND_PORT,
@@ -190,7 +289,7 @@ async fn start_backend(app: AppHandle, state: State<'_, BackendHandle>) -> Resul
     })
 }
 
-async fn poll_health(app: AppHandle, state: Arc<BackendHandle>) {
+async fn poll_health(app: AppHandle, shared: Arc<SharedState>) {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(2))
         .build()
@@ -204,30 +303,35 @@ async fn poll_health(app: AppHandle, state: Arc<BackendHandle>) {
 
         match client.get(HEALTH_URL).send().await {
             Ok(resp) if resp.status().is_success() => {
-                state.set_status(BackendStatus::Healthy);
-                let _ = app.emit("backend-status", "ready");
+                shared.set_status(BackendStatus::Healthy);
+                emit_status(&app, BackendStatus::Healthy, None);
+                shared.push_log("[Health] backend ready".to_string());
+                emit_log(&app, "[Health] backend ready".to_string());
                 return;
             }
             _ => failures += 1,
         }
 
-        if failures >= 40 {
-            state.set_status(BackendStatus::Failed);
-            let _ = app.emit("backend-status", "error");
+        if failures >= HEALTH_MAX_FAILS {
+            shared.set_status(BackendStatus::Failed);
+            emit_status(&app, BackendStatus::Failed, Some("后端健康检查超时".to_string()));
             let msg = "后端健康检查超时".to_string();
-            state.push_log(msg.clone());
+            shared.push_log(msg.clone());
             emit_log(&app, msg);
             return;
         }
 
-        let msg = format!("等待后端就绪 ({}/40)...", failures);
-        state.push_log(msg.clone());
+        let msg = format!("等待后端就绪 ({}/{})...", failures, HEALTH_MAX_FAILS);
+        shared.push_log(msg.clone());
         emit_log(&app, msg);
     }
 }
 
 async fn stop_backend_inner(state: &BackendHandle) -> Result<(), String> {
     if let Some(handle) = state.health_task.lock().await.take() {
+        handle.abort();
+    }
+    if let Some(handle) = state.exit_watcher.lock().await.take() {
         handle.abort();
     }
 
@@ -286,6 +390,28 @@ fn open_data_dir() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn log_frontend_error(message: String, stack: Option<String>) {
+    eprintln!("[frontend-error] {}", message);
+    if let Some(s) = stack {
+        eprintln!("[frontend-error-stack] {}", s);
+    }
+}
+
+#[tauri::command]
+async fn open_devtools(window: WebviewWindow) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    {
+        window.open_devtools();
+        Ok(())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        let _ = window;
+        Err("开发者工具仅在开发模式下可用".to_string())
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -298,7 +424,15 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(BackendHandle::default())
-        .invoke_handler(tauri::generate_handler![start_backend, stop_backend, restart_backend, backend_status, open_data_dir])
+        .invoke_handler(tauri::generate_handler![
+            start_backend,
+            stop_backend,
+            restart_backend,
+            backend_status,
+            open_data_dir,
+            log_frontend_error,
+            open_devtools
+        ])
         .setup(|_app| {
             #[cfg(any(windows, target_os = "linux"))]
             {

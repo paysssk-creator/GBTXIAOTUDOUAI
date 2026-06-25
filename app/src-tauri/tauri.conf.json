@@ -53,7 +53,7 @@
   "plugins": {
     "updater": {
       "active": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZDMTc3OTYwNDREODZFMUYKUldRZmJ0aEVZSGtYL0xaSFYreUxjTTZhY2I3VjFkN2Z5bSs3Z1hOdnJZRkpydy9wSnNJSHpSbGYK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM2MEVFRTVEQ0ZDRUIyOQpSV1FwNi96YzVlNWdETk5TS1o2SlRJV3NDOHNGb3hIamlnVXNWamUwU2RwYnJlREJFTVF1ckNLawo=",
       "endpoints": [
         "https://github.com/paysssk-creator/GBTXIAOTUDOUAI/releases/latest/download/latest.json"
       ]

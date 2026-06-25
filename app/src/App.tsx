@@ -5,13 +5,16 @@ import { ThemeProvider } from "./providers/ThemeProvider";
 import { BootCheckGate } from "./components/BootCheckGate";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { AppUpdatePrompt } from "./components/AppUpdatePrompt";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import AppRoutes from "./AppRoutes";
 
 function AppShell() {
   return (
     <div className="app-shell">
       <main className="app-main">
-        <AppRoutes />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
       </main>
       <BottomTabBar />
       <AppUpdatePrompt />

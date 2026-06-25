@@ -11,6 +11,8 @@ interface BackendContextValue {
   status: "idle" | "starting" | "healthy" | "failed";
   logs: string[];
   error: string | null;
+  safeMode: boolean;
+  enterSafeMode: () => void;
 }
 
 const BackendContext = createContext<BackendContextValue | null>(null);
@@ -18,8 +20,14 @@ const BackendContext = createContext<BackendContextValue | null>(null);
 export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<BackendContextValue["status"]>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [safeMode, setSafeMode] = useState(false);
   const logsRef = useRef<string[]>([]);
   const [, forceUpdate] = useState({});
+  const setBackendStatus = useAppStore((s) => s.setBackendStatus);
+
+  const enterSafeMode = useCallback(() => {
+    setSafeMode(true);
+  }, []);
 
   const appendLog = useCallback((line: string) => {
     logsRef.current = [...logsRef.current.slice(-199), line];
@@ -27,16 +35,43 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    setBackendStatus(status);
+  }, [status, setBackendStatus]);
+
+  useEffect(() => {
     if (!isTauri()) return;
 
-    let unlisten: (() => void) | undefined;
+    const unsubs: (() => void)[] = [];
+
     const setup = async () => {
-      unlisten = await listen<string>("backend-log", (event) => {
+      const logUnlisten = await listen<string>("backend-log", (event) => {
         appendLog(event.payload);
       });
+      unsubs.push(logUnlisten);
+
+      const statusUnlisten = await listen<{ status: string; error?: string }>(
+        "backend-status",
+        (event) => {
+          const payload = event.payload;
+          const next = payload.status as BackendContextValue["status"];
+          if (next === "idle" || next === "starting" || next === "healthy" || next === "failed") {
+            setStatus(next);
+            setError(payload.error || null);
+            if (payload.error) {
+              appendLog(`[Error] ${payload.error}`);
+            }
+          }
+        }
+      );
+      unsubs.push(statusUnlisten);
     };
+
     setup();
-    return () => unlisten?.();
+    return () => {
+      for (const unsub of unsubs) {
+        unsub();
+      }
+    };
   }, [appendLog]);
 
   const start = useCallback(async () => {
@@ -103,7 +138,9 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   }, [appendLog]);
 
   return (
-    <BackendContext.Provider value={{ start, restart, stop, status, logs: logsRef.current, error }}>
+    <BackendContext.Provider
+      value={{ start, restart, stop, status, logs: logsRef.current, error, safeMode, enterSafeMode }}
+    >
       {children}
     </BackendContext.Provider>
   );

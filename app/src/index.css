@@ -488,6 +488,128 @@ a {
   transition: width 0.3s ease;
 }
 
+/* Skill results */
+.skill-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skill-result {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--fg-subtle);
+}
+
+.skill-result.success {
+  border-left-color: var(--success);
+}
+
+.skill-result.error {
+  border-left-color: var(--error);
+}
+
+.skill-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.skill-result-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.skill-result-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-subtle);
+}
+
+.skill-result.success .skill-result-dot {
+  background: var(--success);
+}
+
+.skill-result.error .skill-result-dot {
+  background: var(--error);
+}
+
+.skill-result-message {
+  font-size: 13px;
+  color: var(--fg-dim);
+  margin-bottom: 10px;
+}
+
+.skill-result-error {
+  font-size: 13px;
+  color: var(--error);
+  margin-bottom: 10px;
+}
+
+.skill-result-data {
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: "Cascadia Code", Consolas, "SF Mono", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--fg-dim);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.skill-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-category-tab {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--fg-dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skill-category-tab:hover {
+  background: var(--bg-2);
+  color: var(--fg);
+}
+
+.skill-category-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.skill-category-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  color: var(--fg-subtle);
+  font-size: 11px;
+  font-weight: 500;
+}
+
 /* Utilities */
 .flex { display: flex; }
 .flex-col { flex-direction: column; }

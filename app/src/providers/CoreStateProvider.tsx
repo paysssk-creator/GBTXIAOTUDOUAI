@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { fetchData } from "../lib/api";
 import { useAppStore } from "../store";
+import { useBackend } from "./BackendProvider";
 
 interface CoreState {
   initialized: boolean;
@@ -15,8 +16,9 @@ const CoreStateContext = createContext<CoreState | null>(null);
 export function CoreStateProvider({ children }: { children: React.ReactNode }) {
   const [initialized, setInitialized] = useState(false);
   const setProfile = useAppStore((state) => state.setProfile);
+  const { status } = useBackend();
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const status = await fetchData<{
         api_key_set?: boolean;
@@ -33,11 +35,18 @@ export function CoreStateProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setInitialized(true);
     }
-  };
+  }, [setProfile]);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
+
+  // Re-fetch profile once backend becomes healthy.
+  useEffect(() => {
+    if (status === "healthy") {
+      refresh();
+    }
+  }, [status, refresh]);
 
   const profile = useAppStore((state) => state.profile);
 
