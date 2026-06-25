@@ -6,7 +6,7 @@ import { LLMMetricsPanel } from "../components/LLMMetricsPanel";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { status } = useBackend();
+  const { status, restart } = useBackend();
   const { apiKeySet, model, version } = useCoreState();
 
   const isReady = status === "healthy";
@@ -45,7 +45,77 @@ export default function Home() {
         <LLMMetricsPanel />
       </div>
 
+      <div className="card mb-4">
+        <div className="card-title">快捷操作</div>
+        <div className="quick-actions">
+          <button className="quick-action" onClick={() => navigate("/chat")}>
+            <ChatIcon />
+            <span>开始对话</span>
+          </button>
+          <button className="quick-action" onClick={() => navigate("/skills")}>
+            <SkillsIcon />
+            <span>运行 Skill</span>
+          </button>
+          <button className="quick-action" onClick={() => navigate("/settings")}>
+            <KeyIcon />
+            <span>配置 API Key</span>
+          </button>
+          {!isReady ? (
+            <button className="quick-action" onClick={restart}>
+              <ReloadIcon />
+              <span>重启后端</span>
+            </button>
+          ) : (
+            <button className="quick-action" onClick={() => navigate("/settings")}>
+              <UpdateIcon />
+              <span>检查更新</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       <DeviceCapsPanel />
     </div>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  );
+}
+
+function SkillsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+    </svg>
+  );
+}
+
+function KeyIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+    </svg>
+  );
+}
+
+function ReloadIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  );
+}
+
+function UpdateIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      <path d="M12 16l4-4m0 0l-4-4m4 4H8" />
+    </svg>
   );
 }

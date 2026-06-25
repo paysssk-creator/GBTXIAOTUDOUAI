@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { check } from "@tauri-apps/plugin-updater";
 import { useBackend } from "../providers/BackendProvider";
@@ -140,10 +140,48 @@ export default function Settings() {
         </div>
 
         <div className="card">
-          <div className="card-title">后端日志</div>
-          <div className="logs">{logs.join("\n") || "暂无日志"}</div>
+          <div className="card-title flex justify-between items-center">
+            <span>后端日志</span>
+            <div className="flex gap-2">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => navigator.clipboard.writeText(logs.join("\n"))}
+                disabled={logs.length === 0}
+              >
+                复制
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => useAppStore.getState().setBackendInfo({ logs: [] })}
+                disabled={logs.length === 0}
+              >
+                清空
+              </button>
+            </div>
+          </div>
+          <LogViewer logs={logs} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function LogViewer({ logs }: { logs: string[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, [logs]);
+
+  return (
+    <div ref={ref} className="logs">
+      {logs.length === 0 ? (
+        <span className="text-subtle">暂无日志</span>
+      ) : (
+        logs.join("\n")
+      )}
     </div>
   );
 }

@@ -513,6 +513,115 @@ a {
   background: var(--bg);
 }
 
+.chat-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.chat-toolbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.chat-toolbar-spacer {
+  flex: 1;
+}
+
+.chat-frame-wrap {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.chat-frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.chat-frame-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.chat-frame-wrap .spinner {
+  margin-bottom: 12px;
+}
+
+/* Quick actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg-dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+  outline: none;
+  user-select: none;
+}
+
+.quick-action:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent);
+}
+
+.quick-action:hover {
+  background: var(--bg-2);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.quick-action:active {
+  transform: scale(0.97);
+}
+
+.quick-action svg {
+  color: var(--accent);
+}
+
 .progress-bar {
   width: 100%;
   height: 6px;
