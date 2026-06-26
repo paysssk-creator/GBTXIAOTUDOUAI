@@ -1,0 +1,12 @@
+[package]
+name = "minisign-verify-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+minisign-verify = "0.2"
+base64 = "0.22"
+
+[[bin]]
+name = "minisign-verify-cli"
+path = "src/main.rs"
