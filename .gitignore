@@ -53,3 +53,4 @@ venv_cradle/
 venv_cradle_py310/
 cradle_py310_*_log.txt
 scripts/minisign-verify/target/
+.tmp-verify-release/
