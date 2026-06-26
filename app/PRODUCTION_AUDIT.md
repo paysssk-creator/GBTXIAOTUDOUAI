@@ -15,17 +15,17 @@
 | `pnpm audit` (app/) | PASS — no known vulnerabilities |
 | `cargo audit` | PASS — no vulnerabilities; 17 informational warnings (transitive deps) |
 | Release asset SHA-256 checksums | PASS — local/remote match |
-| Minisign signature verification | PASS — Windows .exe/.msi signatures verified with public key |
+| Minisign signature verification | **FAIL** — v1.5.4 assets signed with a key not matching `tauri.conf.json` pubkey |
 | GitHub Release v1.5.4 assets | UPDATED — Windows installers + latest.json re-uploaded |
 
 ## Build artifacts
 
 | Asset | SHA-256 |
 |-------|---------|
-| `gbt-app_1.5.4_x64-setup.exe` | `013d4c16e3eb31e5d16af98036e88e68c4d67e6f12a1e829edae199fd6aab997` |
-| `gbt-app_1.5.4_x64_en-US.msi` | `8e8b3f73791049923666f9182494e6bd23885289e3671421f95b72c55df72481` |
+| `gbt-app_1.5.4_x64-setup.exe` | `d6ee9ebf6fdfe5f0ba939f46b6fff9ba486ed1bf565189ad03c99ac799b6287f` |
+| `gbt-app_1.5.4_x64_en-US.msi` | `d4fdbd89cfb8aec3e6e97ca9792f8947e6a262fcdf0cd4bee3c2870877bfc0f5` |
 
-> 注：以上 checksum 来自本地未签名构建验证，正式签名版本以 GitHub Release 页面为准。签名后的 .exe/.msi 哈希会略有不同。
+> 注：以上 checksum 来自 GitHub Release v1.5.4 已签名资产。
 
 ## Signature verification
 
@@ -35,9 +35,13 @@ Signatures were verified using an independent Rust verifier built with the `mini
 RWQp6/zc5e5gDNNSKZ6JTIWsC8sFoxHjigUsVje0SdpbreDBEMQurCKk
 ```
 
-- `gbt-app_1.5.4_x64-setup.exe` + `.sig` → OK
-- `gbt-app_1.5.4_x64_en-US.msi` + `.sig` → OK
-- `latest.json` Windows signature matches `gbt-app_1.5.4_x64-setup.exe.sig`
+- `gbt-app_1.5.4_x64-setup.exe` + `.sig` → **FAIL**（签名 key ID 与 `tauri.conf.json` 公钥不匹配）
+- `gbt-app_1.5.4_x64_en-US.msi` + `.sig` → **FAIL**（同上）
+- `latest.json` Windows signature matches `gbt-app_1.5.4_x64-setup.exe.sig` → OK
+
+> ⚠️ **Action required**: v1.5.4 的 Tauri 签名使用了与 `tauri.conf.json` 中公钥不对应的私钥。
+> 这会导致自动更新验证失败。需要核对 GitHub secret `TAURI_SIGNING_PRIVATE_KEY`
+> 是否与当前公钥配对；若不匹配，请更新 secret 或更新 `tauri.conf.json` 中的公钥后重新发布。
 
 ## Changes in this rebuild
 
