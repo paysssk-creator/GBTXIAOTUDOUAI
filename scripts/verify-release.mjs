@@ -26,6 +26,10 @@ const ASSETS = [
   `gbt-app_${VERSION}_x64-setup.exe.sig`,
   `gbt-app_${VERSION}_x64_en-US.msi`,
   `gbt-app_${VERSION}_x64_en-US.msi.sig`,
+];
+
+const DOWNLOADS = [
+  ...ASSETS,
   "checksums.txt",
   "latest.json",
 ];
@@ -53,11 +57,12 @@ async function base64DecodeFile(inputPath, outputPath) {
   await writeFile(outputPath, Buffer.from(b64.trim(), "base64"));
 }
 
-async function getPublicKey() {
+async function getPublicKeyPath() {
   const conf = JSON.parse(await readFile(join(APP_DIR, "src-tauri", "tauri.conf.json"), "utf8"));
-  const pubB64 = conf.plugins.updater.pubkey;
-  const pubFile = Buffer.from(pubB64, "base64").toString("utf8");
-  return pubFile.trim().split("\n")[1];
+  const pubFile = Buffer.from(conf.plugins.updater.pubkey, "base64").toString("utf8");
+  const pubPath = join(WORK_DIR, "pubkey");
+  await writeFile(pubPath, pubFile);
+  return pubPath;
 }
 
 async function main() {
@@ -70,7 +75,7 @@ async function main() {
   await exec("gh", [
     "release", "download", TAG,
     "--repo", REPO,
-    ...ASSETS.flatMap((a) => ["--pattern", a]),
+    ...DOWNLOADS.flatMap((a) => ["--pattern", a]),
     "-D", WORK_DIR,
   ]);
 
@@ -86,7 +91,11 @@ async function main() {
       })
   );
 
-  for (const [name, expected] of checksums) {
+  for (const name of ASSETS) {
+    const expected = checksums.get(name);
+    if (!expected) {
+      throw new Error(`Checksum for ${name} not found in checksums.txt`);
+    }
     const actual = await sha256(join(WORK_DIR, name));
     if (actual !== expected) {
       throw new Error(`Checksum mismatch for ${name}: expected ${expected}, got ${actual}`);
@@ -105,14 +114,14 @@ async function main() {
   console.log("\nBuilding minisign verifier...");
   await exec("cargo", ["build", "--release", "--manifest-path", join(ROOT, "scripts", "minisign-verify", "Cargo.toml")]);
 
-  const pubKey = await getPublicKey();
+  const pubKeyPath = await getPublicKeyPath();
   const verifier = join(ROOT, "scripts", "minisign-verify", "target", "release", process.platform === "win32" ? "minisign-verify-cli.exe" : "minisign-verify-cli");
 
   console.log("\nVerifying minisign signatures...");
-  for (const name of ["gbt-app_1.5.3_x64-setup.exe", "gbt-app_1.5.3_x64_en-US.msi"]) {
+  for (const name of [`gbt-app_${VERSION}_x64-setup.exe`, `gbt-app_${VERSION}_x64_en-US.msi`]) {
     const rawSig = join(WORK_DIR, `${name}.sig.raw`);
     await base64DecodeFile(join(WORK_DIR, `${name}.sig`), rawSig);
-    await exec(verifier, [pubKey, rawSig, join(WORK_DIR, name)]);
+    await exec(verifier, [pubKeyPath, rawSig, join(WORK_DIR, name)]);
     console.log(`  ${name}: OK`);
   }
 

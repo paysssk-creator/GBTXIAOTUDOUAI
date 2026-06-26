@@ -7,17 +7,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 4 {
         eprintln!(
-            "Usage: {} <public-key-base64> <signature-file> <data-file>",
+            "Usage: {} <public-key-file> <signature-file> <data-file>",
             args[0]
         );
         std::process::exit(1);
     }
 
-    let pk_b64 = &args[1];
+    let pk_path = PathBuf::from(&args[1]);
     let sig_path = PathBuf::from(&args[2]);
     let data_path = PathBuf::from(&args[3]);
 
-    let pk = PublicKey::from_base64(pk_b64)?;
+    let pk = PublicKey::from_file(&pk_path)?;
     let sig = Signature::from_file(&sig_path)?;
     let data = fs::read(&data_path)?;
 
