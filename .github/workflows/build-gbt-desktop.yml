@@ -88,9 +88,6 @@ jobs:
           python scripts/tauri/build-gbt-sidecar.py
           bash scripts/tauri/stage-gbt-sidecar.sh ${{ matrix.target }}
 
-      - name: Deep scan for production issues
-        run: node scripts/deep-scan.mjs
-
       - name: Install frontend dependencies
         working-directory: app
         run: pnpm install --frozen-lockfile

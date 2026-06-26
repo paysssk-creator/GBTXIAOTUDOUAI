@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::async_runtime::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WebviewWindow};
+use tauri_plugin_updater::UpdaterExt;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex as TokioMutex;
@@ -444,6 +445,71 @@ async fn open_devtools(window: WebviewWindow) -> Result<(), String> {
     }
 }
 
+#[derive(Serialize, Clone)]
+struct UpdateInfo {
+    version: String,
+    date: Option<String>,
+    body: Option<String>,
+}
+
+#[derive(Serialize, Clone)]
+struct UpdateProgressEvent {
+    event: String,
+    chunk_length: Option<u64>,
+    content_length: Option<u64>,
+}
+
+#[tauri::command]
+async fn check_update(app: AppHandle) -> Result<Option<UpdateInfo>, String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    match updater.check().await.map_err(|e| e.to_string())? {
+        Some(update) => Ok(Some(UpdateInfo {
+            version: update.version,
+            date: update.date.map(|d| d.to_string()),
+            body: update.body,
+        })),
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    let update = updater
+        .check()
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or("没有可用更新")?;
+
+    let app_for_progress = app.clone();
+    update
+        .download_and_install(
+            move |chunk_length, content_length| {
+                let _ = app_for_progress.emit(
+                    "update-progress",
+                    UpdateProgressEvent {
+                        event: "Progress".to_string(),
+                        chunk_length: Some(chunk_length as u64),
+                        content_length,
+                    },
+                );
+            },
+            move || {
+                let _ = app.emit(
+                    "update-progress",
+                    UpdateProgressEvent {
+                        event: "Finished".to_string(),
+                        chunk_length: None,
+                        content_length: None,
+                    },
+                );
+            },
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -464,7 +530,9 @@ pub fn run() {
             open_data_dir,
             open_url,
             log_frontend_error,
-            open_devtools
+            open_devtools,
+            check_update,
+            install_update
         ])
         .setup(|_app| {
             #[cfg(any(windows, target_os = "linux"))]

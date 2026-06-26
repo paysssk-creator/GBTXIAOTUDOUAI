@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { useBackend } from "../providers/BackendProvider";
 import { useToast } from "../providers/ToastProvider";
 import { useAppStore } from "../store";
@@ -39,6 +39,8 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
+  const [updateInfo, setUpdateInfo] = useState<{ version: string; body?: string } | null>(null);
+  const [installing, setInstalling] = useState(false);
 
   const providerName = PROVIDER_OPTIONS.find((p) => p.id === provider)?.name;
   const signupUrl = PROVIDER_SIGNUP_URLS[provider];
@@ -114,10 +116,12 @@ export default function Settings() {
       return;
     }
     setUpdateMessage("正在检查更新...");
+    setUpdateInfo(null);
     try {
-      const update = await check();
+      const update = await invoke<{ version: string; body?: string } | null>("check_update");
       if (update) {
-        setUpdateMessage(`发现新版本 ${update.version}，重启后安装`);
+        setUpdateInfo(update);
+        setUpdateMessage(`发现新版本 ${update.version}`);
         showToast(`发现新版本 ${update.version}`, "success");
       } else {
         setUpdateMessage("当前已是最新版本");
@@ -127,6 +131,23 @@ export default function Settings() {
       const msg = err instanceof Error ? err.message : String(err);
       setUpdateMessage(`检查失败: ${msg}`);
       showToast(`检查失败: ${msg}`, "error");
+    }
+  };
+
+  const installUpdate = async () => {
+    if (!isTauri()) return;
+    setInstalling(true);
+    setUpdateMessage("正在下载并安装更新...");
+    try {
+      await invoke("install_update");
+      setUpdateMessage("安装完成，即将重启");
+      showToast("安装完成，即将重启", "success");
+      await relaunch();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setUpdateMessage(`安装失败: ${msg}`);
+      showToast(`安装失败: ${msg}`, "error");
+      setInstalling(false);
     }
   };
 
@@ -245,9 +266,21 @@ export default function Settings() {
         <div className="card">
           <div className="card-title">更新</div>
           <p className="text-sm text-dim mb-3">{updateMessage || "自动更新会在启动时静默检查"}</p>
-          <button className="btn btn-ghost" onClick={checkForUpdate}>
-            检查更新
-          </button>
+          {updateInfo?.body && (
+            <pre className="text-xs text-dim mb-3" style={{ maxHeight: 120, overflow: "auto", whiteSpace: "pre-wrap" }}>
+              {updateInfo.body}
+            </pre>
+          )}
+          <div className="flex gap-2">
+            <button className="btn btn-ghost" onClick={checkForUpdate} disabled={installing} aria-busy={installing}>
+              检查更新
+            </button>
+            {updateInfo && (
+              <button className="btn btn-primary" onClick={installUpdate} disabled={installing} aria-busy={installing}>
+                {installing ? "安装中..." : `安装 ${updateInfo.version}`}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="card">
