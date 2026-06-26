@@ -1,4 +1,5 @@
-const API_BASE = "http://127.0.0.1:8765";
+import { API_BASE } from "./config";
+
 const DEFAULT_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 300;
 

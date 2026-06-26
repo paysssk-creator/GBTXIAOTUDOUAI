@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBackend } from "../providers/BackendProvider";
+import { CHAT_URL } from "../lib/config";
 
-const CHAT_URL = "http://127.0.0.1:8765/";
 const LOAD_TIMEOUT_MS = 8000;
 
 export default function Chat() {

@@ -161,12 +161,13 @@ export function useBackend() {
   return ctx;
 }
 
+import { HEALTH_URL } from "../lib/config";
+
 async function pollUntilReady(
   setStatus: (s: BackendContextValue["status"]) => void,
   setError: (e: string | null) => void,
   appendLog: (line: string) => void
 ) {
-  const HEALTH_URL = "http://127.0.0.1:8765/api/health";
   const MAX_ATTEMPTS = 40;
   const INITIAL_DELAY_MS = 400;
 
