@@ -1,6 +1,6 @@
 # GBT AI Workstation — Production Audit Report v1.5.3
 
-**Audit date:** 2026-06-26
+**Audit date:** 2026-06-27
 **Release:** v1.5.3
 **Scope:** Windows x86_64 installer (NSIS + MSI), Tauri v2 + React frontend, PyInstaller sidecar
 
@@ -22,8 +22,8 @@
 
 | Asset | SHA-256 |
 |-------|---------|
-| `gbt-app_1.5.3_x64-setup.exe` | `810f5e4aff5db52d4c617084089f9d7a034245773ac55a580ca73a6ec83bc70e` |
-| `gbt-app_1.5.3_x64_en-US.msi` | `b210e217bb1f0955c1e4be3e47bd664e5fd5868a7a3461fc87ceb9e5385f253c` |
+| `gbt-app_1.5.3_x64-setup.exe` | `ec303451d414b4f7c479cd00b7c0ed2d321505caca1cdb0691654fd5f78de26a` |
+| `gbt-app_1.5.3_x64_en-US.msi` | `859f606d4c24ccd58933c3d8f15d74af1a7fa1856a378c40888234b581c8d0bb` |
 
 ## Signature verification
 
@@ -40,6 +40,7 @@ RWQp6/zc5e5gDNNSKZ6JTIWsC8sFoxHjigUsVje0SdpbreDBEMQurCKk
 ## Changes in this rebuild
 
 - Removed stray `console.log` boot/render statements from `src/main.tsx` for production cleanliness.
+- Centralized backend endpoint configuration (`127.0.0.1:8765`) into `src/lib/config.ts` and removed unused `backend.ts`.
 
 ## Cargo audit findings
 
