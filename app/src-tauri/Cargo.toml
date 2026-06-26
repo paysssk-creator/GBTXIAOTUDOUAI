@@ -1,6 +1,6 @@
 [package]
 name = "gbt-app"
-version = "1.5.3"
+version = "1.5.4"
 description = "GBT AI Workstation desktop shell"
 authors = ["GBTxiaotudou"]
 edition = "2021"

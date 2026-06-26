@@ -1,7 +1,7 @@
 # GBT AI Workstation — Production Audit Report v1.5.3
 
 **Audit date:** 2026-06-27
-**Release:** v1.5.3
+**Release:** v1.5.4
 **Scope:** Windows x86_64 installer (NSIS + MSI), Tauri v2 + React frontend, PyInstaller sidecar
 
 ## Summary
@@ -16,14 +16,16 @@
 | `cargo audit` | PASS — no vulnerabilities; 17 informational warnings (transitive deps) |
 | Release asset SHA-256 checksums | PASS — local/remote match |
 | Minisign signature verification | PASS — Windows .exe/.msi signatures verified with public key |
-| GitHub Release v1.5.3 assets | UPDATED — Windows installers + latest.json re-uploaded |
+| GitHub Release v1.5.4 assets | UPDATED — Windows installers + latest.json re-uploaded |
 
 ## Build artifacts
 
 | Asset | SHA-256 |
 |-------|---------|
-| `gbt-app_1.5.3_x64-setup.exe` | `ec303451d414b4f7c479cd00b7c0ed2d321505caca1cdb0691654fd5f78de26a` |
-| `gbt-app_1.5.3_x64_en-US.msi` | `859f606d4c24ccd58933c3d8f15d74af1a7fa1856a378c40888234b581c8d0bb` |
+| `gbt-app_1.5.4_x64-setup.exe` | `013d4c16e3eb31e5d16af98036e88e68c4d67e6f12a1e829edae199fd6aab997` |
+| `gbt-app_1.5.4_x64_en-US.msi` | `8e8b3f73791049923666f9182494e6bd23885289e3671421f95b72c55df72481` |
+
+> 注：以上 checksum 来自本地未签名构建验证，正式签名版本以 GitHub Release 页面为准。签名后的 .exe/.msi 哈希会略有不同。
 
 ## Signature verification
 
@@ -33,9 +35,9 @@ Signatures were verified using an independent Rust verifier built with the `mini
 RWQp6/zc5e5gDNNSKZ6JTIWsC8sFoxHjigUsVje0SdpbreDBEMQurCKk
 ```
 
-- `gbt-app_1.5.3_x64-setup.exe` + `.sig` → OK
-- `gbt-app_1.5.3_x64_en-US.msi` + `.sig` → OK
-- `latest.json` Windows signature matches `gbt-app_1.5.3_x64-setup.exe.sig`
+- `gbt-app_1.5.4_x64-setup.exe` + `.sig` → OK
+- `gbt-app_1.5.4_x64_en-US.msi` + `.sig` → OK
+- `latest.json` Windows signature matches `gbt-app_1.5.4_x64-setup.exe.sig`
 
 ## Changes in this rebuild
 
@@ -87,7 +89,7 @@ Run a full audit locally:
 
 ```bash
 node scripts/deep-scan.mjs
-node scripts/verify-release.mjs v1.5.3
+node scripts/verify-release.mjs v1.5.4
 ```
 
 ## Verification commands
