@@ -68,27 +68,40 @@ export function DeviceCapsPanel() {
           {loading ? "检测中..." : "刷新"}
         </button>
       </div>
-      <div className="device-grid">
+      <div className="device-grid" role="list">
         {caps.map((cap) => {
           const Icon = ICONS[cap.id] || DeviceIcon;
           return (
-            <div
+            <button
               key={cap.id}
+              type="button"
               className="device-card"
               onClick={() => handleClick(cap.id, cap.name)}
               title={cap.detail || cap.name}
+              role="listitem"
+              aria-label={`测试 ${cap.name}`}
+              disabled={loading}
             >
               <Icon />
               <span className="device-card-label">{cap.name}</span>
               {cap.available === true && <span className="text-xs" style={{ color: "var(--success)" }}>可用</span>}
               {cap.available === false && <span className="text-xs" style={{ color: "var(--error)" }}>不可用</span>}
               {cap.available === null && <span className="text-xs text-subtle">检测中</span>}
-            </div>
+            </button>
           );
         })}
       </div>
       {result && (
-        <div className="mt-3 text-sm" style={{ color: result.text.startsWith("✓") ? "var(--success)" : "var(--fg-dim)" }}>
+        <div
+          className="mt-3 text-sm"
+          style={{
+            color: result.text.startsWith("✓")
+              ? "var(--success)"
+              : result.text.startsWith("✗")
+                ? "var(--error)"
+                : "var(--fg-dim)",
+          }}
+        >
           {result.text}
         </div>
       )}

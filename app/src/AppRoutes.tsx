@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useBackend } from "./providers/BackendProvider";
 import { useCoreState } from "./providers/CoreStateProvider";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
@@ -8,14 +9,19 @@ import Welcome from "./pages/Welcome";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { initialized, apiKeySet } = useCoreState();
+  const { safeMode } = useBackend();
   const location = useLocation();
 
-  if (!initialized) {
+  if (!initialized && !safeMode) {
     return (
       <div className="boot-screen">
         <div className="spinner" />
       </div>
     );
+  }
+
+  if (safeMode && location.pathname === "/settings") {
+    return <>{children}</>;
   }
 
   if (!apiKeySet && location.pathname !== "/welcome") {

@@ -16,9 +16,12 @@ export interface UserProfile {
   freeTier: boolean;
 }
 
+const THEME_CYCLE: ThemeMode[] = ["dark", "light", "system"];
+
 interface AppState {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
 
   backend: BackendInfo;
   setBackendStatus: (status: BackendInfo["status"]) => void;
@@ -27,15 +30,64 @@ interface AppState {
 
   profile: UserProfile;
   setProfile: (profile: Partial<UserProfile>) => void;
+
+  lastProvider: string;
+  setLastProvider: (provider: string) => void;
 }
 
 const MAX_LOG_LINES = 200;
 
+function loadTheme(): ThemeMode {
+  try {
+    const saved = localStorage.getItem("gbt-theme");
+    if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  } catch {
+    // ignore
+  }
+  return "dark";
+}
+
+function saveTheme(theme: ThemeMode) {
+  try {
+    localStorage.setItem("gbt-theme", theme);
+  } catch {
+    // ignore
+  }
+}
+
+function loadLastProvider(): string {
+  try {
+    const saved = localStorage.getItem("gbt-last-provider");
+    if (saved) return saved;
+  } catch {
+    // ignore
+  }
+  return "OPENAI_API_KEY";
+}
+
+function saveLastProvider(provider: string) {
+  try {
+    localStorage.setItem("gbt-last-provider", provider);
+  } catch {
+    // ignore
+  }
+}
+
 export const useAppStore = create<AppState>((set) => ({
-  theme: "dark",
+  theme: loadTheme(),
   setTheme: (theme) => {
     set({ theme });
+    saveTheme(theme);
     applyTheme(theme);
+  },
+  toggleTheme: () => {
+    set((state) => {
+      const nextIndex = (THEME_CYCLE.indexOf(state.theme) + 1) % THEME_CYCLE.length;
+      const next = THEME_CYCLE[nextIndex];
+      saveTheme(next);
+      applyTheme(next);
+      return { theme: next };
+    });
   },
 
   backend: {
@@ -62,6 +114,12 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setProfile: (profile) =>
     set((state) => ({ profile: { ...state.profile, ...profile } })),
+
+  lastProvider: loadLastProvider(),
+  setLastProvider: (provider) => {
+    set({ lastProvider: provider });
+    saveLastProvider(provider);
+  },
 }));
 
 function applyTheme(theme: ThemeMode) {

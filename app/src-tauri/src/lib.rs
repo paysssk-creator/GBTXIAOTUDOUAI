@@ -163,9 +163,35 @@ fn emit_status(app: &AppHandle, status: BackendStatus, error: Option<String>) {
     let _ = app.emit("backend-status", payload);
 }
 
+async fn try_health_check() -> bool {
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+    match client.get(HEALTH_URL).send().await {
+        Ok(resp) => resp.status().is_success(),
+        Err(_) => false,
+    }
+}
+
 #[tauri::command]
 async fn start_backend(app: AppHandle, state: State<'_, BackendHandle>) -> Result<BackendInfo, String> {
     if port_in_use(BACKEND_PORT) {
+        // Port is occupied; it may be a leftover GBT sidecar from a previous run.
+        // If it is healthy, reuse it instead of failing.
+        if try_health_check().await {
+            let data_dir = data_dir().map_err(|e| e.to_string())?;
+            state.set_status(BackendStatus::Healthy);
+            emit_status(&app, BackendStatus::Healthy, None);
+            return Ok(BackendInfo {
+                port: BACKEND_PORT,
+                data_dir: data_dir.to_string_lossy().to_string(),
+                status: "healthy".to_string(),
+            });
+        }
         return Err(format!("端口 {} 已被占用，请先关闭其他 GBT 实例", BACKEND_PORT));
     }
 
@@ -391,6 +417,12 @@ fn open_data_dir() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    opener::open(&url).map_err(|e| format!("无法打开链接: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
 fn log_frontend_error(message: String, stack: Option<String>) {
     eprintln!("[frontend-error] {}", message);
     if let Some(s) = stack {
@@ -430,6 +462,7 @@ pub fn run() {
             restart_backend,
             backend_status,
             open_data_dir,
+            open_url,
             log_frontend_error,
             open_devtools
         ])
@@ -443,13 +476,12 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, event| match event {
-            RunEvent::ExitRequested { .. } => {
+        .run(|_app_handle, event| {
+            if let RunEvent::ExitRequested { .. } = event {
                 let state = _app_handle.state::<BackendHandle>();
                 tauri::async_runtime::block_on(async move {
                     let _ = stop_backend_inner(&state).await;
                 });
             }
-            _ => {}
         });
 }

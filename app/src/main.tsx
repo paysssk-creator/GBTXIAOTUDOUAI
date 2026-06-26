@@ -5,8 +5,6 @@ import "./index.css";
 import { isTauri } from "./lib/tauri";
 import { invoke } from "@tauri-apps/api/core";
 
-console.log("[main] GBT app frontend booting");
-
 function logToRust(level: "error" | "warn", message: string, stack?: string) {
   if (isTauri()) {
     invoke("log_frontend_error", { message: `[${level}] ${message}`, stack }).catch(() => {
@@ -39,7 +37,6 @@ try {
       <App />
     </React.StrictMode>
   );
-  console.log("[main] App rendered");
 } catch (err) {
   console.error("[main] Failed to render app:", err);
   const message = err instanceof Error ? err.message : String(err);

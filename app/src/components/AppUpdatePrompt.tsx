@@ -1,11 +1,32 @@
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAppUpdate } from "../hooks/useAppUpdate";
 
 export function AppUpdatePrompt() {
-  const { phase, info, error, install, checkForUpdate, reset } =
-    useAppUpdate({ autoCheck: true, autoDownload: true });
+  const {
+    phase,
+    info,
+    error,
+    bytesDownloaded,
+    totalBytes,
+    relaunch,
+    checkForUpdate,
+    reset,
+  } = useAppUpdate({ autoCheck: true, autoDownload: true });
 
-  if (phase === "idle" || phase === "checking" || phase === "available" || phase === "downloading") {
+  useEffect(() => {
+    if (phase !== "ready_to_install" && phase !== "error") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        reset();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [phase, reset]);
+
+  if (phase === "idle" || phase === "checking" || phase === "available") {
     return null;
   }
 
@@ -30,6 +51,26 @@ export function AppUpdatePrompt() {
         )}
       </div>
       <div className="update-prompt-body">
+        {phase === "downloading" && (
+          <>
+            <p className="mb-2">
+              正在下载更新{info?.version ? ` ${info.version}` : ""}...
+            </p>
+            <div className="progress-bar">
+              <div
+                className="progress-bar-fill"
+                style={{
+                  width: `${totalBytes ? Math.round((bytesDownloaded / totalBytes) * 100) : 0}%`,
+                }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-dim">
+              {formatBytes(bytesDownloaded)}
+              {totalBytes ? ` / ${formatBytes(totalBytes)}` : ""}
+            </p>
+          </>
+        )}
+
         {phase === "ready_to_install" && (
           <>
             <p>
@@ -38,7 +79,7 @@ export function AppUpdatePrompt() {
                 : "新版本已下载完成，重启后即可使用。"}
             </p>
             <div className="update-prompt-actions">
-              <button className="btn btn-primary" onClick={install}>
+              <button className="btn btn-primary" onClick={relaunch}>
                 立即重启
               </button>
               <button className="btn btn-ghost" onClick={reset}>
@@ -85,4 +126,12 @@ function UpdateIcon() {
       <path d="M9.25 6.75a.75.75 0 011.5 0v3.69l2.22 2.22a.75.75 0 11-1.06 1.06l-2.44-2.44a.75.75 0 01-.22-.53V6.75z" />
     </svg>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log10(bytes) / 3));
+  const value = bytes / 10 ** (i * 3);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }

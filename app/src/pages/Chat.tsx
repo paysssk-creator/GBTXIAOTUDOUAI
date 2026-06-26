@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBackend } from "../providers/BackendProvider";
 
 const CHAT_URL = "http://127.0.0.1:8765/";
+const LOAD_TIMEOUT_MS = 8000;
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -10,14 +11,50 @@ export default function Chat() {
   const [iframeKey, setIframeKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLoadTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   const reload = useCallback(() => {
     setLoading(true);
     setError(false);
+    clearLoadTimeout();
     setIframeKey((k) => k + 1);
-  }, []);
+  }, [clearLoadTimeout]);
+
+  useEffect(() => {
+    if (loading && !error) {
+      timeoutRef.current = setTimeout(() => {
+        setLoading(false);
+        setError(true);
+      }, LOAD_TIMEOUT_MS);
+    }
+    return clearLoadTimeout;
+  }, [loading, error, clearLoadTimeout]);
 
   const isReady = status === "healthy";
+
+  useEffect(() => {
+    if (status === "healthy" && error) {
+      reload();
+    }
+  }, [status, error, reload]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        reload();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [reload]);
 
   return (
     <div className="chat-page">
@@ -35,8 +72,14 @@ export default function Chat() {
         <span className="chat-toolbar-title">GBT Chat</span>
         <div className="chat-toolbar-spacer" />
         {!isReady && (
-          <button className="btn btn-primary btn-sm chat-toolbar-btn" onClick={restart}>
-            重启后端
+          <button
+            className="btn btn-primary btn-sm chat-toolbar-btn"
+            onClick={restart}
+            disabled={status === "starting"}
+            aria-busy={status === "starting"}
+            title="重新启动 GBT 后端"
+          >
+            {status === "starting" ? "启动中..." : "重启后端"}
           </button>
         )}
         <button
@@ -73,10 +116,12 @@ export default function Chat() {
           title="GBT Chat"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
           onLoad={() => {
+            clearLoadTimeout();
             setLoading(false);
             setError(false);
           }}
           onError={() => {
+            clearLoadTimeout();
             setLoading(false);
             setError(true);
           }}

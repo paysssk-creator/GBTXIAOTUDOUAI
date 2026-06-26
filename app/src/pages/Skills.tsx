@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "../providers/ToastProvider";
 import { useSkills, type SkillResult } from "../hooks/useSkills";
 
 interface SkillRun {
@@ -28,13 +29,46 @@ function formatJson(value: unknown): string {
   }
 }
 
+function ClearIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function resultText(run: SkillRun): string {
+  const parts: string[] = [];
+  if (run.text) parts.push(`输入: ${run.text}`);
+  if (run.result.message) parts.push(run.result.message);
+  if (run.result.error) parts.push(`错误: ${run.result.error}`);
+  if (run.result.data !== undefined && run.result.data !== null) {
+    parts.push(formatJson(run.result.data));
+  }
+  return parts.join("\n\n");
+}
+
 export default function Skills() {
   const { skills, loading, invokeSkill } = useSkills();
+  const { showToast } = useToast();
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [running, setRunning] = useState<string | null>(null);
   const [history, setHistory] = useState<SkillRun[]>([]);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -67,6 +101,11 @@ export default function Skills() {
       },
       ...prev.slice(0, 9),
     ]);
+    if (res.ok) {
+      showToast(`${skill.description || skill.name} 执行成功`, "success");
+    } else {
+      showToast(`${skill.description || skill.name} 执行失败`, "error");
+    }
   };
 
   return (
@@ -91,12 +130,26 @@ export default function Skills() {
         </div>
         <div className="card">
           <div className="card-title">搜索技能</div>
-          <input
-            className="input"
-            placeholder="按名称或描述过滤..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="password-input-wrap">
+            <input
+              ref={searchRef}
+              className="input"
+              placeholder="按名称或描述过滤..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setQuery("")}
+                aria-label="清空搜索"
+                tabIndex={-1}
+              >
+                <ClearIcon />
+              </button>
+            )}
+          </div>
           <p className="text-xs text-dim mt-2">
             共 {skills.length} 个技能，当前显示 {filtered.length} 个
           </p>
@@ -129,7 +182,8 @@ export default function Skills() {
             <button
               className="btn btn-primary btn-sm w-full"
               onClick={() => handleInvoke(skill)}
-              disabled={running === skill.name}
+              disabled={running !== null}
+              aria-busy={running === skill.name}
             >
               {running === skill.name ? "执行中..." : "执行"}
             </button>
@@ -155,7 +209,23 @@ export default function Skills() {
                     <span className="skill-result-dot" />
                     {run.description || run.name}
                   </div>
-                  <span className="text-xs text-subtle">{run.time}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-subtle">{run.time}</span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(resultText(run));
+                          showToast("已复制结果", "success");
+                        } catch {
+                          showToast("复制失败", "error");
+                        }
+                      }}
+                      aria-label="复制结果"
+                    >
+                      复制
+                    </button>
+                  </div>
                 </div>
                 {run.text && <p className="skill-result-message">输入: {run.text}</p>}
                 {run.result.message && <p className="skill-result-message">{run.result.message}</p>}

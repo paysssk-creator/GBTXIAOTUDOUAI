@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchData } from "../lib/api";
+import { useBackend } from "../providers/BackendProvider";
 
 interface MetricsSnapshot {
   current?: { provider?: string; model?: string };
@@ -24,6 +25,7 @@ interface Metrics {
 export function LLMMetricsPanel() {
   const [metrics, setMetrics] = useState<Metrics>({});
   const [loading, setLoading] = useState(false);
+  const { status } = useBackend();
 
   const refresh = async () => {
     setLoading(true);
@@ -50,10 +52,17 @@ export function LLMMetricsPanel() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (status === "healthy") {
+      refresh();
+    }
+  }, [status]);
+
   const items = [
     { label: "累计请求", value: metrics.requests ?? "-" },
     { label: "输入 Token", value: metrics.tokensIn ?? "-" },
     { label: "输出 Token", value: metrics.tokensOut ?? "-" },
+    { label: "平均延迟", value: metrics.avgLatency !== undefined ? `${metrics.avgLatency.toFixed(2)}s` : "-" },
     { label: "预估费用", value: metrics.costRmb !== undefined ? `¥${metrics.costRmb.toFixed(4)}` : "-" },
   ];
 

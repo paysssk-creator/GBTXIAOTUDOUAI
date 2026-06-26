@@ -93,17 +93,16 @@ export function useAppUpdate(options: UseAppUpdateOptions = {}) {
     }
   }, [autoDownload, reset]);
 
-  const install = useCallback(async () => {
+  const relaunchApp = useCallback(async () => {
     setPhase("installing");
     try {
-      await info?.install();
       setPhase("restarting");
       await relaunch();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setPhase("error");
     }
-  }, [info]);
+  }, []);
 
   useEffect(() => {
     if (autoCheck) {
@@ -121,7 +120,7 @@ export function useAppUpdate(options: UseAppUpdateOptions = {}) {
     error,
     checkForUpdate,
     download,
-    install,
+    relaunch: relaunchApp,
     reset,
   };
 }

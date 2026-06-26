@@ -8,6 +8,7 @@ interface BackendContextValue {
   start: () => Promise<void>;
   restart: () => Promise<void>;
   stop: () => Promise<void>;
+  clearLogs: () => void;
   status: "idle" | "starting" | "healthy" | "failed";
   logs: string[];
   error: string | null;
@@ -27,6 +28,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
   const enterSafeMode = useCallback(() => {
     setSafeMode(true);
+  }, []);
+
+  const clearLogs = useCallback(() => {
+    logsRef.current = [];
+    forceUpdate({});
   }, []);
 
   const appendLog = useCallback((line: string) => {
@@ -82,6 +88,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setStatus("starting");
     setError(null);
     logsRef.current = [];
+    forceUpdate({});
     try {
       const info = (await invoke("start_backend")) as {
         port: number;
@@ -106,6 +113,8 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     if (!isTauri()) return;
     setStatus("starting");
     setError(null);
+    logsRef.current = [];
+    forceUpdate({});
     try {
       const info = (await invoke("restart_backend")) as {
         port: number;
@@ -139,7 +148,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <BackendContext.Provider
-      value={{ start, restart, stop, status, logs: logsRef.current, error, safeMode, enterSafeMode }}
+      value={{ start, restart, stop, clearLogs, status, logs: logsRef.current, error, safeMode, enterSafeMode }}
     >
       {children}
     </BackendContext.Provider>
@@ -158,10 +167,10 @@ async function pollUntilReady(
   appendLog: (line: string) => void
 ) {
   const HEALTH_URL = "http://127.0.0.1:8765/api/health";
-  const MAX_FAILS = 40;
-  let failures = 0;
+  const MAX_ATTEMPTS = 40;
+  const INITIAL_DELAY_MS = 400;
 
-  while (failures < MAX_FAILS) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 2000);
@@ -173,15 +182,16 @@ async function pollUntilReady(
         appendLog("[Health] backend ready");
         return;
       }
-    } catch {
-      // ignore
+      appendLog(`[Health] HTTP ${res.status} (${attempt}/${MAX_ATTEMPTS})`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      appendLog(`[Health] not ready (${attempt}/${MAX_ATTEMPTS}): ${message}`);
     }
-    failures++;
-    appendLog(`[Health] waiting (${failures}/${MAX_FAILS})...`);
-    await new Promise((r) => setTimeout(r, 800));
+    const delay = Math.min(INITIAL_DELAY_MS * 2 ** Math.floor(attempt / 5), 3000);
+    await new Promise((r) => setTimeout(r, delay));
   }
 
   setStatus("failed");
-  setError("后端健康检查超时");
+  setError("后端健康检查超时，请检查端口 8765 是否被占用或后端是否崩溃");
   appendLog("[Error] backend health check timed out");
 }

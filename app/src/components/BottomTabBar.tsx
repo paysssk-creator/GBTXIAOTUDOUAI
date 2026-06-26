@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const IS_MAC = navigator.platform.toLowerCase().includes("mac");
+const MODIFIER = IS_MAC ? "⌘" : "Ctrl";
+
 const TABS = [
-  { id: "home", label: "主页", path: "/home" },
-  { id: "chat", label: "对话", path: "/chat" },
-  { id: "skills", label: "Skills", path: "/skills" },
-  { id: "settings", label: "设置", path: "/settings" },
+  { id: "home", label: "主页", path: "/home", shortcut: `${MODIFIER}+1` },
+  { id: "chat", label: "对话", path: "/chat", shortcut: `${MODIFIER}+2` },
+  { id: "skills", label: "Skills", path: "/skills", shortcut: `${MODIFIER}+3` },
+  { id: "settings", label: "设置", path: "/settings", shortcut: `${MODIFIER}+4` },
 ];
 
 function HomeIcon() {
@@ -53,11 +56,29 @@ export function BottomTabBar() {
   const navigate = useNavigate();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  if (location.pathname === "/welcome") {
+    return null;
+  }
+
   const activeIndex = TABS.findIndex((tab) => location.pathname.startsWith(tab.path));
 
   useEffect(() => {
     refs.current = refs.current.slice(0, TABS.length);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const num = Number.parseInt(e.key, 10);
+      if (Number.isNaN(num) || num < 1 || num > TABS.length) return;
+      e.preventDefault();
+      const tab = TABS[num - 1];
+      navigate(tab.path);
+      refs.current[num - 1]?.focus();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
@@ -87,6 +108,7 @@ export function BottomTabBar() {
               tabIndex={active ? 0 : -1}
               onClick={() => navigate(tab.path)}
               onKeyDown={(e) => handleKeyDown(e, index)}
+              title={`${tab.label} (${tab.shortcut})`}
             >
               <Icon />
               <span>{tab.label}</span>

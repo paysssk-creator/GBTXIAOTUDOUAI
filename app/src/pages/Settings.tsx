@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { check } from "@tauri-apps/plugin-updater";
 import { useBackend } from "../providers/BackendProvider";
+import { useToast } from "../providers/ToastProvider";
 import { useAppStore } from "../store";
 import { fetchData, postJSON } from "../lib/api";
-import { isTauri } from "../lib/tauri";
+import { isTauri, openExternal } from "../lib/tauri";
+import { PasswordInput } from "../components/PasswordInput";
 
 const PROVIDER_OPTIONS = [
   { id: "OPENAI_API_KEY", name: "OpenAI (GPT-4o / GPT-5)" },
@@ -17,14 +19,31 @@ const PROVIDER_OPTIONS = [
   { id: "MOONSHOT_API_KEY", name: "Kimi (Moonshot)" },
 ];
 
+const PROVIDER_SIGNUP_URLS: Record<string, string> = {
+  OPENAI_API_KEY: "https://platform.openai.com/signup",
+  ANTHROPIC_API_KEY: "https://console.anthropic.com/settings/keys",
+  GLM_API_KEY: "https://open.bigmodel.cn/usercenter/apikeys",
+  GEMINI_API_KEY: "https://aistudio.google.com/app/apikey",
+  DEEPSEEK_API_KEY: "https://platform.deepseek.com/api_keys",
+  QWEN_API_KEY: "https://bailian.console.aliyun.com/?apiKey=1#/api-key",
+  GROK_API_KEY: "https://console.x.ai/team/default/api-keys",
+  MOONSHOT_API_KEY: "https://platform.moonshot.cn/console/api-keys",
+};
+
 export default function Settings() {
-  const { theme, setTheme } = useAppStore();
-  const { status, logs, restart, stop } = useBackend();
-  const [provider, setProvider] = useState(PROVIDER_OPTIONS[0].id);
+  const { theme, setTheme, lastProvider, setLastProvider } = useAppStore();
+  const { status, logs, restart, stop, clearLogs } = useBackend();
+  const { showToast } = useToast();
+  const [provider, setProvider] = useState(lastProvider);
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
+
+  const providerName = PROVIDER_OPTIONS.find((p) => p.id === provider)?.name;
+  const signupUrl = PROVIDER_SIGNUP_URLS[provider];
+  const version = useAppStore((state) => state.profile.version);
+  const dataDir = useAppStore((state) => state.backend.dataDir);
 
   useEffect(() => {
     fetchData<{ api_key_set?: boolean }>("/api/status")
@@ -41,31 +60,89 @@ export default function Settings() {
       await postJSON("/api/config", { [provider]: apiKey.trim() });
       setMessage("API Key 已保存，重启后生效");
       setApiKey("");
+      showToast("API Key 已保存", "success");
     } catch (err) {
-      setMessage(`保存失败: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage(`保存失败: ${msg}`);
+      showToast(`保存失败: ${msg}`, "error");
     } finally {
       setSaving(false);
     }
   };
 
   const openDataDir = async () => {
-    if (isTauri()) {
+    if (!isTauri()) {
+      showToast("当前环境不支持打开目录", "warning");
+      return;
+    }
+    try {
       await invoke("open_data_dir");
+      showToast("已打开数据目录", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`打开失败: ${msg}`, "error");
+    }
+  };
+
+  const handleRestart = async () => {
+    try {
+      await restart();
+      showToast("后端重启中...", "info");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`重启失败: ${msg}`, "error");
+    }
+  };
+
+  const handleStop = async () => {
+    if (!window.confirm("确定要停止 GBT 后端吗？停止后将无法使用对话和 Skills。")) {
+      return;
+    }
+    try {
+      await stop();
+      showToast("后端已停止", "info");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`停止失败: ${msg}`, "error");
     }
   };
 
   const checkForUpdate = async () => {
     if (!isTauri()) {
       setUpdateMessage("当前环境不支持自动更新");
+      showToast("当前环境不支持自动更新", "warning");
       return;
     }
     setUpdateMessage("正在检查更新...");
     try {
       const update = await check();
-      setUpdateMessage(update ? `发现新版本 ${update.version}，重启后安装` : "当前已是最新版本");
+      if (update) {
+        setUpdateMessage(`发现新版本 ${update.version}，重启后安装`);
+        showToast(`发现新版本 ${update.version}`, "success");
+      } else {
+        setUpdateMessage("当前已是最新版本");
+        showToast("当前已是最新版本", "info");
+      }
     } catch (err) {
-      setUpdateMessage(`检查失败: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      setUpdateMessage(`检查失败: ${msg}`);
+      showToast(`检查失败: ${msg}`, "error");
     }
+  };
+
+  const copyLogs = async () => {
+    if (logs.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(logs.join("\n"));
+      showToast("日志已复制", "success");
+    } catch {
+      showToast("复制失败", "error");
+    }
+  };
+
+  const handleClearLogs = () => {
+    clearLogs();
+    showToast("日志已清空", "info");
   };
 
   return (
@@ -76,29 +153,52 @@ export default function Settings() {
       </div>
 
       <div className="grid grid-2">
-        <div className="card">
+        <form
+          className="card"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveApiKey();
+          }}
+        >
           <div className="card-title">API Key</div>
           <select
             className="input"
             value={provider}
-            onChange={(e) => setProvider(e.target.value)}
+            onChange={(e) => {
+              setProvider(e.target.value);
+              setLastProvider(e.target.value);
+            }}
           >
             {PROVIDER_OPTIONS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <input
-            className="input mt-2"
-            type="password"
-            placeholder={`输入你的 ${PROVIDER_OPTIONS.find((p) => p.id === provider)?.name} API Key`}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-          />
+          <div className="mt-2">
+            <PasswordInput
+              value={apiKey}
+              onChange={setApiKey}
+              placeholder={`输入你的 ${providerName} API Key`}
+              onSubmit={saveApiKey}
+            />
+          </div>
+          {signupUrl && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm w-full mt-2"
+              onClick={() =>
+                openExternal(signupUrl).catch((err) =>
+                  showToast(`打开链接失败: ${err instanceof Error ? err.message : String(err)}`, "error")
+                )
+              }
+            >
+              还没有 {providerName} API Key？去官网注册
+            </button>
+          )}
           {message && <p className="text-sm mt-2 text-dim">{message}</p>}
-          <button className="btn btn-primary mt-3" onClick={saveApiKey} disabled={saving}>
+          <button type="submit" className="btn btn-primary mt-3" disabled={saving} aria-busy={saving}>
             {saving ? "保存中..." : "保存 API Key"}
           </button>
-        </div>
+        </form>
 
         <div className="card">
           <div className="card-title">外观</div>
@@ -107,7 +207,11 @@ export default function Settings() {
               <button
                 key={m}
                 className={`btn ${theme === m ? "btn-primary" : "btn-ghost"}`}
-                onClick={() => setTheme(m)}
+                onClick={() => {
+                  setTheme(m);
+                  showToast(m === "light" ? "已切换浅色主题" : m === "dark" ? "已切换深色主题" : "已跟随系统主题", "success");
+                }}
+                aria-pressed={theme === m}
               >
                 {m === "light" ? "浅色" : m === "dark" ? "深色" : "跟随系统"}
               </button>
@@ -117,12 +221,19 @@ export default function Settings() {
 
         <div className="card">
           <div className="card-title">后端</div>
-          <p className="text-sm text-dim mb-3">状态: {status}</p>
+          <p className="text-sm text-dim mb-1">状态: {status}</p>
+          {version && <p className="text-sm text-dim mb-1">版本: {version}</p>}
+          {dataDir && (
+            <p className="text-sm text-dim mb-3" style={{ wordBreak: "break-all" }}>
+              数据目录: {dataDir}
+            </p>
+          )}
+          {!dataDir && <div className="mb-3" />}
           <div className="flex gap-2">
-            <button className="btn btn-ghost" onClick={restart}>
+            <button className="btn btn-ghost" onClick={handleRestart}>
               重启后端
             </button>
-            <button className="btn btn-ghost" onClick={stop}>
+            <button className="btn btn-ghost" onClick={handleStop}>
               停止后端
             </button>
             <button className="btn btn-ghost" onClick={openDataDir}>
@@ -145,14 +256,14 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => navigator.clipboard.writeText(logs.join("\n"))}
+                onClick={copyLogs}
                 disabled={logs.length === 0}
               >
                 复制
               </button>
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => useAppStore.getState().setBackendInfo({ logs: [] })}
+                onClick={handleClearLogs}
                 disabled={logs.length === 0}
               >
                 清空

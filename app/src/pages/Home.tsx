@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBackend } from "../providers/BackendProvider";
 import { useCoreState } from "../providers/CoreStateProvider";
+import { useToast } from "../providers/ToastProvider";
 import { DeviceCapsPanel } from "../components/DeviceCapsPanel";
 import { LLMMetricsPanel } from "../components/LLMMetricsPanel";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { status, restart } = useBackend();
+  const { status, restart, error } = useBackend();
+  const { showToast } = useToast();
   const { apiKeySet, model, version } = useCoreState();
 
   const isReady = status === "healthy";
@@ -31,6 +34,9 @@ export default function Home() {
               {isReady ? "运行中" : apiKeySet ? "未就绪" : "未登录"}
             </span>
             {!apiKeySet && <span className="text-sm text-dim">请在设置中配置 API Key</span>}
+            {status === "failed" && error && (
+              <span className="text-sm" style={{ color: "var(--error)" }}>{error}</span>
+            )}
           </div>
           <div className="flex gap-3 mt-4">
             <button className="btn btn-primary" onClick={() => navigate("/chat")}>
@@ -61,10 +67,7 @@ export default function Home() {
             <span>配置 API Key</span>
           </button>
           {!isReady ? (
-            <button className="quick-action" onClick={restart}>
-              <ReloadIcon />
-              <span>重启后端</span>
-            </button>
+            <RestartButton restart={restart} showToast={showToast} />
           ) : (
             <button className="quick-action" onClick={() => navigate("/settings")}>
               <UpdateIcon />
@@ -76,6 +79,36 @@ export default function Home() {
 
       <DeviceCapsPanel />
     </div>
+  );
+}
+
+function RestartButton({
+  restart,
+  showToast,
+}: {
+  restart: () => Promise<void>;
+  showToast: (message: string, type?: "info" | "success" | "warning" | "error") => void;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  const handleClick = async () => {
+    setBusy(true);
+    try {
+      await restart();
+      showToast("后端重启中...", "info");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`重启失败: ${msg}`, "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button className="quick-action" onClick={handleClick} disabled={busy} aria-busy={busy} title="重新启动 GBT 后端">
+      <ReloadIcon />
+      <span>{busy ? "重启中..." : "重启后端"}</span>
+    </button>
   );
 }
 

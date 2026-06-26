@@ -24,12 +24,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
+      const stack = this.state.error.stack || this.state.error.message;
       return (
         <div className="boot-screen">
           <div className="boot-card">
-            <h1 className="boot-title" style={{ color: "var(--error)" }}>应用启动失败</h1>
+            <h1 className="boot-title" style={{ color: "var(--error)" }}>应用渲染失败</h1>
             <p className="boot-message">
-              渲染时发生错误，请尝试重启应用或重新安装。
+              发生未捕获的渲染错误，请尝试重启应用或复制错误信息反馈。
             </p>
             <pre
               style={{
@@ -45,14 +46,29 @@ export class ErrorBoundary extends Component<Props, State> {
                 whiteSpace: "pre-wrap",
               }}
             >
-              {this.state.error.stack || this.state.error.message}
+              {stack}
             </pre>
-            <button
-              className="btn btn-primary mt-3 w-full"
-              onClick={() => window.location.reload()}
-            >
-              重试
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                className="btn btn-primary flex-1"
+                onClick={() => window.location.reload()}
+              >
+                重试
+              </button>
+              <button
+                className="btn btn-ghost flex-1"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(stack);
+                    alert("错误信息已复制到剪贴板");
+                  } catch {
+                    alert("复制失败，请手动复制上方日志");
+                  }
+                }}
+              >
+                复制错误
+              </button>
+            </div>
           </div>
         </div>
       );

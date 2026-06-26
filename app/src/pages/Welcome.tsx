@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../providers/ToastProvider";
+import { useAppStore } from "../store";
 import { postJSON } from "../lib/api";
+import { openExternal } from "../lib/tauri";
+import { PasswordInput } from "../components/PasswordInput";
 
 const PROVIDER_OPTIONS = [
   { id: "OPENAI_API_KEY", name: "OpenAI (GPT-4o / GPT-5)" },
@@ -13,12 +17,28 @@ const PROVIDER_OPTIONS = [
   { id: "MOONSHOT_API_KEY", name: "Kimi (Moonshot)" },
 ];
 
+const PROVIDER_SIGNUP_URLS: Record<string, string> = {
+  OPENAI_API_KEY: "https://platform.openai.com/signup",
+  ANTHROPIC_API_KEY: "https://console.anthropic.com/settings/keys",
+  GLM_API_KEY: "https://open.bigmodel.cn/usercenter/apikeys",
+  GEMINI_API_KEY: "https://aistudio.google.com/app/apikey",
+  DEEPSEEK_API_KEY: "https://platform.deepseek.com/api_keys",
+  QWEN_API_KEY: "https://bailian.console.aliyun.com/?apiKey=1#/api-key",
+  GROK_API_KEY: "https://console.x.ai/team/default/api-keys",
+  MOONSHOT_API_KEY: "https://platform.moonshot.cn/console/api-keys",
+};
+
 export default function Welcome() {
   const navigate = useNavigate();
-  const [provider, setProvider] = useState(PROVIDER_OPTIONS[0].id);
+  const { lastProvider, setLastProvider } = useAppStore();
+  const { showToast } = useToast();
+  const [provider, setProvider] = useState(lastProvider);
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const providerName = PROVIDER_OPTIONS.find((p) => p.id === provider)?.name;
+  const signupUrl = PROVIDER_SIGNUP_URLS[provider];
 
   const start = async () => {
     setSaving(true);
@@ -26,10 +46,13 @@ export default function Welcome() {
     try {
       if (apiKey.trim()) {
         await postJSON("/api/config", { [provider]: apiKey.trim() });
+        showToast("API Key 已保存", "success");
       }
       navigate("/home");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+      showToast(`保存失败: ${msg}`, "error");
     } finally {
       setSaving(false);
     }
@@ -45,21 +68,38 @@ export default function Welcome() {
         <select
           className="input"
           value={provider}
-          onChange={(e) => setProvider(e.target.value)}
+          onChange={(e) => {
+            setProvider(e.target.value);
+            setLastProvider(e.target.value);
+          }}
         >
           {PROVIDER_OPTIONS.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-        <input
-          className="input mt-2"
-          type="password"
-          placeholder="API Key（可选）"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-        />
+        <div className="mt-2">
+          <PasswordInput
+            value={apiKey}
+            onChange={setApiKey}
+            placeholder="API Key（可选）"
+            onSubmit={start}
+          />
+        </div>
         {error && <p className="text-sm mt-2" style={{ color: "var(--error)" }}>{error}</p>}
-        <button className="btn btn-primary mt-3 w-full" onClick={start} disabled={saving}>
+        {signupUrl && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm w-full mt-2"
+            onClick={() =>
+              openExternal(signupUrl).catch((err) =>
+                showToast(`打开链接失败: ${err instanceof Error ? err.message : String(err)}`, "error")
+              )
+            }
+          >
+            还没有 {providerName} API Key？去官网注册
+          </button>
+        )}
+        <button className="btn btn-primary mt-3 w-full" onClick={start} disabled={saving} aria-busy={saving}>
           {saving ? "保存中..." : "进入 GBT"}
         </button>
         <button className="btn btn-ghost w-full" onClick={() => navigate("/home")}>
