@@ -75,6 +75,21 @@ RWQp6/zc5e5gDNNSKZ6JTIWsC8sFoxHjigUsVje0SdpbreDBEMQurCKk
 - `proc-macro-error` and `unic-*` are transitive dependencies of the build-time macro/identifier parsing pipeline. No runtime surface is exposed.
 - No actionable patches are currently available upstream. Monitor `cargo audit` output on each release.
 
+## Reusable verification tooling
+
+The following scripts are now committed to the repository for reproducible audits:
+
+- `scripts/deep-scan.mjs` — scans `app/src` for debug code, hardcoded secrets, TODO markers and unexpected external URLs.
+- `scripts/verify-release.mjs [version]` — downloads release assets from GitHub and verifies SHA-256 + minisign signatures.
+- `scripts/minisign-verify/` — small Rust CLI used by `verify-release.mjs` to verify minisign signatures.
+
+Run a full audit locally:
+
+```bash
+node scripts/deep-scan.mjs
+node scripts/verify-release.mjs v1.5.3
+```
+
 ## Verification commands
 
 ```bash
