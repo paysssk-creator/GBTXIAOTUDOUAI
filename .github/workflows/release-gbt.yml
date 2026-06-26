@@ -51,17 +51,16 @@ jobs:
           VERSION="${VERSION#v}"
           mkdir -p release-assets
 
-          # Windows: MSI + NSIS
+          # Windows: NSIS setup + MSI
           if [ -d "dl/x86_64-pc-windows-msvc" ]; then
             find "dl/x86_64-pc-windows-msvc" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.sig' \) | while read -r f; do
               base=$(basename "$f")
-              ext="${base##*.}"
               case "$base" in
-                gbt-app_*_x64_en-US.msi|gbt-app_*_x64.msi)      new="gbt-app_${VERSION}_x86_64-pc-windows-msvc.msi" ;;
-                gbt-app_*_x86_64.exe)                           new="gbt-app_${VERSION}_x86_64-pc-windows-msvc.exe" ;;
-                gbt-app_*_x64_en-US.msi.sig|gbt-app_*_x64.msi.sig) new="gbt-app_${VERSION}_x86_64-pc-windows-msvc.msi.sig" ;;
-                gbt-app_*_x86_64.exe.sig)                       new="gbt-app_${VERSION}_x86_64-pc-windows-msvc.exe.sig" ;;
-                *)                                              new="gbt-app_${VERSION}_x86_64-pc-windows-msvc.${ext}" ;;
+                gbt-app_*_x64-setup.exe)        new="gbt-app_${VERSION}_x64-setup.exe" ;;
+                gbt-app_*_x64-setup.exe.sig)    new="gbt-app_${VERSION}_x64-setup.exe.sig" ;;
+                gbt-app_*_x64_en-US.msi)        new="gbt-app_${VERSION}_x64_en-US.msi" ;;
+                gbt-app_*_x64_en-US.msi.sig)    new="gbt-app_${VERSION}_x64_en-US.msi.sig" ;;
+                *)                              new="$base" ;;
               esac
               cp "$f" "release-assets/$new"
             done
@@ -167,10 +166,10 @@ jobs:
 
           platforms = {}
 
-          win_msi = f"gbt-app_{version}_x86_64-pc-windows-msvc.msi"
-          win_msi_sig = read_sig(f"release-assets/{win_msi}.sig")
-          if win_msi_sig:
-              platforms['windows-x86_64'] = {"signature": win_msi_sig, "url": asset(win_msi)}
+          win_setup = f"gbt-app_{version}_x64-setup.exe"
+          win_setup_sig = read_sig(f"release-assets/{win_setup}.sig")
+          if win_setup_sig:
+              platforms['windows-x86_64'] = {"signature": win_setup_sig, "url": asset(win_setup)}
 
           darwin_arm = f"gbt-app_{version}_aarch64-apple-darwin.app.tar.gz"
           darwin_arm_sig = read_sig(f"release-assets/{darwin_arm}.sig")
