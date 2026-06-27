@@ -73,37 +73,40 @@ Write-Output "OK"
 
 
 def _probe_microphone_native() -> Dict[str, Any]:
-    """麦克风原生探测（在线程中执行）"""
+    """麦克风原生探测（在线程中执行），使用 sounddevice（比 pyaudio 在 Windows 上更稳定）"""
     result = {"available": False, "devices": []}
-    import pyaudio
-    pa = pyaudio.PyAudio()
-    try:
-        default_input = pa.get_default_input_device_info()
+    import sounddevice as sd
+    devices = sd.query_devices()
+    for i, info in enumerate(devices):
+        if info.get("max_input_channels", 0) > 0:
+            result["devices"].append({
+                "index": i,
+                "name": info.get("name"),
+                "maxInputChannels": info.get("max_input_channels"),
+                "defaultSampleRate": info.get("default_samplerate"),
+            })
+    default_idx = sd.default.device[0]
+    default_input = None
+    if default_idx is not None and default_idx >= 0:
+        default_input = devices[default_idx]
+    elif result["devices"]:
+        default_input = result["devices"][0]
+    if default_input:
         result["default_input"] = {
-            "index": default_input["index"],
+            "index": int(default_input["index"]) if "index" in default_input else (default_idx if default_idx >= 0 else result["devices"][0]["index"]),
             "name": default_input["name"],
-            "channels": default_input["maxInputChannels"],
-            "rate": default_input["defaultSampleRate"],
+            "channels": default_input.get("max_input_channels", 2),
+            "rate": default_input.get("default_samplerate", 44100),
         }
-        for i in range(pa.get_device_count()):
-            info = pa.get_device_info_by_index(i)
-            if info.get("maxInputChannels", 0) > 0:
-                result["devices"].append({
-                    "index": i,
-                    "name": info.get("name"),
-                    "channels": info.get("maxInputChannels"),
-                    "rate": info.get("defaultSampleRate"),
-                })
         result["available"] = True
-    finally:
-        pa.terminate()
+        result["detail"] = f"默认设备: {default_input['name']}"
     return result
 
 
 def probe_microphone() -> Dict[str, Any]:
     """麦克风能力：检查 pyaudio 与默认输入设备（带超时）"""
     try:
-        return _run_with_timeout(_probe_microphone_native, timeout=4.0)
+        return _run_with_timeout(_probe_microphone_native, timeout=10.0)
     except Exception as e:
         return {"available": False, "devices": [], "error": str(e)}
 
@@ -132,7 +135,7 @@ def _probe_bluetooth_native() -> Dict[str, Any]:
 def probe_bluetooth() -> Dict[str, Any]:
     """蓝牙能力：检查 bleak 可用性并列出附近设备（带超时）"""
     try:
-        return _run_with_timeout(_probe_bluetooth_native, timeout=5.0)
+        return _run_with_timeout(_probe_bluetooth_native, timeout=12.0)
     except Exception as e:
         return {"available": False, "adapter_ok": False, "devices": [], "error": str(e)}
 
@@ -189,7 +192,7 @@ def _probe_camera_native() -> Dict[str, Any]:
 def probe_camera() -> Dict[str, Any]:
     """摄像头能力：检查 OpenCV 是否可枚举摄像头设备（带超时）"""
     try:
-        return _run_with_timeout(_probe_camera_native, timeout=5.0)
+        return _run_with_timeout(_probe_camera_native, timeout=10.0)
     except Exception as e:
         return {"available": False, "devices": [], "error": str(e)}
 
@@ -269,10 +272,10 @@ def probe_all() -> Dict[str, Any]:
     # 限制并发探测线程数，避免多请求同时触发时线程/设备资源争用
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(probes), 4)) as pool:
         future_to_name = {pool.submit(fn): name for name, fn in probes.items()}
-        for future in concurrent.futures.as_completed(future_to_name, timeout=20):
+        for future in concurrent.futures.as_completed(future_to_name, timeout=45):
             name = future_to_name[future]
             try:
-                results[name] = future.result(timeout=2)
+                results[name] = future.result(timeout=10)
             except Exception as e:
                 results[name] = {"available": False, "error": str(e)}
     results["elapsed_ms"] = round((time.time() - t0) * 1000, 2)
@@ -327,39 +330,50 @@ def _camera_snapshot_native(index: int, save_path: str = None) -> Dict[str, Any]
 def safe_camera_snapshot(index: int = 0, save_path: str = None) -> Dict[str, Any]:
     """安全拍摄单张摄像头画面（带超时）"""
     try:
-        return _run_with_timeout(_camera_snapshot_native, timeout=5.0, index=index, save_path=save_path)
+        return _run_with_timeout(_camera_snapshot_native, timeout=10.0, index=index, save_path=save_path)
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
 
 def _audio_record_native(seconds: float, save_path: str = None) -> Dict[str, Any]:
-    """麦克风录制原生实现（在线程中执行）"""
-    import pyaudio
+    """麦克风录制原生实现（在线程中执行），使用 sounddevice（Windows 兼容性更好）"""
+    import sounddevice as sd
+    import numpy as np
     import wave
-    pa = pyaudio.PyAudio()
-    try:
-        info = pa.get_default_input_device_info()
-        rate = int(info["defaultSampleRate"])
-        channels = min(2, int(info["maxInputChannels"])) or 1
-        chunk = 1024
-        fmt = pyaudio.paInt16
-        frames = []
-        stream = pa.open(format=fmt, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
+
+    devices = sd.query_devices()
+    candidates = []
+    default_idx = sd.default.device[0]
+    if default_idx is not None and default_idx >= 0:
+        candidates.append(default_idx)
+    for i, info in enumerate(devices):
+        if info.get("max_input_channels", 0) > 0 and i not in candidates:
+            candidates.append(i)
+    if not candidates:
+        return {"ok": False, "error": "未找到可用麦克风输入设备"}
+
+    last_error = None
+    for device_index in candidates:
+        info = devices[device_index]
+        rate = int(info.get("default_samplerate", 44100))
+        channels = min(2, int(info.get("max_input_channels", 2))) or 1
         try:
-            for _ in range(0, int(rate / chunk * seconds)):
-                frames.append(stream.read(chunk, exception_on_overflow=False))
-        finally:
-            stream.stop_stream()
-            stream.close()
-        path = save_path or os.path.join(os.environ.get("GBT_HOME", os.getcwd()), "mic_test.wav")
-        with wave.open(path, "wb") as wf:
-            wf.setnchannels(channels)
-            wf.setsampwidth(pa.get_sample_size(fmt))
-            wf.setframerate(rate)
-            wf.writeframes(b"".join(frames))
-        return {"ok": True, "path": path, "duration": seconds, "rate": rate, "channels": channels}
-    finally:
-        pa.terminate()
+            recording = sd.rec(int(seconds * rate), samplerate=rate, channels=channels,
+                               dtype="int16", device=device_index)
+            sd.wait()
+            path = save_path or os.path.join(os.environ.get("GBT_HOME", os.getcwd()), "mic_test.wav")
+            with wave.open(path, "wb") as wf:
+                wf.setnchannels(channels)
+                wf.setsampwidth(2)
+                wf.setframerate(rate)
+                wf.writeframes(recording.tobytes())
+            return {"ok": True, "path": path, "duration": seconds, "rate": rate, "channels": channels,
+                    "device_index": device_index, "device_name": info.get("name"),
+                    "max_amplitude": int(np.max(np.abs(recording)))}
+        except Exception as e:
+            last_error = e
+            continue
+    return {"ok": False, "error": f"所有输入设备均无法录音: {last_error}"}
 
 
 def safe_audio_record(seconds: float = 3.0, save_path: str = None) -> Dict[str, Any]:

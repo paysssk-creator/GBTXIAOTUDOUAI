@@ -1,9 +1,12 @@
 """
 账户追踪器 — 现金/持仓/盈亏
+集成A股规则：T+1交收、100股整数倍
 """
 import logging
 from datetime import datetime
 from collections import deque
+
+from gbt.a_share_rules import a_share
 
 L = logging.getLogger("GBT.Account")
 
@@ -15,6 +18,7 @@ class Account:
         self.initial_cash = initial_cash
         self.cash = initial_cash
         self.positions = {}       # {code: {shares, avg_cost, name}}
+        self.buy_dates = {}       # {code: datetime} — T+1交收记录
         self.trade_log = deque(maxlen=200)
         self.daily_pnl = 0
         self.total_pnl = 0
@@ -59,7 +63,11 @@ class Account:
         }
 
     def buy(self, code, name, shares, price):
-        """买入"""
+        """买入 — 自动规整为100股整数倍并记录T+1买入时间"""
+        shares = a_share.normalize_lot(shares)
+        if shares <= 0:
+            return {"ok": False, "error": "买入数量不足1手(100股)"}
+
         cost = shares * price
         if cost > self.cash:
             return {"ok": False, "error": f"资金不足 (需{cost:.0f} 余额{self.cash:.0f})"}
@@ -74,6 +82,8 @@ class Account:
             pos["avg_cost"] = round(total_cost / total_shares, 2)
         else:
             self.positions[code] = {"shares": shares, "avg_cost": price, "name": name}
+
+        self.buy_dates[code] = datetime.now()
 
         entry = {
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -105,13 +115,14 @@ class Account:
         return {"ok": True, "entry": entry}
 
     def sell(self, code, shares, price):
-        """卖出"""
+        """卖出 — 自动规整为100股整数倍"""
         if code not in self.positions:
             return {"ok": False, "error": f"无持仓: {code}"}
 
         pos = self.positions[code]
-        if shares > pos["shares"]:
-            shares = pos["shares"]
+        shares = a_share.normalize_lot(min(shares, pos["shares"]))
+        if shares <= 0:
+            return {"ok": False, "error": "卖出数量不足1手(100股)"}
 
         revenue = shares * price
         cost_basis = pos["avg_cost"] * shares
@@ -165,6 +176,22 @@ class Account:
 
         L.info(f"💰 卖出 {entry['name']}({code}) {shares}股 @ {price:.2f} = ¥{revenue:.0f} | PnL: ¥{pnl:.0f}")
         return {"ok": True, "entry": entry}
+
+    def can_sell(self, code, shares=0, sell_date=None):
+        """检查是否满足A股卖出规则 (T+1、整数倍、持仓充足)"""
+        sell_date = sell_date or datetime.now()
+        if code not in self.positions:
+            return {"ok": False, "reason": f"无持仓: {code}"}
+        pos = self.positions[code]
+        normalized = a_share.normalize_lot(shares or pos["shares"])
+        if normalized <= 0:
+            return {"ok": False, "reason": "卖出数量不足1手(100股)"}
+        if normalized > pos["shares"]:
+            return {"ok": False, "reason": f"持仓不足：持有{pos['shares']}股，尝试卖出{normalized}股"}
+        buy_date = self.buy_dates.get(code)
+        if buy_date and not a_share.can_sell_today(buy_date, sell_date):
+            return {"ok": False, "reason": "T+1交收：当日买入的股票次日才能卖出"}
+        return {"ok": True, "reason": "可以卖出", "shares": normalized}
 
     def get_positions_with_value(self, market_prices=None):
         """持仓含市值"""

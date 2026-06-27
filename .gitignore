@@ -34,6 +34,7 @@ data/gbt.db
 # Test reports
 tests/capability_stress_report.json
 screenshots/*.png
+mic_test*.wav
 
 # Generated
 version_info.txt

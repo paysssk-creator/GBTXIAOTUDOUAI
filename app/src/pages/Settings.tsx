@@ -41,6 +41,8 @@ export default function Settings() {
   const [updateMessage, setUpdateMessage] = useState("");
   const [updateInfo, setUpdateInfo] = useState<{ version: string; body?: string } | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [autoAuthorize, setAutoAuthorize] = useState(false);
+  const [autoAuthorizeLoading, setAutoAuthorizeLoading] = useState(false);
 
   const providerName = PROVIDER_OPTIONS.find((p) => p.id === provider)?.name;
   const signupUrl = PROVIDER_SIGNUP_URLS[provider];
@@ -51,6 +53,11 @@ export default function Settings() {
     fetchData<{ api_key_set?: boolean }>("/api/status")
       .then((status) => {
         if (status.api_key_set) setMessage("API Key 已配置");
+      })
+      .catch(() => {});
+    fetchData<{ auto_authorize?: boolean }>("/api/trade/auto_authorize")
+      .then((data) => {
+        if (typeof data.auto_authorize === "boolean") setAutoAuthorize(data.auto_authorize);
       })
       .catch(() => {});
   }, []);
@@ -148,6 +155,24 @@ export default function Settings() {
       setUpdateMessage(`安装失败: ${msg}`);
       showToast(`安装失败: ${msg}`, "error");
       setInstalling(false);
+    }
+  };
+
+  const toggleAutoAuthorize = async () => {
+    const next = !autoAuthorize;
+    if (next && !window.confirm("开启自动授权后，AI 将直接执行交易和桌面操控，不再询问确认。\n\n若连接的是真实券商账户，可能造成真实资金损失。确定开启吗？")) {
+      return;
+    }
+    setAutoAuthorizeLoading(true);
+    try {
+      await postJSON("/api/trade/auto_authorize", { enabled: next });
+      setAutoAuthorize(next);
+      showToast(next ? "自动授权已开启" : "自动授权已关闭", next ? "warning" : "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`切换失败: ${msg}`, "error");
+    } finally {
+      setAutoAuthorizeLoading(false);
     }
   };
 
@@ -261,6 +286,22 @@ export default function Settings() {
               打开数据目录
             </button>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-title">自动授权</div>
+          <p className="text-sm text-dim mb-3">
+            开启后 AI 执行交易和桌面操控时不再进入模拟模式。
+            <span style={{ color: "var(--error)" }}>涉及真实资金账户时请务必谨慎。</span>
+          </p>
+          <button
+            className={`btn ${autoAuthorize ? "btn-primary" : "btn-ghost"}`}
+            onClick={toggleAutoAuthorize}
+            disabled={autoAuthorizeLoading}
+            aria-busy={autoAuthorizeLoading}
+          >
+            {autoAuthorizeLoading ? "切换中..." : autoAuthorize ? "自动授权：已开启" : "自动授权：已关闭"}
+          </button>
         </div>
 
         <div className="card">

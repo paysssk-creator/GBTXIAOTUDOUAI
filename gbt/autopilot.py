@@ -98,6 +98,7 @@ class PipelineResult:
     message: str
     actions_executed: int = 0
     screenshots_taken: int = 0
+    turns: int = 0
 
 
 # ── 自主操盘引擎 ──

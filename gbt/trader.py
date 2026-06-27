@@ -27,6 +27,13 @@ except ImportError:
     HAS_STRATEGY = False
     strategy_engine = None
 
+try:
+    from gbt.a_share_rules import a_share
+    HAS_A_SHARE = True
+except ImportError:
+    HAS_A_SHARE = False
+    a_share = None
+
 L = logging.getLogger("GBT.Trader")
 
 # ── 交易步骤追踪 ──
@@ -151,10 +158,13 @@ class AShareTrader:
         self.current_session = None          # 当前交易会话
         self.step_mode = True                # 逐步模式
 
+        # 风控与A股规则
+        self.risk_ctrl = risk_mgr if HAS_RISK else None
+
         # 电脑操控能力
         self.browser_profile = None          # Chrome profile
         self.use_browser_automation = True   # 使用浏览器自动化
-        
+
         # 风控冷却 — 被拦截的股票 N 分钟内不重复分析
         self.blocked_cooldown = {}  # {code: timestamp}
         self.cooldown_minutes = 120  # 冷却时长(分钟)
@@ -502,12 +512,46 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                      "shares": shares, "price": trade_price,
                      "amount": round(shares * trade_price, 2), "status": "pending"}
 
+        # ═══ A股规则硬约束 ═══
+        if HAS_A_SHARE and quote:
+            if action == "buy":
+                check = a_share.check_buy(
+                    code, shares, trade_price, quote.prev_close,
+                    available_cash=float("inf"), name=name
+                )
+            else:
+                available = 0
+                try:
+                    from gbt.account import account
+                    pos = account.positions.get(code)
+                    available = pos["shares"] if pos else 0
+                except Exception:
+                    pass
+                buy_date = None
+                try:
+                    from gbt.account import account
+                    buy_date = account.buy_dates.get(code)
+                except Exception:
+                    pass
+                check = a_share.check_sell(
+                    code, shares, trade_price, quote.prev_close,
+                    available, buy_date=buy_date, name=name
+                )
+            if not check.ok:
+                L.warning(f"🛑 A股规则拦截: {name}({code}) — {check.reason}")
+                if session:
+                    session.result = f"⛔ A股规则拦截: {check.reason}"
+                self._record_trade(code, name, action, shares, trade_price, "rejected", check.reason)
+                return {"ok": False, "msg": f"A股规则拦截: {check.reason}"}
+
         # ═══ 风控先行 — 不通过则绝不开浏览器 ═══
         if self.risk_ctrl:
             try:
-                rc_result = self.risk_ctrl.check_trade(code, action, shares, trade_price)
+                rc_signal = TradeSignal(code, name, action, trade_price,
+                                        reason="execute_trade", confidence=100)
+                rc_result = self.risk_ctrl.approve_trade(rc_signal, self.positions)
                 if not rc_result.get("approved", True):
-                    reason = rc_result.get("reason", "风控拦截")
+                    reason = "; ".join(rc_result.get("issues", ["风控拦截"]))
                     L.warning(f"🛑 风控拦截: {name}({code}) — {reason}")
                     # 加入冷却名单
                     self.blocked_cooldown[code] = time.time() + self.cooldown_minutes * 60
@@ -747,9 +791,13 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                             if sig.action == "buy":
                                 result = account.buy(sig.code, sig.name, shares, price)
                             elif sig.action == "sell" and sig.code in account.positions:
-                                pos = account.positions[sig.code]
-                                result = account.sell(sig.code, pos["shares"], price)
-                                trade_pnl = result.get("pnl", 0)
+                                can = account.can_sell(sig.code)
+                                if not can["ok"]:
+                                    result = {"ok": False, "error": can["reason"]}
+                                else:
+                                    pos = account.positions[sig.code]
+                                    result = account.sell(sig.code, pos["shares"], price)
+                                    trade_pnl = result.get("pnl", 0)
                             else:
                                 result = {"ok": False, "error": f"无仓位执行 {sig.action} {sig.code}"}
                             ts.executed = result.get("ok", False)
@@ -824,6 +872,18 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
             return {"ok": True}
         except Exception as e:
             return {"ok": False, "error": str(e)}
+
+    def _record_trade(self, code, name, action, shares, price, status, reason=""):
+        """记录被拦截/ rejected 的交易"""
+        entry = {
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "code": code, "name": name, "action": action,
+            "shares": shares, "price": price,
+            "amount": round(shares * price, 2),
+            "status": status, "reason": reason
+        }
+        with self._lock:
+            self.trade_log.appendleft(entry)
 
     # ═══════════════════════════════════════════════
     # 状态查询

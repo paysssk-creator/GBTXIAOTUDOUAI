@@ -18,6 +18,7 @@ except Exception as e:
 # 纭繚鑳藉姏娉ㄥ唽鍒拌矾鐢卞櫒
 import gbt.capabilities  # noqa: F401
 from gbt.skills import registry  # noqa: F401
+from gbt import config as gbt_config
 
 from flask import Flask, request, jsonify, make_response
 
@@ -47,7 +48,7 @@ def get_ai_operator():
     global _ai_operator
     if _ai_operator is None:
         from gbt.ai_operator import AIDeviceOperator
-        _ai_operator = AIDeviceOperator(safe_mode=False)
+        _ai_operator = AIDeviceOperator(safe_mode=not gbt_config.AUTO_AUTHORIZE)
     return _ai_operator
 
 def get_trader():
@@ -124,7 +125,7 @@ def dashboard_api():
 
         data = {
             "llm": llm_status,
-            "trade": {"ready": True, "auto_trade": False, "watchlist_count": 40},
+            "trade": {"ready": True, "auto_trade": gbt_config.AUTO_AUTHORIZE, "auto_authorize": gbt_config.AUTO_AUTHORIZE, "watchlist_count": 40},
             "watcher": {"monitors": {"system": {"status": "ok"}}},
             "capabilities": 19,
             "modules": 42,
@@ -214,6 +215,9 @@ def desk_act():
     params = data.get("params", {})
     if not action_type:
         return fail("缂哄皯 action_type")
+    # 兼容常见动作别名
+    alias_map = {"type_text": "type", "key": "press", "send_keys": "type"}
+    action_type = alias_map.get(action_type, action_type)
     try:
         from gbt.ai_operator import DeviceAction
         op = get_ai_operator()
@@ -238,6 +242,25 @@ def desk_run_task():
     except Exception as e:
         return fail("run_task failed", str(e), 500)
 
+
+
+@app.route("/api/trade/auto_authorize", methods=["GET"])
+def get_auto_authorize():
+    return jsonify(ok({"auto_authorize": gbt_config.AUTO_AUTHORIZE, "auto_trade": gbt_config.AUTO_AUTHORIZE}))
+
+
+@app.route("/api/trade/auto_authorize", methods=["POST"])
+def set_auto_authorize():
+    data = request.get_json(force=True, silent=True) or {}
+    enabled = bool(data.get("enabled", False))
+    gbt_config.set_auto_authorize(enabled)
+    # 重新加载 AI 操作器以应用 safe_mode 变更
+    try:
+        from gbt.ai_operator import reload_ai_operator
+        reload_ai_operator()
+    except Exception as e:
+        L.warning(f"reload_ai_operator failed: {e}")
+    return jsonify(ok({"auto_authorize": enabled, "auto_trade": enabled}))
 
 
 @app.route("/api/trade/analyze", methods=["POST"])
@@ -492,6 +515,15 @@ def device_mic():
         return fail("mic record failed", str(e), 500)
 
 
+@app.route("/api/device/bluetooth", methods=["POST"])
+def device_bluetooth():
+    try:
+        from gbt.device_caps import probe_bluetooth
+        return jsonify(ok(probe_bluetooth()))
+    except Exception as e:
+        return fail("bluetooth probe failed", str(e), 500)
+
+
 # ── Config / .env helpers ───────────────────────────────────────────────────
 
 def _env_path() -> str:
@@ -572,6 +604,8 @@ def status():
             "skills": len(registry.skills),
             "has_api_key": api_key_set,
             "api_key_set": api_key_set,
+            "auto_authorize": gbt_config.AUTO_AUTHORIZE,
+            "auto_trade": gbt_config.AUTO_AUTHORIZE,
         }
         return jsonify(ok(data))
     except Exception as e:

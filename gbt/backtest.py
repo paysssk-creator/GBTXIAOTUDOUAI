@@ -6,6 +6,8 @@ import logging
 from datetime import datetime, timedelta
 from collections import deque
 
+from gbt.a_share_rules import a_share
+
 L = logging.getLogger("GBT.Backtest")
 
 
@@ -82,9 +84,10 @@ class BacktestEngine:
         self.positions = {}       # {code: {"shares": n, "avg_cost": p}}
         self.trades = []
         self.equity_curve = []
-        self._commission_rate = 0.00025  # 佣金
-        self._stamp_tax_rate = 0.001     # 印花税(卖出单向)
-        self._min_commission = 5         # 最低佣金
+        self._commission_rate = a_share.commission_rate  # 佣金
+        self._stamp_tax_rate = a_share.stamp_tax_rate     # 印花税(卖出单向)
+        self._transfer_fee_rate = a_share.transfer_fee_rate  # 过户费
+        self._min_commission = a_share.min_commission     # 最低佣金
 
         # 风控参数
         self.stop_loss_pct = 7
@@ -292,17 +295,23 @@ class BacktestEngine:
         return result
 
     def _open_position(self, code, price, shares):
-        """开仓"""
+        """开仓 — 100股整数倍，含佣金+过户费"""
+        shares = a_share.normalize_lot(shares)
+        if shares <= 0:
+            return
         cost = shares * price
         commission = max(cost * self._commission_rate, self._min_commission)
-        total_cost = cost + commission
+        transfer_fee = cost * self._transfer_fee_rate if code.lower().startswith("sh") else 0.0
+        total_cost = cost + commission + transfer_fee
 
         if total_cost > self.cash:
-            shares = int((self.cash - self._min_commission) / (price * (1 + self._commission_rate)) / 100) * 100
-            if shares < 100: return
+            shares = a_share.normalize_lot((self.cash - self._min_commission) / (price * (1 + self._commission_rate + self._transfer_fee_rate)))
+            if shares < 100:
+                return
             cost = shares * price
             commission = max(cost * self._commission_rate, self._min_commission)
-            total_cost = cost + commission
+            transfer_fee = cost * self._transfer_fee_rate if code.lower().startswith("sh") else 0.0
+            total_cost = cost + commission + transfer_fee
 
         self.cash -= total_cost
         self.positions[code] = {"shares": shares, "avg_cost": price}
@@ -311,22 +320,23 @@ class BacktestEngine:
             "time": datetime.now().strftime("%Y-%m-%d"),
             "action": "buy", "code": code, "price": price,
             "shares": shares, "cost": round(total_cost, 2),
-            "commission": round(commission, 2), "pnl": 0
+            "commission": round(commission + transfer_fee, 2), "pnl": 0
         })
 
     def _close_position(self, code, price, shares, reason=""):
-        """平仓"""
+        """平仓 — 100股整数倍，含佣金+印花税+过户费"""
         if code not in self.positions:
             return
         pos = self.positions[code]
-        actual_shares = min(shares, pos["shares"])
+        actual_shares = a_share.normalize_lot(min(shares, pos["shares"]))
         if actual_shares <= 0:
             return
 
         revenue = actual_shares * price
         commission = max(revenue * self._commission_rate, self._min_commission)
         stamp_tax = revenue * self._stamp_tax_rate
-        net_revenue = revenue - commission - stamp_tax
+        transfer_fee = revenue * self._transfer_fee_rate if code.lower().startswith("sh") else 0.0
+        net_revenue = revenue - commission - stamp_tax - transfer_fee
         cost_basis = pos["avg_cost"] * actual_shares
         pnl = net_revenue - cost_basis
 
@@ -339,7 +349,7 @@ class BacktestEngine:
             "time": datetime.now().strftime("%Y-%m-%d"),
             "action": "sell", "code": code, "price": price,
             "shares": actual_shares, "cost": round(net_revenue, 2),
-            "commission": round(commission + stamp_tax, 2),
+            "commission": round(commission + stamp_tax + transfer_fee, 2),
             "pnl": round(pnl, 2), "reason": reason
         })
 

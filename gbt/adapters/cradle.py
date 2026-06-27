@@ -20,8 +20,11 @@ def run_task(task: str = "open chrome and search GBT", max_steps: int = 10, env_
     if env_config:
         cmd += ["--envConfig", env_config]
     try:
-        p = subprocess.run(cmd, cwd=CRADLE_DIR, env=env, capture_output=True, text=True, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=="win32" else 0)
+        # 子进程超时留 5s 缓冲，避免 Flask HTTP 请求先超时
+        p = subprocess.run(cmd, cwd=CRADLE_DIR, env=env, capture_output=True, text=True, timeout=25, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=="win32" else 0)
         return {"ok": p.returncode == 0, "returncode": p.returncode, "stdout": p.stdout[:2000], "stderr": p.stderr[:1000], "task": task}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "cradle runner timed out after 25s", "task": task}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 def status() -> Dict:

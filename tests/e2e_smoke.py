@@ -22,7 +22,7 @@ def main():
         try:
             r = fn()
             ok = r.status_code == 200 and (r.json().get("ok") is True if r.headers.get("content-type","").startswith("application/json") else "GBT" in r.text)
-            print(f"  [{"PASS" if ok else "FAIL"}] {name}: {r.status_code}")
+            print(f"  [{'PASS' if ok else 'FAIL'}] {name}: {r.status_code}")
             if ok: passed += 1
             else: failed += 1; print(r.text[:200])
         except Exception as e:

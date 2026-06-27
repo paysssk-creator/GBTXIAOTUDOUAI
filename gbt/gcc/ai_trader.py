@@ -13,6 +13,9 @@ except Exception: HAS_PIL = False
 try:
     import mss; HAS_MSS = True
 except Exception: HAS_MSS = False
+try:
+    from gbt.a_share_rules import a_share; HAS_A_SHARE = True
+except Exception: HAS_A_SHARE = False
 
 @dataclass
 class TradeDecision:
@@ -130,6 +133,12 @@ class AITrader:
         if hasattr(self, '_last_trade_key') and self._last_trade_key == key:
             return {"ok":True,"action":"hold","reason":"去重: 已执行过相同操作"}
         self._last_trade_key = key
+
+        # A股规则: 数量必须为100股整数倍
+        if HAS_A_SHARE:
+            decision.volume = a_share.normalize_lot(decision.volume)
+        if decision.volume < 100:
+            return {"ok":False,"error":"A股交易数量不足1手(100股)"}
 
         try:
             # 1. 先确认交易窗口状态

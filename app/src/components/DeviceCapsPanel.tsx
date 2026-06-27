@@ -15,19 +15,29 @@ const ICONS: Record<string, () => JSX.Element> = {
   browser: BrowserIcon,
 };
 
-export function DeviceCapsPanel() {
-  const { caps, loading, probe, invoke } = useDeviceCaps();
-  const [result, setResult] = useState<{ id: string; text: string } | null>(null);
+type TestResult = { ok: boolean; text: string };
+type BatchItem = { id: string; name: string; status: "pending" | "running" | "passed" | "failed"; text: string };
 
-  const handleClick = async (id: string, name: string) => {
-    setResult({ id, text: `正在测试 ${name}...` });
-    let res;
+async function runCapabilityTest(
+  id: string,
+  name: string,
+  invoke: (id: string, params?: unknown) => Promise<{ ok: boolean; result?: unknown; error?: string }>
+): Promise<TestResult> {
+  let extra = "";
+  try {
+    let res: { ok: boolean; result?: unknown; error?: string };
     switch (id) {
       case "voice":
         res = await invoke("speak", { text: "GBT 设备能力测试" });
         break;
       case "microphone":
         res = await invoke("mic", { seconds: 3 });
+        if (res.ok && res.result && typeof res.result === "object") {
+          const r = res.result as Record<string, unknown>;
+          const amplitude = r.max_amplitude ?? "-";
+          const device = r.device_name ?? "";
+          extra = ` (amplitude=${amplitude}${device ? `, ${device}` : ""})`;
+        }
         break;
       case "camera":
         res = await invoke("camera", { index: 0 });
@@ -36,37 +46,65 @@ export function DeviceCapsPanel() {
         res = await invoke("notify", { title: "GBT", message: "通知测试" });
         break;
       case "desktop":
-        try {
-          await postData<Record<string, unknown>>("/api/desk/observe", {});
-          res = { ok: true, result: "桌面观察完成" };
-        } catch (err) {
-          res = { ok: false, error: err instanceof Error ? err.message : String(err) };
-        }
+        await postData<Record<string, unknown>>("/api/desk/observe", {});
+        res = { ok: true, result: "桌面观察完成" };
         break;
       case "browser":
-        try {
-          await postData<Record<string, unknown>>("/api/skill/browser_open", { text: "https://www.google.com" });
-          res = { ok: true, result: "浏览器已打开" };
-        } catch (err) {
-          res = { ok: false, error: err instanceof Error ? err.message : String(err) };
-        }
+        await postData<Record<string, unknown>>("/api/skill/browser_open", { text: "https://www.google.com" });
+        res = { ok: true, result: "浏览器已打开" };
         break;
       default:
         res = { ok: true, result: `${name} 可用` };
     }
-    setResult({
-      id,
-      text: res.ok ? `✓ ${name} 正常` : `✗ ${name} 失败: ${res.error}`,
-    });
+    return { ok: res.ok, text: res.ok ? `✓ ${name} 正常${extra}` : `✗ ${name} 失败: ${res.error}` };
+  } catch (err) {
+    return { ok: false, text: `✗ ${name} 失败: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export function DeviceCapsPanel() {
+  const { caps, loading, probe, invoke } = useDeviceCaps();
+  const [result, setResult] = useState<{ id: string; text: string } | null>(null);
+  const [showBatch, setShowBatch] = useState(false);
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchRunning, setBatchRunning] = useState(false);
+
+  const handleClick = async (id: string, name: string) => {
+    setResult({ id, text: `正在测试 ${name}...` });
+    const r = await runCapabilityTest(id, name, invoke);
+    setResult({ id, text: r.text });
   };
+
+  const runBatch = async () => {
+    setShowBatch(true);
+    setBatchRunning(true);
+    const items = caps.map((c) => ({ id: c.id, name: c.name, status: "pending" as const, text: "" }));
+    setBatchItems(items);
+    for (let i = 0; i < items.length; i++) {
+      setBatchItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, status: "running" } : it)));
+      const r = await runCapabilityTest(items[i].id, items[i].name, invoke);
+      setBatchItems((prev) =>
+        prev.map((it, idx) => (idx === i ? { ...it, status: r.ok ? "passed" : "failed", text: r.text } : it))
+      );
+    }
+    setBatchRunning(false);
+  };
+
+  const passedCount = batchItems.filter((i) => i.status === "passed").length;
+  const failedCount = batchItems.filter((i) => i.status === "failed").length;
 
   return (
     <div className="card">
       <div className="card-title">
         <span>设备能力</span>
-        <button className="btn btn-ghost btn-sm" onClick={probe} disabled={loading}>
-          {loading ? "检测中..." : "刷新"}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn btn-primary btn-sm" onClick={runBatch} disabled={loading || batchRunning}>
+            {batchRunning ? "测试中..." : "一键测试"}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={probe} disabled={loading || batchRunning}>
+            {loading ? "检测中..." : "刷新"}
+          </button>
+        </div>
       </div>
       <div className="device-grid" role="list">
         {caps.map((cap) => {
@@ -80,7 +118,7 @@ export function DeviceCapsPanel() {
               title={cap.detail || cap.name}
               role="listitem"
               aria-label={`测试 ${cap.name}`}
-              disabled={loading}
+              disabled={loading || batchRunning}
             >
               <Icon />
               <span className="device-card-label">{cap.name}</span>
@@ -91,7 +129,7 @@ export function DeviceCapsPanel() {
           );
         })}
       </div>
-      {result && (
+      {result && !showBatch && (
         <div
           className="mt-3 text-sm"
           style={{
@@ -105,12 +143,60 @@ export function DeviceCapsPanel() {
           {result.text}
         </div>
       )}
+
+      {showBatch && (
+        <div
+          className="batch-dialog-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBatch(false);
+          }}
+        >
+          <div className="batch-dialog">
+            <div className="batch-dialog-header">
+              <span>统一能力测试</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowBatch(false)} disabled={batchRunning}>
+                关闭
+              </button>
+            </div>
+            <div className="batch-dialog-body">
+              {batchItems.map((item) => (
+                <div key={item.id} className="batch-item">
+                  <span className="batch-item-name">{item.name}</span>
+                  <span
+                    className="batch-item-status"
+                    style={{
+                      color:
+                        item.status === "passed"
+                          ? "var(--success)"
+                          : item.status === "failed"
+                            ? "var(--error)"
+                            : item.status === "running"
+                              ? "var(--primary)"
+                              : "var(--fg-dim)",
+                    }}
+                  >
+                    {item.status === "pending" && "待测试"}
+                    {item.status === "running" && "测试中..."}
+                    {item.status === "passed" && (item.text || "通过")}
+                    {item.status === "failed" && (item.text || "失败")}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {!batchRunning && batchItems.length > 0 && (
+              <div className="batch-dialog-footer">
+                通过 {passedCount} / {batchItems.length}，失败 {failedCount}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function VoiceIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><path d="M12 19v3"/></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>;
 }
 function MicIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><path d="M12 19v3"/></svg>;

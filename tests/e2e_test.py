@@ -35,14 +35,15 @@ def test_capabilities():
 
 def test_screenpipe():
     ok(requests.post(f"{BASE}/api/screenpipe/start", json={"mode":"screen","interval":2.0}, timeout=30))
-    time.sleep(2)
+    time.sleep(5)
     data = ok(requests.get(f"{BASE}/api/screenpipe/recent?limit=2", timeout=5))
     print("screenpipe frames:", data.get("count"))
     assert data.get("count", 0) >= 1
     ok(requests.post(f"{BASE}/api/screenpipe/stop", timeout=5))
 
 def test_cradle_task():
-    data = ok(requests.post(f"{BASE}/api/cradle/run", json={"task":"open chrome","max_steps":1}, timeout=30))
+    # 自动授权开启时 Cradle 会真正执行桌面动作，等待时间更长
+    data = ok(requests.post(f"{BASE}/api/cradle/run", json={"task":"open chrome","max_steps":1}, timeout=45))
     print("cradle source:", data.get("source"), "steps:", data.get("steps"))
     assert data.get("steps", 0) >= 1
     last = data.get("history", [])[-1]

@@ -65,6 +65,23 @@ def _fallback_capture_loop(interval: float = 2.0):
             _stop_event.wait(interval)
 
 
+def _scan_frames_dir(limit: int = 10) -> List[Dict]:
+    """扫描 frames 目录返回最新的截图文件（二进制和 fallback 通用）"""
+    frames = []
+    try:
+        files = []
+        for name in os.listdir(FRAMES_DIR):
+            if name.lower().endswith(".png"):
+                path = os.path.join(FRAMES_DIR, name)
+                files.append((os.path.getmtime(path), path))
+        files.sort(reverse=True)
+        for mtime, path in files[:limit]:
+            frames.append({"time": datetime.fromtimestamp(mtime).isoformat(), "path": path, "source": "frames_dir"})
+    except Exception as e:
+        L.debug("scan frames dir error: %s", e)
+    return frames
+
+
 def start(mode: str = "screen", interval: float = 2.0) -> Dict:
     global _proc, _monitor_thread, _stop_event, _last_frames
 
@@ -91,18 +108,18 @@ def start(mode: str = "screen", interval: float = 2.0) -> Dict:
                 stderr=subprocess.PIPE,
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
             )
-            time.sleep(1)
-            status = "started" if _proc.poll() is None else "failed"
-            if status == "started":
-                return {"ok": True, "status": status, "pid": _proc.pid, "binary": binary, "mode": mode}
-            else:
-                L.warning("screenpipe binary start returned failed, using fallback")
-                try:
-                    _proc.terminate()
-                    _proc.wait(timeout=1)
-                except Exception:
-                    pass
-                _proc = None
+            time.sleep(3)
+            still_running = _proc.poll() is None
+            has_frames = len(_scan_frames_dir(limit=1)) > 0
+            if still_running and has_frames:
+                return {"ok": True, "status": "started", "pid": _proc.pid, "binary": binary, "mode": mode}
+            L.warning("screenpipe binary did not produce frames or exited, using fallback")
+            try:
+                _proc.terminate()
+                _proc.wait(timeout=1)
+            except Exception:
+                pass
+            _proc = None
         except Exception as e:
             L.warning("screenpipe binary start failed, using fallback: %s", e)
 
@@ -148,5 +165,19 @@ def status() -> Dict:
 
 
 def recent(limit: int = 10) -> Dict:
-    frames = _last_frames[-limit:][::-1]
+    # 合并 fallback 内存缓存和 frames 目录扫描结果，按时间倒序
+    seen = set()
+    frames = []
+    for f in _last_frames[-limit * 2:][::-1]:
+        key = f.get("path", "") or f.get("time", "")
+        if key not in seen:
+            seen.add(key)
+            frames.append(f)
+    for f in _scan_frames_dir(limit=limit * 2):
+        key = f.get("path", "")
+        if key not in seen:
+            seen.add(key)
+            frames.append(f)
+    frames.sort(key=lambda x: x.get("time", ""), reverse=True)
+    frames = frames[:limit]
     return {"ok": True, "frames": frames, "count": len(frames)}

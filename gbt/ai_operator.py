@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from gbt import config as gbt_config
+
 L = logging.getLogger("GBT.AIOperator")
 
 
@@ -235,8 +237,16 @@ class AIDeviceOperator:
 
 
 # 全局实例
-ai_operator = AIDeviceOperator(safe_mode=False)
+ai_operator = AIDeviceOperator(safe_mode=not gbt_config.AUTO_AUTHORIZE)
 
 
 def get_ai_operator():
+    return ai_operator
+
+
+def reload_ai_operator():
+    """根据当前 AUTO_AUTHORIZE 配置重新创建全局 AI 操作器。"""
+    global ai_operator
+    ai_operator = AIDeviceOperator(safe_mode=not gbt_config.AUTO_AUTHORIZE)
+    L.warning(f"AI 操作器已重新加载，自动授权={gbt_config.AUTO_AUTHORIZE}")
     return ai_operator

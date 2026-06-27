@@ -130,17 +130,18 @@ if ($procs) {{
         return {"ok": True}
 
     def notify(self, title, message):
-        """发送 Windows 桌面通知"""
+        """发送 Windows 桌面通知（异步，不阻塞）"""
         try:
             ps = f'''
 Add-Type -AssemblyName System.Windows.Forms
 $n = New-Object System.Windows.Forms.NotifyIcon
 $n.Icon = [System.Drawing.SystemIcons]::Information
 $n.Visible = $true
-$n.ShowBalloonTip(5000, "{title}", "{message}", "Info")
+$n.ShowBalloonTip(1500, "{title}", "{message}", "Info")
 '''
-            subprocess.run(["powershell", "-NoProfile", "-Command", ps],
-                          capture_output=True, timeout=5, text=True, errors='replace')
+            subprocess.Popen(["powershell", "-WindowStyle", "Hidden", "-NoProfile", "-Command", ps],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
             return {"ok": True, "title": title, "message": message}
         except Exception as e:
             L.warning(f"桌面通知失败: {e}")
