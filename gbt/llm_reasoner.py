@@ -45,7 +45,8 @@ class LLMActionReasoner:
     def _setup_client(self, key: str, base_url: str, model: str):
         try:
             import openai
-            self.client = openai.OpenAI(api_key=key, base_url=base_url)
+            # 5s 连接/读取超时，0 次重试，避免网络抖动时整个 TaskEngine 卡住
+            self.client = openai.OpenAI(api_key=key, base_url=base_url, timeout=5, max_retries=0)
             self.model = model
         except Exception as e:
             L.warning("LLM client setup failed: %s", e)
