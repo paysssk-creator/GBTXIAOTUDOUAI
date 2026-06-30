@@ -42,15 +42,16 @@ def test_screenpipe():
     ok(requests.post(f"{BASE}/api/screenpipe/stop", timeout=5))
 
 def test_cradle_task():
-    # 自动授权开启时 Cradle 会真正执行桌面动作，等待时间更长
-    data = ok(requests.post(f"{BASE}/api/cradle/run", json={"task":"open chrome","max_steps":1}, timeout=45))
+    # 自动授权开启时 Cradle 会真正执行桌面动作；用截图任务替代打开 Chrome，避免依赖浏览器环境
+    data = ok(requests.post(f"{BASE}/api/cradle/run", json={"task":"截图观察桌面","max_steps":2}, timeout=45))
     print("cradle source:", data.get("source"), "steps:", data.get("steps"))
     assert data.get("steps", 0) >= 1
     last = data.get("history", [])[-1]
     assert last.get("result", {}).get("ok") or last.get("result") is not None
 
 def test_chat_routing():
-    data = ok(requests.post(f"{BASE}/api/chat", json={"text":"执行一个任务：打开记事本"}, timeout=30))
+    # 用截图任务替代打开记事本，自动授权开启时也能快速完成
+    data = ok(requests.post(f"{BASE}/api/chat", json={"text":"执行一个任务：截图观察桌面"}, timeout=30))
     intent = data.get("classification", {}).get("intent")
     print("chat intent:", intent)
     assert intent == "cradle_task"

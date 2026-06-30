@@ -2,7 +2,7 @@
 web_api.py 鈥?GBT 鍏ㄨ兘鑳藉姏 Web API 鏈嶅姟 v1.0
 鐩戝惉 127.0.0.1:8765锛屾妸鎵€鏈夎兘鍔涙毚闇茬粰 nanobrowser 鍓嶇銆?
 """
-import os, sys, json, logging
+import os, sys, json, logging, threading
 from datetime import datetime
 from typing import Dict, Any
 
@@ -24,6 +24,9 @@ from flask import Flask, request, jsonify, make_response
 
 L = logging.getLogger("GBT.WebAPI")
 app = Flask(__name__)
+
+# 设备操作全局锁：防止语音/摄像头/麦克风等硬件驱动在高并发下互相抢占或崩溃
+_DEVICE_OP_LOCK = threading.Lock()
 
 # 鎵嬪姩 CORS锛岄伩鍏嶄緷璧?flask_cors
 @app.after_request
@@ -461,7 +464,8 @@ def screenpipe_recent():
 def device_probe():
     try:
         from gbt.device_caps import probe_all
-        return jsonify(ok(probe_all()))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(probe_all()))
     except Exception as e:
         return fail("device probe failed", str(e), 500)
 
@@ -474,7 +478,8 @@ def device_speak():
         return fail("缺少 text")
     try:
         from gbt.device_caps import safe_speak
-        return jsonify(ok(safe_speak(text)))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(safe_speak(text)))
     except Exception as e:
         return fail("speak failed", str(e), 500)
 
@@ -488,7 +493,8 @@ def device_notify():
         return fail("缺少 message/text")
     try:
         from gbt.device_caps import safe_notify
-        return jsonify(ok(safe_notify(title, message)))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(safe_notify(title, message)))
     except Exception as e:
         return fail("notify failed", str(e), 500)
 
@@ -499,7 +505,8 @@ def device_camera():
     index = int(data.get("index", 0))
     try:
         from gbt.device_caps import safe_camera_snapshot
-        return jsonify(ok(safe_camera_snapshot(index=index)))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(safe_camera_snapshot(index=index)))
     except Exception as e:
         return fail("camera failed", str(e), 500)
 
@@ -510,7 +517,8 @@ def device_mic():
     seconds = float(data.get("seconds", 3.0))
     try:
         from gbt.device_caps import safe_audio_record
-        return jsonify(ok(safe_audio_record(seconds=seconds)))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(safe_audio_record(seconds=seconds)))
     except Exception as e:
         return fail("mic record failed", str(e), 500)
 
@@ -519,7 +527,8 @@ def device_mic():
 def device_bluetooth():
     try:
         from gbt.device_caps import probe_bluetooth
-        return jsonify(ok(probe_bluetooth()))
+        with _DEVICE_OP_LOCK:
+            return jsonify(ok(probe_bluetooth()))
     except Exception as e:
         return fail("bluetooth probe failed", str(e), 500)
 
@@ -661,8 +670,17 @@ def skill_run(name: str):
 
 def run_server(host="127.0.0.1", port=8765, debug=False):
     L.info(f"GBT Web API starting at http://{host}:{port}")
-    # 多线程模式：避免设备能力（语音/摄像头/蓝牙）等耗时调用阻塞其他请求
-    app.run(host=host, port=port, debug=debug, use_reloader=False, threaded=True)
+    if debug:
+        app.run(host=host, port=port, debug=True, use_reloader=False, threaded=True)
+        return
+    # 生产/压测场景使用 waitress，避免 Flask 开发服务器在高并发设备请求下崩溃
+    try:
+        import waitress
+        L.info("Using waitress WSGI server")
+        waitress.serve(app, host=host, port=port, threads=8, channel_timeout=60)
+    except ImportError:
+        L.warning("waitress not installed, falling back to Flask dev server")
+        app.run(host=host, port=port, debug=False, use_reloader=False, threaded=True)
 
 
 if __name__ == "__main__":

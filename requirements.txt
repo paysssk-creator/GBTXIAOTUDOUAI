@@ -33,3 +33,6 @@ winrt-Windows.Media.Ocr; platform_system=="Windows"
 tiktoken>=0.7,<1.0
 dill==0.3.8
 dataclass-wizard==0.22.3
+
+# 生产 WSGI 服务器（Windows 兼容）
+waitress>=3.0,<4.0
