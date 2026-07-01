@@ -55,3 +55,13 @@ venv_cradle_py310/
 cradle_py310_*_log.txt
 scripts/minisign-verify/target/
 .tmp-verify-release/
+
+# Security — 防止敏感文件入库
+*.db
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+credentials.json
+.env.local
+.env.*.local

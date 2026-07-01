@@ -97,7 +97,7 @@ def detect_keys() -> Dict[str, dict]:
             v = os.getenv(ek)
             if v and len(v.strip()) > 10:
                 mk = v[:8]+"..."+v[-4:] if len(v)>12 else "***"
-                found.append({"key_name":ek,"masked":mk,"raw":v})
+                found.append({"key_name":ek,"masked":mk})  # 不保留 raw 值防止日志/序列化泄露
         # Ollama: 真正检查端口连通性
         if pid == "ollama":
             import socket

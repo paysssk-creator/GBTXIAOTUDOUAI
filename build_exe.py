@@ -8,7 +8,7 @@ import os, sys, subprocess
 ROOT = os.path.dirname(os.path.abspath(__file__))
 NAME = "GBTWorkstation"
 ENTRY = os.path.join(ROOT, "entry.py")
-ICON = os.path.join(ROOT, "gbt", "icon.ico")
+ICON = os.path.join(ROOT, "gbt.ico")
 
 PYTHON = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 if not os.path.exists(PYTHON):

@@ -51,9 +51,5 @@ build = [
 Homepage = "https://github.com/paysssk-creator/GBTXIAOTUDOUAI"
 Repository = "https://github.com/paysssk-creator/GBTXIAOTUDOUAI"
 
-[project.scripts]
-gbt = "gbt.cli:main"
-gbt-desktop = "desktop.app:main"
-
 [tool.setuptools.packages.find]
-include = ["gbt*", "agents*", "tools*", "desktop*"]
+include = ["gbt*"]

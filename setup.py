@@ -46,10 +46,7 @@ setup(
         ],
     },
     entry_points={
-        "console_scripts": [
-            "gbt=gbt.cli:main",
-            "gbt-desktop=desktop.app:main",
-        ],
+        "console_scripts": [],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
