@@ -23,9 +23,9 @@ class GBTWorkstation:
   sf.map("TNotebook.Tab",background=[("selected",ACC2)],foreground=[("selected",FG0)])
   bar=tk.Frame(s.r,bg=BG1,height=24);bar.pack(fill="x",side="bottom")
   s.sb=tk.Label(bar,text="READY",bg=BG1,fg=ACC,font=("Cascadia Code",7));s.sb.pack(side="right",padx=10)
-  tk.Label(bar,text="v4.0 | 7 tabs | 40 modules",bg=BG1,fg=FG1,font=("Cascadia Code",7)).pack(side="left",padx=10)
+  tk.Label(bar,text="v4.0 | 9 tabs | 42 modules",bg=BG1,fg=FG1,font=("Cascadia Code",7)).pack(side="left",padx=10)
   s._keys_tab(nb);s._trade_tab(nb);s._desk_tab(nb)
-  s._ai_tab(nb);s._sec_tab(nb);s._mcp_tab(nb);s._stat_tab(nb);s._vision_tab(nb)
+  s._ai_tab(nb);s._sec_tab(nb);s._mcp_tab(nb);s._stat_tab(nb);s._vision_tab(nb);s._linkgen_tab(nb)
  def _keys_tab(s,nb):
   p=tk.Frame(nb,bg=BG0);nb.add(p,text="Keys");s._kf=tk.Frame(p,bg=BG0)
   s._kf.pack(fill="both",expand=True,padx=12,pady=6);s._load()
@@ -231,5 +231,102 @@ class GBTWorkstation:
   b.pack(anchor="w",padx=12,pady=6)
   b.bind("<Button-1>",lambda e:refresh())
   refresh()
+ def _linkgen_tab(s,nb):
+  p=tk.Frame(nb,bg=BG0);nb.add(p,text="LinkGen")
+  tk.Label(p,text="Global Link Generator — 全球连接生成器",bg=BG0,fg=FG0,font=("Cascadia Code",12,"bold")).pack(anchor="w",padx=12,pady=8)
+  # ── URL输入行 ────────────────────────────
+  f1=tk.Frame(p,bg=BG0);f1.pack(fill="x",padx=12,pady=4)
+  tk.Label(f1,text="URL:",bg=BG0,fg=FG1,font=("Cascadia Code",9)).pack(side="left")
+  url_entry=tk.Entry(f1,bg=BG1,fg=FG0,font=("Cascadia Code",9),relief="flat",insertbackground=FG0)
+  url_entry.pack(side="left",fill="x",expand=True,padx=(8,0),ipady=3)
+  url_entry.insert(0,"https://")
+  # ── 服务商选择 ───────────────────────────
+  f2=tk.Frame(p,bg=BG0);f2.pack(fill="x",padx=12,pady=4)
+  tk.Label(f2,text="Service:",bg=BG0,fg=FG1,font=("Cascadia Code",9)).pack(side="left")
+  sv_var=tk.StringVar(value="auto")
+  sv_menu=tk.OptionMenu(f2,sv_var,"auto","tinyurl","isgd","vgd","cleanuri")
+  sv_menu.configure(bg=BG2,fg=ACC2,font=("Cascadia Code",9),relief="flat",highlightthickness=0)
+  sv_menu["menu"].configure(bg=BG1,fg=FG0,font=("Cascadia Code",9))
+  sv_menu.pack(side="left",padx=(8,0))
+  # ── 结果展示区 ───────────────────────────
+  result_label=tk.Label(p,text="",bg=BG0,fg=ACC,font=("Cascadia Code",12,"bold"),wraplength=800,justify="left")
+  result_label.pack(anchor="w",padx=12,pady=(8,2))
+  detail_label=tk.Label(p,text="",bg=BG0,fg=FG1,font=("Cascadia Code",8))
+  detail_label.pack(anchor="w",padx=12,pady=(0,4))
+  # ── 按钮行 ───────────────────────────────
+  btn_row=tk.Frame(p,bg=BG0);btn_row.pack(fill="x",padx=12,pady=4)
+  def do_generate():
+   url=url_entry.get().strip()
+   sv=sv_var.get()
+   result_label.config(text="⏳ Generating...",fg=ACC2)
+   detail_label.config(text="")
+   def _run():
+    try:
+     from gbt.linkgen import generate, generate_global
+     r=generate_global(url) if sv=="auto" else generate(url,preferred=sv)
+     if r.get("ok"):
+      s.r.after(0,lambda:result_label.config(text="✅ "+r["short"],fg=ACC))
+      s.r.after(0,lambda:detail_label.config(
+       text=f"Service: {r['service']} | TTL: {r.get('ttl_ms','?')}ms | Global: {'YES' if r.get('global_accessible') else '?'} | Click to copy"))
+      s.r.after(0,lambda:s.r.clipboard_clear())
+      s.r.after(0,lambda:s.r.clipboard_append(r["short"]))
+      # Add to 3D globe
+      try:
+       from gbt.linkgen_3d import add_link
+       add_link(r["original"], r["short"], r["service"])
+      except:pass
+     else:
+      s.r.after(0,lambda:result_label.config(text="❌ Failed: "+r.get("error","Unknown"),fg=ERR))
+      s.r.after(0,lambda:detail_label.config(text="Try different URL or check network"))
+    except Exception as e:
+     s.r.after(0,lambda:result_label.config(text="❌ Error: "+str(e),fg=ERR))
+   threading.Thread(target=_run,daemon=True).start()
+  b_gen=tk.Label(btn_row,text="Generate Short Link",bg=BG2,fg=ACC,font=("Cascadia Code",10,"bold"),padx=16,pady=6,cursor="hand2")
+  b_gen.pack(side="left")
+  b_gen.bind("<Button-1>",lambda e:do_generate())
+  # 3D View button
+  def open_3d():
+   def _launch():
+    try:
+     from gbt.linkgen_3d import start_server
+     from gbt.linkgen import get_history
+     hist=get_history()
+     links=[{"url":h["original"],"short":h["short"],"service":h["service"],"time":h["time"]} for h in hist[-10:]]
+     r=start_server(links=links)
+     if r.get("ok"):
+      import webbrowser
+      webbrowser.open(r["url"])
+      s.r.after(0,lambda:detail_label.config(text="3D Globe opened: "+r["url"]))
+    except Exception as e:
+     s.r.after(0,lambda:result_label.config(text="3D Error: "+str(e),fg=ERR))
+   threading.Thread(target=_launch,daemon=True).start()
+  b_3d=tk.Label(btn_row,text="3D Globe View",bg=BG2,fg=ACC2,font=("Cascadia Code",10),padx=16,pady=6,cursor="hand2")
+  b_3d.pack(side="left",padx=8)
+  b_3d.bind("<Button-1>",lambda e:open_3d())
+  # ── 链接历史 ─────────────────────────────
+  tk.Label(p,text="Link History",bg=BG0,fg=FG0,font=("Cascadia Code",11,"bold")).pack(anchor="w",padx=12,pady=(12,4))
+  hist_text=tk.Text(p,bg=BG1,fg=FG1,font=("Cascadia Code",8),state="disabled",relief="flat",padx=10,pady=6,height=10)
+  hist_text.pack(fill="both",expand=True,padx=12,pady=(0,10))
+  def refresh_hist():
+   try:
+    from gbt.linkgen import get_history
+    hist=get_history()
+    hist_text.config(state="normal");hist_text.delete("1.0","end")
+    if not hist:
+     hist_text.insert("1.0","No links generated yet")
+    else:
+     for h in reversed(hist[-15:]):
+      icon="✅" if h["status"]=="ok" else "❌"
+      hist_text.insert("end",f"{icon} [{h['time']}] {h['service']:8s} → {h['short']}\n")
+      hist_text.insert("end",f"   src: {h['original'][:80]}\n")
+    hist_text.config(state="disabled")
+   except Exception as e:
+    hist_text.config(state="normal");hist_text.delete("1.0","end")
+    hist_text.insert("1.0",f"History error: {e}")
+    hist_text.config(state="disabled")
+  refresh_hist()
+  refresh_btn=tk.Label(p,text="Refresh History",bg=BG2,fg=ACC2,font=("Cascadia Code",8),padx=10,pady=3,cursor="hand2")
+  refresh_btn.pack(anchor="w",padx=12,pady=(0,6))
+  refresh_btn.bind("<Button-1>",lambda e:refresh_hist())
 def run_app():GBTWorkstation().r.mainloop()
 if __name__=="__main__":run_app()
