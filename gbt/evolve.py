@@ -58,11 +58,11 @@ class EvolveAbort(Exception):
 
 # 每个模式: (正则, 替换, 描述, 是否可自动修复)
 AUTO_FIX_PATTERNS = [
-    # subprocess shell=True → shell=False
+    # subprocess shell=False → shell=False
     (
         re.compile(r'\bshell\s*=\s*True\b'),
         'shell=False',
-        'shell=True→shell=False',
+        'shell=False→shell=False',
         True,
     ),
     # 裸 except: → except Exception as e:

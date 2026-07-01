@@ -22,7 +22,7 @@ def load():
         if os.path.exists(ACCOUNT_FILE):
             with open(ACCOUNT_FILE, "r", encoding="utf-8") as f:
                 return json.loads(f.read())
-    except:
+    except Exception as e:
         pass
     return dict(DEFAULT_ACCOUNT)
 
@@ -31,7 +31,7 @@ def save(acct):
         os.makedirs(os.path.dirname(ACCOUNT_FILE), exist_ok=True)
         with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
             json.dump(acct, f, ensure_ascii=False, indent=2, default=str)
-    except:
+    except Exception as e:
         pass
 
 def get_status():

@@ -1,4 +1,4 @@
-﻿"""
+"""
 gbt/skills/web_search.py — 网络搜索能力
 可独立运行: python -m gbt.skills.web_search "查询内容"
 """

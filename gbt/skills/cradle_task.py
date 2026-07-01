@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """gbt/skills/cradle_task.py - 电脑自主操控任务能力
 优先调用 vendor/cradle runner；若环境不兼容则 fallback 到 GBT TaskEngine。
 """

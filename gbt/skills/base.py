@@ -3,7 +3,7 @@ gbt/skills/base.py — Skill 基类与统一注册表
 借鉴 open-strix 的 skill 组织方式：
 - 每个 skill 是独立模块
 - 既能被 SmartRouter 统一调度
-- 也能通过 `python -m gbt.skills.xxx "query"` 独立运行
+- 也能通过 `python -m gbt.skills.<name> "query"` 独立运行
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List

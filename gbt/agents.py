@@ -289,7 +289,7 @@ class DesktopAgent(BaseAgent):
             try:
                 import os;os.system("sndvol 2>nul")
                 return "音量面板已弹出"
-            except:
+            except Exception as e:
                 return "音量调节: 请使用系统快捷键"
     def _system_lock(self, text):
         import subprocess

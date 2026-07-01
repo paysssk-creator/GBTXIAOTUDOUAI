@@ -1,4 +1,4 @@
-﻿"""
+"""
 gbt/adapters/cradle.py — Cradle 核心操控适配器
 Cradle 子模块已挂到 vendor/cradle，
 本适配器负责调用 Cradle runner 实现电脑自主操控。

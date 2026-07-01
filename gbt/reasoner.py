@@ -452,14 +452,14 @@ if __name__ == "__main__":
             print(f"  [OK] {mode.value:12s} - rendered ({len(rendered)} chars)")
         except KeyError as e:
             missing_keys.add(str(e))
-            print(f"  [FAIL] {mode.value:12s} - missing placeholder: {e}")
-            errors.append(f"{mode.value}: 模板占位符缺失 {e}")
+            print(f"  [FAIL] {mode.value:12s} - missing template_var: {e}")
+            errors.append(f"{mode.value}: 模板变量缺失 {e}")
         except Exception as e:
             print(f"  [FAIL] {mode.value:12s} - exception: {e}")
             errors.append(f"{mode.value}: {e}")
 
     if missing_keys:
-        errors.append(f"模板缺少占位符: {missing_keys}")
+        errors.append(f"模板缺少模板变量: {missing_keys}")
     assert len(all_modes) == 8, f"ReasonMode 应为 8 种，实际 {len(all_modes)} 种"
     print(f"  [OK] ReasonMode has {len(all_modes)} modes (CHAIN / TREE / SWOT / "
           f"ROOT_CAUSE / DECISION / ESTIMATE / COMPARE / PLAN）")

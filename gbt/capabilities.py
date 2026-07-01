@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 capabilities.py — GBT capability registry v4
 借鉴 open-strix 的 skill 组织方式：

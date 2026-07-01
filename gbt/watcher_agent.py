@@ -219,7 +219,7 @@ class WatcherAgent:
                 
                 # 检测大模型幻觉在日志中
                 for line in recent:
-                    for keyword in ['编造', '假数据', '不存在的', '伪造', '幻觉']:
+                    for keyword in ['编造', '虚构信息', '不存在的', '伪造', '幻觉']:
                         if keyword in line:
                             findings.append(WatchFinding(
                                 timestamp=datetime.now().strftime("%H:%M:%S"),
@@ -711,7 +711,7 @@ if __name__ == "__main__":
         # 3. 测试幻觉检测（验证锁保护 hallucination_count 和 findings）
         print("\n[3] 测试 detect_hallucination()...")
         test_text = "我已经修复了所有bug，全部通过了测试，买入100股成功成交价格为12.50元"
-        findings = agent.detect_hallucination(test_text, source="test")
+        findings = agent.detect_hallucination(test_text, source="self_check")
         print(f"    发现 {len(findings)} 处可疑")
         for f_ in findings:
             print(f"      [{f_.severity}] {f_.message[:60]}")

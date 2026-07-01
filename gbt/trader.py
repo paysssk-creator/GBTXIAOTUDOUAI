@@ -377,10 +377,10 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 3.置信度: 0-100
 4.策略依据
 格式:
-判断:xxx
+判断:___
 操作:buy/sell/hold
 置信度:数字
-策略:xxx"""
+策略:___"""
 
             resp = self.llm.invoke([
                 {"role": "system", "content": """你是 GBT Pro v2.1 内置的A股量化交易分析师,运行在专业桌面交易终端内。
