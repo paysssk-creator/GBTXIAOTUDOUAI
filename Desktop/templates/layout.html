@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBT Pro v2.1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e14;
+            color: #e6e8ec;
+            min-height: 100vh;
+        }
+        .header {
+            background: #131820;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1c2433;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #39d353;
+        }
+        .header .status {
+            font-size: 12px;
+            color: #8b949e;
+        }
+        .dashboard {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .card {
+            background: #131820;
+            border: 1px solid #1c2433;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card h3 {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 8px;
+        }
+        .card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #e6e8ec;
+        }
+        .card .sub {
+            font-size: 12px;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+        .error {
+            color: #f85149;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GBT Pro v2.1</h1>
+        <span class="status" id="status">加载中...</span>
+    </div>
+    <div class="dashboard">
+        <div class="loading" id="loading">正在加载仪表盘数据...</div>
+        <div class="grid" id="grid" style="display:none;"></div>
+    </div>
+    <script>
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/dashboard');
+                const data = await res.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                const grid = document.getElementById('grid');
+                grid.style.display = 'grid';
+                
+                const cards = [
+                    { title: 'LLM 调用', value: data.llm?.total_calls || 0, sub: '总调用次数' },
+                    { title: 'CPU', value: data.system?.cpu || 0, sub: '% 使用率', unit: '%' },
+                    { title: '内存', value: data.system?.memory || 0, sub: '% 使用率', unit: '%' },
+                    { title: 'MCP 服务', value: data.mcp?.servers?.length || 0, sub: '已连接服务' },
+                    { title: '账户余额', value: data.trade?.account?.cash || 0, sub: '可用资金', unit: '¥' },
+                    { title: '持仓', value: data.trade?.account?.positions || 0, sub: '持仓数量' },
+                ];
+                
+                cards.forEach(card => {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = `
+                        <h3>${card.title}</h3>
+                        <div class="value">${card.unit || ''}${card.value}</div>
+                        <div class="sub">${card.sub}</div>
+                    `;
+                    grid.appendChild(div);
+                });
+                
+                document.getElementById('status').textContent = '在线';
+                document.getElementById('status').style.color = '#39d353';
+            } catch (err) {
+                document.getElementById('loading').textContent = '加载失败: ' + err.message;
+                document.getElementById('loading').className = 'error';
+                document.getElementById('status').textContent = '离线';
+                document.getElementById('status').style.color = '#f85149';
+            }
+        }
+        
+        loadDashboard();
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>
