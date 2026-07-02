@@ -6,8 +6,6 @@ try:import webview
 except:webview=None
 from flask import Flask,render_template_string,jsonify,request
 
-DP=os.path.join(os.path.dirname(__file__),"desktop","templates","layout.html")
-DASH_HTML=open(DP,"r",encoding="utf-8").read() if os.path.exists(DP) else "<h1>GBT Pro</h1>"
 from gbt.knowledge.inject import inject_knowledge
 inject_knowledge()
 app=Flask(__name__)
@@ -26,10 +24,15 @@ def dashboard():
 @app.route("/api/status")
 def status():
     from gbt.providers import AutoKeyConfig
-    from gbt.mcp import get_mcp
     discovered=AutoKeyConfig.scan()
     avail=sum(1 for v in discovered.values() if v["status"]=="available")
-    return jsonify({"mcp_count":len(get_mcp().list_servers()),"llm":"Akashic/DeepSeek/Ollama","model":"auto","keys_available":avail,"keys_total":13})
+    mcp_count=0
+    try:
+        from gbt.mcp import get_mcp
+        mcp_count=len(get_mcp().list_servers())
+    except:
+        pass
+    return jsonify({"mcp_count":mcp_count,"llm":"Akashic/DeepSeek/Ollama","model":"auto","keys_available":avail,"keys_total":13})
 
 @app.route("/api/dashboard")
 def dashboard_data():
@@ -97,7 +100,13 @@ def api_watcher_status():return jsonify({"running":False})
 @app.route("/api/trader/status")
 def api_trader_status():return jsonify({"auto_trade":False})
 @app.route("/api/account")
-def api_account():import gbt.paper_account as __pa;return jsonify(__pa.get_status())
+def api_account():
+    try:
+        import gbt.paper_account as __pa
+        return jsonify(__pa.get_status())
+    except:
+        return jsonify({"cash":100000,"equity":100000,"pnl":0})
+
 @app.route("/api/connectors")
 def api_connectors():return jsonify({"connectors":[],"total":0})
 @app.route("/api/logo")
@@ -125,5 +134,11 @@ if __name__=="__main__":
     print("GBT Pro v2.1 - Desktop App")
     threading.Thread(target=lambda:app.run(host="127.0.0.1",port=8765,debug=False,use_reloader=False),daemon=True).start()
     time.sleep(3)
-    webview.create_window("GBT Pro v2.1","http://127.0.0.1:8765/dashboard",width=1280,height=800,min_size=(1000,650))
-    webview.start()
+    if webview:
+        webview.create_window("GBT Pro v2.1","http://127.0.0.1:8765/dashboard",width=1280,height=800,min_size=(1000,650))
+        webview.start()
+    else:
+        print("Webview not available, running in browser mode")
+        print(f"Open http://127.0.0.1:8765/dashboard in your browser")
+        while True:
+            time.sleep(1)
