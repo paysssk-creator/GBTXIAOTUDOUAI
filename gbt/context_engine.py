@@ -161,7 +161,7 @@ class TapeFold:
 class ContextConfig:
     """上下文引擎配置"""
     # 本地小模型配置
-    small_model_name: str = "qwen2.5:3b"
+    small_model_name: str = "qwen2.5-coder:7b"
     small_model_base_url: str = "http://localhost:11434/v1"
     small_model_temperature: float = 0.3
     small_model_max_tokens: int = 1024
@@ -292,7 +292,7 @@ class LocalCurator:
     
     def __init__(
         self,
-        model_name: str = "qwen2.5:3b",
+        model_name: str = "qwen2.5-coder:7b",
         base_url: str = "http://localhost:11434/v1",
         temperature: float = 0.3,
         max_tokens: int = 1024,
@@ -833,7 +833,7 @@ class ContextManager:
         self,
         large_model_llm: Any = None,     # GBTLLM 实例
         config: Optional[ContextConfig] = None,
-        small_model_name: str = "qwen2.5:3b",
+        small_model_name: str = "qwen2.5-coder:7b",
         curator: Optional[LocalCurator] = None,
         database: Optional[TapeDatabase] = None,
         auto_curator: bool = True,

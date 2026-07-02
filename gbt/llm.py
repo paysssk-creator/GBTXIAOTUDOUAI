@@ -62,7 +62,7 @@ class GBTLLM:
                 pid = ek.replace("_API_KEY","").lower()
                 val = db.get(pid)
                 if val: return val
-        except: pass
+        except Exception as e: pass
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
             if not v:
