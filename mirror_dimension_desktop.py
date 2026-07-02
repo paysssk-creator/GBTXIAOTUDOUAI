@@ -304,8 +304,87 @@ class App(ctk.CTk):
         lines.append("✓ 全部通过" if ok else "✕ 需关注")
         self.after(0, lambda: self._bot_bubble("\n".join(lines)))
 
+    # ═══ 通用 OAuth 本地服务器 ═══
+    OAUTH_PORT = 19763
+
+    def _start_oauth_server(self, platform, state):
+        """启动本地 HTTP 服务器，等待 OAuth 回调"""
+        import http.server, urllib.parse as _up
+        app = self
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                parsed = _up.urlparse(self.path)
+                params = _up.parse_qs(parsed.query)
+                if platform == "gitee":
+                    # Gitee 在查询参数中返回 code
+                    code = params.get("code", [None])[0]
+                else:
+                    code = params.get("code", [None])[0]
+                got_state = params.get("state", [None])[0]
+                if code and got_state == state:
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/html; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write("<h2>授权成功！</h2><p>正在返回 GBT小土豆...</p><script>setTimeout(()=>window.close(),800)</script>".encode())
+                    app.after(0, lambda: app._oauth_callback(platform, code))
+                else:
+                    self.send_response(400); self.end_headers()
+                    self.wfile.write(b"Invalid callback")
+                self.server.auth_done = True
+            def log_message(self, *args): pass
+
+        srv = http.server.HTTPServer(("localhost", self.OAUTH_PORT), Handler)
+        srv.auth_done = False
+        def _serve():
+            while not srv.auth_done:
+                srv.handle_request()
+            srv.server_close()
+        threading.Thread(target=_serve, daemon=True).start()
+
+    def _oauth_callback(self, platform, code):
+        threading.Thread(target=self._exchange_token, args=(platform, code), daemon=True).start()
+
+    def _exchange_token(self, platform, code):
+        """用授权码交换 access_token"""
+        import urllib.parse as _up, json as _json, urllib.request
+        try:
+            if platform == "gitlab":
+                data = _up.urlencode({
+                    "client_id": self.GITLAB_CLIENT_ID,
+                    "client_secret": self.GITLAB_CLIENT_SECRET,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": f"http://localhost:{self.OAUTH_PORT}/callback",
+                }).encode()
+                req = urllib.request.Request("https://gitlab.com/oauth/token", data=data)
+                resp = _json.loads(urllib.request.urlopen(req, timeout=15).read())
+                if resp.get("access_token"):
+                    self._gl_ok = True
+                    self.after(0, lambda: (self._bot_bubble("✓ GitLab 已连接"), self._refresh_services()))
+            elif platform == "gitee":
+                data = _up.urlencode({
+                    "client_id": self.GITEE_CLIENT_ID,
+                    "client_secret": self.GITEE_CLIENT_SECRET,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": f"http://localhost:{self.OAUTH_PORT}/callback",
+                }).encode()
+                req = urllib.request.Request("https://gitee.com/oauth/token", data=data,
+                                             headers={"Content-Type": "application/x-www-form-urlencoded"})
+                resp = _json.loads(urllib.request.urlopen(req, timeout=15).read())
+                if resp.get("access_token"):
+                    self._gitee_ok = True
+                    self.after(0, lambda: (self._bot_bubble("✓ Gitee 已连接"), self._refresh_services()))
+        except Exception as e:
+            self.after(0, lambda: self._bot_bubble("✕ 授权失败: " + str(e)[:100]))
+
     # ═══ 服务登录 ═══
     GITHUB_CLIENT_ID = "Iv1.b507a08c87ecf98c"
+    GITLAB_CLIENT_ID = "c692cc14f6cefb105cf50edea659d08ab35f36adf088ad3ed9b6c2aa0d53a2d9"
+    GITLAB_CLIENT_SECRET = "gloas-f37777fad7e20fefd6198016047be87f548a265c828b78158f9e336b08ecad96"
+    GITEE_CLIENT_ID = "253b0ebeae13e58dcbd43409217cac0e117508958c049b956a85e587d8d45906"
+    GITEE_CLIENT_SECRET = "cf49ad5c391c7c5e27a123362ea4f67b2c7da5235cb17314ed8f6d9a65ebacf6"
 
     def _github_login(self):
         import subprocess, json as _json, urllib.request, secrets
@@ -356,16 +435,52 @@ class App(ctk.CTk):
         threading.Thread(target=_poll, daemon=True).start()
 
     def _gitlab_login(self):
-        self._bot_bubble("🦊 GitLab 授权\n\n▸ 浏览器已打开 Token 页面\n▸ 权限已预选(api)\n▸ 点 Create → 点 📋 复制 → 自动完成")
-        os.startfile("https://gitlab.com/-/user_settings/personal_access_tokens?name=GBTxiaotudou&scopes=api")
-        self._pending_auth = "gitlab"
-        self._start_clipboard_poll()
+        """GitLab OAuth 全自动授权"""
+        import urllib.parse, secrets
+        state = secrets.token_urlsafe(16)
+        params = urllib.parse.urlencode({
+            "client_id": self.GITLAB_CLIENT_ID,
+            "redirect_uri": f"http://localhost:{self.OAUTH_PORT}/callback",
+            "response_type": "code",
+            "scope": "api read_user read_repository",
+            "state": state,
+        })
+        url = f"https://gitlab.com/oauth/authorize?{params}"
+        self._bot_bubble("🦊 GitLab 授权\n\n▸ 浏览器已打开 GitLab 授权页\n▸ 登录并授权 → 自动跳回完成")
+        self._start_oauth_server("gitlab", state)
+        os.startfile(url)
 
     def _gitee_login(self):
-        self._bot_bubble("🐴 Gitee 授权\n\n▸ 浏览器已打开 Token 页面\n▸ 勾选 projects + user_info\n▸ 点生成 → 点 📋 复制 → 自动完成")
-        os.startfile("https://gitee.com/personal_access_tokens/new?name=GBTxiaotudou&scopes=projects,user_info")
-        self._pending_auth = "gitee"
-        self._start_clipboard_poll()
+        """Gitee OAuth 全自动授权"""
+        import urllib.parse, secrets
+        state = secrets.token_urlsafe(16)
+        params = urllib.parse.urlencode({
+            "client_id": self.GITEE_CLIENT_ID,
+            "redirect_uri": f"http://localhost:{self.OAUTH_PORT}/callback",
+            "response_type": "code",
+            "scope": "user_info projects",
+            "state": state,
+        })
+        url = f"https://gitee.com/oauth/authorize?{params}"
+        self._bot_bubble("🐴 Gitee 授权\n\n▸ 浏览器已打开 Gitee 授权页\n▸ 登录并授权 → 自动跳回完成")
+        self._start_oauth_server("gitee", state)
+        os.startfile(url)
+
+    def _refresh_services(self):
+        """刷新左侧面板的服务连接状态"""
+        any_ok = False
+        for name, check, login, status_lbl, btn in self._svc_widgets:
+            authed = check()
+            if authed:
+                any_ok = True
+            status_lbl.configure(text="已连接" if authed else "未连接",
+                               text_color=C["green"] if authed else C["dim"])
+            btn.configure(text="断开" if authed else "连接",
+                         fg_color=C["border"] if authed else C["cyan"],
+                         text_color=C["text"] if authed else C["bg"],
+                         hover_color=C["red"] if authed else "#00c8e0",
+                         command=(lambda n=name: self._disconnect(n)) if authed else login)
+        self._repo_btn.configure(state="normal" if any_ok else "disabled")
 
     def _disconnect(self, platform):
         if platform == "GitHub":
@@ -377,6 +492,7 @@ class App(ctk.CTk):
         elif platform == "Gitee":
             self._gitee_ok = False
         self._bot_bubble(f"✕ {platform} 已断开")
+        self._refresh_services()
 
     def _start_clipboard_poll(self):
         self._clip_last = ""
@@ -431,7 +547,7 @@ class App(ctk.CTk):
                 subprocess.run(["git", "config", "--global", "gbt.gitlab.token", token],
                               capture_output=True, timeout=5)
                 self._gl_ok = True; self._pending_auth = None
-                self._bot_bubble(f"✓ GitLab 已连接 · {user}")
+                self.after(0, lambda u=user: (self._bot_bubble("✓ GitLab 已连接 · " + u), self._refresh_services()))
                 return True
             except Exception:
                 return False
@@ -444,7 +560,7 @@ class App(ctk.CTk):
                 subprocess.run(["git", "config", "--global", "gbt.gitee.token", token],
                               capture_output=True, timeout=5)
                 self._gitee_ok = True; self._pending_auth = None
-                self._bot_bubble(f"✓ Gitee 已连接 · {user}")
+                self.after(0, lambda u=user: (self._bot_bubble("✓ Gitee 已连接 · " + u), self._refresh_services()))
                 return True
             except Exception:
                 return False
