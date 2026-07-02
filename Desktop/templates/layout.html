@@ -99,6 +99,8 @@
                     { title: 'MCP 服务', value: data.mcp?.servers?.length || 0, sub: '已连接服务' },
                     { title: '账户余额', value: data.trade?.account?.cash || 0, sub: '可用资金', unit: '¥' },
                     { title: '持仓', value: data.trade?.account?.positions || 0, sub: '持仓数量' },
+                    { title: '盈亏', value: data.trade?.account?.pnl || 0, sub: '总盈亏', unit: '¥' },
+                    { title: '盈亏率', value: (data.trade?.account?.pnl_pct || 0).toFixed(2), sub: '%', unit: '' },
                 ];
                 
                 cards.forEach(card => {

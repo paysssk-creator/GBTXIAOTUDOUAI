@@ -108,9 +108,11 @@ def api_trader_status():return jsonify({"auto_trade":False})
 def api_account():
     try:
         import gbt.paper_account as __pa
-        return jsonify(__pa.get_status())
-    except:
-        return jsonify({"cash":100000,"equity":100000,"pnl":0})
+        status = __pa.get_status()
+        return jsonify(status)
+    except Exception as e:
+        print(f"[ACCOUNT] Error: {e}")
+        return jsonify({"cash":100000,"equity":100000,"pnl":0,"pnl_pct":0,"positions":0,"position_list":[],"trade_count":0})
 
 @app.route("/api/connectors")
 def api_connectors():return jsonify({"connectors":[],"total":0})
