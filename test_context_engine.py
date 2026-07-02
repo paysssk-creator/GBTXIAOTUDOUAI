@@ -122,11 +122,22 @@ def test_tape_database():
 
 def test_local_curator_fallback():
     """测试本地策展人回退模式 (无Ollama时)"""
-    from gbt.context_engine import LocalCurator, TapeSegment, estimate_tokens
+    from gbt.context_engine import LocalCurator, TapeSegment, estimate_tokens, discover_local_models
     
-    # 使用不存在的模型触发回退
+    # 检测本地可用模型
+    local_models = discover_local_models()
+    use_ollama = "--ollama" in sys.argv
+    
+    if use_ollama and local_models:
+        model_name = local_models[0]
+        print(f"  🔍 使用本地模型: {model_name}")
+    else:
+        model_name = "nonexistent:model"
+        if use_ollama and not local_models:
+            print("  ⚠️ 未发现本地Ollama模型，使用回退模式")
+    
     curator = LocalCurator(
-        model_name="nonexistent:model",
+        model_name=model_name,
         base_url="http://localhost:11434/v1",
         temperature=0.3,
     )
@@ -180,12 +191,24 @@ def test_local_curator_fallback():
 
 def test_context_manager():
     """测试上下文管理器"""
-    from gbt.context_engine import ContextManager, ContextConfig
+    from gbt.context_engine import ContextManager, ContextConfig, discover_local_models
+    
+    # 检测本地可用模型
+    local_models = discover_local_models()
+    use_ollama = "--ollama" in sys.argv
+    
+    if use_ollama and local_models:
+        small_model = local_models[0]
+        print(f"  🔍 使用本地模型: {small_model}")
+    else:
+        small_model = "qwen2.5:3b"
+        if use_ollama and not local_models:
+            print("  ⚠️ 未发现本地Ollama模型，使用默认模型")
     
     # 使用临时数据库
     db_path = os.path.join(tempfile.gettempdir(), "test_ctx_mgr.db")
     config = ContextConfig(
-        small_model_name="qwen2.5:3b",
+        small_model_name=small_model,
         max_active_tokens=500,
         fold_trigger_ratio=0.5,
         fold_batch_size=3,
@@ -193,7 +216,7 @@ def test_context_manager():
         db_path=db_path,
     )
     
-    ctx = ContextManager(config=config, auto_curator=False)
+    ctx = ContextManager(config=config, auto_curator=use_ollama and bool(local_models))
     
     # 启动会话
     sid = ctx.start_session("test_project")
@@ -273,11 +296,14 @@ def test_context_manager():
 
 def test_mirror_context():
     """测试镜像上下文"""
-    from gbt.context_engine import ContextManager, MirrorContext, ContextConfig
+    from gbt.context_engine import ContextManager, MirrorContext, ContextConfig, discover_local_models
+    
+    local_models = discover_local_models()
+    use_ollama = "--ollama" in sys.argv
     
     db_path = os.path.join(tempfile.gettempdir(), "test_mirror_ctx.db")
     config = ContextConfig(db_path=db_path)
-    ctx = ContextManager(config=config, auto_curator=False)
+    ctx = ContextManager(config=config, auto_curator=use_ollama and bool(local_models))
     
     with MirrorContext(ctx) as mirror:
         result = mirror.test_summarize(
@@ -300,15 +326,28 @@ def test_mirror_context():
 
 def test_create_context_manager():
     """测试便捷工厂"""
-    from gbt.context_engine import create_context_manager, ContextManager
+    from gbt.context_engine import create_context_manager, ContextManager, discover_local_models
+    
+    local_models = discover_local_models()
+    use_ollama = "--ollama" in sys.argv
+    
+    if use_ollama and local_models:
+        small_model = local_models[0]
+        auto_start = True
+        print(f"  🔍 使用本地模型: {small_model}")
+    else:
+        small_model = "qwen2.5:3b"
+        auto_start = False
+        if use_ollama and not local_models:
+            print("  ⚠️ 未发现本地Ollama模型，使用默认模型")
     
     db_path = os.path.join(tempfile.gettempdir(), "test_factory.db")
     ctx = create_context_manager(
         large_model_llm=None,
-        small_model="qwen2.5:3b",
+        small_model=small_model,
         db_path=db_path,
         max_active_tokens=4000,
-        auto_start=False,  # 不自动连Ollama
+        auto_start=auto_start,
     )
     
     assert isinstance(ctx, ContextManager)
