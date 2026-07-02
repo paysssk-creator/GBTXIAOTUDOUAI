@@ -1309,13 +1309,22 @@ def discover_local_models(base_url: str = "http://localhost:11434/v1") -> List[s
     if not HAS_OPENAI:
         return []
     try:
-        client = OpenAI(base_url=base_url, api_key="ollama", timeout=5)
-        # Ollama list models via /api/tags
+        # 尝试通过 Ollama API 获取模型列表
         import urllib.request, json as _json
         req = urllib.request.Request("http://localhost:11434/api/tags")
         resp = urllib.request.urlopen(req, timeout=5)
         data = _json.loads(resp.read())
-        return [m["name"] for m in data.get("models", [])]
+        models = [m["name"] for m in data.get("models", [])]
+        if models:
+            return models
+    except Exception:
+        pass
+    
+    # 回退: 尝试通过 OpenAI 兼容接口获取模型
+    try:
+        client = OpenAI(base_url=base_url, api_key="ollama", timeout=5)
+        models = client.models.list()
+        return [m.id for m in models]
     except Exception:
         return []
 

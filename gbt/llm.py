@@ -55,6 +55,10 @@ class GBTLLM:
 
     def _find_key(self, cfg: dict) -> Optional[str]:
         """多源查找API密钥"""
+        # Ollama 不需要 API 密钥
+        if cfg.get("auth_mode") == "none":
+            return "ollama"
+        
         try:
             from gbt.keydb import get_keydb
             db = get_keydb()
@@ -115,7 +119,10 @@ class GBTLLM:
         import json, urllib.request, urllib.error
         cfg = PROVIDERS.get(pid, {})
         try:
-            api_key = self._find_key(cfg) if pid != "ollama" else "ollama"
+            api_key = self._find_key(cfg)
+            if not api_key and pid != "ollama":
+                return False
+            
             headers = {"Content-Type": "application/json"}
             if pid != "ollama":
                 headers["Authorization"] = f"Bearer {api_key}"
