@@ -65,3 +65,7 @@ scripts/minisign-verify/target/
 credentials.json
 .env.local
 .env.*.local
+
+*.pyc
+
+.env.template

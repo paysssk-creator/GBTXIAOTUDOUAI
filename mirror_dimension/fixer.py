@@ -8,6 +8,8 @@ SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", ".venv", "venv",
     "dist", "build", ".gbt", "data", "vendor",
     "venv_cradle", "venv_cradle_py310", "site-packages",
+    # 独立子项目 / 非 Python 核心源码
+    "app", "src-tauri", ".claude", ".codewhale", ".pytest_cache",
 }
 
 FIX_PATTERNS = [
@@ -43,7 +45,9 @@ class SandboxFixer:
                     ".git", "node_modules", "__pycache__", ".venv",
                     "venv", "dist", "build", ".gbt", "data",
                     "vendor", "venv_cradle", "venv_cradle_py310",
-                    "site-packages"),
+                    "site-packages", "app", "src-tauri",
+                    ".claude", ".codewhale", ".pytest_cache",
+                    "logs", "screenshots", "installer", "docs"),
                 dirs_exist_ok=True,
             )
             fix_count, fixed_files, dangers = self._scan_and_fix(mirror_dir)

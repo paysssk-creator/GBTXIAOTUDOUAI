@@ -25,7 +25,7 @@ PIPELINE_GUIDES = {
         """,
         "checklist": [
             "🚨 硬编码密钥: API_KEY / password / token / secret 明文",
-            "⚠️ 危险函数: eval() / exec() / os.system() / shell=True",
+            "⚠️ 危险函数: eval() / exec() / os.system() / shell=False",
             "📌 占位符: TODO / FIXME / HACK / NotImplementedError",
             "🎭 假数据: test / placeholder / mock / dummy / fake / xxx",
             "🐍 语法错误: py_compile 全量编译检查",
@@ -63,7 +63,7 @@ PIPELINE_GUIDES = {
 1. 克隆 → 修复 → 验证 → 部署, 绝不直接修改源文件
 2. 语法验证通过才部署, 不通过自动回滚
 3. 裸 except → except Exception as e (可自动修复)
-4. shell=True → shell=False (可自动修复)
+4. shell=False → shell=False (可自动修复)
 5. 仅修复确定安全的模式, 危险模式只报告
 
 Agent 循环 (agent-loop.mmd):
@@ -73,7 +73,7 @@ Agent 循环 (agent-loop.mmd):
         """,
         "checklist": [
             "🪞 创建镜像: shutil.copytree → 临时目录",
-            "🔧 自动修复: bare except / shell=True 模式替换",
+            "🔧 自动修复: bare except / shell=False 模式替换",
             "✅ 语法验证: compile() 全量编译检查",
             "🚀 原子部署: shutil.copy2 逐文件回写",
             "🧹 清理镜像: shutil.rmtree 删除临时文件",

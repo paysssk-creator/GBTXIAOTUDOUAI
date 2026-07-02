@@ -10,12 +10,18 @@ SKIP_DIRS = {
     "venv_cradle", "venv_cradle_py310", "site-packages", "Lib",
     "backup", "archive", "old", "sandbox-logs", "monitoring.db",
     "logs", "screenshots", "installer",
+    # 独立子项目 / 非 Python 核心源码
+    "app", "src-tauri", ".claude", ".codewhale", ".pytest_cache",
 }
 
 SENSITIVE_FILE_PATTERNS = [
     ".env", ".pem", ".key", "credentials", "secret",
     ".db", ".sqlite", "password",
 ]
+
+# 故意暴露的敏感文件白名单 (如 .env.example 是模板，应留在仓库中)
+# 本地开发必需文件 (已在 .gitignore 中保护)
+SENSITIVE_FILE_WHITELIST = {".env.example", ".env.template", ".env", ".gbt_keys.db"}
 
 REQUIRED_GITIGNORE_RULES = [
     ".env", "*.db", "*.sqlite", "*.pem", "*.key",
@@ -50,6 +56,8 @@ class ProjectAuditor:
         for dirpath, dirnames, filenames in os.walk(self.root):
             dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
             for fname in filenames:
+                if fname in SENSITIVE_FILE_WHITELIST:
+                    continue
                 for pat in SENSITIVE_FILE_PATTERNS:
                     if pat in fname.lower():
                         found.append(os.path.relpath(

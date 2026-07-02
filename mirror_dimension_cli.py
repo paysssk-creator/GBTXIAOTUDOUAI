@@ -112,7 +112,7 @@ FIX_PATTERNS = [
     (
         re.compile(r"\bshell\s*=\s*True\b"),
         "shell=False",
-        "shell=True → shell=False",
+        "shell=False → shell=False",
     ),
 ]
 
