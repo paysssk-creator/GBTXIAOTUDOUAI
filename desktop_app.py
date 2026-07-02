@@ -45,9 +45,14 @@ def dashboard_data():
     except: data["mcp"]={"servers":[]}
     try:
         import gbt.paper_account as __pa
-        pa=__pa.get_status()
+        if hasattr(__pa, 'get_status'):
+            pa=__pa.get_status()
+        else:
+            pa={"cash":100000,"equity":100000,"pnl":0}
         data["trade"]={"account":pa,"watchlist":data.get("trade",{}).get("watchlist",[])}
-    except: data["trade"]={"account":{"cash":100000,"equity":100000,"pnl":0},"watchlist":[]}
+    except Exception as e:
+        print(f"[DASHBOARD] Trade error: {e}")
+        data["trade"]={"account":{"cash":100000,"equity":100000,"pnl":0},"watchlist":[]}
     return jsonify(data)
 
 @app.route("/api/hacker/capabilities")
