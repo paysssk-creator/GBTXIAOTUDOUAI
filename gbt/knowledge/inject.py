@@ -9,7 +9,20 @@ def inject_knowledge():
         
         # Monkey-patch: append knowledge to brain's get_context
         if not hasattr(AutonomousBrain, 'get_context'):
-            print("[KNOWLEDGE] AutonomousBrain.get_context not available, skip patch")
+            # 如果 get_context 不存在，尝试查找其他可能的方法
+            # 或者直接添加一个 get_context 方法
+            if hasattr(AutonomousBrain, 'get_system_prompt'):
+                original_get_context = AutonomousBrain.get_system_prompt
+                
+                def enhanced_context(self):
+                    ctx = original_get_context(self)
+                    ctx += "\n\n[Professional Knowledge Base]\n" + SYSTEM_KNOWLEDGE
+                    return ctx
+                
+                AutonomousBrain.get_system_prompt = enhanced_context
+                print("[KNOWLEDGE] Patched get_system_prompt instead of get_context")
+            else:
+                print("[KNOWLEDGE] AutonomousBrain.get_context not available, skip patch")
         else:
             original_get_context = AutonomousBrain.get_context
         
