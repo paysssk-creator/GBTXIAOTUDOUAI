@@ -8,14 +8,17 @@ def inject_knowledge():
         from gbt.brain import AutonomousBrain
         
         # Monkey-patch: append knowledge to brain's get_context
-        original_get_context = AutonomousBrain.get_context
+        if not hasattr(AutonomousBrain, 'get_context'):
+            print("[KNOWLEDGE] AutonomousBrain.get_context not available, skip patch")
+        else:
+            original_get_context = AutonomousBrain.get_context
         
-        def enhanced_context(self):
-            ctx = original_get_context(self)
-            ctx += "\n\n[Professional Knowledge Base]\n" + SYSTEM_KNOWLEDGE
-            return ctx
+            def enhanced_context(self):
+                ctx = original_get_context(self)
+                ctx += "\n\n[Professional Knowledge Base]\n" + SYSTEM_KNOWLEDGE
+                return ctx
         
-        AutonomousBrain.get_context = enhanced_context
+            AutonomousBrain.get_context = enhanced_context
         
         # Also patch system prompt if accessible
         try:
@@ -24,8 +27,7 @@ def inject_knowledge():
                 msg.SYSTEM_PROMPT = msg.SYSTEM_PROMPT + "\n" + SYSTEM_KNOWLEDGE
             if hasattr(msg, 'DEFAULT_SYSTEM'):
                 msg.DEFAULT_SYSTEM = msg.DEFAULT_SYSTEM + "\n" + SYSTEM_KNOWLEDGE
-        except:
-            pass
+        except Exception as e: pass
             
         print("[KNOWLEDGE] A-Share + Desktop expertise injected")
         return True
