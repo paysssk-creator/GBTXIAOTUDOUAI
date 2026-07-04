@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""LEGACY experimental Tk desktop prototype.
+
+This file is retained only for historical/reference purposes. It is not part of
+the current formal desktop release line. The only formal desktop entry is
+`release\\launch_current_runtime.bat` -> `GBT_Pro_v1.1.17_dir_parallel.exe`.
+"""
+
+# 开发者: 自由的风
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 import threading, json, time, os, sys, subprocess

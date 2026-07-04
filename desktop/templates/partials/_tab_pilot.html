@@ -1,0 +1,62 @@
+                <div class="tab-panel" id="panel-pilot">
+                    <div class="grid2" style="margin-bottom:16px">
+                        <div class="card">
+                            <div class="card-header">自主操盘状态<span class="st" id="pilot-st">停止</span></div>
+                            <div class="card-body">
+                                <div style="display:flex;gap:8px;margin-bottom:12px">
+                                    <button onclick="pilotStart()" id="pilot-start-btn"
+                                        style="flex:1;padding:10px;background:var(--g);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">启动自主操盘</button>
+                                    <button onclick="pilotStop()" id="pilot-stop-btn"
+                                        style="flex:1;padding:10px;background:var(--r);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;display:none">停止</button>
+                                </div>
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="p-scan">0</div>
+                                        <div class="lbl">扫描次数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="p-trade">0</div>
+                                        <div class="lbl">成交笔数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="p-signal">0</div>
+                                        <div class="lbl">信号数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="p-pnl">¥0</div>
+                                        <div class="lbl">累计盈亏</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:10px;font-size:10px;color:var(--t3)">
+                                    模式: <span id="p-mode">保守</span> |
+                                    止损: <span id="p-sl">-5%</span> |
+                                    止盈: <span id="p-tp">+10%</span> |
+                                    间隔: <span id="p-int">60s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">扫描信号<span class="st" id="p-slast">--</span></div>
+                            <div class="card-body">
+                                <table class="data">
+                                    <thead>
+                                        <tr>
+                                            <th>代码</th>
+                                            <th>名称</th>
+                                            <th>价格</th>
+                                            <th>涨跌</th>
+                                            <th>信号</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="p-signals"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">操盘日志<span class="st">实时</span></div>
+                        <div class="card-body">
+                            <div class="log-box" id="p-log" style="max-height:300px">就绪 — 点击"启动自主操盘"开始自动交易</div>
+                        </div>
+                    </div>
+                </div>

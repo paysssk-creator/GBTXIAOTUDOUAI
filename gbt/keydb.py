@@ -50,11 +50,11 @@ class KeyDB:
                         for l in open(p,"r",encoding="utf-8"):
                             l=l.strip()
                             if l.startswith(f"{ek}="): return l.split("=",1)[1].strip().strip('"').strip("'")
-                    except: pass
+                    except Exception: pass
         r = self.conn.execute("SELECT key FROM k WHERE pid=? ORDER BY used DESC LIMIT 1",(pid,)).fetchone()
         if r:
             try: return self._dec(r[0])
-            except: pass
+            except Exception: pass
         return None
     def all_info(self):
         rows = self.conn.execute("SELECT pid,ts,used,cnt,free,note FROM k").fetchall()

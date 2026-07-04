@@ -1,0 +1,36 @@
+# GBT Pro — 预发（演练）环境
+# 用 image tag 引用不可变镜像，禁止 `build: .`
+# 与生产栈完全同构（镜像 + 启动入口 + 健康探针一致）
+
+services:
+  gbt-preview:
+    image: gbt-pro:${GBT_RELEASE_TAG-preview}
+    container_name: gbt-preview
+    restart: "no"
+    ports:
+      - "18765:8765"
+    env_file:
+      - ./.env.preview
+    environment:
+      GBT_ROLE: preview
+      GBT_PORT: "8765"
+      GBT_BIND: "0.0.0.0"
+    volumes:
+      - gbt_preview_data:/app/data
+      - gbt_preview_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "/app/deploy/healthcheck.py"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    stop_grace_period: 10s
+    networks:
+      - gbt_net
+
+networks:
+  gbt_net:
+    driver: bridge
+
+volumes:
+  gbt_preview_data:
+  gbt_preview_logs:

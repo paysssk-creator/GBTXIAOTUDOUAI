@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  gbt:
+    build: .
+    container_name: gbt-pro
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_MODEL=deepseek-reasoner
+      - DEEPSEEK_CHAT_MODEL=deepseek-chat
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN:-}
+      - TG_CHAT_ID=${TG_CHAT_ID:-}
+      - SC_KEY=${SC_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./screenshots:/app/screenshots
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8765/api/status')" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3

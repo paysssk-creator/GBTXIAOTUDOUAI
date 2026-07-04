@@ -167,6 +167,35 @@ CREATE INDEX IF NOT EXISTS idx_kline_cache_day ON kline_cache(day);
 class Database:
     """SQLite 数据库管理器 — 线程安全"""
 
+    # ── 允许的表名白名单 ──
+    _ALLOWED_TABLES = frozenset({
+        "accounts", "positions", "trades", "signals", "sessions",
+        "daily_stats", "strategy_config", "risk_config", "kline_cache", "blacklist",
+    })
+    _ALLOWED_COLUMNS = frozenset({
+        "name", "cash", "total_pnl", "daily_pnl", "total_trades", "win_trades",
+        "loss_trades", "updated_at", "initial_cash", "id", "account_id",
+        "code", "shares", "avg_cost", "created_at", "time", "action", "price",
+        "amount", "pnl", "cash_after", "commission", "stamp_tax", "status",
+        "session_id", "confidence", "reason", "strategy", "signal_json",
+        "steps_json", "date", "buy_trades", "sell_trades", "win_rate",
+        "max_drawdown", "best_trade", "worst_trade", "sharpe_ratio",
+        "decisions_count", "signals_count", "risk_blocks", "mcp_downtime_seconds",
+        "key", "value", "value_type", "description", "table", "scale", "day",
+        "open", "high", "low", "close", "volume", "fetched_at", "expires_at",
+        "added_at", "start_time", "executed",
+    })
+
+    def _validate_table(self, table: str) -> str:
+        if table not in self._ALLOWED_TABLES:
+            raise ValueError(f"非法表名: {table}")
+        return table
+
+    def _validate_column(self, col: str) -> str:
+        if col not in self._ALLOWED_COLUMNS:
+            raise ValueError(f"非法字段名: {col}")
+        return col
+
     def __init__(self, db_path=None):
         self.db_path = db_path or DB_PATH
         self._local = threading.local()
@@ -224,7 +253,7 @@ class Database:
 
     def update_account(self, name="default", **kwargs):
         kwargs["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sets = ", ".join(f"{k}=?" for k in kwargs)
+        sets = ", ".join(f"{self._validate_column(k)}=?" for k in kwargs)
         vals = list(kwargs.values()) + [name]
         with self.conn() as c:
             c.execute(f"UPDATE accounts SET {sets} WHERE name=?", vals)
@@ -374,9 +403,9 @@ class Database:
             for r in rows:
                 d = dict(r)
                 try: d["signal"] = json.loads(d.pop("signal_json", "{}"))
-                except: d["signal"] = {}
+                except Exception: d["signal"] = {}
                 try: d["steps"] = json.loads(d.pop("steps_json", "[]"))
-                except: d["steps"] = []
+                except Exception: d["steps"] = []
                 result.append(d)
             return result
 
@@ -388,13 +417,13 @@ class Database:
         with self.conn() as c:
             existing = c.execute("SELECT id FROM daily_stats WHERE date=?", (date,)).fetchone()
             if existing:
-                sets = ", ".join(f"{k}=?" for k in kwargs)
+                sets = ", ".join(f"{self._validate_column(k)}=?" for k in kwargs)
                 vals = list(kwargs.values()) + [now, date]
                 c.execute(f"UPDATE daily_stats SET {sets}, created_at=? WHERE date=?", vals)
             else:
                 kwargs["date"] = date
                 kwargs["created_at"] = now
-                cols = ", ".join(kwargs.keys())
+                cols = ", ".join(self._validate_column(k) for k in kwargs)
                 placeholders = ", ".join("?" * len(kwargs))
                 c.execute(f"INSERT INTO daily_stats ({cols}) VALUES ({placeholders})", list(kwargs.values()))
             c.commit()
@@ -414,7 +443,8 @@ class Database:
         """启动时加载配置缓存"""
         with self.conn() as c:
             for table in ("strategy_config", "risk_config"):
-                rows = c.execute("SELECT key, value, value_type FROM " + table).fetchall()
+                t = self._validate_table(table)
+                rows = c.execute(f"SELECT key, value, value_type FROM {t}").fetchall()
                 for r in rows:
                     prefix = "strategy." if table == "strategy_config" else "risk."
                     self._config_cache[prefix + r["key"]] = self._parse_value(r["value"], r["value_type"])
@@ -427,11 +457,12 @@ class Database:
         return str(value)
 
     def get_config(self, key, default=None, table="strategy_config"):
+        t = self._validate_table(table)
         cache_key = f"{'strategy' if table=='strategy_config' else 'risk'}.{key}"
         if cache_key in self._config_cache:
             return self._config_cache[cache_key]
         with self.conn() as c:
-            r = c.execute(f"SELECT value, value_type FROM {table} WHERE key=?", (key,)).fetchone()
+            r = c.execute(f"SELECT value, value_type FROM {t} WHERE key=?", (key,)).fetchone()
             if r:
                 val = self._parse_value(r["value"], r["value_type"])
                 with self._lock:
@@ -441,6 +472,7 @@ class Database:
 
     def set_config(self, key, value, table="strategy_config", description=""):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        t = self._validate_table(table)
         if isinstance(value, bool): vtype, sval = "bool", str(value).lower()
         elif isinstance(value, int): vtype, sval = "int", str(value)
         elif isinstance(value, float): vtype, sval = "float", str(value)
@@ -449,7 +481,7 @@ class Database:
 
         with self.conn() as c:
             c.execute(
-                f"""INSERT INTO {table} (key, value, value_type, description, updated_at)
+                f"""INSERT INTO {t} (key, value, value_type, description, updated_at)
                 VALUES (?,?,?,?,?)
                 ON CONFLICT(key) DO UPDATE SET value=excluded.value, value_type=excluded.value_type, description=excluded.description, updated_at=excluded.updated_at""",
                 (key, sval, vtype, description, now)
@@ -460,8 +492,9 @@ class Database:
             self._config_cache[cache_key] = value
 
     def get_all_configs(self, table="strategy_config"):
+        t = self._validate_table(table)
         with self.conn() as c:
-            rows = c.execute(f"SELECT * FROM {table} ORDER BY key").fetchall()
+            rows = c.execute(f"SELECT * FROM {t} ORDER BY key").fetchall()
             return [dict(r) for r in rows]
 
     # ═══════════════════════════════════════════════
@@ -663,7 +696,7 @@ class Database:
             tables = ["accounts", "positions", "trades", "signals", "sessions", "daily_stats", "kline_cache", "blacklist"]
             stats = {}
             for t in tables:
-                count = c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                count = c.execute(f"SELECT COUNT(*) FROM {self._validate_table(t)}").fetchone()[0]
                 stats[t] = count
             stats["db_size_mb"] = round(os.path.getsize(self.db_path) / 1024 / 1024, 2) if os.path.exists(self.db_path) else 0
             return stats

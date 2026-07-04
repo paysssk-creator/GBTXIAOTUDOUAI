@@ -1,0 +1,194 @@
+                <div class="tab-panel" id="panel-trade">
+                    <div class="card" style="margin-bottom:16px">
+                        <div class="card-header">
+                            每日复盘解说
+                            <span class="st" id="recap-time">未生成</span>
+                            <span style="margin-left:auto;display:flex;gap:6px">
+                                <button class="save" id="recap-btn" onclick="recapGenerate()"
+                                    title="由 DeepSeek-Reasoner 基于本机实时市场快照生成">一键生成复盘</button>
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div id="recap-headline" class="recap-headline">点击「一键生成复盘」基于今日本机可见的指数/自选/策略状态，让
+                                DeepSeek-Reasoner 出 4 段盘后评。</div>
+                            <div id="recap-report" class="recap-report">等待生成...</div>
+                            <div id="recap-meta" class="recap-meta"></div>
+                        </div>
+                    </div>
+                    <div class="grid3" style="margin-bottom:16px">
+                        <div class="card">
+                            <div class="card-header">市场宽度<span class="st" id="trade-time">--</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="trade-breadth">--</div>
+                                        <div class="lbl">多头占比</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val g" id="trade-up">--</div>
+                                        <div class="lbl">上涨指数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val r" id="trade-down">--</div>
+                                        <div class="lbl">下跌指数</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">风格轮动<span class="st">风格</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="trade-avg">--</div>
+                                        <div class="lbl">指数均值</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="trade-style">--</div>
+                                        <div class="lbl">主导风格</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="trade-risk">--</div>
+                                        <div class="lbl">情绪温度</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">领涨领跌<span class="st">焦点</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val g" id="trade-leader">--</div>
+                                        <div class="lbl">最强指数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val r" id="trade-laggard">--</div>
+                                        <div class="lbl">最弱指数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="trade-watch-strong">--</div>
+                                        <div class="lbl">自选强势</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid2">
+                        <div class="card">
+                            <div class="card-header">核心指数看板<span class="st">实时</span></div>
+                            <div class="card-body">
+                                <div id="trade-index-cards" class="trade-index-cards">加载中...</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">市场脉搏<span class="st">脉搏</span></div>
+                            <div class="card-body">
+                                <div id="trade-idx" class="trade-pulse-list">加载中...</div>
+                                <div id="trade-pulse" class="trade-insight-box">等待行情数据...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid2" style="margin-top:16px">
+                        <div class="card">
+                            <div class="card-header">自选股强弱榜<span class="st">自选</span></div>
+                            <div class="card-body">
+                                <table class="data">
+                                    <thead>
+                                        <tr>
+                                            <th>代码</th>
+                                            <th>名称</th>
+                                            <th>价格</th>
+                                            <th>涨跌幅</th>
+                                            <th>强弱</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="trade-wl"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">交易观察清单<span class="st">看盘</span></div>
+                            <div class="card-body">
+                                <div id="trade-focus-list" class="trade-focus-list">等待自选数据...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top:16px">
+                        <div class="card-header">单股详情 <span class="st" id="trade-detail-code">--</span></div>
+                        <div class="card-body">
+                            <div class="trade-pro-toolbar">
+                                <div class="trade-pro-search">
+                                    <input id="trade-search-input" placeholder="搜代码/名称 直接切换个股，例如 600519 / 平安" />
+                                    <button class="primary" onclick="tradeProSearch()">切股</button>
+                                </div>
+                                <div class="trade-pro-period" id="trade-pro-period">
+                                    <button class="active" data-days="60" onclick="tradeProPeriod(this,60)">60日</button>
+                                    <button data-days="120" onclick="tradeProPeriod(this,120)">120日</button>
+                                    <button data-days="180" onclick="tradeProPeriod(this,180)">180日</button>
+                                </div>
+                                <button class="save" onclick="tradeProAnalyze()" title="让 DeepSeek 给专业诊断">AI诊股</button>
+                            </div>
+                            <div class="trade-detail-head">
+                                <div>
+                                    <div class="trade-detail-name" id="trade-detail-name">请选择自选股</div>
+                                    <div class="trade-detail-sub" id="trade-detail-sub">点击左侧自选股强弱榜或观察清单查看明细</div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div class="trade-detail-price" id="trade-detail-price">--</div>
+                                    <div class="trade-detail-move" id="trade-detail-move">--</div>
+                                </div>
+                            </div>
+                            <div class="trade-pro-chart-wrap">
+                                <div class="trade-pro-chart-meta">
+                                    <span id="trade-pro-chart-meta">价量走势（专业终端视图）</span>
+                                    <span id="trade-pro-chart-info" class="muted"></span>
+                                </div>
+                                <div id="trade-pro-chart" class="trade-pro-chart">尚未加载 K 线...</div>
+                            </div>
+                            <div class="grid3" style="margin-top:14px">
+                                <div class="trade-mini-card">
+                                    <div class="k">今开</div>
+                                    <div class="v" id="trade-detail-open">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">最高</div>
+                                    <div class="v" id="trade-detail-high">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">最低</div>
+                                    <div class="v" id="trade-detail-low">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">昨收</div>
+                                    <div class="v" id="trade-detail-prev">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">振幅</div>
+                                    <div class="v" id="trade-detail-amplitude">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">成交额</div>
+                                    <div class="v" id="trade-detail-amount">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">成交量</div>
+                                    <div class="v" id="trade-detail-volume">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">总市值</div>
+                                    <div class="v" id="trade-detail-mcap">--</div>
+                                </div>
+                                <div class="trade-mini-card">
+                                    <div class="k">流通市值</div>
+                                    <div class="v" id="trade-detail-fcap">--</div>
+                                </div>
+                            </div>
+                            <div class="trade-pro-tech" id="trade-pro-tech">
+                                <div class="trade-pro-tech-empty">点击"切股" 或 选中上方任一档位以计算 MA/RSI/MACD 指标摘要</div>
+                            </div>
+                            <div id="trade-detail-insight" class="trade-insight-box" style="margin-top:14px">等待个股行情数据...
+                            </div>
+                        </div>
+                    </div>
+                </div>

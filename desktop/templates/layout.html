@@ -1,92 +1,2350 @@
-<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GBT Pro v2.2</title><link rel="stylesheet" href="/styles.css"></head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>GBT Pro — 自主操盘·智能交易终端</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="/api/logo" type="image/svg+xml">
+</head>
+
 <body>
-<div id="app">
-<aside id="side">
-<div class="s-logo"><div class="icon">G</div><div class="txt"><h2>GBT Pro</h2><span>v2.2 生产版</span></div></div>
-<div class="s-nav">
-<div class="sec">总览</div>
-<div class="n-item active" data-tab="dash"><div class="dot" style="background:var(--a)"></div>仪表盘</div>
-<div class="n-item" data-tab="llm"><div class="dot" style="background:var(--c1)"></div>大模型中心<span class="badge" id="llm-badge">0</span></div>
-<div class="sec">交易</div>
-<div class="n-item" data-tab="trade"><div class="dot" style="background:var(--g)"></div>A股行情</div>
-<div class="n-item" data-tab="account"><div class="dot" style="background:var(--y)"></div>账户</div>
-<div class="sec">操作</div>
-<div class="n-item" data-tab="hacker"><div class="dot" style="background:var(--r)"></div>黑客 49</div>
-<div class="n-item" data-tab="desktop"><div class="dot" style="background:#8b5cf6"></div>电脑操控</div>
-<div class="n-item" data-tab="mcp"><div class="dot" style="background:var(--c1)"></div>MCP服务器<span class="badge" id="mcp-badge">0</span></div>
-</div>
-<div class="s-foot"><div class="status"><div class="live"></div><span id="status-txt">在线</span></div><div id="sys-info">处理器 -- | MEM --</div><div style="margin-top:2px">paysssk-creator</div></div>
-</aside>
-<div id="main">
-<div id="topbar"><h1 id="page-title">仪表盘</h1><div class="ticker" id="ticker"></div></div>
-<div id="content">
-<div class="tab-panel active" id="panel-dash">
-<div class="grid3" style="margin-bottom:16px">
-<div class="card"><div class="card-header">大模型消耗<span class="st">LLM</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-tokens">--</div><div class="lbl">总Token</div></div><div class="stat-box"><div class="val" id="d-cost">--</div><div class="lbl">费用</div></div><div class="stat-box"><div class="val" id="d-calls">--</div><div class="lbl">调用次数</div></div><div class="stat-box"><div class="val" id="d-model">--</div><div class="lbl">当前模型</div></div></div></div></div>
-<div class="card"><div class="card-header">系统<span class="st" id="d-host">--</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-cpu">--</div><div class="lbl">处理器</div><div class="progress"><div class="fill p-cpu" id="d-cpubar" style="width:0"></div></div></div><div class="stat-box"><div class="val" id="d-mem">--</div><div class="lbl">内存</div><div class="progress"><div class="fill p-mem" id="d-membar" style="width:0"></div></div></div><div class="stat-box"><div class="val" id="d-disk">--</div><div class="lbl">硬盘</div><div class="progress"><div class="fill p-disk" id="d-diskbar" style="width:0"></div></div></div></div></div></div>
-<div class="card"><div class="card-header">账户<span class="st">A-Share</span></div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="d-cash">--</div><div class="lbl">现金</div></div><div class="stat-box"><div class="val" id="d-equity">--</div><div class="lbl">净值</div></div><div class="stat-box"><div class="val" id="d-pnl">--</div><div class="lbl">盈亏</div></div><div class="stat-box"><div class="val" id="d-pos">--</div><div class="lbl">持仓</div></div></div></div></div>
-</div>
-<div class="grid2">
-<div class="card"><div class="card-header">大模型动态</div><div class="card-body"><table class="data"><thead><tr><th>时间</th><th>当前模型</th><th>输入</th><th>输出</th><th>费用</th></tr></thead><tbody id="d-llmhist"></tbody></table></div></div>
-<div class="card"><div class="card-header">自选股<span class="st">A-Share</span></div><div class="card-body"><table class="data"><thead><tr><th>代码</th><th>名称</th><th>价格</th><th>涨跌幅</th></tr></thead><tbody id="d-watch"></tbody></table></div></div>
-</div>
-</div>
-<div class="tab-panel" id="panel-llm">
-<div class="grid2"><div class="card"><div class="card-header">大模型供应商</div><div class="card-body"><div id="llm-list" style="display:flex;flex-direction:column;gap:6px"></div></div></div>
-<div class="card"><div class="card-header">对话</div><div class="card-body"><textarea id="llm-input" placeholder="输入提示词..." style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:10px;resize:none;font:12px Segoe UI;height:80px"></textarea><button onclick="send对话()" style="margin-top:8px;width:100%;padding:10px;background:var(--a);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer">发送</button></div></div></div>
-<div class="card" style="margin-top:16px"><div class="card-header">输出</div><div class="card-body"><div class="log-box" id="llm-out" style="max-height:300px">就绪...</div></div></div>
-</div>
-<div class="tab-panel" id="panel-trade">
-<div class="grid2"><div class="card"><div class="card-header">市场指数</div><div class="card-body"><div id="trade-idx" style="font:11px Consolas,monospace;color:var(--t2)">加载中...</div></div></div>
-<div class="card"><div class="card-header">自选股</div><div class="card-body"><table class="data"><thead><tr><th>代码</th><th>名称</th><th>价格</th><th>涨跌幅</th></tr></thead><tbody id="trade-wl"></tbody></table></div></div></div>
-</div>
-<div class="tab-panel" id="panel-account">
-<div class="grid3"><div class="card"><div class="card-header">账户余额</div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="a-cash">--</div><div class="lbl">现金</div></div><div class="stat-box"><div class="val" id="a-equity">--</div><div class="lbl">净值</div></div><div class="stat-box"><div class="val" id="a-pnl">--</div><div class="lbl">盈亏</div></div></div></div></div>
-<div class="card"><div class="card-header">交易状态</div><div class="card-body"><div class="stat-grid"><div class="stat-box"><div class="val" id="a-pos">--</div><div class="lbl">持仓</div></div><div class="stat-box"><div class="val" id="a-mode">手动</div><div class="lbl">模式</div></div><div class="stat-box"><div class="val" id="a-conn">--</div><div class="lbl">连接器</div></div></div></div></div>
-</div>
-</div>
-<div class="tab-panel" id="panel-hacker">
-<div class="card"><div class="card-header">全部49项能力<span class="st" id="hack-cnt">--</span></div><div class="card-body"><div class="grid-btn" id="hack-grid"></div></div></div>
-<div class="card" style="margin-top:12px"><div class="card-header">执行日志</div><div class="card-body"><div class="log-box" id="hack-log">空闲</div></div></div>
-</div>
-<div class="tab-panel" id="panel-desktop">
-<div class="card"><div class="card-header">控制操作</div><div class="card-body"><div class="grid-btn" id="desk-grid"></div></div></div>
-<div class="card" style="margin-top:12px"><div class="card-header">日志</div><div class="card-body"><div class="log-box" id="desk-log">空闲</div></div></div>
-</div>
-<div class="tab-panel" id="panel-mcp">
-<div class="card"><div class="card-header">MCP服务器<span class="st" id="mcp-cnt">--</span></div><div class="card-body"><div class="grid-btn" id="mcp-grid"></div></div></div>
-</div>
-</div></div></div>
-<div id="toast"></div>
-<script>
-var D=document,currentTab="dash",titles={dash:"仪表盘",llm:"大模型中心",trade:"A-Share",account:"账户",hacker:"黑客 49",desktop:"Desktop",mcp:"MCP"};
-function $(id){return D.getElementById(id)}
-function qs(sel){return D.querySelectorAll(sel)}
-function api(url,cb,method,body){var x=new XMLHttpRequest();x.open(method||"GET",url+"?_="+Date.now(),true);if(body)x.setRequestHeader("Content-Type","application/json");x.onreadystatechange=function(){if(x.readyState===4){try{var d=JSON.parse(x.responseText);cb(d,null)}catch(e){cb(null,"Parse")}}};x.onerror=function(){cb(null,"Net")};x.timeout=8000;x.ontimeout=function(){cb(null,"时间out")};try{x.send(body||null)}catch(e){cb(null,String(e))}}
-function esc(s){var e=D.createElement("span");e.textContent=s||"";return e.innerHTML}
+    <div id="app">
+        <aside id="side">
+            <div class="s-logo">
+                <div class="icon-box">
+                    <img src="/api/logo" alt="GBT Logo" style="width:100%;height:100%;border-radius:12px">
+                </div>
+                <div class="txt">
+                    <h2>GBT Pro</h2>
+                    <div class="tagline">自主操盘 · 智能交易</div>
+                    <div class="by">自由之翼工作室</div>
+                </div>
+            </div>
+            <div class="s-nav">
+                <div class="sec">总览</div>
+                <div class="n-item active" data-tab="dash">
+                    <div class="dot" style="background:var(--a)"></div>仪表盘
+                </div>
+                <div class="n-item" data-tab="llm">
+                    <div class="dot" style="background:var(--c1)"></div>大模型中心<span class="badge" id="llm-badge">0</span>
+                </div>
+                <div class="sec">AI对话</div>
+                <div class="n-item" data-tab="chat">
+                    <div class="dot" style="background:var(--brand-primary)"></div>智能 对话<span class="badge"
+                        id="chat-badge">●</span>
+                </div>
+                <div class="sec">交易</div>
+                <div class="n-item" data-tab="pilot">
+                    <div class="dot" style="background:var(--g)"></div>自主操盘<span class="badge" id="pilot-badge">●</span>
+                </div>
+                <div class="n-item" data-tab="trade">
+                    <div class="dot" style="background:var(--g)"></div>A股行情
+                </div>
+                <div class="n-item" data-tab="account">
+                    <div class="dot" style="background:var(--y)"></div>账户
+                </div>
+                <div class="sec">操作</div>
+                <div class="n-item" data-tab="desktop">
+                    <div class="dot" style="background:#8b5cf6"></div>电脑操控
+                </div>
+                <div class="n-item" data-tab="mcp">
+                    <div class="dot" style="background:var(--c1)"></div>MCP服务器<span class="badge"
+                        id="mcp-badge">0</span>
+                </div>
+                <div class="sec">配置</div>
+                <div class="n-item" data-tab="auth">
+                    <div class="dot" style="background:#06b6d4"></div>登录认证
+                </div>
+                <div class="n-item" data-tab="connect">
+                    <div class="dot" style="background:var(--a)"></div>连接大模型
+                </div>
+            </div>
+            <div class="s-foot">
+                <div class="status">
+                    <div class="live"></div><span id="status-txt">在线</span>
+                </div>
+                <div id="sys-info">处理器 -- | 内存 --</div>
+                <div class="brand-foot">GBT Pro · AI驱动A股自主交易终端</div>
+                <div class="brand-foot" style="opacity:0.25">自由之翼工作室 · 自主操盘者</div>
+            </div>
+        </aside>
+        <div id="main">
+            <div id="topbar">
+                <h1 id="page-title">仪表盘</h1>
+                <div class="topbar-right">
+                    <div class="ticker" id="ticker"></div>
+                    <div id="auth-chip" class="auth-chip-pill">访客模式</div>
+                </div>
+            </div>
+            <div id="content">
+                <div class="tab-panel active" id="panel-dash">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero dashboard-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">MISSION OVERVIEW</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">作战总览仪表盘</div>
+                                    <span class="workspace-status">系统在线</span>
+                                </div>
+                                <div class="workspace-copy">把大模型用量、主机状态、账户情况和核心观察列表统一收进首页工作台，让首页看起来像真正的交易终端入口，而不是普通后台首页。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">云端大脑已接入</span>
+                                    <span class="workspace-chip">自主操盘持续运行</span>
+                                    <span class="workspace-chip">电脑操控能力已挂载</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid3 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">大模型消耗<span class="st">大模型</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box">
+                                            <div class="val" id="d-tokens">--</div>
+                                            <div class="lbl">总令牌数</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-cost">--</div>
+                                            <div class="lbl">费用</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-calls">--</div>
+                                            <div class="lbl">调用次数</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-model">--</div>
+                                            <div class="lbl">当前模型</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">系统<span class="st" id="d-host">--</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box">
+                                            <div class="val" id="d-cpu">--</div>
+                                            <div class="lbl">处理器</div>
+                                            <div class="progress">
+                                                <div class="fill p-cpu" id="d-cpubar" style="width:0"></div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-mem">--</div>
+                                            <div class="lbl">内存</div>
+                                            <div class="progress">
+                                                <div class="fill p-mem" id="d-membar" style="width:0"></div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-disk">--</div>
+                                            <div class="lbl">硬盘</div>
+                                            <div class="progress">
+                                                <div class="fill p-disk" id="d-diskbar" style="width:0"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">账户<span class="st">A股</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box">
+                                            <div class="val" id="d-cash">--</div>
+                                            <div class="lbl">现金</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-equity">--</div>
+                                            <div class="lbl">净值</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-pnl">--</div>
+                                            <div class="lbl">盈亏</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="val" id="d-pos">--</div>
+                                            <div class="lbl">持仓</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">大模型动态</div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-table-shell">
+                                        <table class="data">
+                                            <thead>
+                                                <tr>
+                                                    <th>时间</th>
+                                                    <th>当前模型</th>
+                                                    <th>输入</th>
+                                                    <th>输出</th>
+                                                    <th>费用</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="d-llmhist"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">自选股<span class="st">A股</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-table-shell">
+                                        <table class="data">
+                                            <thead>
+                                                <tr>
+                                                    <th>代码</th>
+                                                    <th>名称</th>
+                                                    <th>价格</th>
+                                                    <th>涨跌幅</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="d-watch"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-pilot">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero pilot-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">AUTOPILOT ENGINE</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">自主操盘中枢</div>
+                                    <span class="workspace-status" id="pilot-st">停止</span>
+                                </div>
+                                <div class="workspace-copy">统一查看引擎状态、扫描节奏、风险参数和实时日志，界面层级与聊天工作台保持一致。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">模式 <b id="p-mode">保守</b></span>
+                                    <span class="workspace-chip">止损 <b id="p-sl">-5%</b></span>
+                                    <span class="workspace-chip">止盈 <b id="p-tp">+10%</b></span>
+                                    <span class="workspace-chip">间隔 <b id="p-int">60s</b></span>
+                                </div>
+                            </div>
+                            <div class="workspace-hero-actions">
+                                <button onclick="pilotStart()" id="pilot-start-btn" class="btn-ui success">启动自主操盘</button>
+                                <button onclick="pilotStop()" id="pilot-stop-btn" class="btn-ui danger" style="display:none">停止自主操盘</button>
+                            </div>
+                        </div>
+                        <div class="workspace-metric-grid">
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">扫描次数</div>
+                                <div class="metric-value" id="p-scan">0</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">成交笔数</div>
+                                <div class="metric-value" id="p-trade">0</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">信号数</div>
+                                <div class="metric-value" id="p-signal">0</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">累计盈亏</div>
+                                <div class="metric-value" id="p-pnl">¥0</div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap pilot-precheck-shell">
+                            <div class="card workspace-card">
+                                <div class="card-header">自主接管闭环<span class="st" id="pilot-precheck-status">待检测</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-form-grid pilot-precheck-grid">
+                                        <div>
+                                            <label class="workspace-label" for="pilot-broker">目标券商</label>
+                                            <input id="pilot-broker" class="workspace-input" placeholder="留空则自动识别券商">
+                                        </div>
+                                        <div>
+                                            <label class="workspace-label" for="pilot-stock">股票代码</label>
+                                            <input id="pilot-stock" class="workspace-input" placeholder="例如 600519">
+                                        </div>
+                                        <div>
+                                            <label class="workspace-label" for="pilot-price">委托价格</label>
+                                            <input id="pilot-price" class="workspace-input" type="number" step="0.01" placeholder="例如 1420.55">
+                                        </div>
+                                        <div>
+                                            <label class="workspace-label" for="pilot-lots">委托数量</label>
+                                            <input id="pilot-lots" class="workspace-input" type="number" step="100" placeholder="例如 100">
+                                        </div>
+                                        <div>
+                                            <label class="workspace-label" for="pilot-trade-action">交易方向</label>
+                                            <select id="pilot-trade-action" class="workspace-input">
+                                                <option value="buy">买入</option>
+                                                <option value="sell">卖出</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="pilot-precheck-chip-row">
+                                        <span class="pilot-precheck-chip">接管阶段 <b id="pilot-takeover-phase">待检测</b></span>
+                                        <span class="pilot-precheck-chip">唯一下一步 <b id="pilot-next-action">--</b></span>
+                                        <span class="pilot-precheck-chip">填单条件 <b id="pilot-fill-ready">--</b></span>
+                                        <span class="pilot-precheck-chip">确认弹窗 <b id="pilot-confirm-ready">--</b></span>
+                                    </div>
+                                    <div id="pilot-precheck-note" class="workspace-note" style="margin-top:12px">点击“刷新接管预检”，系统会给出当前唯一下一步动作。</div>
+                                    <div class="pilot-probe-grid">
+                                        <div class="pilot-probe-item"><span>登录状态</span><b id="pilot-probe-login">--</b></div>
+                                        <div class="pilot-probe-item"><span>交易锚点</span><b id="pilot-probe-anchors">--</b></div>
+                                        <div class="pilot-probe-item"><span>委托回读</span><b id="pilot-probe-entrust">--</b></div>
+                                        <div class="pilot-probe-item"><span>持仓回读</span><b id="pilot-probe-position">--</b></div>
+                                        <div class="pilot-probe-item"><span>当前前台</span><b id="pilot-probe-window">--</b></div>
+                                        <div class="pilot-probe-item"><span>探测结论</span><b id="pilot-probe-ready">--</b></div>
+                                    </div>
+                                    <div id="pilot-probe-note" class="workspace-note pilot-probe-note">等待进入可接管态后执行联合回读探测。</div>
+                                    <div class="pilot-fill-grid">
+                                        <div class="pilot-fill-item"><span>目标代码</span><b id="pilot-fill-stock-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>目标价格</span><b id="pilot-fill-price-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>目标数量</span><b id="pilot-fill-lots-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>参数就绪</span><b id="pilot-fill-payload-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>锚点就绪</span><b id="pilot-fill-anchor-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>预演状态</span><b id="pilot-fill-preview-state">--</b></div>
+                                    </div>
+                                    <div id="pilot-fill-note" class="workspace-note pilot-fill-note">当前工作台内的交易填单只做安全预演，不执行真实填单。</div>
+                                    <div class="pilot-fill-grid pilot-result-grid">
+                                        <div class="pilot-fill-item"><span>确认按钮</span><b id="pilot-confirm-found">--</b></div>
+                                        <div class="pilot-fill-item"><span>按钮坐标</span><b id="pilot-confirm-coord">--</b></div>
+                                        <div class="pilot-fill-item"><span>提交状态</span><b id="pilot-confirm-submit">--</b></div>
+                                        <div class="pilot-fill-item"><span>回看结果</span><b id="pilot-watch-state">--</b></div>
+                                        <div class="pilot-fill-item"><span>委托代码</span><b id="pilot-watch-entrust">--</b></div>
+                                        <div class="pilot-fill-item"><span>持仓代码</span><b id="pilot-watch-position">--</b></div>
+                                    </div>
+                                    <div id="pilot-result-note" class="workspace-note pilot-fill-note">确认态与委托结果回看会在这里持续回填。</div>
+                                    <div class="workspace-hero-actions pilot-precheck-actions">
+                                        <label class="pilot-inline-check"><input id="pilot-risk-confirm" type="checkbox"> <span>高风险确认</span></label>
+                                        <button onclick="loadPilotTakeoverPrecheck()" class="btn-ui info">刷新接管预检</button>
+                                        <button onclick="runPilotNextAction()" id="pilot-next-btn" class="btn-ui success" disabled>执行唯一下一步</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">执行门禁<span class="st">准入策略</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-note pilot-gate-stack">
+                                        <div class="pilot-gate-row"><span>预演支持</span><b id="pilot-gate-dry">支持</b></div>
+                                        <div class="pilot-gate-row"><span>显式确认</span><b id="pilot-gate-confirm">--</b></div>
+                                        <div class="pilot-gate-row"><span>人工参与</span><b id="pilot-gate-human">--</b></div>
+                                        <div class="pilot-gate-row"><span>可执行链</span><b id="pilot-supported-actions">--</b></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">扫描信号<span class="st" id="p-slast">--</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-table-shell">
+                                        <table class="data">
+                                            <thead>
+                                                <tr>
+                                                    <th>代码</th>
+                                                    <th>名称</th>
+                                                    <th>价格</th>
+                                                    <th>涨跌</th>
+                                                    <th>信号</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="p-signals"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">操盘日志<span class="st">实时</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="log-box workspace-log-box" id="p-log">就绪 — 点击“启动自主操盘”开始自动交易</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-llm">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero llm-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">LLM CONTROL CENTER</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">大模型能力中枢</div>
+                                    <span class="workspace-status">实时扫描</span>
+                                </div>
+                                <div class="workspace-copy">统一查看本机可用大模型供应商、当前默认模型与用量概况，把原来零散的供应商状态卡收口成正式的策略推理控制台。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">支持本地密钥持久化</span>
+                                    <span class="workspace-chip">支持云端大脑协同</span>
+                                    <span class="workspace-chip">支持实时可用性扫描</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="workspace-metric-grid llm-metric-grid">
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">总令牌数</div>
+                                <div class="metric-value" id="llm-tokens">0</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">总费用</div>
+                                <div class="metric-value" id="llm-cost">¥0</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">请求数</div>
+                                <div class="metric-value" id="llm-calls">0</div>
+                            </div>
+                            <div class="workspace-metric-card llm-metric-wide">
+                                <div class="metric-label">当前模型</div>
+                                <div class="metric-value metric-time" id="llm-cur">--</div>
+                                <div class="metric-sub">当前主模型与推理链的默认入口</div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">供应商可用性<span class="st">扫描结果</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-note" style="margin-bottom:12px">这里展示本机当前能直接调用的大模型供应商。可用状态会自动高亮，不可用项保留但降级呈现，方便你快速判断当前策略脑入口。</div>
+                                    <div id="llm-list" class="llm-provider-list"></div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">运行策略说明<span class="st">设备级</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-note llm-note-stack">
+                                        <div class="llm-note-row"><span>密钥策略</span><b>同设备填写一次即可复用</b></div>
+                                        <div class="llm-note-row"><span>云端协同</span><b>云端出计划，本地做执行</b></div>
+                                        <div class="llm-note-row"><span>安全边界</span><b>云端不直接控制键鼠</b></div>
+                                        <div class="llm-note-row"><span>当前模式</span><b>以已连接模型为准</b></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-chat">
+                    <div class="card chat-shell">
+                        <div class="card-header chat-header">
+                            <div class="chat-header-main">
+                                <div class="chat-header-badge">AI</div>
+                                <div class="chat-header-copy">
+                                    <div class="chat-header-title">
+                                        <span>GBT Pro 智能对话</span>
+                                        <span class="chat-status-pill">在线推理</span>
+                                    </div>
+                                    <div class="chat-header-subtitle">面向自主操盘的策略问答、盘中判断与执行前校验中枢</div>
+                                </div>
+                            </div>
+                            <div class="chat-header-actions">
+                                <span id="chat-auth-tip" class="chat-auth-pill">未登录，登录后可启用个人对话额度</span>
+                                <label class="chat-toggle">
+                                    <input type="checkbox" id="deep-mode">
+                                    <span>深度推理 · DeepSeek-R1</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body chat-feed" id="chat-messages">
+                            <div class="chat-welcome">
+                                <div class="chat-welcome-top">
+                                    <div class="chat-welcome-title">今天想让 AI 帮你盯什么？</div>
+                                    <div class="chat-status-pill">专业模式</div>
+                                </div>
+                                <div class="chat-welcome-copy">这里负责盘前计划、盘中盯盘、交易复核和执行前确认。你输入一句话，AI 会结合当前模型配置给出更像正式终端的专业回复。</div>
+                                <div class="chat-quick-grid">
+                                    <button class="chat-quick-btn" onclick="fillChatPrompt('结合当前市场环境，给我一份今天的盘前交易计划。')">
+                                        <div class="chat-quick-title">盘前计划</div>
+                                        <div class="chat-quick-desc">生成开盘前的关注方向、仓位建议和风险点</div>
+                                    </button>
+                                    <button class="chat-quick-btn" onclick="fillChatPrompt('帮我从交易执行角度复核 600519 的买入计划。')">
+                                        <div class="chat-quick-title">执行复核</div>
+                                        <div class="chat-quick-desc">站在下单前检查视角，补充条件、止损和确认项</div>
+                                    </button>
+                                    <button class="chat-quick-btn" onclick="fillChatPrompt('请用专业交易员口吻给我一份收盘复盘模板。')">
+                                        <div class="chat-quick-title">收盘复盘</div>
+                                        <div class="chat-quick-desc">输出更像正式产品的结构化复盘框架</div>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chat-msg assistant">
+                                <div class="msg-avatar">AI</div>
+                                <div class="msg-stack">
+                                    <div class="msg-meta">
+                                        <span class="msg-name">GBT Pro 助手</span>
+                                        <span class="msg-time">已就绪</span>
+                                    </div>
+                                    <div class="msg-bubble">
+                                        <div class="msg-text">你好，我已经准备好帮你处理策略分析、交易复核和操盘问答。你可以直接说需求，也可以点上面的快捷卡片开始。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-composer">
+                            <div class="chat-composer-wrap">
+                                <div class="chat-input-wrap">
+                                    <textarea id="chat-input" placeholder="输入你的问题，例如：帮我复核 600519 的买入计划，给出入场条件和风险点。"
+                                        oninput="autoResizeChatInput()"
+                                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+                                    <div class="chat-input-meta">
+                                        <span>Enter 发送，Shift + Enter 换行</span>
+                                        <span class="chat-empty-note">建议直接输入股票代码、场景和目标</span>
+                                    </div>
+                                </div>
+                                <button class="chat-send-btn" onclick="sendChat()">发送<span>Send</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-trade">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero market-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">MARKET TERMINAL</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">A股行情作战台</div>
+                                    <span class="workspace-status">实时联动</span>
+                                </div>
+                                <div class="workspace-copy">统一承接市场宽度、风格轮动、核心指数、自选强弱、个股 K 线和 AI 诊股，把行情页做成真正可盯盘、可复盘、可决策的专业工作台。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">支持每日复盘</span>
+                                    <span class="workspace-chip">支持 AI 诊股</span>
+                                    <span class="workspace-chip">支持自选联动切股</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card workspace-card">
+                            <div class="card-header">每日复盘解说<span class="st" id="recap-time">未生成</span><span style="margin-left:auto;display:flex;gap:6px"><button class="save" id="recap-btn" onclick="recapGenerate()" title="由 DeepSeek-Reasoner 基于本机实时市场快照生成">一键生成复盘</button></span></div>
+                            <div class="card-body workspace-card-body">
+                                <div id="recap-headline" class="recap-headline">点击「一键生成复盘」基于今日本机可见的指数/自选/策略状态，让 DeepSeek-Reasoner 出 4 段盘后评。</div>
+                                <div id="recap-report" class="recap-report">等待生成...</div>
+                                <div id="recap-meta" class="recap-meta"></div>
+                            </div>
+                        </div>
+                        <div class="grid3 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">市场宽度<span class="st" id="trade-time">--</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box"><div class="val" id="trade-breadth">--</div><div class="lbl">多头占比</div></div>
+                                        <div class="stat-box"><div class="val g" id="trade-up">--</div><div class="lbl">上涨指数</div></div>
+                                        <div class="stat-box"><div class="val r" id="trade-down">--</div><div class="lbl">下跌指数</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">风格轮动<span class="st">风格</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box"><div class="val" id="trade-avg">--</div><div class="lbl">指数均值</div></div>
+                                        <div class="stat-box"><div class="val" id="trade-style">--</div><div class="lbl">主导风格</div></div>
+                                        <div class="stat-box"><div class="val" id="trade-risk">--</div><div class="lbl">情绪温度</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">领涨领跌<span class="st">焦点</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="stat-grid">
+                                        <div class="stat-box"><div class="val g" id="trade-leader">--</div><div class="lbl">最强指数</div></div>
+                                        <div class="stat-box"><div class="val r" id="trade-laggard">--</div><div class="lbl">最弱指数</div></div>
+                                        <div class="stat-box"><div class="val" id="trade-watch-strong">--</div><div class="lbl">自选强势</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">核心指数看板<span class="st">实时</span></div>
+                                <div class="card-body workspace-card-body"><div id="trade-index-cards" class="trade-index-cards">加载中...</div></div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">市场脉搏<span class="st">脉搏</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div id="trade-idx" class="trade-pulse-list">加载中...</div>
+                                    <div id="trade-pulse" class="trade-insight-box">等待行情数据...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">自选股强弱榜<span class="st">自选</span></div>
+                                <div class="card-body workspace-card-body"><div class="workspace-table-shell"><table class="data"><thead><tr><th>代码</th><th>名称</th><th>价格</th><th>涨跌幅</th><th>强弱</th></tr></thead><tbody id="trade-wl"></tbody></table></div></div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">交易观察清单<span class="st">看盘</span></div>
+                                <div class="card-body workspace-card-body"><div id="trade-focus-list" class="trade-focus-list">等待自选数据...</div></div>
+                            </div>
+                        </div>
+                        <div class="card workspace-card">
+                            <div class="card-header">单股详情 <span class="st" id="trade-detail-code">--</span></div>
+                            <div class="card-body workspace-card-body">
+                                <div class="trade-pro-toolbar">
+                                    <div class="trade-pro-search">
+                                        <input id="trade-search-input" placeholder="搜代码/名称 直接切换个股，例如 600519 / 平安" />
+                                        <button class="primary" onclick="tradeProSearch()">切股</button>
+                                    </div>
+                                    <div class="trade-pro-period" id="trade-pro-period">
+                                        <button class="active" data-days="60" onclick="tradeProPeriod(this,60)">60日</button>
+                                        <button data-days="120" onclick="tradeProPeriod(this,120)">120日</button>
+                                        <button data-days="180" onclick="tradeProPeriod(this,180)">180日</button>
+                                    </div>
+                                    <button class="save" onclick="tradeProAnalyze()" title="让 DeepSeek 给专业诊断">AI诊股</button>
+                                </div>
+                                <div class="trade-detail-head">
+                                    <div>
+                                        <div class="trade-detail-name" id="trade-detail-name">请选择自选股</div>
+                                        <div class="trade-detail-sub" id="trade-detail-sub">点击左侧自选股强弱榜或观察清单查看明细</div>
+                                    </div>
+                                    <div style="text-align:right">
+                                        <div class="trade-detail-price" id="trade-detail-price">--</div>
+                                        <div class="trade-detail-move" id="trade-detail-move">--</div>
+                                    </div>
+                                </div>
+                                <div class="trade-pro-chart-wrap">
+                                    <div class="trade-pro-chart-meta"><span id="trade-pro-chart-meta">价量走势（专业终端视图）</span><span id="trade-pro-chart-info" class="muted"></span></div>
+                                    <div id="trade-pro-chart" class="trade-pro-chart">尚未加载 K 线...</div>
+                                </div>
+                                <div class="grid3" style="margin-top:14px">
+                                    <div class="trade-mini-card"><div class="k">今开</div><div class="v" id="trade-detail-open">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">最高</div><div class="v" id="trade-detail-high">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">最低</div><div class="v" id="trade-detail-low">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">昨收</div><div class="v" id="trade-detail-prev">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">振幅</div><div class="v" id="trade-detail-amplitude">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">成交额</div><div class="v" id="trade-detail-amount">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">成交量</div><div class="v" id="trade-detail-volume">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">总市值</div><div class="v" id="trade-detail-mcap">--</div></div>
+                                    <div class="trade-mini-card"><div class="k">流通市值</div><div class="v" id="trade-detail-fcap">--</div></div>
+                                </div>
+                                <div class="trade-pro-tech" id="trade-pro-tech"><div class="trade-pro-tech-empty">点击“切股” 或 选中上方任一档位以计算 MA/RSI/MACD 指标摘要</div></div>
+                                <div id="trade-detail-insight" class="trade-insight-box" style="margin-top:14px">等待个股行情数据...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-account">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero account-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">ACCOUNT CENTER</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">账户与资金总览</div>
+                                    <span class="workspace-status" id="a-auth">未登录</span>
+                                </div>
+                                <div class="workspace-copy">统一查看 A股资金、持仓状态、连接器模式和 AI 账户会话，把账户页也收口到和聊天、行情、自主操盘同一层级的正式终端工作台。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">当前模式 <b id="a-mode">手动</b></span>
+                                    <span class="workspace-chip">连接器 <b id="a-conn">--</b></span>
+                                    <span class="workspace-chip">AI 用户 <b id="a-user">访客</b></span>
+                                    <span class="workspace-chip">套餐 <b id="a-plan">free</b></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="workspace-metric-grid account-metric-grid">
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">现金</div>
+                                <div class="metric-value" id="a-cash">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">净值</div>
+                                <div class="metric-value" id="a-equity">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">盈亏</div>
+                                <div class="metric-value" id="a-pnl">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">持仓</div>
+                                <div class="metric-value" id="a-pos">--</div>
+                            </div>
+                            <div class="workspace-metric-card account-metric-wide">
+                                <div class="metric-label">剩余令牌</div>
+                                <div class="metric-value" id="a-tokens">--</div>
+                                <div class="metric-sub">当前 AI 对话额度</div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">交易账户状态<span class="st">A股</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-note">当前账户页聚合本地资金视图与执行模式，适合在自主操盘前快速核验现金、净值、持仓数量以及券商连接状态。</div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">AI 账户状态<span class="st">会话</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-note">当前登录态会同步到 AI 对话与云端计划链路，未登录时仍可查看本地交易账户信息，但会话与令牌会按访客模式处理。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-auth">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero auth-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">IDENTITY CENTER</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">登录认证中心</div>
+                                    <span class="workspace-status" id="auth-state">访客模式</span>
+                                </div>
+                                <div class="workspace-copy">统一管理第三方授权、本地账号和会话状态。当前版本只保留直接可用的登录方式，避免出现半成品入口。</div>
+                            </div>
+                            <div class="workspace-hero-actions">
+                                <button onclick="loadAuth()" class="btn-ui primary">刷新状态</button>
+                                <button onclick="logoutUser()" id="logout-btn" class="btn-ui danger">退出登录</button>
+                            </div>
+                        </div>
+                        <div class="workspace-metric-grid auth-metric-grid">
+                            <div class="workspace-metric-card auth-metric-wide">
+                                <div class="metric-label">当前用户</div>
+                                <div class="metric-value" id="auth-user">未登录</div>
+                                <div class="metric-sub" id="auth-email">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">登录方式</div>
+                                <div class="metric-value" id="auth-provider">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">套餐</div>
+                                <div class="metric-value" id="auth-plan">free</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">剩余令牌</div>
+                                <div class="metric-value" id="auth-remaining">--</div>
+                            </div>
+                            <div class="workspace-metric-card">
+                                <div class="metric-label">已用令牌</div>
+                                <div class="metric-value" id="auth-used">--</div>
+                            </div>
+                            <div class="workspace-metric-card auth-metric-wide">
+                                <div class="metric-label">最近登录</div>
+                                <div class="metric-value metric-time" id="auth-last-login">--</div>
+                            </div>
+                        </div>
+                        <div id="auth-tip" class="workspace-note">未登录时，可先登录领取基础对话额度；当前版本已移除付费模块。</div>
+                        <div class="grid2 workspace-grid-gap auth-grid">
+                            <div class="card workspace-card">
+                                <div class="card-header">Google 官方授权登录<span class="st">推荐优先使用</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div id="oauth-provider-note" class="workspace-note" style="margin-bottom:12px">正在检测可用登录方式...</div>
+                                    <div id="oauth-provider-grid" class="workspace-oauth-grid"></div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">本地账号登录与注册<span class="st">设备可持续使用</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <form class="auth-form-block" onsubmit="loginUser(); return false;">
+                                        <div class="auth-form-title">账号密码登录</div>
+                                        <div class="workspace-form-grid single">
+                                            <input id="login-username" class="workspace-input" placeholder="请输入用户名" autocomplete="username">
+                                            <input id="login-password" class="workspace-input" type="password" placeholder="请输入密码" autocomplete="current-password">
+                                        </div>
+                                        <button type="submit" class="btn-ui success wide">立即登录</button>
+                                    </form>
+                                    <div class="workspace-divider"></div>
+                                    <form class="auth-form-block" onsubmit="registerUser(); return false;">
+                                        <div class="auth-form-title">新用户注册</div>
+                                        <div class="workspace-form-grid single">
+                                            <input id="register-username" class="workspace-input" placeholder="设置用户名，至少 3 位" autocomplete="username">
+                                            <input id="register-email" class="workspace-input" placeholder="输入常用邮箱，可选" autocomplete="email">
+                                            <input id="register-password" class="workspace-input" type="password" placeholder="设置密码，至少 6 位" autocomplete="new-password">
+                                        </div>
+                                        <button type="submit" class="btn-ui info wide">注册并创建账号</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-desktop">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero desktop-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">DEVICE CONTROL</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">电脑操控控制台</div>
+                                    <span class="workspace-status">预演优先</span>
+                                </div>
+                                <div class="workspace-copy">聚合窗口聚焦、OCR 定位、热键、点击、交易预演和结果回看。默认走安全预演，不让界面看起来像临时调试台。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">支持窗口聚焦</span>
+                                    <span class="workspace-chip">支持交易回看</span>
+                                    <span class="workspace-chip">支持高风险门禁</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card workspace-card">
+                            <div class="card-header">动作面板<span class="st">按能力分组执行</span></div>
+                            <div class="card-body workspace-card-body">
+                                <div class="grid-btn workspace-action-grid" id="desk-grid"></div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">操控参数<span class="st">交易 / 窗口 / 输入</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-form-grid">
+                                        <input id="desk-broker" class="workspace-input" placeholder="券商名，如 东方财富">
+                                        <input id="desk-title" class="workspace-input" placeholder="窗口标题关键字">
+                                        <input id="desk-text" class="workspace-input" placeholder="文本 / 搜索词 / URL">
+                                        <input id="desk-combo" class="workspace-input" placeholder="快捷键，如 ctrl+shift+esc">
+                                        <input id="desk-x" class="workspace-input" type="number" placeholder="X 坐标">
+                                        <input id="desk-y" class="workspace-input" type="number" placeholder="Y 坐标">
+                                        <input id="desk-stock" class="workspace-input" placeholder="股票代码，如 600519">
+                                        <input id="desk-price" class="workspace-input" type="number" step="0.01" placeholder="价格">
+                                        <input id="desk-lots" class="workspace-input" type="number" placeholder="数量 / 手数">
+                                        <select id="desk-trade-action" class="workspace-input">
+                                            <option value="buy">交易方向: 买入</option>
+                                            <option value="sell">交易方向: 卖出</option>
+                                        </select>
+                                        <input id="desk-timeout" class="workspace-input" type="number" placeholder="回看超时秒数，如 30">
+                                        <input id="desk-pid" class="workspace-input" type="number" placeholder="PID">
+                                        <input id="desk-pname" class="workspace-input" placeholder="进程名，如 notepad">
+                                        <select id="desk-volume-mode" class="workspace-input">
+                                            <option value="mute">音量: 静音</option>
+                                            <option value="up">音量: 增大</option>
+                                            <option value="down">音量: 减小</option>
+                                        </select>
+                                    </div>
+                                    <div class="workspace-toolbar-row">
+                                        <label class="workspace-toggle"><input id="desk-dry-run" type="checkbox" checked>预演</label>
+                                        <label class="workspace-toggle"><input id="desk-confirm" type="checkbox">允许高风险动作</label>
+                                        <span class="workspace-hint">建议先保持预演勾选，再做券商聚焦、交易填单和提交前检查。</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">执行日志<span class="st">实时回显</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="log-box workspace-log-box" id="desk-log">空闲</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-mcp">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero mcp-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">MCP CONTROL PLANE</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">MCP服务器中枢</div>
+                                    <span class="workspace-status" id="mcp-cnt">--</span>
+                                </div>
+                                <div class="workspace-copy">统一查看已挂载的 MCP 服务端，给电脑操控、浏览器联动和外部能力接入一个更像正式产品的控制平面，而不是单独的按钮堆。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">支持浏览器接入</span>
+                                    <span class="workspace-chip">支持本地工具挂载</span>
+                                    <span class="workspace-chip">支持能力白名单呈现</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card workspace-card">
+                            <div class="card-header">已接入服务<span class="st">运行清单</span></div>
+                            <div class="card-body workspace-card-body">
+                                <div class="workspace-note" style="margin-bottom:12px">这里展示当前桌面端已经识别并接入的 MCP 服务。后续继续扩展框架兼容层时，这里就是统一的可视化落点。</div>
+                                <div class="grid-btn workspace-action-grid mcp-grid-shell" id="mcp-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-panel" id="panel-connect">
+                    <div class="workspace-stack">
+                        <div class="card workspace-hero connect-hero">
+                            <div class="workspace-hero-main">
+                                <div class="workspace-kicker">MODEL ACCESS</div>
+                                <div class="workspace-title-row">
+                                    <div class="workspace-title">连接大模型中枢</div>
+                                    <span class="workspace-status">设备级持久化</span>
+                                </div>
+                                <div class="workspace-copy">统一管理本地模型密钥、默认模型与云端大脑模式，确保同一设备填写一次即可持续使用，不再像普通设置页那样零散。</div>
+                                <div class="workspace-chip-row">
+                                    <span class="workspace-chip">支持 DeepSeek / OpenAI / Qwen</span>
+                                    <span class="workspace-chip">支持云端优先 / 本地优先</span>
+                                    <span class="workspace-chip">支持设备级持久化</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2 workspace-grid-gap">
+                            <div class="card workspace-card">
+                                <div class="card-header">本地模型连接<span class="st">配置 API Key</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <form onsubmit="saveLLM(); return false;">
+                                        <div class="workspace-form-grid single">
+                                            <div>
+                                                <label class="workspace-label" for="cfg-provider">模型提供商</label>
+                                                <select id="cfg-provider" class="workspace-input">
+                                                    <option value="zhipu">智谱 智能 (GLM-4)</option>
+                                                    <option value="deepseek">DeepSeek</option>
+                                                    <option value="openai">OpenAI</option>
+                                                    <option value="qwen">通义千问</option>
+                                                    <option value="hunyuan">腾讯混元</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="workspace-label" for="cfg-apikey">API Key</label>
+                                                <div id="cfg-saved-note" class="workspace-note" style="display:none;margin-bottom:8px"></div>
+                                                <input id="cfg-apikey" type="password" class="workspace-input" placeholder="输入你的 API Key..." autocomplete="off">
+                                            </div>
+                                            <div>
+                                                <label class="workspace-label" for="cfg-model">模型 (可选)</label>
+                                                <input id="cfg-model" class="workspace-input" placeholder="默认自动选择">
+                                            </div>
+                                        </div>
+                                        <div class="workspace-toolbar-row">
+                                            <button type="submit" class="btn-ui primary">保存并连接</button>
+                                            <span class="workspace-hint">当前设备会记住已保存的大模型配置，避免重复输入。</span>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="card workspace-card">
+                                <div class="card-header">云端大脑<span class="st">模式切换</span></div>
+                                <div class="card-body workspace-card-body">
+                                    <div class="workspace-form-grid single">
+                                        <div>
+                                            <label class="workspace-label" for="cfg-cloud-url">云端大脑 URL</label>
+                                            <div id="cfg-cloud-note" class="workspace-note" style="display:none;margin-bottom:8px"></div>
+                                            <input id="cfg-cloud-url" class="workspace-input" placeholder="云端大脑 URL">
+                                        </div>
+                                        <div>
+                                            <label class="workspace-label" for="cfg-chat-mode">对话模式</label>
+                                            <select id="cfg-chat-mode" class="workspace-input">
+                                                <option value="local">本地优先</option>
+                                                <option value="cloud_preferred">云端优先，失败回退本地</option>
+                                                <option value="cloud">强制云端</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="workspace-toolbar-row">
+                                        <button class="btn-ui success" onclick="saveCloudBrain()">保存云端大脑</button>
+                                        <span class="workspace-hint">云端用于推理与计划，本地仍负责桌面操控与高风险动作门禁。</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toast"></div>
+    <script>
+        var D = document, currentTab = "dash", authState = { token: "", profile: null, balance: null, oauthProviders: {}, oauthState: "", oauthPollTimer: 0 }, titles = { dash: "仪表盘", llm: "大模型中心", chat: "智能 对话", trade: "A股行情", account: "账户", pilot: "自主操盘", desktop: "电脑操控", mcp: "MCP服务器", mirror: "镜像空间", auth: "登录认证", connect: "连接大模型" };
+        function $(id) { return D.getElementById(id) }
+        function qs(sel) { return D.querySelectorAll(sel) }
+        function api(url, cb, method, body) { var x = new XMLHttpRequest(), done = false; function finish(data, err) { if (done) return; done = true; cb(data, err) } var _sep = url.indexOf("?") >= 0 ? "&" : "?"; x.open(method || "GET", url + _sep + "_=" + Date.now(), true); if (body) x.setRequestHeader("Content-Type", "application/json"); if (authState.token) x.setRequestHeader("X-Auth-Token", authState.token); x.onreadystatechange = function () { if (x.readyState === 4) { var d = null; if (x.responseText) { try { d = JSON.parse(x.responseText) } catch (e) { d = null } } if (x.status >= 200 && x.status < 300) { finish(d || {}, null) } else { finish(d, (d && (d.error || d.message)) || ("HTTP " + x.status)) } } }; x.onerror = function () { finish(null, "Net") }; x.timeout = 60000; x.ontimeout = function () { finish(null, "请求超时，请稍后重试") }; try { x.send(body || null) } catch (e) { finish(null, String(e)) } }
+        function esc(s) { var e = D.createElement("span"); e.textContent = s || ""; return e.innerHTML }
+        function setTxt(id, value) { var el = $(id); if (el) el.textContent = value }
+        function getStoredToken() { try { return localStorage.getItem("gbt_auth_token") || "" } catch (e) { return "" } }
+        function setStoredToken(token) { authState.token = token || ""; try { if (token) localStorage.setItem("gbt_auth_token", token); else localStorage.removeItem("gbt_auth_token") } catch (e) { } }
+        function fmtTime(v) { if (!v) return "--"; try { return new Date(v).toLocaleString() } catch (e) { return v } }
+        function authProviderLabel(v) {
+            var key = String(v || "").toLowerCase();
+            if (!key) return "--";
+            if (key === "local") return "本地账号";
+            if (key === "google") return "Google";
+            return String(v || "").toUpperCase();
+        }
+        function updateAuthUI() {
+            var profile = authState.profile || null, balance = authState.balance || null;
+            var loggedIn = !!(authState.token && profile);
+            var currentUser = loggedIn ? (profile.display_name || profile.username || "已登录用户") : "访客";
+            var plan = loggedIn ? (profile.plan || "free") : ((balance && balance.plan) || "free");
+            var remaining = loggedIn ? (profile.tokens_remaining || 0) : ((balance && balance.remaining) || 0);
+            var used = loggedIn ? (profile.tokens_used || 0) : ((balance && balance.used) || 0);
+            var chip = $("auth-chip"), logoutBtn = $("logout-btn"), authStateEl = $("auth-state"), authTip = $("auth-tip");
+            setTxt("auth-user", loggedIn ? currentUser : "未登录");
+            setTxt("auth-email", loggedIn ? (profile.email || "--") : "--");
+            setTxt("auth-provider", loggedIn ? authProviderLabel(profile.auth_provider || "local") : "--");
+            setTxt("auth-plan", plan);
+            setTxt("auth-remaining", Number(remaining || 0).toLocaleString());
+            setTxt("auth-used", Number(used || 0).toLocaleString());
+            setTxt("auth-last-login", loggedIn ? fmtTime(profile.last_login) : "--");
+            setTxt("a-user", currentUser);
+            setTxt("a-plan", plan);
+            setTxt("a-tokens", Number(remaining || 0).toLocaleString());
+            setTxt("a-auth", loggedIn ? "已登录" : "未登录");
+            if (authStateEl) {
+                authStateEl.textContent = loggedIn ? "已登录" : "访客模式";
+                authStateEl.style.color = loggedIn ? "var(--g)" : "var(--t3)";
+            }
+            if (chip) {
+                chip.textContent = loggedIn ? (currentUser + " · " + Number(remaining || 0).toLocaleString() + "T") : ("访客模式 · " + Number(remaining || 0).toLocaleString() + "T");
+                chip.style.color = loggedIn ? "var(--g)" : "var(--t2)";
+            }
+            if (logoutBtn) logoutBtn.disabled = !authState.token;
+            if (authTip) authTip.textContent = loggedIn ? ("当前已登录 " + currentUser + "，登录方式为 " + authProviderLabel(profile.auth_provider || "local") + "。当前版本专注电脑操控与自主操盘能力。") : "未登录时，可先登录领取基础对话额度；当前版本已移除付费模块。";
+            setTxt("chat-auth-tip", loggedIn ? ("已绑定 " + currentUser + " · 剩余 " + Number(remaining || 0).toLocaleString() + " 令牌") : ("未登录，登录后可启用个人对话额度 · 剩余 " + Number(remaining || 0).toLocaleString() + " 令牌"));
+        }
+        function clearAuth(silentMessage) {
+            setStoredToken("");
+            authState.profile = null;
+            authState.balance = null;
+            updateAuthUI();
+            loadTokenBalance(true);
+            if (silentMessage) toast(silentMessage);
+        }
+        function loadTokenBalance(silent) {
+            api("/api/token/balance", function (d, err) {
+                if (d && d.ok) {
+                    authState.balance = d;
+                    if (authState.profile) {
+                        authState.profile.plan = d.plan;
+                        authState.profile.tokens_total = d.tokens;
+                        authState.profile.tokens_used = d.used;
+                        authState.profile.tokens_remaining = d.remaining;
+                    }
+                    updateAuthUI();
+                    return;
+                }
+                if ((err || "").indexOf("会话过期") >= 0 || (err || "").indexOf("401") >= 0) {
+                    clearAuth(silent ? "" : "会话过期，请重新登录");
+                    return;
+                }
+                if (!silent) toast(err || (d && (d.error || d.message)) || "余额读取失败");
+            });
+        }
+        function loadProfile(silent) {
+            if (!authState.token) {
+                authState.profile = null;
+                updateAuthUI();
+                loadTokenBalance(true);
+                return;
+            }
+            api("/api/auth/profile", function (d, err) {
+                if (d && d.ok) {
+                    authState.profile = d.profile || null;
+                    updateAuthUI();
+                    loadTokenBalance(true);
+                    return;
+                }
+                if ((err || "").indexOf("会话过期") >= 0 || (err || "").indexOf("401") >= 0) {
+                    clearAuth(silent ? "" : "会话过期，请重新登录");
+                    return;
+                }
+                if (!silent) toast(err || (d && (d.error || d.message)) || "读取账户失败");
+            });
+        }
+        function renderOAuthProviders(list) {
+            var wrap = $("oauth-provider-grid");
+            if (!wrap) return;
+            var visible = (list || []).filter(function (p) { return !!(p && p.implemented && p.configured); });
+            var html = [];
+            for (var i = 0; i < visible.length; i++) {
+                var p = visible[i] || {};
+                var enabled = true;
+                if (p.provider === "google") {
+                    html.push(
+                        '<button onclick="oauthLogin(\'google\')"'
+                        + ' style="text-align:left;padding:14px 16px;border-radius:12px;border:1px solid #dadce0;background:#ffffff;color:#111827;cursor:' + (enabled ? 'pointer' : 'not-allowed') + ';opacity:' + (enabled ? '1' : '0.65') + ';box-shadow:0 8px 24px rgba(15,23,42,.18);"'
+                        + (enabled ? '' : ' disabled')
+                        + '>'
+                        + '<div style="display:flex;align-items:center;gap:12px">'
+                        + '<div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;line-height:1;background:conic-gradient(#4285F4 0 25%, #34A853 25% 50%, #FBBC05 50% 75%, #EA4335 75% 100%);color:#fff">G</div>'
+                        + '<div style="flex:1">'
+                        + '<div style="font-weight:700;font-size:14px;color:#111827">使用 Google 官方授权登录</div>'
+                        + '<div style="margin-top:4px;font-size:11px;color:#4b5563">点击后跳转到 Google 官方授权页，完成授权后自动回到桌面端</div>'
+                        + '</div>'
+                        + '<div style="font-size:11px;color:#2563eb;font-weight:700">官方授权</div>'
+                        + '</div>'
+                        + '</button>'
+                    );
+                    continue;
+                }
+                var status = p.status_text || "可用";
+                var bg = "linear-gradient(135deg,#0f172a,#111827)";
+                var title = (p.label || p.provider || "OAuth") + " 登录";
+                var desc = "使用 " + (p.label || p.provider || "该方式") + " 登录";
+                html.push(
+                    '<button onclick="oauthLogin(\'' + (p.provider || '') + '\')"'
+                    + ' style="text-align:left;padding:10px;border-radius:10px;border:1px solid var(--b);background:' + bg + ';color:var(--t);cursor:' + (enabled ? 'pointer' : 'not-allowed') + ';opacity:' + (enabled ? '1' : '0.65') + ';"'
+                    + (enabled ? '' : ' disabled')
+                    + '>'
+                    + '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'
+                    + '<span style="font-weight:700;font-size:13px">' + title + '</span>'
+                    + '<span style="font-size:10px;color:var(--t2)">' + status + '</span>'
+                    + '</div>'
+                    + '<div style="margin-top:4px;font-size:11px;color:var(--t2)">' + desc + '</div>'
+                    + '</button>'
+                );
+            }
+            wrap.innerHTML = html.join("");
+            wrap.style.display = visible.length ? "grid" : "none";
+            wrap.style.gridTemplateColumns = "1fr";
+        }
+        function loadOAuthProviders(silent) {
+            api("/api/auth/oauth/providers", function (d, err) {
+                if (d && d.ok && d.providers) {
+                    var list = d.providers || [];
+                    var map = {};
+                    for (var i = 0; i < list.length; i++) map[list[i].provider] = list[i];
+                    authState.oauthProviders = map;
+                    renderOAuthProviders(list);
+                    var note = $("oauth-provider-note");
+                    if (note) {
+                        var ready = list.filter(function (x) { return x.implemented && x.configured }).map(function (x) { return x.label });
+                        var pending = list.filter(function (x) { return x.implemented && !x.configured }).length;
+                        var todo = list.filter(function (x) { return !x.implemented }).length;
+                        note.textContent = ready.length
+                            ? ("推荐直接使用 Google 官方授权登录。若你已有本地账号，也可以继续使用下方账号密码登录。")
+                            : ("当前未启用第三方登录，请先使用下方账号密码登录。");
+                    }
+                    return;
+                }
+                if (!silent) toast(err || "读取 OAuth 配置失败");
+            });
+        }
+        function stopOauthPoll() {
+            if (authState.oauthPollTimer) { try { clearInterval(authState.oauthPollTimer) } catch (e) { } }
+            authState.oauthPollTimer = 0;
+            authState.oauthState = "";
+        }
+        function oauthLogin(provider) {
+            var meta = authState.oauthProviders[provider] || {};
+            if (!meta.implemented) { toast((meta.label || provider) + " 已入入口矩阵，但桌面端适配器还没完成"); return }
+            if (!meta.configured) { toast((meta.label || provider) + " 授权尚未配置"); return }
+            api("/api/auth/oauth/start/" + provider, function (d, err) {
+                if (!(d && d.ok && d.state && d.auth_url)) {
+                    toast((d && (d.error || d.message)) || err || "授权启动失败");
+                    return;
+                }
+                authState.oauthState = d.state;
+                if (!d.opened) {
+                    try { window.open(d.auth_url, "_blank", "noopener") } catch (e) { }
+                }
+                stopOauthPoll();
+                authState.oauthState = d.state;
+                authState.oauthPollTimer = setInterval(function () {
+                    api("/api/auth/oauth/poll?state=" + encodeURIComponent(d.state), function (r) {
+                        if (r && r.status === "pending") return;
+                        stopOauthPoll();
+                        if (r && r.status === "success" && r.token) {
+                            setStoredToken(r.token);
+                            authState.profile = null;
+                            authState.balance = null;
+                            updateAuthUI();
+                            setTimeout(function () { loadProfile(true) }, 0);
+                            setTimeout(function () {
+                                if (authState.token && !authState.profile) loadProfile(true)
+                            }, 800);
+                            setTimeout(function () {
+                                if (authState.token && !authState.profile) loadProfile(true)
+                            }, 2000);
+                            try { toast((meta.label || provider) + " 授权成功") } catch (e) { }
+                            return;
+                        }
+                        toast((r && (r.error || r.message)) || "授权失败");
+                    });
+                }, 1500);
+                toast("已打开 " + (meta.label || provider) + " 授权页，请在浏览器完成登录");
+            }, "POST", "{}");
+        }
+        function loadAuth() { loadProfile(false); loadOAuthProviders(true) }
+        function registerUser() {
+            var username = $("register-username").value.trim(), email = $("register-email").value.trim(), password = $("register-password").value.trim();
+            if (username.length < 3) { toast("用户名至少3个字符"); return }
+            if (password.length < 6) { toast("密码至少6个字符"); return }
+            api("/api/auth/register", function (d, err) {
+                if (d && d.ok) {
+                    toast(d.message || "注册成功");
+                    $("login-username").value = username;
+                    $("login-password").focus();
+                    $("register-password").value = "";
+                } else {
+                    toast((d && (d.message || d.error)) || err || "注册失败");
+                }
+            }, "POST", JSON.stringify({ username: username, email: email, password: password }));
+        }
+        function loginUser() {
+            var username = $("login-username").value.trim(), password = $("login-password").value.trim();
+            if (!username || !password) { toast("请输入用户名和密码"); return }
+            api("/api/auth/login", function (d, err) {
+                if (d && d.ok && d.token) {
+                    setStoredToken(d.token);
+                    authState.profile = null;
+                    authState.balance = null;
+                    $("login-password").value = "";
+                    updateAuthUI();
+                    setTimeout(function () { loadProfile(true) }, 0);
+                    setTimeout(function () {
+                        if (authState.token && !authState.profile) loadProfile(true)
+                    }, 800);
+                    try { toast(d.message || "登录成功") } catch (e) { }
+                } else {
+                    toast((d && (d.message || d.error)) || err || "登录失败");
+                }
+            }, "POST", JSON.stringify({ username: username, password: password }));
+        }
+        function logoutUser() {
+            if (!authState.token) { toast("当前未登录"); return }
+            api("/api/auth/logout", function (d, err) {
+                setStoredToken("");
+                authState.profile = null;
+                authState.balance = null;
+                updateAuthUI();
+                loadTokenBalance(true);
+                toast((d && (d.message || d.error)) || err || "已退出");
+            }, "POST", JSON.stringify({ token: authState.token }));
+        }
 
-qs(".n-item").forEach(function(el){el.onclick=function(){switchTab(this.dataset.tab)}})
-function switchTab(tab){currentTab=tab;D.getElementById("page-title").textContent=titles[tab]||tab;qs(".n-item").forEach(function(e){e.classList.toggle("active",e.dataset.tab===tab)});qs(".tab-panel").forEach(function(e){e.classList.toggle("active",e.id==="panel-"+tab)});if(tab==="hacker")loadHacker();if(tab==="trade")loadTrade();if(tab==="desktop")loadDesktop();if(tab==="mcp")loadMCP();if(tab==="llm")loadLLM();if(tab==="account")load账户()}
+        qs(".n-item").forEach(function (el) { el.onclick = function () { switchTab(this.dataset.tab) } })
+        function switchTab(tab) { currentTab = tab; D.getElementById("page-title").textContent = titles[tab] || tab; qs(".n-item").forEach(function (e) { e.classList.toggle("active", e.dataset.tab === tab) }); qs(".tab-panel").forEach(function (e) { e.classList.toggle("active", e.id === "panel-" + tab) }); if (tab === "pilot") loadPilot(); if (tab === "trade") loadTrade(); if (tab === "desktop") loadDesktop(); if (tab === "mcp") loadMCP(); if (tab === "mirror") loadMirror(); if (tab === "llm") loadLLM(); if (tab === "chat") loadChat(); if (tab === "account") load账户(); if (tab === "auth") loadAuth() }
 
-var toastQ=[];function toast(msg){toastQ.push(msg);if(toastQ.length>5)toastQ.shift();var t=$("toast"),h="";for(var i=0;i<toastQ.length;i++)h+='<div class="tst">'+esc(toastQ[i])+'</div>';t.innerHTML=h;set时间out(function(){toastQ.shift();var h2="";for(var j=0;j<toastQ.length;j++)h2+='<div class="tst">'+esc(toastQ[j])+'</div>';t.innerHTML=h2},3000)}
+        var toastQ = [], toastSeen = {};
+        function isSoftNotice(msg) { return /授权尚未配置|适配器还没完成|读取 OAuth 配置失败|支付链路未配置/.test(msg || "") }
+        function routeSoftNotice(msg) {
+            var note = $("oauth-provider-note") || $("auth-tip");
+            if (note && msg) note.textContent = msg;
+        }
+        function toast(msg) {
+            msg = (msg || "").trim();
+            if (!msg) return;
+            var key = msg.replace(/\s+/g, " ");
+            var now = Date.now();
+            var last = toastSeen[key] || 0;
+            if (isSoftNotice(msg)) {
+                routeSoftNotice(msg);
+                if (now - last < 60000) return;
+                toastSeen[key] = now;
+                return;
+            }
+            if (now - last < 8000) return;
+            toastSeen[key] = now;
+            toastQ.push(msg);
+            if (toastQ.length > 5) toastQ.shift();
+            var t = $("toast"), h = "";
+            for (var i = 0; i < toastQ.length; i++)h += '<div class="tst">' + esc(toastQ[i]) + '</div>';
+            t.innerHTML = h;
+            setTimeout(function () {
+                toastQ.shift();
+                var h2 = "";
+                for (var j = 0; j < toastQ.length; j++)h2 += '<div class="tst">' + esc(toastQ[j]) + '</div>';
+                t.innerHTML = h2
+            }, 3000)
+        }
+        var tradeState = { indices: [], watchlist: [], selectedCode: "", stockDetail: null };
+        function fmtNum(v, digits) { var n = Number(v || 0); return n.toLocaleString(undefined, { minimumFractionDigits: digits || 0, maximumFractionDigits: digits || 0 }) }
+        function fmtPct(v) { var n = Number(v || 0); return (n >= 0 ? "+" : "") + n.toFixed(2) + "%" }
+        function pctCls(v) { return Number(v || 0) >= 0 ? "g" : "r" }
+        function fmtYi(v) { var n = Number(v || 0); return n ? (n.toFixed(2) + "亿") : "--" }
+        function fmtWan(v) { var n = Number(v || 0); return n ? ((n / 10000).toFixed(2) + "万手") : "--" }
+        function strengthText(v) { var n = Number(v || 0); if (n >= 3) return "领涨"; if (n >= 1) return "强势"; if (n > -1) return "震荡"; if (n > -3) return "承压"; return "弱势" }
+        function marketRiskText(v) { var n = Number(v || 0); if (n >= 2) return "偏热"; if (n >= 0.5) return "回暖"; if (n > -0.5) return "中性"; if (n > -2) return "偏冷"; return "走弱" }
+        function tradeStyleText(indices) {
+            var growth = [], value = [];
+            for (var i = 0; i < indices.length; i++) {
+                var name = (indices[i].name || ""), pct = Number(indices[i].pct || 0);
+                if (name.indexOf("创业") >= 0 || name.indexOf("科创") >= 0) growth.push(pct);
+                if (name.indexOf("上证") >= 0 || name.indexOf("沪深300") >= 0 || name.indexOf("深证") >= 0) value.push(pct);
+            }
+            var ga = growth.length ? growth.reduce(function (a, b) { return a + b }, 0) / growth.length : 0;
+            var va = value.length ? value.reduce(function (a, b) { return a + b }, 0) / value.length : 0;
+            if (ga - va > 0.7) return "成长主导";
+            if (va - ga > 0.7) return "权重主导";
+            return "均衡轮动";
+        }
+        function renderTradeDetail(detail) {
+            if (!detail || !detail.ok) {
+                setTxt("trade-detail-code", "--");
+                setTxt("trade-detail-name", "暂无个股详情");
+                setTxt("trade-detail-sub", "点击自选股查看实时行情");
+                setTxt("trade-detail-price", "--");
+                setTxt("trade-detail-move", "--");
+                ["trade-detail-open", "trade-detail-high", "trade-detail-low", "trade-detail-prev", "trade-detail-amplitude", "trade-detail-amount", "trade-detail-volume", "trade-detail-mcap", "trade-detail-fcap"].forEach(function (id) { setTxt(id, "--") });
+                setTxt("trade-detail-insight", "等待个股行情数据...");
+                return;
+            }
+            var cls = pctCls(detail.pct || 0), price = Number(detail.price || 0);
+            setTxt("trade-detail-code", detail.code || "--");
+            setTxt("trade-detail-name", detail.name || detail.code || "--");
+            setTxt("trade-detail-sub", "实时结构化行情 · 东方财富");
+            setTxt("trade-detail-price", price ? price.toFixed(2) : "--");
+            setTxt("trade-detail-move", (detail.change >= 0 ? "+" : "") + Number(detail.change || 0).toFixed(2) + " / " + fmtPct(detail.pct || 0));
+            $("trade-detail-move").className = "trade-detail-move " + cls;
+            setTxt("trade-detail-open", detail.open ? Number(detail.open).toFixed(2) : "--");
+            setTxt("trade-detail-high", detail.high ? Number(detail.high).toFixed(2) : "--");
+            setTxt("trade-detail-low", detail.low ? Number(detail.low).toFixed(2) : "--");
+            setTxt("trade-detail-prev", detail.prev_close ? Number(detail.prev_close).toFixed(2) : "--");
+            setTxt("trade-detail-amplitude", typeof detail.amplitude !== "undefined" ? Number(detail.amplitude).toFixed(2) + "%" : "--");
+            setTxt("trade-detail-amount", fmtYi(detail.amount));
+            setTxt("trade-detail-volume", fmtWan(detail.volume));
+            setTxt("trade-detail-mcap", fmtYi(detail.market_cap));
+            setTxt("trade-detail-fcap", fmtYi(detail.float_cap));
+            setTxt("trade-detail-insight", "当前 " + (detail.name || detail.code || "") + " 报 " + (price ? price.toFixed(2) : "--") + "，涨跌幅 " + fmtPct(detail.pct || 0) + "，振幅 " + (typeof detail.amplitude !== "undefined" ? Number(detail.amplitude).toFixed(2) + "%" : "--") + "。盘中区间 " + (detail.low ? Number(detail.low).toFixed(2) : "--") + " - " + (detail.high ? Number(detail.high).toFixed(2) : "--") + "，成交额 " + fmtYi(detail.amount) + "，适合结合策略信号进一步判断强弱延续。");
+        }
+        function loadTradeDetail(code, days) {
+            code = (code || "").trim();
+            if (!code) return;
+            tradeState.selectedCode = code;
+            $("trade-search-input").value = code;
+            days = Number(days || tradeState.periodDays || 60);
+            tradeState.periodDays = days;
+            api("/api/market/stock/" + code + "/history?days=" + days, function (d) {
+                if (!d || !d.ok) {
+                    toast("暂无该股行情：" + (d && d.error || "网络异常"));
+                    return;
+                }
+                tradeState.history = d;
+                tradeState.stockDetail = d.quote || null;
+                renderTradeDetail(tradeState.stockDetail);
+                renderTradeProChart(d.klines || [], d.summary || {});
+                renderTradeProTech(d.summary || {});
+            }, "GET");
+        }
+        function tradeProSearch() {
+            var v = $("trade-search-input").value || "";
+            v = v.replace(/\s+/g, "");
+            var code = /^\d{6}$/.test(v) ? v : "";
+            if (!code) {
+                var wl = tradeState.watchlist || [];
+                for (var i = 0; i < wl.length; i++) {
+                    if ((wl[i].name || "").indexOf(v) >= 0 || (wl[i].code || "") === v) { code = wl[i].code; break }
+                }
+            }
+            if (!code) { toast("未识别股票：" + v + "，请输入 6 位代码或自选名称"); return }
+            loadTradeDetail(code, tradeState.periodDays || 60);
+        }
+        function tradeProPeriod(btn, days) {
+            var btns = $("trade-pro-period").querySelectorAll("button");
+            for (var i = 0; i < btns.length; i++) btns[i].classList.toggle("active", btns[i] === btn);
+            loadTradeDetail(tradeState.selectedCode || (tradeState.stockDetail && tradeState.stockDetail.code) || "", days);
+        }
+        // —— 流式逐字推入（前端模拟"实时推理"视觉，避免 SSE 改造） ——
+        function streamReveal(el, text, ms) {
+            if (!el) return;
+            if (!text) { el.textContent = ""; return }
+            ms = ms || 18;
+            el.textContent = "";
+            el.classList.add("is-streaming");
+            var i = 0, batchSize = 2;
+            var iv = setInterval(function () {
+                if (i >= text.length) { clearInterval(iv); el.classList.remove("is-streaming"); el.scrollTop = el.scrollHeight; return }
+                var step = Math.min(batchSize, text.length - i);
+                el.textContent += text.substr(i, step);
+                i += step;
+                el.scrollTop = el.scrollHeight;
+            }, ms);
+        }
+        function tradeProAnalyze() {
+            var code = tradeState.selectedCode;
+            if (!code) { toast("请先选中个股"); return }
+            var s = tradeState.history && tradeState.history.summary;
+            var hint = s ? "技术摘要：MA形态=" + (s.ma_pattern || "--") + "、RSI=" + s.rsi + "、MACD=" + (s.macd && s.macd.signal) + "、支撑=" + s.support + "、压力=" + s.resist : "";
+            var target = $("trade-detail-insight");
+            if (target) { target.textContent = "正在生成诊断…（首次调用 智能-Reasoner 可能需 8–20 秒）"; target.classList.add("is-streaming") }
+            api("/api/chat", function (resp) {
+                if (!resp || !resp.ok) {
+                    if (target) { target.classList.remove("is-streaming"); target.textContent = "诊断失败：" + (resp && resp.error || "未知错误") }
+                    toast("诊断失败：" + (resp && resp.error || "未知错误"));
+                    return;
+                }
+                streamReveal(target, resp.response || "", 16);
+                toast("诊断已生成，扣费 " + (resp.tokens_consumed || 0) + "T");
+            }, "POST", JSON.stringify({
+                text: "请以专业 智能 股票交易终端视角，分析个股 " + code + "。" + hint + " 用 4–6 句话输出关键支撑压力、量价信号、买卖点位风险。",
+                deep_reasoning: true
+            }));
+        }
+        function renderTradeProChart(klines, summary) {
+            var box = $("trade-pro-chart");
+            if (!box) return;
+            var info = $("trade-pro-chart-info");
+            if (!klines || klines.length < 2) { box.innerHTML = "暂无 K 线数据"; info && (info.textContent = ""); return }
+            var W = 720, H = 240, padL = 38, padR = 56, padT = 24, padB = 26, n = klines.length;
+            var innerW = W - padL - padR, innerH = H - padT - padB;
+            var closes = klines.map(function (k) { return k.close });
+            var highs = klines.map(function (k) { return k.high }), lows = klines.map(function (k) { return k.low }), vols = klines.map(function (k) { return k.volume || 0 });
+            var mas = [
+                { seq: (summary && summary.ma5_seq) || [], color: "#ffd166", label: "MA5" },
+                { seq: (summary && summary.ma10_seq) || [], color: "#06d6a0", label: "MA10" },
+                { seq: (summary && summary.ma20_seq) || [], color: "#118ab2", label: "MA20" }
+            ];
+            var allHigh = highs.slice(), allLow = lows.slice();
+            for (var mi = 0; mi < mas.length; mi++) {
+                for (var j = 0; j < mas[mi].seq.length; j++) {
+                    var v = mas[mi].seq[j];
+                    if (v == null) continue;
+                    if (v > allHigh[j]) allHigh[j] = v;
+                    if (v < allLow[j]) allLow[j] = v;
+                }
+            }
+            var maxH = Math.max.apply(null, allHigh), minL = Math.min.apply(null, allLow);
+            var maxV = Math.max.apply(null, vols), minV = Math.min.apply(null, vols);
+            var yScale = function (v) { return padT + (1 - (v - minL) / (maxH - minL || 1)) * innerH };
+            var barH = function (v) { return ((v - minV) / (maxV - minV || 1)) * (innerH * 0.26) };
+            var xStep = innerW / n, bw = Math.max(2, xStep * 0.55);
+            var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="trade-pro-svg">';
+            // 顶部图例
+            for (var li = 0; li < mas.length; li++) {
+                var lx = padL + li * 70;
+                svg += '<rect x="' + lx + '" y="4" width="10" height="10" rx="2" fill="' + mas[li].color + '"/>';
+                svg += '<text x="' + (lx + 14) + '" y="13" fill="rgba(220,228,238,0.7)" font-size="10">' + mas[li].label + '</text>';
+            }
+            for (var g = 0; g < 4; g++) {
+                var yv = padT + innerH * g / 3, v = maxH - (maxH - minL) * g / 3;
+                svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + yv + '" y2="' + yv + '" stroke="rgba(255,255,255,0.06)" />';
+                svg += '<text x="6" y="' + (yv + 4) + '" fill="rgba(180,196,219,0.55)" font-size="10">' + v.toFixed(2) + '</text>';
+            }
+            svg += '<line x1="' + (W - padR) + '" x2="' + (W - padR) + '" y1="' + padT + '" y2="' + (H - padB) + '" stroke="rgba(255,255,255,0.08)" />';
+            // K 线
+            for (var i = 0; i < n; i++) {
+                var k = klines[i], x = padL + i * xStep + (xStep - bw) / 2;
+                var up = k.close >= k.open, col = up ? "#ef4d4d" : "#26b37b";
+                var yOpen = yScale(k.open), yClose = yScale(k.close), yHigh = yScale(k.high), yLow = yScale(k.low);
+                var bh = Math.max(1, Math.abs(yClose - yOpen));
+                svg += '<line x1="' + (x + bw / 2) + '" x2="' + (x + bw / 2) + '" y1="' + yHigh + '" y2="' + yLow + '" stroke="' + col + '" stroke-width="1" />';
+                svg += '<rect x="' + x + '" y="' + (up ? yClose : yOpen) + '" width="' + bw + '" height="' + bh + '" fill="' + col + '" />';
+                if (vols.length && maxV > 0) {
+                    var vh = barH(k.volume || 0), vy = H - padB - vh;
+                    svg += '<rect x="' + x + '" y="' + vy + '" width="' + bw + '" height="' + vh + '" fill="' + col + '" opacity="0.18" />';
+                }
+            }
+            // 均线叠加 — 单色平滑折线
+            for (var mli = 0; mli < mas.length; mli++) {
+                var seq = mas[mli].seq, color = mas[mli].color, label = mas[mli].label;
+                var pts = [];
+                for (var j = 0; j < n; j++) {
+                    var v = seq[j];
+                    if (v == null) { pts.push(null); continue }
+                    var cx = padL + (j + 0.5) * xStep;
+                    pts.push(cx.toFixed(2) + "," + yScale(v).toFixed(2));
+                }
+                var drawn = [];
+                for (var p = 0; p < pts.length; p++) {
+                    if (pts[p] == null) {
+                        if (drawn.length >= 2) svg += '<polyline points="' + drawn.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.4" stroke-linejoin="round" />';
+                        drawn = [];
+                    } else { drawn.push(pts[p]) }
+                }
+                if (drawn.length >= 2) svg += '<polyline points="' + drawn.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.4" stroke-linejoin="round" />';
+            }
+            svg += '<text x="' + padL + '" y="' + (H - 6) + '" fill="rgba(180,196,219,0.55)" font-size="10">' + esc(klines[0].date || "") + '</text>';
+            svg += '<text x="' + (W - padR) + '" y="' + (H - 6) + '" fill="rgba(180,196,219,0.55)" font-size="10" text-anchor="end">' + esc(klines[klines.length - 1].date || "") + '</text>';
+            svg += '</svg>';
+            box.innerHTML = svg;
+            if (info) info.textContent = "区间高 " + maxH.toFixed(2) + " · 区间低 " + minL.toFixed(2) + " · 成交峰值 " + (maxV ? (maxV / 10000).toFixed(2) + "万手" : "--");
+        }
+        function renderTradeProTech(s) {
+            var box = $("trade-pro-tech");
+            if (!box) return;
+            if (!s || !s.ok) {
+                box.innerHTML = '<div class="trade-pro-tech-empty">' + esc((s && s.error) || "暂无技术指标摘要") + '</div>';
+                return;
+            }
+            var tone = function (v, gt) { if (v == null) return "muted"; return v > gt ? "g" : (v < -gt ? "r" : "n") };
+            var macd = s.macd || {};
+            var html = '' +
+                '<div class="trade-pro-tech-grid">' +
+                techCard("均线形态", esc(s.ma_pattern || "--"), s.ma_pattern && s.ma_pattern.indexOf("多") >= 0 ? "g" : "r") +
+                techCard("MA5/10/20", '<span class="tech-line">' + numOrDash(s.ma5) + ' / ' + numOrDash(s.ma10) + ' / ' + numOrDash(s.ma20) + '</span>', "n", numOrDash(s.ma5, true), numOrDash(s.ma10, true), numOrDash(s.ma20, true)) +
+                techCard("BIAS", '<span class="tech-line">' + numOrDash(s.bias5) + ' / ' + numOrDash(s.bias10) + ' / ' + numOrDash(s.bias20) + '</span>', tone(s.bias5, 3), null, null, null, "%") +
+                techCard("RSI(14)", numOrDash(s.rsi) + ' · ' + esc(s.rsi_zone || "--"), Number(s.rsi) >= 70 ? "r" : (Number(s.rsi) <= 30 ? "g" : "n")) +
+                techCard("MACD", '<span class="tech-line">DIF ' + numOrDash(macd.dif) + ' / DEA ' + numOrDash(macd.dea) + '</span><span class="tech-line muted">BAR ' + numOrDash(macd.bar) + ' · ' + esc(macd.signal || "--") + '</span>', macd.bar > 0 ? "g" : "r") +
+                techCard("量比(近5日)", numOrDash(s.vol_ratio), Number(s.vol_ratio) >= 1.5 ? "g" : (Number(s.vol_ratio) >= 0.7 ? "n" : "r")) +
+                techCard("20日振幅", numOrDash(s.amp20) + "%", tone(s.amp20, 6)) +
+                techCard("支撑 / 压力", '<span class="tech-line">' + numOrDash(s.support) + ' / ' + numOrDash(s.resist) + '</span>', "n") +
+                '</div>';
+            box.innerHTML = html;
+        }
+        function techCard(title, value, cls) {
+            return '<div class="trade-pro-tech-card ' + (cls || "n") + '"><div class="t">' + esc(title) + '</div><div class="v">' + value + '</div></div>';
+        }
+        function numOrDash(v, raw) {
+            if (v == null || v === "" || isNaN(Number(v))) return "--";
+            return raw ? String(v) : Number(v).toFixed(2);
+        }
+        function renderTradeWatchlist(watchlist) {
+            var rows = "", focus = "", strong = 0, sorted = (watchlist || []).slice().sort(function (a, b) { return Number(b.change_pct || 0) - Number(a.change_pct || 0) });
+            for (var i = 0; i < sorted.length; i++) {
+                var w = sorted[i] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct), tag = strengthText(pct);
+                if (pct > 0) strong++;
+                rows += "<tr class='trade-watch-row" + (tradeState.selectedCode === code ? " active" : "") + "' onclick=\"loadTradeDetail('" + esc(code) + "')\"><td>" + esc(code) + "</td><td>" + esc(name) + "</td><td>" + (price ? price.toFixed(2) : "--") + "</td><td class='" + cls + "'>" + (price ? fmtPct(pct) : "--") + "</td><td class='" + cls + "'>" + tag + "</td></tr>";
+                focus += '<div class="trade-focus-item' + (tradeState.selectedCode === code ? " active" : "") + '" onclick="loadTradeDetail(\'' + esc(code) + '\')"><div><div class="trade-focus-name">' + esc(name) + '</div><div class="trade-focus-code">' + esc(code) + '</div></div><div style="text-align:right"><div class="trade-focus-price">' + (price ? price.toFixed(2) : "--") + '</div><div class="' + cls + '">' + (price ? fmtPct(pct) : "--") + " · " + tag + "</div></div></div>";
+            }
+            $("trade-wl").innerHTML = rows || "<tr><td colspan=5 style=color:var(--t3)>暂无自选数据</td></tr>";
+            $("trade-focus-list").innerHTML = focus || '<div style="color:var(--t3)">暂无自选观察列表</div>';
+            setTxt("trade-watch-strong", (watchlist || []).length ? (strong + "/" + watchlist.length) : "--");
+            if (!tradeState.selectedCode && sorted.length) loadTradeDetail(sorted[0].code || sorted[0][0] || "");
+        }
+        function renderTradeMarket(indices) {
+            var mt = $("ticker");
+            if (!indices || !indices.length) {
+                if (mt) mt.innerHTML = "<span style=color:var(--t3)>市场离线</span>";
+                $("trade-index-cards").innerHTML = '<div style="color:var(--t3)">暂无指数数据</div>';
+                $("trade-idx").innerHTML = '<div style="color:var(--t3)">暂无指数数据</div>';
+                $("trade-pulse").textContent = "等待行情数据...";
+                return;
+            }
+            var tickerHtml = "", cardHtml = "", pulseHtml = "", up = 0, down = 0, sum = 0;
+            var sorted = indices.slice().sort(function (a, b) { return Number(b.pct || 0) - Number(a.pct || 0) });
+            for (var i = 0; i < indices.length; i++) {
+                var x = indices[i] || {}, pct = Number(x.pct || 0), price = Number(x.price || 0), change = Number(x.change || 0), cls = pctCls(pct);
+                if (pct >= 0) up++; else down++;
+                sum += pct;
+                tickerHtml += '<div class="t-item"><span class="t-name">' + esc(x.name || "") + '</span><span class="t-val ' + cls + '">' + (price ? price.toFixed(2) : "--") + '</span><span class="' + cls + '" style="font-size:10px">' + fmtPct(pct) + "</span></div>";
+                cardHtml += '<div class="trade-index-card ' + cls + '"><div class="trade-index-top"><span class="trade-index-name">' + esc(x.name || "") + '</span><span class="trade-index-code">' + esc(x.code || "") + '</span></div><div class="trade-index-price">' + (price ? price.toFixed(2) : "--") + '</div><div class="trade-index-move"><span class="' + cls + '">' + (change >= 0 ? "+" : "") + change.toFixed(2) + '</span><span class="' + cls + '">' + fmtPct(pct) + "</span></div></div>";
+                pulseHtml += '<div class="trade-pulse-row"><span>' + esc(x.name || "") + '</span><span class="' + cls + '">' + fmtPct(pct) + "</span></div>";
+            }
+            var avg = indices.length ? (sum / indices.length) : 0;
+            var breadth = indices.length ? Math.round(up / indices.length * 100) : 0;
+            var leader = sorted[0] || {}, laggard = sorted[sorted.length - 1] || {};
+            var style = tradeStyleText(indices);
+            if (mt) mt.innerHTML = tickerHtml || "<span style=color:var(--t3)>暂无数据</span>";
+            $("trade-index-cards").innerHTML = cardHtml;
+            $("trade-idx").innerHTML = pulseHtml;
+            $("trade-pulse").innerHTML = '当前指数平均涨跌幅 <span class="' + pctCls(avg) + '">' + fmtPct(avg) + '</span>，多头占比 <span>' + breadth + '%</span>。当前由 <span>' + esc(style) + '</span> 主导，领涨指数为 <span class="g">' + esc(leader.name || "--") + '</span>，最弱指数为 <span class="r">' + esc(laggard.name || "--") + '</span>。';
+            setTxt("trade-time", new Date().toLocaleTimeString());
+            setTxt("trade-breadth", breadth + "%");
+            setTxt("trade-up", String(up));
+            setTxt("trade-down", String(down));
+            setTxt("trade-avg", fmtPct(avg));
+            $("trade-avg").className = "val " + pctCls(avg);
+            setTxt("trade-style", style);
+            setTxt("trade-risk", marketRiskText(avg));
+            setTxt("trade-leader", leader.name || "--");
+            $("trade-leader").className = "val g";
+            setTxt("trade-laggard", laggard.name || "--");
+            $("trade-laggard").className = "val r";
+        }
+        function refresh() {
+            api("/api/dashboard", function (d) {
+                if (!d) return;
+                var lm = d.llm || {}, tt = lm.totals || {}, ct = lm.current || {};
+                $("d-tokens").textContent = (tt.tokens_total || 0).toLocaleString();
+                $("d-cost").textContent = "\u00a5" + (tt.cost_rmb || 0).toFixed(4);
+                $("d-calls").textContent = (tt.requests || 0).toLocaleString();
+                $("d-model").textContent = ct.model || "--";
+                var hh = "", hist = lm.history || [];
+                for (var hi = Math.max(0, hist.length - 10); hi < hist.length; hi++) {
+                    var h = hist[hi];
+                    hh += "<tr><td>" + esc(h.time || "") + "</td><td>" + esc(h.model || "") + "</td><td>" + (h.tokens_in || 0) + "</td><td>" + (h.tokens_out || 0) + "</td><td>\u00a5" + (h.cost_rmb || 0).toFixed(4) + "</td></tr>";
+                }
+                $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";
+                var td = d.trade || {}, acct = td.account || {};
+                $("d-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString();
+                $("d-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString();
+                var pnl = acct.pnl || 0;
+                $("d-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString();
+                $("d-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)";
+                $("d-pos").textContent = acct.positions || "0";
+                var wl = "", watchlist = td.watchlist || [];
+                tradeState.watchlist = watchlist;
+                for (var wi = 0; wi < watchlist.length; wi++) {
+                    var w = watchlist[wi] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct);
+                    wl += "<tr><td>" + esc(code) + "</td><td>" + esc(name) + "</td><td>" + (price ? price.toFixed(2) : "--") + "</td><td class='" + cls + "'>" + (price ? fmtPct(pct) : "--") + "</td></tr>";
+                }
+                $("d-watch").innerHTML = wl || "<tr><td colspan=4 style=color:var(--t3)>暂无数据</td></tr>";
+                renderTradeWatchlist(watchlist);
+                var sy = d.system || {};
+                var cpu = sy.cpu || 0, mem = sy.memory || 0, dsk = sy.disk || 0;
+                $("d-cpu").textContent = cpu.toFixed(1) + "%";
+                $("d-cpubar").style.width = cpu + "%";
+                $("d-mem").textContent = mem.toFixed(1) + "%";
+                $("d-membar").style.width = mem + "%";
+                $("d-disk").textContent = dsk.toFixed(1) + "%";
+                $("d-diskbar").style.width = dsk + "%";
+                $("d-host").textContent = sy.host || "";
+                $("sys-info").textContent = "处理器 " + cpu.toFixed(0) + "% | MEM " + mem.toFixed(0) + "%";
+                var srvs = (d.mcp || {}).servers || [];
+                $("mcp-cnt").textContent = srvs.length + " online";
+                $("mcp-badge").textContent = srvs.length;
+                loadMarket();
+            });
+        }
 
-function refresh(){api("/api/dashboard",function(d){if(!d)return;var lm=d.llm||{},tt=lm.totals||{},ct=lm.current||{};$("d-tokens").textContent=(tt.tokens_total||0).toLocaleString();$("d-cost").textContent="\u00a5"+(tt.cost_rmb||0).toFixed(4);$("d-calls").textContent=(tt.requests||0).toLocaleString();$("d-model").textContent=ct.model||"--";var hh="",hist=lm.history||[];for(var hi=Math.max(0,hist.length-10);hi<hist.length;hi++){var h=hist[hi];hh+="<tr><td>"+esc(h.time||"")+"</td><td>"+esc(h.model||"")+"</td><td>"+(h.tokens_in||0)+"</td><td>"+(h.tokens_out||0)+"</td><td>\u00a5"+(h.cost_rmb||0).toFixed(4)+"</td></tr>"}$("d-llmhist").innerHTML=hh||"<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";var td=d.trade||{},acct=td.account||{};$("d-cash").textContent="\u00a5"+(acct.cash||0).toLocaleString();$("d-equity").textContent="\u00a5"+(acct.equity||0).toLocaleString();var pnl=acct.pnl||0;$("d-pnl").textContent=(pnl>=0?"+":"")+pnl.toLocaleString();$("d-pnl").style.color=pnl>=0?"var(--g)":"var(--r)";$("d-pos").textContent=acct.positions||"0";var wl="",wl2="",watchlist=td.watchlist||[];for(var wi=0;wi<watchlist.length;wi++){var w=watchlist[wi];wl+="<tr><td>"+esc(w[0]||"")+"</td><td>"+esc(w[1]||"")+"</td><td>--</td><td>--</td></tr>";wl2+="<tr><td>"+esc(w[0]||"")+"</td><td>"+esc(w[1]||"")+"</td><td>--</td><td>--</td></tr>"}$("d-watch").innerHTML=wl||"<tr><td colspan=4 style=color:var(--t3)>暂无数据</td></tr>";$("trade-wl").innerHTML=wl2||"<tr><td colspan=4 style=color:var(--t3)>暂无数据</td></tr>";var sy=d.system||{};var cpu=sy.cpu||0,mem=sy.memory||0,dsk=sy.disk||0;$("d-cpu").textContent=cpu.toFixed(1)+"%";$("d-cpubar").style.width=cpu+"%";$("d-mem").textContent=mem.toFixed(1)+"%";$("d-membar").style.width=mem+"%";$("d-disk").textContent=dsk.toFixed(1)+"%";$("d-diskbar").style.width=dsk+"%";$("d-host").textContent=sy.host||"";$("sys-info").textContent="处理器 "+cpu.toFixed(0)+"% | MEM "+mem.toFixed(0)+"%";var srvs=(d.mcp||{}).servers||[];$("mcp-cnt").textContent=srvs.length+" online";$("mcp-badge").textContent=srvs.length;loadMarket()})}
+        function loadMarket() {
+            api("/api/market", function (d) {
+                if (!d || !d.ok) {
+                    renderTradeMarket([]);
+                    return;
+                }
+                tradeState.indices = d.indices || [];
+                renderTradeMarket(tradeState.indices);
+            });
+        }
 
-function loadMarket(){api("/api/market",function(d){var mt=$("ticker");if(!mt||!d||!d.ok){if(mt)mt.innerHTML="<span style=color:var(--t3)>市场离线</span>";return}var h="",idx=d.indices||[];for(var i=0;i<idx.length;i++){var x=idx[i],cl=x.pct>=0?"g":"r";h+='<div class="t-item"><span class="t-name">'+esc(x.name)+'</span><span class="t-val '+cl+'">'+x.price+'</span><span class="'+cl+'" style="font-size:10px">'+(x.pct>=0?"+":"")+x.pct.toFixed(2)+"%</span></div>"}mt.innerHTML=h||"<span style=color:var(--t3)>暂无数据</span>";var ti=$("trade-idx");if(ti)ti.innerHTML=h||"无指数"})}
+        // 电脑操控主能力：只保留桌面操控动作，不再暴露黑客/付费语义
+        var __desktopLabels = {
+            "system_status": "系统状态",
+            "screenshot": "屏幕截图",
+            "browser_open": "打开浏览器",
+            "broker_open": "打开券商",
+            "broker_list": "券商列表",
+            "broker_login_detect": "登录检测",
+            "broker_window_scan": "券商窗口扫描",
+            "broker_window_focus": "券商窗口聚焦",
+            "trade_ready_check": "操盘准备检查",
+            "trade_takeover_ready": "自主接管准备",
+            "trade_takeover_watch": "持续接管监视",
+            "trade_takeover_precheck": "接管后预检",
+            "trade_panel_probe": "联合回读探测",
+            "trade_anchor_detect": "交易锚点识别",
+            "trade_confirm_detect": "确认弹窗识别",
+            "trade_entrust_readback": "委托区域回读",
+            "trade_position_readback": "持仓区域回读",
+            "trade_submit_confirm": "提交交易确认",
+            "trade_result_watch": "委托结果回看",
+            "trade_workflow": "操盘流程",
+            "window_maximize": "窗口最大化",
+            "keyboard_type": "键盘输入",
+            "keyboard_hotkey": "键盘快捷键",
+            "mouse_click": "鼠标点击",
+            "mouse_move": "鼠标移动",
+            "process_list": "进程列表",
+            "process_kill": "结束进程",
+            "window_focus": "聚焦窗口",
+            "volume_control": "音量调节",
+            "trade_form_fill": "交易填单",
+            "system_lock": "锁屏"
+        };
+        function _desktopLabel(id, fallback) { return __desktopLabels[id] || fallback || id; }
+        function _deskVal(id) { var el = $(id); return el ? (el.value || "").trim() : "" }
+        function _deskNum(id) { var v = _deskVal(id); return v === "" ? null : Number(v) }
+        function buildDeskPayload(cid) {
+            var payload = { id: cid, action: "运行" };
+            var broker = _deskVal("desk-broker");
+            var title = _deskVal("desk-title");
+            var text = _deskVal("desk-text");
+            var combo = _deskVal("desk-combo");
+            var x = _deskNum("desk-x");
+            var y = _deskNum("desk-y");
+            var stock = _deskVal("desk-stock");
+            var price = _deskNum("desk-price");
+            var lots = _deskNum("desk-lots");
+            var tradeAction = _deskVal("desk-trade-action");
+            var timeout = _deskNum("desk-timeout");
+            var pid = _deskNum("desk-pid");
+            var pname = _deskVal("desk-pname");
+            var volumeMode = _deskVal("desk-volume-mode") || "mute";
+            var dryRun = !!($("desk-dry-run") && $("desk-dry-run").checked);
+            var confirm = !!($("desk-confirm") && $("desk-confirm").checked);
+            if (dryRun) payload.dry_run = true;
+            if (confirm) payload.confirm = true;
+            if (broker) payload.broker = broker;
+            if (title) payload.title = title;
+            if (tradeAction) payload.trade_action = tradeAction;
+            if (timeout !== null) payload.timeout = timeout;
+            if (cid === "browser_open") {
+                if (text) {
+                    if (/^https?:\/\//i.test(text)) payload.url = text;
+                    else payload.query = text;
+                }
+            } else if (cid === "keyboard_type") {
+                if (text) payload.text = text;
+            } else if (cid === "keyboard_hotkey") {
+                if (combo) payload.combo = combo;
+            } else if (cid === "mouse_click" || cid === "mouse_move") {
+                if (x !== null) payload.x = x;
+                if (y !== null) payload.y = y;
+            } else if (cid === "process_kill") {
+                if (pid !== null) payload.pid = pid;
+                if (pname) payload.name = pname;
+            } else if (cid === "window_focus" || cid === "broker_window_focus") {
+                if (title) payload.title = title;
+                if (broker) payload.broker = broker;
+            } else if (cid === "volume_control") {
+                payload.mode = volumeMode;
+                if (lots !== null) payload.steps = lots;
+            } else if (cid === "trade_form_fill") {
+                if (stock) payload.stock_code = stock;
+                if (broker) payload.broker = broker;
+                if (tradeAction) payload.trade_action = tradeAction;
+                if (price !== null) payload.price = price;
+                if (lots !== null) payload.lots = lots;
+            } else if (cid === "trade_takeover_ready" || cid === "trade_takeover_watch" || cid === "trade_takeover_precheck" || cid === "trade_confirm_detect" || cid === "trade_submit_confirm" || cid === "trade_result_watch" || cid === "trade_ready_check" || cid === "trade_entrust_readback" || cid === "trade_position_readback" || cid === "trade_panel_probe") {
+                if (stock) payload.stock_code = stock;
+                if (broker) payload.broker = broker;
+                if (tradeAction) payload.trade_action = tradeAction;
+                if (price !== null) payload.price = price;
+                if (lots !== null) payload.lots = lots;
+                if (cid === "trade_takeover_watch" && timeout !== null) payload.timeout_sec = timeout;
+                if (cid === "trade_result_watch" && timeout !== null) payload.timeout = timeout;
+            } else if (cid === "trade_workflow" || cid === "broker_open") {
+                if (broker) payload.broker = broker;
+            }
+            return payload;
+        }
+        function loadDesktop() {
+            api("/api/desktop/capabilities", function (d) {
+                var caps = d && d.capabilities || [];
+                window.__deskActs = [];
+                var h = "";
+                for (var i = 0; i < caps.length; i++) {
+                    var cap = caps[i] || {};
+                    var label = _desktopLabel(cap.id, cap.name || ("动作" + i));
+                    var cid = cap.id || label;
+                    window.__deskActs.push([label, cid]);
+                    h += '<div class="btn-cap" onclick="execDesk(\'' + esc(label) + '\')"><div class="c-dot" style="background:var(--a)"></div>' + esc(label) + "</div>";
+                }
+                $("desk-grid").innerHTML = h || '<span style="color:var(--t3)">暂无电脑操控动作</span>';
+            });
+        }
+        function execDesk(label) {
+            var log = $("desk-log");
+            var cid = label;
+            try {
+                for (var i = 0; i < (window.__deskActs || []).length; i++) {
+                    if (window.__deskActs[i][0] === label) { cid = window.__deskActs[i][1]; break }
+                }
+            } catch (e) { }
+            var payload = buildDeskPayload(cid);
+            if (log) log.textContent = "> " + label + " (" + cid + ")...\n" + JSON.stringify(payload, null, 2);
+            api("/api/desktop/exec", function (d) {
+                var tm = new Date().toLocaleTimeString();
+                if (log) log.textContent = "[" + tm + "] " + (d && d.ok ? "成功" : "失败") + " " + label + "\n" + (d ? d.data || d.error || "" : "") + "\n---\n" + log.textContent;
+                toast((d && d.ok ? "成功：" : "失败：") + label);
+            }, "POST", JSON.stringify(payload));
+        }
 
-function loadHacker(){api("/api/hacker/capabilities",function(d){if(!d)return;$("hack-cnt").textContent=d.total+" caps";var h="",caps=d.capabilities||[];for(var i=0;i<caps.length;i++){var c=caps[i];h+='<div class="btn-cap" onclick="execCap(\''+esc(c.id)+'\')"><div class="c-dot" style="background:'+(c.mcp?"var(--g)":"var(--a)")+'"></div>'+esc(c.id)+"</div>"}$("hack-grid").innerHTML=h})}
-function execCap(cid){var log=$("hack-log");if(log)log.textContent="> "+cid+"...";api("/api/hacker/exec",function(d){var tm=new Date().toLocale时间String();if(log)log.textContent="["+tm+"] "+(d&&d.ok?"OK":"FAIL")+" "+cid+"\n"+(d?d.data||d.error||"":"")+"\n---\n"+log.textContent;toast((d&&d.ok?"OK ":"FAIL ")+cid)},"POST",JSON.stringify({id:cid,action:"run"}))}
+        function loadMCP() {
+            api("/api/dashboard", function (d) {
+                var srvs = (d && d.mcp || {}).servers || [];
+                var h = "";
+                for (var i = 0; i < srvs.length; i++) {
+                    var s = srvs[i] || {};
+                    var name = typeof s === "string" ? s : (s.id || s.name || "未命名服务");
+                    var meta = typeof s === "string" ? "已挂载服务" : (s.name && s.id && s.name !== s.id ? s.id : "已挂载服务");
+                    h += '<div class="mcp-service-card">'
+                        + '<div class="mcp-service-main">'
+                        + '<div class="mcp-service-name">' + esc(name) + '</div>'
+                        + '<div class="mcp-service-meta">' + esc(meta || '已挂载服务') + '</div>'
+                        + '</div>'
+                        + '<span class="mcp-service-status online">在线</span>'
+                        + '</div>';
+                }
+                $("mcp-grid").innerHTML = h || '<div class="workspace-note">暂未配置服务器</div>';
+            });
+        }
 
-function loadDesktop(){var acts=["screenshot","browser_open","window_maximize","keyboard_type","keyboard_hotkey","mouse_click","process_list","process_kill","window_focus","volume_control","system_lock"];var h="";for(var i=0;i<acts.length;i++)h+='<div class="btn-cap" onclick="execDesk(\''+acts[i]+'\')"><div class="c-dot" style="background:var(--a)"></div>'+acts[i]+"</div>";$("desk-grid").innerHTML=h}
-function execDesk(cid){var log=$("desk-log");if(log)log.textContent="> "+cid+"...";api("/api/hacker/exec",function(d){var tm=new Date().toLocale时间String();if(log)log.textContent="["+tm+"] "+(d&&d.ok?"OK":"FAIL")+" "+cid+"\n"+(d?d.data||d.error||"":"")+"\n---\n"+log.textContent;toast((d&&d.ok?"OK ":"FAIL ")+cid)},"POST",JSON.stringify({id:cid,action:"run"}))}
+        function loadCloudBrainConfig() {
+            api("/api/config/cloud_brain", function (cfg) {
+                var note = $("cfg-cloud-note");
+                if (cfg && $("cfg-cloud-url")) $("cfg-cloud-url").value = cfg.url || "";
+                if (cfg && $("cfg-chat-mode")) $("cfg-chat-mode").value = cfg.chat_mode || "local";
+                if (note) {
+                    var parts = [];
+                    parts.push(cfg && cfg.enabled ? "已启用" : "未启用");
+                    if (cfg && cfg.status && cfg.status.ok) {
+                        parts.push("在线");
+                        if (cfg.status.provider) parts.push(cfg.status.provider);
+                        if (cfg.status.model) parts.push(cfg.status.model);
+                        note.style.display = "block";
+                        note.textContent = "云端大脑：" + parts.join(" / ");
+                    } else if (cfg && cfg.url) {
+                        note.style.display = "block";
+                        note.textContent = "云端大脑：" + parts.join(" / ") + (cfg.status && cfg.status.error ? (" / " + cfg.status.error) : "");
+                    } else {
+                        note.style.display = "none";
+                        note.textContent = "";
+                    }
+                }
+            })
+        }
+        function loadLLM() {
+            api("/api/config/llm", function (cfg) {
+                var a = cfg && cfg.available || [];
+                var h = "";
+                function llmStatusText(v) {
+                    var key = String(v || "").toLowerCase();
+                    if (key === "available") return "可用";
+                    if (key === "missing") return "未配置";
+                    if (key === "error") return "异常";
+                    return key ? String(v) : "未就绪";
+                }
+                for (var i = 0; i < a.length; i++) {
+                    var av = a[i] || {};
+                    var ok = av.status === "available";
+                    var meta = av.id ? String(av.id).toUpperCase() : "自动扫描";
+                    h += '<div class="llm-provider-item ' + (ok ? 'available' : 'offline') + '">'
+                        + '<div class="llm-provider-main">'
+                        + '<div class="llm-provider-title">' + esc(av.name || av.provider || '未命名供应商') + '</div>'
+                        + '<div class="llm-provider-meta">' + esc(meta) + '</div>'
+                        + '</div>'
+                        + '<span class="llm-provider-status ' + (ok ? 'available' : 'offline') + '">' + esc(llmStatusText(av.status)) + '</span>'
+                        + '</div>';
+                }
+                $("llm-list").innerHTML = h || '<div class="workspace-note">暂未扫描到供应商信息</div>';
+                if (cfg && cfg.saved_provider && $("cfg-provider")) $("cfg-provider").value = cfg.saved_provider;
+                if (cfg && cfg.saved_model && $("cfg-model")) $("cfg-model").value = cfg.saved_model;
+                var savedNote = $("cfg-saved-note");
+                var keyBox = $("cfg-apikey");
+                if (savedNote && keyBox) {
+                    if (cfg && cfg.saved_on_device && cfg.key_masked) {
+                        savedNote.style.display = "block";
+                        savedNote.textContent = "本机已保存密钥：" + cfg.key_masked + "，同一设备后续可直接复用，无需每次重填。";
+                        keyBox.placeholder = "本机已保存，无需重填；留空可直接使用已保存密钥";
+                    } else {
+                        savedNote.style.display = "none";
+                        savedNote.textContent = "";
+                        keyBox.placeholder = "输入你的 API Key...";
+                    }
+                }
+                loadCloudBrainConfig();
+            });
+            api("/api/dashboard", function (d) {
+                if (!d) return;
+                var lm = d.llm || {}, tt = lm.totals || {}, ct = lm.current || {};
+                setTxt("llm-tokens", (tt.tokens_total || 0).toLocaleString());
+                setTxt("llm-cost", "¥" + (tt.cost_rmb || 0).toFixed(4));
+                setTxt("llm-calls", (tt.requests || 0).toLocaleString());
+                setTxt("llm-cur", ct.model || "--");
+                var h = "", hist = lm.history || [];
+                for (var hi = Math.max(0, hist.length - 20); hi < hist.length; hi++) {
+                    var hh = hist[hi];
+                    h += "<tr><td>" + esc(hh.time || "") + "</td><td>" + esc(hh.model || "") + "</td><td>"
+                        + (hh.tokens_in || 0) + "</td><td>" + (hh.tokens_out || 0) + "</td><td>¥"
+                        + (hh.cost_rmb || 0).toFixed(4) + "</td></tr>";
+                }
+                $("d-llmhist").innerHTML = h || '<tr><td colspan=5 style=color:var(--t3)>暂无调用记录</td></tr>';
+            });
+        }
+        function send对话() {
+            var inp = $("llm-input"), out = $("llm-out"), txt = inp.value.trim();
+            if (!txt) return;
+            inp.value = "";
+            out.textContent = "⏳ 调用大模型中...";
+            api("/api/chat", function (d) {
+                if (!d) { out.textContent = "错误: 无响应"; return }
+                if (d.ok) {
+                    var m = d.metrics || {};
+                    out.textContent = "[" + (d.provider || "LLM") + " " + (d.model || "") + "]\n"
+                        + "令牌: " + (m.tokens_in || 0) + " in + " + (m.tokens_out || 0) + " out"
+                        + " | Cost: ¥" + (m.cost_rmb || 0).toFixed(6) + "\n"
+                        + "──────────────────────────\n"
+                        + (d.response || "");
+                } else {
+                    out.textContent = "✗ " + (d.error || "调用失败");
+                }
+            }, "POST", JSON.stringify({ text: txt, brain_mode: ($("cfg-chat-mode") ? $("cfg-chat-mode").value : "local") }))
+        }
 
-function loadMCP(){api("/api/dashboard",function(d){var srvs=(d&&d.mcp||{}).servers||[];var h="";for(var i=0;i<srvs.length;i++){var s=srvs[i],n=typeof s==="string"?s:(s.id||s.name||"");h+='<div class="btn-cap"><div class="c-dot" style="background:var(--g)"></div>'+esc(n)+"</div>"}$("mcp-grid").innerHTML=h||"<span style=color:var(--t3)>No servers</span>"})}
+        // ── 智能 对话 (chat panel) ──
+        var chatHistory = [];
 
-function loadLLM(){api("/api/dashboard",function(d){if(!d)return;var lm=d.llm||{},tt=lm.totals||{},ct=lm.current||{};var h="",hist=lm.history||[];for(var hi=Math.max(0,hist.length-20);hi<hist.length;hi++){var hh=hist[hi];h+="<tr><td>"+esc(hh.time||"")+"</td><td>"+esc(hh.model||"")+"</td><td>"+(hh.tokens_in||0)+"</td><td>"+(hh.tokens_out||0)+"</td><td>\u00a5"+(hh.cost_rmb||0).toFixed(4)+"</td></tr>"}$("d-llmhist").innerHTML=h||"<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";var pd="";for(var k in lm){if(lm[k]&&lm[k].model)pd+=lm[k].model+" | "};$("llm-list").innerHTML=pd||"<span style=color:var(--t3)>无可用供应商</span>"})}
-function send对话(){var inp=$("llm-input"),out=$("llm-out"),txt=inp.value.trim();if(!txt)return;out.textContent="发送ing...";api("/api/chat",function(d){out.textContent=(d&&d.ok?d.response:"错误: "+(d?d.error||"":"无响应"))},"POST",JSON.stringify({text:txt}))}
-function load账户(){api("/api/dashboard",function(d){if(!d)return;var td=d.trade||{},acct=td.account||{};$("a-cash").textContent="\u00a5"+(acct.cash||0).toLocaleString();$("a-equity").textContent="\u00a5"+(acct.equity||0).toLocaleString();var pnl=acct.pnl||0;$("a-pnl").textContent=(pnl>=0?"+":"")+pnl.toLocaleString();$("a-pnl").style.color=pnl>=0?"var(--g)":"var(--r)";$("a-pos").textContent=acct.positions||"0"})}
-function loadTrade(){loadMarket()}
+        function chatTimeLabel() {
+            try {
+                return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            } catch (e) {
+                return "刚刚";
+            }
+        }
 
-refresh();set输入terval(refresh,5000)
-</script>
-</body></html>
+        function autoResizeChatInput() {
+            var inp = $("chat-input");
+            if (!inp) return;
+            inp.style.height = "56px";
+            inp.style.height = Math.min(inp.scrollHeight, 140) + "px";
+        }
+
+        function fillChatPrompt(text) {
+            var inp = $("chat-input");
+            if (!inp) return;
+            inp.value = text || "";
+            autoResizeChatInput();
+            inp.focus();
+        }
+
+        function addChatMsg(role, text, reasoning) {
+            var container = $("chat-messages");
+            var cls = role === "user" ? "user" : "assistant";
+            var name = role === "user" ? "你" : "GBT Pro 助手";
+            var avatar = role === "user" ? "我" : "AI";
+            var html = '<div class="chat-msg ' + cls + '">';
+            html += '<div class="msg-avatar">' + avatar + '</div>';
+            html += '<div class="msg-stack">';
+            html += '<div class="msg-meta"><span class="msg-name">' + name + '</span><span class="msg-time">' + chatTimeLabel() + '</span></div>';
+            html += '<div class="msg-bubble">';
+            if (reasoning) {
+                html += '<div class="msg-reasoning"><b>推理摘要</b><br>' + esc(reasoning).replace(/\n/g, "<br>") + '</div>';
+            }
+            html += '<div class="msg-text">' + esc(text || "").replace(/\n/g, "<br>") + '</div>';
+            html += '</div></div></div>';
+            container.insertAdjacentHTML("beforeend", html);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChat() {
+            var inp = $("chat-input"), txt = inp.value.trim();
+            if (!txt) return;
+            var deep = $("deep-mode").checked;
+            if (guideChatAccess()) return;
+            inp.value = "";
+            autoResizeChatInput();
+            addChatMsg("user", txt);
+            var container = $("chat-messages");
+            var loadingId = "loading-" + Date.now();
+            container.insertAdjacentHTML("beforeend", '<div id="' + loadingId + '" class="chat-msg assistant"><div class="msg-avatar">AI</div><div class="msg-stack"><div class="msg-meta"><span class="msg-name">GBT Pro 助手</span><span class="msg-time">' + chatTimeLabel() + '</span></div><div class="msg-bubble"><div class="msg-loading"><span>正在思考' + (deep ? ' · 深度推理' : '') + '</span><span class="msg-loading-dots"><span></span><span></span><span></span></span></div></div></div></div>');
+            container.scrollTop = container.scrollHeight;
+            api("/api/chat", function (d) {
+                var el = D.getElementById(loadingId);
+                if (el) el.remove();
+                if (!d) { addChatMsg("assistant", "错误: 无响应"); return }
+                if (d.ok) {
+                    var reasoning = d.reasoning || "";
+                    addChatMsg("assistant", d.response || "", reasoning);
+                    var m = d.metrics || {};
+                    if (typeof d.tokens_remaining !== "undefined") {
+                        if (authState.profile) authState.profile.tokens_remaining = d.tokens_remaining;
+                        loadTokenBalance(true);
+                    }
+                    if (m.tokens_in || m.tokens_out) {
+                        toast((deep ? "推理" : "Chat") + " in:" + (m.tokens_in || 0) + " out:" + (m.tokens_out || 0) + (m.reasoning_tokens ? " r:" + m.reasoning_tokens : "") + (typeof d.tokens_remaining !== "undefined" ? (" 剩余:" + d.tokens_remaining) : ""));
+                    }
+                } else {
+                    if ((d.error || "").indexOf("会话过期") >= 0) { clearAuth("会话过期，请重新登录"); }
+                    addChatMsg("assistant", "✗ " + (d.error || "调用失败"));
+                }
+            }, "POST", JSON.stringify({ text: txt, deep_reasoning: deep, token: authState.token, brain_mode: ($("cfg-chat-mode") ? $("cfg-chat-mode").value : "local") }));
+        }
+
+        function loadChat() {
+            autoResizeChatInput();
+            api("/api/status", function (d) {
+                var badge = $("chat-badge");
+                if (badge && d && d.keys_available > 0) {
+                    badge.style.background = "var(--g)";
+                    badge.textContent = "●";
+                }
+            });
+            updateAuthUI();
+        }
+
+        function guideChatAccess() {
+            var remaining = (authState.balance && typeof authState.balance.remaining !== "undefined")
+                ? Number(authState.balance.remaining || 0) : 0;
+            if (!authState.token && remaining <= 0) {
+                addChatMsg("assistant", "当前是访客模式，令牌为 0。请先登录领取新用户 10000 tokens 后再开始对话。");
+                routeSoftNotice("模型已连接，但当前访客额度为 0。请先登录领取新用户令牌后再开始对话。");
+                switchTab("auth");
+                return true;
+            }
+            if (authState.token && remaining <= 0) {
+                addChatMsg("assistant", "当前账号对话额度已用完。当前版本已移除付费模块，请先专注使用电脑操控与自主操盘主能力。");
+                return true;
+            }
+            return false;
+        }
+        function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; $("a-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString(); $("a-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString(); var pnl = acct.pnl || 0; $("a-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(); $("a-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; $("a-pos").textContent = acct.positions || "0"; loadTokenBalance(true) }) }
+        function loadTrade() { refresh(); loadMarket(); if (tradeState.selectedCode) loadTradeDetail(tradeState.selectedCode); restoreLastRecap(); }
+        function restoreLastRecap() {
+            try {
+                var raw = localStorage.getItem("gbt_last_recap");
+                if (!raw) return;
+                var last = JSON.parse(raw);
+                if (last && last.report) {
+                    $("recap-report").textContent = last.report;
+                    $("recap-headline").textContent = last.headline || "上次复盘已恢复";
+                    $("recap-time").textContent = last.time || "已恢复";
+                    if (last.tokens_consumed) $("recap-meta").textContent = "上次消耗 " + last.tokens_consumed + " 令牌 · 模型 " + (last.model || "deepseek-reasoner");
+                }
+            } catch (e) { }
+        }
+        function recapGenerate() {
+            var btn = $("recap-btn");
+            var token = getStoredToken();
+            btn.disabled = true;
+            var oldText = btn.textContent;
+            btn.textContent = "正在生成复盘…";
+            $("recap-headline").textContent = "正在拉取实时市场快照…";
+            $("recap-report").textContent = "DeepSeek-Reasoner 正在思考，按行业标准一般需要 8–30 秒，请耐心等待…";
+            $("recap-report").classList.add("is-streaming");
+            $("recap-meta").textContent = "";
+            api("/api/market/recap", function (resp) {
+                btn.disabled = false;
+                btn.textContent = oldText;
+                if (!resp || !resp.ok) {
+                    toast("复盘生成失败：" + (resp && resp.error || "未知错误"));
+                    $("recap-report").textContent = "生成失败：" + (resp && resp.error || "未知错误");
+                    $("recap-report").classList.remove("is-streaming");
+                    return;
+                }
+                $("recap-headline").textContent = resp.headline || "今日市场复盘已生成";
+                $("recap-time").textContent = "已生成 · " + new Date().toLocaleTimeString("zh-CN");
+                $("recap-meta").textContent = "模型 " + (resp.model || "deepseek-reasoner") + " · 消耗 " + (resp.tokens_consumed || 0) + " Tokens · " + (resp.user || "_default");
+                streamReveal($("recap-report"), resp.report || "", 12);
+                try { localStorage.setItem("gbt_last_recap", JSON.stringify({ report: resp.report, headline: resp.headline, model: resp.model, tokens_consumed: resp.tokens_consumed, time: new Date().toLocaleTimeString("zh-CN") })) } catch (e) { }
+            }, "POST", JSON.stringify({ token: token, today: new Date().toISOString().slice(0, 10) }));
+        }
+
+        // ── LLM 连接 ──
+        function saveLLM() {
+            var p = $("cfg-provider").value, k = $("cfg-apikey").value.trim(), m = $("cfg-model").value.trim();
+            var savedNote = $("cfg-saved-note");
+            if (!k && !(savedNote && savedNote.style.display !== "none")) { toast("请先输入 API Key"); return }
+            var btn = document.querySelector('#panel-connect button.save');
+            btn.disabled = true; btn.textContent = "连接中...";
+            api("/api/config/llm", function (d) {
+                btn.disabled = false; btn.textContent = "保存并连接";
+                if (!d) { toast("连接失败: 无响应"); return }
+                var msg = d.message || "";
+                if (d.ok) {
+                    api("/api/token/balance", function (bal) {
+                        if (bal && bal.ok) authState.balance = bal;
+                        updateAuthUI();
+                        if (!authState.token && bal && typeof bal.remaining !== "undefined" && Number(bal.remaining || 0) <= 0) {
+                            routeSoftNotice("模型已连接，但当前访客额度为 0。请先登录领取新用户令牌后再开始对话。");
+                            switchTab("auth");
+                            return;
+                        }
+                        toast("连接成功!");
+                        loadLLM();
+                    });
+                    return;
+                }
+                else { toast("警告: " + msg); }
+            }, "POST", JSON.stringify({ provider: p, api_key: k, model: m }))
+            $("cfg-apikey").value = ""
+        }
+        function saveCloudBrain() {
+            var btns = document.querySelectorAll('#panel-connect button.save');
+            var btn = btns && btns.length > 1 ? btns[1] : null;
+            var url = $("cfg-cloud-url") ? $("cfg-cloud-url").value.trim() : "";
+            var mode = $("cfg-chat-mode") ? $("cfg-chat-mode").value : "local";
+            if (!url) { toast("请先填写云端大脑 URL"); return }
+            if (btn) { btn.disabled = true; btn.textContent = "保存中..."; }
+            api("/api/config/cloud_brain", function (d) {
+                if (btn) { btn.disabled = false; btn.textContent = "保存云端大脑"; }
+                if (!d || !d.ok) { toast("云端大脑保存失败: " + ((d && d.error) || "无响应")); return }
+                toast("云端大脑已保存");
+                loadCloudBrainConfig();
+            }, "POST", JSON.stringify({ url: url, enabled: true, chat_mode: mode }))
+        }
+        // ── 自主操盘 ──
+        var pilotTakeoverState = null;
+        function pilotField(id) { var el = $(id); return el ? (el.value || "").trim() : "" }
+        function pilotNumField(id) { var v = pilotField(id); return v === "" ? null : Number(v) }
+        function pilotActionLabel(id) {
+            var map = {
+                trade_takeover_watch: "持续接管监视",
+                trade_panel_probe: "联合回读探测",
+                trade_form_fill: "交易填单",
+                trade_submit_confirm: "提交交易确认",
+                trade_result_watch: "委托结果回看"
+            };
+            return map[id] || id || "--";
+        }
+        function pilotPhaseLabel(id) {
+            var map = {
+                app_only: "APP内闭环",
+                await_broker_window: "等待券商窗口",
+                await_login: "等待登录",
+                await_trade_page: "等待交易页",
+                ready_for_takeover: "已进入可接管态"
+            };
+            return map[id] || id || "待检测";
+        }
+        function pilotNextBtnClass(id) {
+            if (id === "trade_submit_confirm") return "btn-ui danger";
+            if (id === "trade_form_fill") return "btn-ui primary";
+            if (id === "trade_panel_probe") return "btn-ui info";
+            return "btn-ui success";
+        }
+        function pilotPrecheckPayload() {
+            var payload = { id: "trade_takeover_precheck", app_only: true, auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
+            var broker = pilotField("pilot-broker"), stock = pilotField("pilot-stock"), price = pilotNumField("pilot-price"), lots = pilotNumField("pilot-lots");
+            if (broker) payload.broker = broker;
+            if (stock) payload.stock_code = stock;
+            if (price !== null) payload.price = price;
+            if (lots !== null) payload.lots = lots;
+            return payload;
+        }
+        function pilotShortText(txt, maxLen) {
+            txt = (txt || "").trim();
+            if (!txt) return "--";
+            if (!maxLen || txt.length <= maxLen) return txt;
+            return txt.slice(0, maxLen - 1) + "…";
+        }
+        function pilotProbePanelLabel(state) {
+            if (!state) return "--";
+            if (state.found) {
+                var count = (state.rows || []).length || (state.codes || []).length || 0;
+                return count > 0 ? ("已识别 " + count + " 条") : "已识别";
+            }
+            return state.error ? "检测失败" : "未识别";
+        }
+        function renderPilotProbe(d) {
+            var anchors = d && d.anchor_state && d.anchor_state.anchors ? d.anchor_state.anchors : {};
+            var anchorCount = Object.keys(anchors).length;
+            if (d && d.app_only) {
+                setTxt("pilot-probe-login", "APP内模式");
+                setTxt("pilot-probe-anchors", "APP内直驱");
+                setTxt("pilot-probe-entrust", pilotProbePanelLabel(d && d.entrust_state));
+                setTxt("pilot-probe-position", pilotProbePanelLabel(d && d.position_state));
+                setTxt("pilot-probe-window", "GBT Pro");
+                setTxt("pilot-probe-ready", "APP内闭环");
+                var appProbeNote = $("pilot-probe-note");
+                if (appProbeNote) appProbeNote.textContent = (d.next_step || "APP内闭环模式已启用，请直接执行安全预演。") + " | 不再依赖外部券商窗口、登录态和切页结果。";
+                return;
+            }
+            var loginText = "--";
+            if (d && d.login_state) loginText = d.login_state.ok ? (d.login_state.logged_in ? "已登录" : "待登录") : "检测失败";
+            setTxt("pilot-probe-login", loginText);
+            setTxt("pilot-probe-anchors", d ? (anchorCount ? ("已识别 " + anchorCount + " 个") : "未识别") : "--");
+            setTxt("pilot-probe-entrust", pilotProbePanelLabel(d && d.entrust_state));
+            setTxt("pilot-probe-position", pilotProbePanelLabel(d && d.position_state));
+            setTxt("pilot-probe-window", pilotShortText(d && d.active_window && d.active_window.title, 24));
+            setTxt("pilot-probe-ready", d ? ((d.ready || d.precheck_passed) ? "已接近可执行态" : "仍待交易页") : "--");
+            var probeNotes = [], seen = {};
+            function pushProbe(line) {
+                var txt = (line || "").trim();
+                if (!txt || seen[txt]) return;
+                seen[txt] = true;
+                probeNotes.push(txt);
+            }
+            if (d) {
+                if (d.focus_state && d.focus_state.selected && d.focus_state.selected.title) pushProbe("已聚焦：" + d.focus_state.selected.title);
+                if (d.focus_state && d.focus_state.error) pushProbe("聚焦失败：" + d.focus_state.error);
+                if (d.page_nav_state && d.page_nav_state.reason) pushProbe("切页状态：" + d.page_nav_state.reason);
+                pushProbe((d.ready || d.precheck_passed) ? "探测结论：已接近可执行态" : "探测结论：仍需先切到真实券商交易页");
+            }
+            var probeNote = $("pilot-probe-note");
+            if (probeNote) probeNote.textContent = probeNotes.join(" | ") || "等待进入可接管态后执行联合回读探测。";
+        }
+        function pilotValueReady(value) {
+            return !!String(value || "").trim();
+        }
+        function renderPilotFill(d) {
+            var stock = pilotField("pilot-stock"), price = pilotNumField("pilot-price"), lots = pilotNumField("pilot-lots");
+            var preview = d && d.fill_preview ? d.fill_preview : null;
+            var missingPayload = d && d.precheck_passed ? (d.missing_payload || []) : [];
+            var missingAnchors = d && d.precheck_passed ? (d.missing_fill_anchors || []) : [];
+            var payloadReady = !!stock && price !== null && price > 0 && lots !== null && lots > 0;
+            var anchorReady = d && d.precheck_passed ? !missingAnchors.length : false;
+            var anchorState = d && d.anchor_state ? d.anchor_state : {};
+            setTxt("pilot-fill-stock-state", pilotValueReady(stock) ? stock : "待补");
+            setTxt("pilot-fill-price-state", price !== null && price > 0 ? price.toFixed(2) : "待补");
+            setTxt("pilot-fill-lots-state", lots !== null && lots > 0 ? String(lots) : "待补");
+            setTxt("pilot-fill-payload-state", payloadReady ? "已齐" : (missingPayload.length ? ("缺少 " + missingPayload.join(" / ")) : "待补"));
+            setTxt("pilot-fill-anchor-state", d && d.precheck_passed ? (anchorReady ? "已齐" : (missingAnchors.length ? ("缺少 " + missingAnchors.join(" / ")) : "待补")) : (anchorState.ok ? "待探测" : "未识别"));
+            setTxt("pilot-fill-preview-state", preview ? (preview.ok ? "预演通过" : "预演失败") : (d && d.next_action_id === "trade_form_fill" ? "待预演" : "未开始"));
+            var notes = [];
+            if (d && d.next_action_id === "trade_form_fill") notes.push("当前唯一下一步已进入交易填单预演。");
+            notes.push("当前工作台内的交易填单只做安全预演，不执行真实填单。");
+            if (!payloadReady) notes.push("请先补齐股票代码、价格、数量。");
+            if (d && d.precheck_passed && missingAnchors.length) notes.push("填单前仍缺锚点：" + missingAnchors.join(" / "));
+            if (preview) notes.push((preview.data || preview.error || "预演已返回").split("\n")[0]);
+            var note = $("pilot-fill-note");
+            if (note) note.textContent = notes.join(" | ");
+        }
+        function pilotCodesLabel(codes) {
+            codes = Array.isArray(codes) ? codes.filter(Boolean) : [];
+            return codes.length ? codes.slice(0, 3).join(" / ") : "--";
+        }
+        function renderPilotConfirmWatch(d) {
+            var confirmState = d && d.confirm_state ? d.confirm_state : {};
+            var confirmBtn = confirmState.confirm_btn || {};
+            var submitState = d && d.confirm_submit ? d.confirm_submit : null;
+            var watchWrap = d && d.watch_result ? d.watch_result : null;
+            var watchState = watchWrap && watchWrap.watch_state ? watchWrap.watch_state : null;
+            setTxt("pilot-confirm-found", confirmState.found ? "已识别" : "未识别");
+            setTxt("pilot-confirm-coord", confirmState.found && confirmBtn.x > 0 && confirmBtn.y > 0 ? ("(" + confirmBtn.x + ", " + confirmBtn.y + ")") : "--");
+            setTxt("pilot-confirm-submit", submitState ? (submitState.ok ? "已提交" : "提交失败") : (confirmState.found ? "待确认" : "未开始"));
+            setTxt("pilot-watch-state", watchState ? (watchState.found ? "已识别" : (watchState.ok ? "未识别" : "检测失败")) : "未开始");
+            setTxt("pilot-watch-entrust", pilotCodesLabel(watchState && watchState.entrust_state && watchState.entrust_state.codes));
+            setTxt("pilot-watch-position", pilotCodesLabel(watchState && watchState.position_state && watchState.position_state.codes));
+            var notes = [];
+            if (confirmState.found) notes.push("已识别确认弹窗，勾选高风险确认后可提交。");
+            else notes.push("当前尚未识别到可点击的交易确认按钮。");
+            if (submitState) notes.push((submitState.data || submitState.error || "提交已返回").split("\n")[0]);
+            if (watchState) {
+                if (watchState.found) notes.push("已检测到委托结果关键词：" + ((watchState.keywords || []).join(" / ") || "已识别"));
+                else notes.push("委托结果回看暂未识别到明确结果。");
+            }
+            var note = $("pilot-result-note");
+            if (note) note.textContent = notes.join(" | ");
+        }
+        function runPilotResultWatch(autoTriggered) {
+            var payload = pilotNextActionPayload("trade_result_watch");
+            if ($("p-log")) {
+                $("p-log").textContent = "[执行 委托结果回看]\n正在回看委托结果...\n---\n" + $("p-log").textContent;
+            }
+            api("/api/desktop/exec", function (d) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { watch_result: d });
+                renderPilotConfirmWatch(pilotTakeoverState);
+                if ($("p-log")) {
+                    $("p-log").textContent = "[委托结果回看]\n" + (d ? (d.data || d.error || "无响应") : "无响应") + "\n---\n" + $("p-log").textContent;
+                }
+                if (d && d.ok) {
+                    toast(autoTriggered ? "提交后已自动回看委托结果" : "已执行：委托结果回看");
+                } else {
+                    toast("委托结果回看失败：" + (d ? (d.error || "未知错误") : "无响应"));
+                }
+                loadPilotTakeoverPrecheck();
+            }, "POST", JSON.stringify(payload));
+        }
+        function renderPilotPrecheck(d) {
+            var preserved = pilotTakeoverState || {};
+            pilotTakeoverState = Object.assign({}, d || {}, { fill_preview: preserved.fill_preview, confirm_submit: preserved.confirm_submit, watch_result: preserved.watch_result });
+            var passed = !!(d && d.precheck_passed), nextId = d && d.next_action_id || "", appOnly = !!(d && d.app_only), status = $("pilot-precheck-status");
+            if (appOnly) {
+                if (pilotTakeoverState.watch_result && pilotTakeoverState.watch_result.ok) nextId = "";
+                else if (pilotTakeoverState.confirm_submit && pilotTakeoverState.confirm_submit.ok) nextId = "trade_result_watch";
+                else if (pilotTakeoverState.fill_preview && pilotTakeoverState.fill_preview.ok) nextId = "trade_submit_confirm";
+            }
+            pilotTakeoverState.next_action_id = nextId;
+            if (status) {
+                status.textContent = appOnly ? "APP内闭环" : (passed ? "可接管" : "待接管");
+                status.style.color = (passed || appOnly) ? "var(--g)" : "var(--y)";
+            }
+            setTxt("pilot-takeover-phase", pilotPhaseLabel(d && d.takeover_phase));
+            setTxt("pilot-next-action", pilotActionLabel(nextId));
+            setTxt("pilot-fill-ready", d ? (d.can_fill_form ? "已满足" : "未满足") : "--");
+            setTxt("pilot-confirm-ready", d ? (d.can_submit_confirm ? "已识别" : "未识别") : "--");
+            setTxt("pilot-gate-dry", d && d.risk_gate && d.risk_gate.dry_run_supported ? "支持" : "--");
+            setTxt("pilot-gate-confirm", d && d.risk_gate ? ((d.risk_gate.confirm_required_actions || []).map(pilotActionLabel).join(" / ") || "--") : "--");
+            setTxt("pilot-gate-human", d && d.risk_gate ? (d.risk_gate.human_action_required ? "需要人工参与" : "允许继续自动") : "--");
+            setTxt("pilot-supported-actions", d ? ((d.supported_actions || []).map(pilotActionLabel).join(" / ") || "--") : "--");
+            var notes = [], noteSeen = {};
+            function pushPilotNote(line) {
+                var txt = (line || "").trim();
+                if (!txt || noteSeen[txt]) return;
+                noteSeen[txt] = true;
+                notes.push(txt);
+            }
+            if (d) {
+                pushPilotNote(d.next_step || "");
+                (d.warnings || []).forEach(pushPilotNote);
+                if (d.precheck_passed && (d.missing_payload || []).length) pushPilotNote("待补参数：" + d.missing_payload.join(", "));
+                if (d.precheck_passed && (d.missing_fill_anchors || []).length) pushPilotNote("待补锚点：" + d.missing_fill_anchors.join(", "));
+            }
+            var note = $("pilot-precheck-note");
+            if (note) note.textContent = notes.join(" | ") || "点击“刷新接管预检”，系统会给出当前唯一下一步动作。";
+            renderPilotProbe(pilotTakeoverState);
+            renderPilotFill(pilotTakeoverState);
+            renderPilotConfirmWatch(pilotTakeoverState);
+            var nextBtn = $("pilot-next-btn");
+            if (nextBtn) {
+                nextBtn.className = pilotNextBtnClass(nextId);
+                nextBtn.textContent = nextId ? ("执行：" + pilotActionLabel(nextId)) : "执行唯一下一步";
+                nextBtn.disabled = !nextId;
+            }
+        }
+        function loadPilotTakeoverPrecheck() {
+            var note = $("pilot-precheck-note");
+            if (note) note.textContent = "正在刷新接管预检...";
+            api("/api/desktop/exec", function (d) {
+                renderPilotPrecheck(d);
+                if (!d) toast("接管预检失败：无响应");
+            }, "POST", JSON.stringify(pilotPrecheckPayload()));
+        }
+        function pilotNextActionPayload(cid) {
+            var payload = { id: cid, app_only: true, auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
+            var broker = pilotField("pilot-broker"), stock = pilotField("pilot-stock"), price = pilotNumField("pilot-price"), lots = pilotNumField("pilot-lots");
+            if (broker) payload.broker = broker;
+            if (stock) payload.stock_code = stock;
+            if (price !== null) payload.price = price;
+            if (lots !== null) payload.lots = lots;
+            if (cid === "trade_takeover_watch") {
+                payload.timeout_sec = 20;
+                payload.poll_interval = 2;
+            } else if (cid === "trade_panel_probe") {
+                payload.capture_evidence = true;
+            } else if (cid === "trade_form_fill") {
+                payload.dry_run = true;
+            } else if (cid === "trade_result_watch") {
+                payload.timeout = 15;
+            }
+            if (cid === "trade_submit_confirm" && $("pilot-risk-confirm") && $("pilot-risk-confirm").checked) {
+                payload.confirm = true;
+            }
+            return payload;
+        }
+        function runPilotNextAction() {
+            var state = pilotTakeoverState || {}, cid = state.next_action_id;
+            if (!cid) { toast("请先刷新接管预检"); return }
+            if (cid === "trade_submit_confirm" && !($("pilot-risk-confirm") && $("pilot-risk-confirm").checked)) {
+                toast("请先勾选高风险确认");
+                return;
+            }
+            var btn = $("pilot-next-btn");
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "执行中...";
+            }
+            api("/api/desktop/exec", function (d) {
+                if ($("p-log")) {
+                    $("p-log").textContent = "[执行 " + pilotActionLabel(cid) + "]\n" + (d ? (d.data || d.error || "") : "无响应") + "\n---\n" + $("p-log").textContent;
+                }
+                if (cid === "trade_panel_probe" && d && d.ok) {
+                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, d || {});
+                    renderPilotProbe(pilotTakeoverState);
+                }
+                if (cid === "trade_form_fill" && d) {
+                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { fill_preview: d });
+                    renderPilotFill(pilotTakeoverState);
+                }
+                if (cid === "trade_submit_confirm" && d) {
+                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { confirm_submit: d });
+                    renderPilotConfirmWatch(pilotTakeoverState);
+                    if (d.ok) { runPilotResultWatch(true); return; }
+                }
+                if (cid === "trade_result_watch" && d) {
+                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { watch_result: d });
+                    renderPilotConfirmWatch(pilotTakeoverState);
+                }
+                if (d && d.ok) {
+                    toast("已执行：" + pilotActionLabel(cid) + (cid === "trade_form_fill" ? "（预演）" : ""));
+                } else {
+                    toast("执行失败：" + (d ? (d.error || pilotActionLabel(cid)) : pilotActionLabel(cid)));
+                }
+                loadPilotTakeoverPrecheck();
+            }, "POST", JSON.stringify(pilotNextActionPayload(cid)));
+        }
+        function pilotStart() {
+            api("/api/pilot/start", function (d) {
+                if (d && d.ok) {
+                    toast("自主操盘已启动!"); loadPilot()
+                } else { toast("启动失败: " + (d ? d.error : "?")) }
+            })
+        }
+        function pilotStop() {
+            api("/api/pilot/stop", function (d) {
+                if (d && d.ok) {
+                    toast("自主操盘已停止"); loadPilot()
+                } else { toast("停止失败") }
+            })
+        }
+        function loadPilot() {
+            api("/api/pilot/status", function (d) {
+                if (!d) return
+                var running = d.running
+                $("pilot-st").textContent = running ? "运行中" : "已停止"
+                $("pilot-st").style.color = running ? "var(--g)" : "var(--t3)"
+                $("pilot-start-btn").style.display = running ? "none" : "block"
+                $("pilot-stop-btn").style.display = running ? "block" : "none"
+                $("pilot-badge").textContent = running ? "●" : "○"
+                $("pilot-badge").style.color = running ? "var(--g)" : "var(--t3)"
+                $("p-scan").textContent = d.scan_count
+                $("p-trade").textContent = d.trade_count
+                $("p-signal").textContent = d.signal_count
+                $("p-pnl").textContent = "¥" + (d.pnl || 0).toFixed(2)
+                $("p-mode").textContent = d.mode
+                $("p-sl").textContent = (d.stop_loss_pct || 0) + "%"
+                $("p-tp").textContent = (d.take_profit_pct || 0) + "%"
+                $("p-int").textContent = (d.scan_interval_sec || 60) + "s"
+                $("p-slast").textContent = d.last_scan || "--"
+                var tb = $("p-signals");
+                tb.innerHTML = "";
+                (d.watchlist || []).forEach(function (wl) {
+                    tb.innerHTML += "<tr><td>" + wl[0] + "</td><td>" + wl[1] + "</td><td>--</td><td>--</td><td>等待</td></tr>"
+                })
+                $("p-log").textContent = (d.logs || []).slice(-30).join("\n") || "就绪"
+                api("/api/pilot/signals", function (sd) {
+                    if (!sd || !sd.signals) return
+                    tb.innerHTML = "";
+                    sd.signals.forEach(function (s) {
+                        tb.innerHTML += "<tr><td>" + s.code + "</td><td>" + s.name + "</td><td>¥" + s.price + "</td><td class='" + (s.change_pct >= 0 ? "g" : "r") + "'>" + (s.change_pct >= 0 ? "+" : "") + s.change_pct + "%</td><td><span style='color:" + (s.signal === "BUY" ? "var(--g)" : s.signal === "SELL" ? "var(--r)" : "var(--t3)") + "'>" + s.signal + "</span></td></tr>"
+                    })
+                })
+                loadPilotTakeoverPrecheck();
+            })
+        }
+
+        setStoredToken(getStoredToken());
+        updateAuthUI();
+        loadProfile(true);
+        refresh(); setInterval(refresh, 5000)
+    </script>
+</body>
+
+</html>

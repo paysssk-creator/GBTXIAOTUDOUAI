@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GBT v2.0 — 自主操盘 AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#0a0e17;color:#e0e6ed;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+.header{background:#111827;padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1e293b;flex-shrink:0}
+.header .logo{width:30px;height:30px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:#fff}
+.header h2{font-size:15px;font-weight:600}
+.header .st{font-size:10px;padding:2px 8px;border-radius:10px;margin-left:auto}
+.header .st.on{background:#064e3b;color:#34d399}
+.header .st.off{background:#451a03;color:#fbbf24}
+.header .btns{display:flex;gap:6px;margin-left:8px}
+.header .btns button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s}
+.header .btns button:hover{background:#2563eb;color:#fff;border-color:#2563eb}
+
+/* Panels */
+.panel{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:center}
+.panel.show{display:flex}
+.panel .box{background:#1a1f2e;border:1px solid #334155;border-radius:12px;padding:20px;width:90%;max-width:420px}
+.panel h3{font-size:15px;margin-bottom:14px;color:#e0e6ed}
+.panel label{font-size:11px;color:#64748b;display:block;margin-bottom:4px}
+.panel select,.panel input{width:100%;background:#111827;border:1px solid #334155;color:#e0e6ed;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:12px;outline:none}
+.panel select:focus,.panel input:focus{border-color:#2563eb}
+.panel .row{display:flex;gap:8px}
+.panel .row button{flex:1;padding:8px;border-radius:6px;font-size:13px;cursor:pointer;border:none;font-weight:600}
+.panel .row .save{background:#2563eb;color:#fff}
+.panel .row .save:hover{background:#1d4ed8}
+.panel .row .cancel{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+.panel .code-hint{font-size:10px;color:#64748b;margin:8px 0;line-height:1.4}
+
+/* Chat area */
+.chat{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5;word-break:break-word;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;background:#2563eb;color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:#1e293b;color:#cbd5e1;border-bottom-left-radius:4px;white-space:pre-wrap;font-size:12px}
+.msg.bot .cap{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.msg.system{align-self:center;background:transparent;color:#475569;font-size:10px;text-align:center;max-width:95%}
+.msg .price{color:#34d399;font-weight:600}
+.msg .red{color:#ef4444}
+
+/* Quick actions */
+.quick{display:flex;flex-wrap:wrap;gap:5px;padding:6px 12px;border-top:1px solid #1e293b;flex-shrink:0}
+.quick button{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:5px 10px;border-radius:14px;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.quick button:hover{background:#2563eb;border-color:#2563eb;color:#fff}
+
+/* Input area */
+.input-area{display:flex;gap:6px;padding:8px 12px 14px;border-top:1px solid #1e293b;flex-shrink:0}
+.input-area input{flex:1;background:#1e293b;border:1px solid #334155;color:#e0e6ed;padding:8px 14px;border-radius:8px;font-size:13px;outline:none}
+.input-area input:focus{border-color:#2563eb}
+.input-area button{background:#2563eb;border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.input-area button:hover{background:#1d4ed8}
+.input-area button:disabled{opacity:.5}
+
+.mode-bar{display:flex;gap:3px;padding:4px 12px 0;flex-shrink:0}
+.mode-bar span{font-size:9px;color:#475569;padding:2px 6px;border-radius:4px;cursor:pointer}
+.mode-bar span.active{background:#2563eb;color:#fff}
+
+.toast{position:fixed;top:12px;right:12px;background:#064e3b;color:#34d399;padding:8px 16px;border-radius:8px;font-size:12px;z-index:200;animation:fadeIn .3s;display:none}
+.code-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.code-grid .code-item{background:#111827;border:1px solid #334155;border-radius:6px;padding:6px 8px;font-size:10px;color:#94a3b8;text-align:center;cursor:pointer;transition:all .15s}
+.code-grid .code-item:hover{background:#1e293b;border-color:#2563eb;color:#fff}
+.code-grid .code-item .name{font-size:11px;color:#e0e6ed;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">G</div>
+  <h2>GBT v2.0 自主操盘</h2>
+  <span class="st" id="llmStatus">未配置</span>
+  <div class="btns">
+    <button onclick="openPanel('llmPanel')">连接</button>
+  </div>
+</div>
+
+<div class="mode-bar">
+  <span class="active" data-mode="quick">快速</span>
+  <span data-mode="deep">深度</span>
+  <span data-mode="chat">对话</span>
+</div>
+
+<div class="quick" id="quickActions">
+  <button onclick="send('看看今天大盘行情怎么样')">大盘</button>
+  <button onclick="send('查一下600519的状况')">茅台</button>
+  <button onclick="send('我的自选股有哪些')">自选</button>
+  <button onclick="send('我的账户还有多少钱')">账户</button>
+  <button onclick="send('我想操盘')">操盘</button>
+  <button onclick="send('帮我分析600036值得买吗')">AI分析</button>
+  <button onclick="send('给我截个图看看')">截图</button>
+  <button onclick="send('你现在能干什么')">状态</button>
+</div>
+
+<div class="chat" id="chat">
+  <div class="msg system">GBT v2.0 自主操盘 AI</div>
+  <div class="msg system">输入指令或点击上方按钮开始</div>
+</div>
+
+<div class="input-area">
+  <input id="input" placeholder="输入指令，如：查一下600519的状况..." autofocus onkeydown="if(event.key==='Enter')send()">
+  <button id="sendBtn" onclick="send()">发送</button>
+</div>
+
+<!-- LLM 配置面板 -->
+<div class="panel" id="llmPanel">
+  <div class="box">
+    <h3>连接大模型</h3>
+    <label>模型提供商</label>
+    <select id="llmProvider">
+      <option value="zhipu">智谱 AI (GLM-4)</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="openai">OpenAI</option>
+      <option value="qwen">通义千问</option>
+      <option value="hunyuan">腾讯混元</option>
+    </select>
+    <label>API Key</label>
+    <input id="llmKey" type="password" placeholder="输入你的 API Key...">
+    <label>模型 (可选)</label>
+    <input id="llmModel" placeholder="默认模型，留空自动选择">
+    <div class="row">
+      <button class="cancel" onclick="closePanel('llmPanel')">取消</button>
+      <button class="save" onclick="saveLLM()">保存并连接</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let mode = 'quick';
+document.querySelectorAll('.mode-bar span').forEach(el=>{
+  el.onclick=()=>{document.querySelectorAll('.mode-bar span').forEach(e=>e.classList.remove('active'));el.classList.add('active');mode=el.dataset.mode}
+});
+
+function openPanel(id){document.getElementById(id).classList.add('show')}
+function closePanel(id){document.getElementById(id).classList.remove('show')}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none'},2500)}
+
+function addMsg(role,text,cap){
+  var d=document.createElement('div');
+  d.className='msg '+role;
+  if(cap&&role==='bot') d.innerHTML='<div class="cap">'+cap+'</div>'+text;
+  else d.innerHTML=text;
+  document.getElementById('chat').appendChild(d);
+  document.getElementById('chat').scrollTop=document.getElementById('chat').scrollHeight;
+  return d;
+}
+
+function send(text){
+  var input=document.getElementById('input');
+  var t=text||input.value.trim();
+  if(!t)return;
+  if(!text)input.value='';
+  input.focus();
+  
+  addMsg('user',t);
+  var load=addMsg('bot','⏳ 思考中...');
+  var btn=document.getElementById('sendBtn');
+  btn.disabled=true;
+  
+  fetch('/api/reason',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t,mode:mode})})
+  .then(r=>r.json())
+  .then(d=>{
+    load.remove();
+    var output=(d.conclusion||d.output||d.error||'无结果').replace(/\n/g,'<br>');
+    addMsg('bot',output,d.capability||'');
+  })
+  .catch(e=>{load.remove();addMsg('bot','连接失败: '+e.message)})
+  .finally(function(){btn.disabled=false});
+}
+
+// ── LLM 配置 ──
+function saveLLM(){
+  var p=document.getElementById('llmProvider').value;
+  var k=document.getElementById('llmKey').value.trim();
+  var m=document.getElementById('llmModel').value.trim();
+  if(!k){toast('请先输入 API Key');return}
+  
+  fetch('/api/config/llm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:p,api_key:k,model:m})})
+  .then(r=>r.json())
+  .then(d=>{
+    closePanel('llmPanel');
+    toast(d.message||'已连接');
+    document.getElementById('llmStatus').textContent=p;
+    document.getElementById('llmStatus').className='st on';
+  })
+  .catch(function(e){toast('保存失败: '+e.message)});
+}
+
+// ── 启动时加载状态 ──
+fetch('/api/config/llm').then(r=>r.json()).then(d=>{
+  var s=document.getElementById('llmStatus');
+  if(d.current!=='Not configured'){s.textContent='LLM';s.className='st on'}
+  else{s.textContent='未配置';s.className='st off'}
+}).catch(function(){});
+</script>
+</body>
+</html>

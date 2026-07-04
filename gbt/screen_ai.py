@@ -229,6 +229,497 @@ class ScreenOCR:
             "ocr_result": result
         }
 
+    @staticmethod
+    def _center_of(word):
+        return {
+            "x": int(word["x"] + word["w"] / 2),
+            "y": int(word["y"] + word["h"] / 2),
+        }
+
+    @staticmethod
+    def _input_anchor_from_label(word):
+        # 多数券商交易软件在标签右侧放输入框，做一个保守偏移估计
+        return {
+            "x": int(word["x"] + max(word["w"] + 90, 120)),
+            "y": int(word["y"] + max(word["h"] / 2, 12)),
+        }
+
+    @staticmethod
+    def _sanitize_line(text):
+        text = re.sub(r'\s+', ' ', str(text or '')).strip()
+        return text[:80]
+
+    @staticmethod
+    def _code_hits(text):
+        hits = []
+        for item in re.findall(r'(?<!\d)(?:60\d{4}|68\d{4}|30\d{4}|00\d{4})(?!\d)', text or ""):
+            if item not in hits:
+                hits.append(item)
+            if len(hits) >= 8:
+                break
+        return hits
+
+    @staticmethod
+    def _extract_money_lines(lines):
+        out = []
+        for line in lines or []:
+            if re.search(r'(可用|资产|盈亏|市值|成本|成交|委托)', line) and re.search(r'[\d,]+(?:\.\d+)?', line):
+                clean = ScreenOCR._sanitize_line(line)
+                if clean and clean not in out:
+                    out.append(clean)
+            if len(out) >= 6:
+                break
+        return out
+
+    @staticmethod
+    def _panel_field_keywords(panel):
+        if panel == "entrust":
+            return [
+                "证券代码", "股票代码", "代码", "证券名称", "名称", "委托价格", "委托价",
+                "价格", "委托数量", "数量", "股数", "状态", "买入", "卖出", "撤单",
+                "申报", "合同编号", "成交数量",
+            ]
+        return [
+            "证券代码", "股票代码", "代码", "证券名称", "名称", "持仓", "持股",
+            "股份余额", "股票余额", "可用股份", "可卖数量", "可用余额", "成本价",
+            "市价", "最新价", "市值", "参考市值", "参考盈亏", "盈亏",
+        ]
+
+    @classmethod
+    def _is_panel_header(cls, panel, text):
+        clean = cls._sanitize_line(text)
+        if not clean:
+            return False
+        keyword_hits = sum(1 for word in cls._panel_field_keywords(panel) if word in clean)
+        number_hits = cls._number_hits(clean)
+        if cls._code_hits(clean):
+            return False
+        if keyword_hits >= 3:
+            return True
+        if keyword_hits >= 2 and len(number_hits) <= 1 and not cls._detect_action(clean) and not cls._detect_status(clean):
+            return True
+        return False
+
+    @classmethod
+    def _looks_like_panel_row(cls, panel, text):
+        clean = cls._sanitize_line(text)
+        if not clean or cls._is_panel_header(panel, clean):
+            return False
+        code_hits = cls._code_hits(clean)
+        number_hits = cls._number_hits(clean)
+        if panel == "entrust":
+            if code_hits and (len(number_hits) >= 2 or cls._detect_action(clean) or cls._detect_status(clean)):
+                return True
+            if len(number_hits) >= 3 and (cls._detect_action(clean) or cls._detect_status(clean)):
+                return True
+            return False
+        position_keywords = ("持仓", "股份", "余额", "可卖", "可用", "市值", "盈亏", "成本")
+        if code_hits and len(number_hits) >= 2:
+            return True
+        if len(number_hits) >= 4 and any(word in clean for word in position_keywords):
+            return True
+        return False
+
+    @classmethod
+    def _group_words_into_rows(cls, words, bounds=None):
+        filtered = []
+        bounds = bounds or {}
+        left = int(bounds.get("x", 0) or 0)
+        top = int(bounds.get("y", 0) or 0)
+        right = left + int(bounds.get("w", 0) or 0)
+        bottom = top + int(bounds.get("h", 0) or 0)
+        for word in words or []:
+            text = str(word.get("text", "")).strip()
+            if not text:
+                continue
+            cx = int(word.get("x", 0) + word.get("w", 0) / 2)
+            cy = int(word.get("y", 0) + word.get("h", 0) / 2)
+            if bounds:
+                if cx < left or cx > right or cy < top or cy > bottom:
+                    continue
+            filtered.append({
+                "text": text,
+                "x": int(word.get("x", 0) or 0),
+                "h": int(word.get("h", 0) or 0),
+                "cy": cy,
+            })
+        filtered.sort(key=lambda item: (item["cy"], item["x"]))
+        rows = []
+        for word in filtered:
+            if not rows:
+                rows.append({"cy": word["cy"], "h": max(10, word["h"]), "words": [word]})
+                continue
+            current = rows[-1]
+            tolerance = max(12, int(max(current["h"], word["h"]) * 0.7))
+            if abs(word["cy"] - current["cy"]) <= tolerance:
+                current["words"].append(word)
+                count = len(current["words"])
+                current["cy"] = int(((current["cy"] * (count - 1)) + word["cy"]) / count)
+                current["h"] = max(current["h"], word["h"])
+            else:
+                rows.append({"cy": word["cy"], "h": max(10, word["h"]), "words": [word]})
+        lines = []
+        for row in rows:
+            text = " ".join(item["text"] for item in sorted(row["words"], key=lambda item: item["x"]))
+            clean = cls._sanitize_line(text)
+            if clean and clean not in lines:
+                lines.append(clean)
+        return lines
+
+    @classmethod
+    def _panel_candidate_lines(cls, panel, lines, words, bounds=None):
+        candidates = []
+        for source in (cls._group_words_into_rows(words, bounds=bounds), lines or []):
+            for line in source:
+                clean = cls._sanitize_line(line)
+                if not clean or clean in candidates:
+                    continue
+                if cls._is_panel_header(panel, clean):
+                    candidates.append(clean)
+                    continue
+                if cls._looks_like_panel_row(panel, clean) or any(word in clean for word in cls._panel_field_keywords(panel)):
+                    candidates.append(clean)
+                    continue
+                if bounds and re.search(r'[\d,]+(?:\.\d+)?', clean):
+                    candidates.append(clean)
+            if len(candidates) >= 20:
+                break
+        return candidates[:20]
+
+    @staticmethod
+    def _number_hits(text):
+        hits = []
+        for item in re.findall(r'(?<!\d)(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?!\d)', text or ""):
+            item = item.strip()
+            hits.append(item)
+            if len(hits) >= 12:
+                break
+        return hits
+
+    @staticmethod
+    def _detect_action(text):
+        text = str(text or "")
+        for word in ("买入", "卖出", "撤单", "申报"):
+            if word in text:
+                return word
+        return ""
+
+    @staticmethod
+    def _detect_status(text):
+        text = str(text or "")
+        for word in ("已成", "部成", "未成", "已报", "已撤", "废单", "撤单", "申报", "成功", "失败"):
+            if word in text:
+                return word
+        return ""
+
+    @classmethod
+    def _build_panel_rows(cls, panel, lines, stock_code=""):
+        rows = []
+        stock_code = str(stock_code or "").strip()
+        for line in lines or []:
+            clean = cls._sanitize_line(line)
+            if not clean:
+                continue
+            if cls._is_panel_header(panel, clean) or not cls._looks_like_panel_row(panel, clean):
+                continue
+            codes = cls._code_hits(clean)
+            numbers = cls._number_hits(clean)
+            row = {
+                "raw": clean,
+                "code": codes[0] if codes else "",
+                "action": cls._detect_action(clean) if panel == "entrust" else "",
+                "status": cls._detect_status(clean) if panel == "entrust" else "",
+                "price": "",
+                "quantity": "",
+                "amount": "",
+                "available": "",
+                "market_value": "",
+                "profit": "",
+            }
+            numeric_values = [n for n in numbers if n != row["code"]]
+            if panel == "entrust":
+                if numeric_values:
+                    row["price"] = numeric_values[0]
+                if len(numeric_values) >= 2:
+                    row["quantity"] = numeric_values[1]
+                if len(numeric_values) >= 3:
+                    row["amount"] = numeric_values[2]
+            else:
+                if numeric_values:
+                    row["quantity"] = numeric_values[0]
+                if len(numeric_values) >= 2:
+                    row["available"] = numeric_values[1]
+                if len(numeric_values) >= 3:
+                    row["price"] = numeric_values[2]
+                if len(numeric_values) >= 4:
+                    row["market_value"] = numeric_values[3]
+                if len(numeric_values) >= 5:
+                    row["profit"] = numeric_values[4]
+            if stock_code and row["code"] and stock_code not in row["code"] and stock_code[-4:] not in row["code"]:
+                if stock_code not in clean and stock_code[-4:] not in clean:
+                    continue
+            if not row["code"] and not any(row[k] for k in ("price", "quantity", "status", "available", "market_value", "profit")):
+                continue
+            rows.append(row)
+            if len(rows) >= 6:
+                break
+        return rows
+
+    @classmethod
+    def _panel_summary(cls, panel, rows):
+        if not rows:
+            return {}
+        summary = {"row_count": len(rows)}
+        codes = [row.get("code") for row in rows if row.get("code")]
+        if codes:
+            summary["codes"] = list(dict.fromkeys(codes))[:6]
+        statuses = [row.get("status") for row in rows if row.get("status")]
+        if statuses:
+            summary["statuses"] = list(dict.fromkeys(statuses))[:6]
+        actions = [row.get("action") for row in rows if row.get("action")]
+        if actions:
+            summary["actions"] = list(dict.fromkeys(actions))[:6]
+        if panel == "position":
+            profits = [row.get("profit") for row in rows if row.get("profit")]
+            if profits:
+                summary["profit_samples"] = profits[:4]
+        return summary
+
+    @staticmethod
+    def _broker_profile(broker=""):
+        try:
+            from gbt.stock_gate import get_broker_ui_profile
+            return get_broker_ui_profile(broker or "东方财富")
+        except Exception:
+            return {}
+
+    def _panel_bounds_from_keywords(self, words, keywords):
+        hits = []
+        for word in words or []:
+            text = str(word.get("text", "")).strip()
+            if any(key in text for key in keywords):
+                hits.append(word)
+        if not hits:
+            return None
+        left = min(int(item["x"]) for item in hits)
+        top = min(int(item["y"]) for item in hits)
+        right = max(int(item["x"] + item["w"]) for item in hits)
+        bottom = max(int(item["y"] + item["h"]) for item in hits)
+        return {
+            "x": max(0, left - 40),
+            "y": max(0, top - 30),
+            "w": max(120, right - left + 260),
+            "h": max(80, bottom - top + 220),
+        }
+
+    def detect_trade_panel_readback(self, panel="entrust", stock_code="", broker=""):
+        """检测委托/持仓区域回读摘要"""
+        result = self.read_text()
+        if not result.get("ok"):
+            return {
+                "ok": False,
+                "found": False,
+                "panel": panel,
+                "codes": [],
+                "matched_lines": [],
+                "metrics": [],
+                "error": result.get("error", "OCR失败"),
+            }
+
+        panel = (panel or "entrust").strip().lower()
+        if panel not in {"entrust", "position"}:
+            panel = "entrust"
+        panel_keywords = {
+            "entrust": ["委托", "今日委托", "当前委托", "当日委托", "委托查询", "申报", "撤单"],
+            "position": ["持仓", "我的持仓", "持仓查询", "资金股份", "股票市值", "可用股份", "持股"],
+        }
+        profile = self._broker_profile(broker)
+        custom_panel_keywords = ((profile.get("panel_keywords") or {}).get(panel) or [])
+        if custom_panel_keywords:
+            panel_keywords[panel] = list(dict.fromkeys(list(custom_panel_keywords) + panel_keywords[panel]))
+        words = result.get("words", [])
+        lines = result.get("lines", [])
+        bounds = self._panel_bounds_from_keywords(words, panel_keywords[panel])
+        candidates = self._panel_candidate_lines(panel=panel, lines=lines, words=words, bounds=bounds)
+        selected_lines = []
+        for line in candidates:
+            if any(key in line for key in panel_keywords[panel]) or self._looks_like_panel_row(panel, line):
+                if line not in selected_lines:
+                    selected_lines.append(line)
+            if len(selected_lines) >= 8:
+                break
+        if not selected_lines:
+            selected_lines = [line for line in candidates if self._looks_like_panel_row(panel, line)][:8]
+
+        text = result.get("text", "")
+        codes = self._code_hits("\n".join(selected_lines) if selected_lines else text)
+        if stock_code:
+            stock_code = str(stock_code).strip()
+            focused = []
+            for line in selected_lines:
+                if stock_code in line or stock_code[-4:] in line:
+                    focused.append(line)
+            if focused:
+                selected_lines = focused + [line for line in selected_lines if line not in focused]
+        rows = self._build_panel_rows(panel=panel, lines=selected_lines[:8], stock_code=stock_code)
+        metrics = self._extract_money_lines(selected_lines or lines)
+        has_panel_keyword = any(key in text for key in panel_keywords[panel]) or any(
+            any(key in line for key in panel_keywords[panel]) for line in selected_lines
+        )
+        has_structured_rows = any(
+            sum(1 for key in ("code", "price", "quantity", "available", "status", "market_value", "profit", "amount") if row.get(key)) >= 2
+            for row in rows
+        )
+        credible = bool(bounds or has_panel_keyword or (has_structured_rows and len(selected_lines) >= 2) or (has_structured_rows and metrics))
+        rejected_noise = bool((selected_lines or rows or codes) and not credible)
+        if not credible:
+            codes = []
+            selected_lines = []
+            metrics = []
+            rows = []
+        return {
+            "ok": True,
+            "found": credible,
+            "panel": panel,
+            "broker": profile.get("name") or broker or None,
+            "bounds": bounds,
+            "codes": codes,
+            "matched_lines": selected_lines[:6],
+            "metrics": metrics,
+            "rows": rows,
+            "summary": self._panel_summary(panel, rows),
+            "rejected_noise": rejected_noise,
+        }
+
+    def detect_trade_form_anchors(self, action=None, broker=""):
+        """检测交易表单锚点
+
+        Returns:
+            dict: {
+                "ok": bool,
+                "found": bool,
+                "anchors": {...},
+                "keywords": {...},
+                "screen_text": str
+            }
+        }
+        """
+        result = self.read_text()
+        if not result.get("ok"):
+            return {
+                "ok": False,
+                "found": False,
+                "anchors": {},
+                "keywords": {},
+                "screen_text": "",
+                "error": result.get("error", "OCR失败"),
+            }
+
+        words = result.get("words", [])
+        anchor_keywords = {
+            "stock_code": ["证券代码", "股票代码", "代码", "证券"],
+            "price": ["委托价格", "买入价格", "卖出价格", "价格", "委托价"],
+            "lots": ["委托数量", "买入数量", "卖出数量", "数量", "股数"],
+            "buy_btn": ["买入", "立即买入"],
+            "sell_btn": ["卖出", "立即卖出"],
+            "confirm_btn": ["确认", "确定", "提交", "下单", "委托"],
+        }
+        profile = self._broker_profile(broker)
+        custom_anchor_keywords = profile.get("anchor_keywords") or {}
+        for key, patterns in custom_anchor_keywords.items():
+            merged = list(dict.fromkeys(list(patterns or []) + list(anchor_keywords.get(key, []))))
+            anchor_keywords[key] = merged
+        if action == "buy":
+            anchor_keywords["action_btn"] = ["买入", "立即买入"]
+        elif action == "sell":
+            anchor_keywords["action_btn"] = ["卖出", "立即卖出"]
+
+        hits = {key: [] for key in anchor_keywords}
+        for word in words:
+            text = str(word.get("text", "")).strip()
+            if not text:
+                continue
+            for key, patterns in anchor_keywords.items():
+                if any(pattern in text for pattern in patterns):
+                    hits[key].append(word)
+
+        anchors = {}
+        if hits["stock_code"]:
+            anchors["stock_code"] = self._input_anchor_from_label(hits["stock_code"][0])
+        if hits["price"]:
+            anchors["price"] = self._input_anchor_from_label(hits["price"][0])
+        if hits["lots"]:
+            anchors["lots"] = self._input_anchor_from_label(hits["lots"][0])
+        if hits["buy_btn"]:
+            anchors["buy_btn"] = self._center_of(hits["buy_btn"][0])
+        if hits["sell_btn"]:
+            anchors["sell_btn"] = self._center_of(hits["sell_btn"][0])
+        if hits["confirm_btn"]:
+            anchors["confirm_btn"] = self._center_of(hits["confirm_btn"][0])
+        if hits.get("action_btn"):
+            anchors["action_btn"] = self._center_of(hits["action_btn"][0])
+
+        found = len(anchors) > 0
+        return {
+            "ok": True,
+            "found": found,
+            "broker": profile.get("name") or broker or None,
+            "anchors": anchors,
+            "keywords": {key: [item.get("text", "") for item in values[:5]] for key, values in hits.items()},
+            "screen_text": (result.get("text") or "")[:500],
+            "ocr_result": result,
+        }
+
+    def detect_trade_confirm_dialog(self, action=None, stock_code="", broker=""):
+        """检测交易确认弹窗与提交按钮"""
+        result = self.read_text()
+        if not result.get("ok"):
+            return {
+                "ok": False,
+                "found": False,
+                "confirm_btn": None,
+                "keywords": [],
+                "error": result.get("error", "OCR失败"),
+            }
+
+        action = (action or "").strip().lower()
+        action_words = []
+        if action == "buy":
+            action_words = ["买入", "立即买入"]
+        elif action == "sell":
+            action_words = ["卖出", "立即卖出"]
+
+        dialog_keywords = [
+            "委托确认", "请确认", "确认下单", "下单确认",
+            "确认委托", "买入确认", "卖出确认", "委托提交",
+        ] + action_words
+        confirm_keywords = ["确认", "确定", "提交", "委托", "下单"]
+        profile = self._broker_profile(broker)
+        custom_confirm = ((profile.get("anchor_keywords") or {}).get("confirm_btn") or [])
+        if custom_confirm:
+            confirm_keywords = list(dict.fromkeys(list(custom_confirm) + confirm_keywords))
+        if stock_code:
+            dialog_keywords.append(str(stock_code)[-4:])
+
+        found_dialog = []
+        confirm_btn = None
+        for word in result.get("words", []):
+            text = str(word.get("text", "")).strip()
+            if not text:
+                continue
+            if any(key in text for key in dialog_keywords):
+                found_dialog.append(text)
+            if confirm_btn is None and any(key in text for key in confirm_keywords):
+                confirm_btn = self._center_of(word)
+
+        return {
+            "ok": True,
+            "found": bool(found_dialog or confirm_btn),
+            "broker": profile.get("name") or broker or None,
+            "confirm_btn": confirm_btn,
+            "keywords": found_dialog[:8],
+        }
+
 
 class Voice:
     """Windows TTS 语音输出 + 交互确认"""
@@ -380,7 +871,7 @@ class AutoPipeline:
             "message": f"{platform_name} 登录已确认，GBT 自主操盘就绪"
         }
     
-    def monitor_trade_screen(self, code, action, expected_text=None, timeout=60):
+    def monitor_trade_screen(self, code, action, expected_text=None, timeout=60, broker=""):
         """监视交易屏幕 — OCR 验证交易执行结果
         
         在交易提交后，定期 OCR 扫描屏幕，检测：
@@ -405,6 +896,12 @@ class AutoPipeline:
             "已成交", "委托失败", "废单", "撤单",
             action_cn, code[-4:]  # 后4位代码
         ]
+        profile = self._broker_profile(broker)
+        panel_keywords = profile.get("panel_keywords") or {}
+        for key in ("entrust", "position"):
+            for kw in (panel_keywords.get(key) or []):
+                if kw not in keywords:
+                    keywords.append(kw)
         if expected_text:
             keywords.insert(0, expected_text)
         
@@ -423,22 +920,30 @@ class AutoPipeline:
             if found:
                 elapsed = round(time.time() - start, 1)
                 L.info(f"👁 屏幕检测到: {found} (用时{elapsed}s)")
+                entrust = self.detect_trade_panel_readback(panel="entrust", stock_code=code, broker=broker)
+                position = self.detect_trade_panel_readback(panel="position", stock_code=code, broker=broker)
                 return {
                     "ok": True,
                     "found": True,
                     "keywords": found,
                     "screen_text": screen_text[:300],
-                    "elapsed": elapsed
+                    "elapsed": elapsed,
+                    "entrust_state": entrust,
+                    "position_state": position,
                 }
             
             time.sleep(check_interval)
         
+        entrust = self.detect_trade_panel_readback(panel="entrust", stock_code=code, broker=broker)
+        position = self.detect_trade_panel_readback(panel="position", stock_code=code, broker=broker)
         return {
             "ok": True,
             "found": False,
             "screen_text": "",
             "elapsed": round(time.time() - start, 1),
-            "message": f"{timeout}s内未检测到交易确认"
+            "message": f"{timeout}s内未检测到交易确认",
+            "entrust_state": entrust,
+            "position_state": position,
         }
     
     def voice_trade_announce(self, code, name, action, price, shares):

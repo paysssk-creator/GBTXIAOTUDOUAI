@@ -1,9 +1,12 @@
 """
 test_router.py — 智能路由器全能力测试
 每次修改能力后运行此测试确保无回归
+开发者: 自由的风
 """
-import sys, io, json, urllib.request, time
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+import sys, json, urllib.request, time
+# 注意：不要劫持 sys.stdout，否则会破坏 pytest 9 的 capture 系统
+import os
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 API = "http://localhost:8765/api"
 TIMEOUT = 25
@@ -31,7 +34,7 @@ def run_tests():
     try:
         urllib.request.urlopen(f"{API}/status", timeout=5)
     except:
-        print("ERROR: GBT not running on port 8877")
+        print("ERROR: GBT not running on port 8765")
         return 1
     
     for name, text, expected_cap, must_contain in TEST_CASES:

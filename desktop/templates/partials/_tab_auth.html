@@ -1,0 +1,60 @@
+                <div class="tab-panel" id="panel-auth">
+                    <div class="grid2">
+                        <div class="card">
+                            <div class="card-header">当前会话<span class="st" id="auth-state">访客模式</span></div>
+                            <div class="card-body">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+                                    <div>当前用户<span id="auth-user" style="float:right;font-weight:600">未登录</span></div>
+                                    <div>邮箱<span id="auth-email" style="float:right;font-weight:600">--</span></div>
+                                    <div>授权源<span id="auth-provider" style="float:right;font-weight:600">--</span></div>
+                                    <div>套餐<span id="auth-plan" style="float:right;font-weight:600">free</span></div>
+                                    <div>剩余令牌<span id="auth-remaining" style="float:right;font-weight:600">--</span>
+                                    </div>
+                                    <div>已用令牌<span id="auth-used" style="float:right;font-weight:600">--</span>
+                                    </div>
+                                    <div>最近登录<span id="auth-last-login" style="float:right;font-weight:600">--</span>
+                                    </div>
+                                </div>
+                                <div id="auth-tip"
+                                    style="margin-top:12px;padding:10px;border:1px solid var(--b);border-radius:8px;background:var(--bg2);font-size:11px;color:var(--t2)">
+                                    未登录时，AI对话与充值默认作用于访客余额 `_default`。
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:12px">
+                                    <button onclick="loadAuth()"
+                                        style="flex:1;padding:10px;background:var(--a);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">刷新状态</button>
+                                    <button onclick="logoutUser()" id="logout-btn"
+                                        style="flex:1;padding:10px;background:var(--r);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">退出登录</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">授权登录矩阵<span class="st">按 JustAuth 风格统一入口</span></div>
+                            <div class="card-body">
+                                <div id="oauth-provider-note"
+                                    style="margin-bottom:12px;padding:10px;border:1px solid var(--b);border-radius:8px;background:var(--bg2);font-size:11px;color:var(--t2)">
+                                    正在检测第三方授权配置...
+                                </div>
+                                <div id="oauth-provider-grid"
+                                    style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"></div>
+                                <div style="height:1px;background:var(--b);margin:14px 0"></div>
+                                <div style="font-size:12px;font-weight:700;margin-bottom:8px">兼容模式：用户名密码登录</div>
+                                <input id="login-username" placeholder="用户名"
+                                    style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px;font-size:12px;margin-bottom:8px">
+                                <input id="login-password" type="password" placeholder="密码"
+                                    style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px;font-size:12px;margin-bottom:10px">
+                                <button onclick="loginUser()"
+                                    style="width:100%;padding:10px;background:var(--g);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">立即登录</button>
+                                <div style="height:1px;background:var(--b);margin:14px 0"></div>
+                                <div style="font-size:12px;font-weight:700;margin-bottom:8px">兼容模式：创建本地账号</div>
+                                <input id="register-username" placeholder="用户名，至少3位"
+                                    style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px;font-size:12px;margin-bottom:8px">
+                                <input id="register-email" placeholder="邮箱，可选"
+                                    style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px;font-size:12px;margin-bottom:8px">
+                                <input id="register-password" type="password" placeholder="密码，至少6位"
+                                    style="width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px;font-size:12px;margin-bottom:10px">
+                                <button onclick="registerUser()"
+                                    style="width:100%;padding:10px;background:#06b6d4;color:#001018;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">创建账号</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>

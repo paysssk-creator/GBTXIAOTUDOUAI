@@ -1,0 +1,35 @@
+{
+  "product": "GBT Pro",
+  "version": "v1.1.18",
+  "release_tag": "v1.1.18-desktop-runtime",
+  "developer": "自由的风",
+  "build_ts": 1783155149,
+  "artifacts": {
+    "GBT_Pro_v1.1.18_portable_download.zip": {
+      "path": "release\\GBT_Pro_v1.1.18_portable_download.zip",
+      "size_bytes": 146181879,
+      "sha256": "969ee3c21c91fc481187dc2629fa866134efe229ec5ac10ee9a1b62fa255a1e5",
+      "package_type": "portable-runtime"
+    }
+  },
+  "security_checklist": {
+    "env_excluded": true,
+    "audit_excluded": true,
+    "secret_needle_check": "PASS",
+    "executable_format": "PyInstaller dir runtime",
+    "uac_manifest": "asInvoker (用户右键提权)",
+    "dpi_awareness": "PerMonitorV2"
+  },
+  "install_instructions": [
+    "1. 下载 GBT_Pro_v1.1.18_portable_download.zip 并解压到任意本地目录",
+    "2. 双击 Launch GBT Pro.bat 启动桌面端",
+    "3. 首次遇到 Windows 安全提示时选择允许运行",
+    "4. 默认端口 8765，应用数据与日志保留在运行目录",
+    "5. 卸载：删除解压目录即可"
+  ],
+  "atomic_replace_compliance": {
+    "env_consistency": "源码模板、runtime 模板、portable 包模板已同步到同一逻辑版本",
+    "data_consistency": "便携包仅在运行目录写入数据与日志，不覆盖旧版本目录",
+    "validation_observability": "portable 包已执行 /api/status、/api/panel/status 与 APP 内闭环 UAT"
+  }
+}

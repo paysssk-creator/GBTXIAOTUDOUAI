@@ -1,3 +1,5 @@
+
+# 开发者: 自由的风
 import sys,os,ctypes,threading,time
 if getattr(sys,'frozen',False):
     d=os.path.dirname(sys.executable)

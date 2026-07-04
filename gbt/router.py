@@ -10,7 +10,7 @@ L = logging.getLogger("GBT.Router")
 class Capability:
     """能力描述"""
     def __init__(self, name, category, description, keywords=None,
-                 handler=None, priority=5, requires=None):
+                 handler=None, priority=5, requires=None, pattern=None):
         self.name = name
         self.category = category  # desktop | trading | query | system | reasoning | notification
         self.description = description
@@ -18,9 +18,12 @@ class Capability:
         self.handler = handler      # callable that executes the capability
         self.priority = priority    # 1-10, higher = more eager to use
         self.requires = requires or []  # ["trader","account",...]
+        self.pattern = pattern      # optional regex for matching
 
     def matches(self, text):
         """Check if this capability matches the user intent"""
+        if self.pattern and re.search(self.pattern, text):
+            return True
         t = text.lower()
         return any(kw in t for kw in self.keywords)
 
@@ -105,10 +108,19 @@ class SmartRouter:
 
         matches = []
         for cap in self.capabilities.values():
+            match_type = "none"
             if cap.matches(text):
-                # 越长的关键词匹配权重越高
-                best_kw = max((kw for kw in cap.keywords if kw in text.lower()), key=len, default="")
-                score = len(best_kw) / max(len(text), 1) * cap.priority
+                # 检测匹配方式: pattern 还是 keyword
+                if cap.pattern and re.search(cap.pattern, text):
+                    match_type = "pattern"
+                t = text.lower()
+                best_kw = max((kw for kw in cap.keywords if kw in t), key=len, default="")
+                if best_kw:
+                    match_type = "keyword" if match_type == "none" else "both"
+                # 分数 = keyword长度加成 + priority基数
+                kw_bonus = len(best_kw) if best_kw else 0
+                pattern_bonus = 2 if match_type in ("pattern", "both") else 0
+                score = (kw_bonus + pattern_bonus) / max(len(text), 1) * cap.priority
                 matches.append((score, cap))
 
         if not matches:
@@ -162,6 +174,7 @@ class SmartRouter:
                     "classification": classification,
                     "action": "missing_dependency",
                     "missing": req,
+                    "capability": cap.name,
                 }
 
         # 执行能力

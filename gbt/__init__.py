@@ -23,11 +23,12 @@ from .mirror import MirrorSpace, MirrorPipeline, RealCodeValidator, \
 from .mcp import UniversalMCP, MCPServer, MCPResult, MCPStatus, get_mcp, call_mcp
 from .reasoner import DeepReasoner, ReasonMode, ReasonResult, ReasonNode
 from .winctl import WindowsController, WinResult, WinFeature, get_winctl
+from .release_meta import APP_VERSION
 
 # ── 共享配置常量 ──
 DEFAULT_PING_TARGET = "8.8.8.8"  # 网络连通性检测的缺省目标
 
-__version__ = "1.5.0"
+__version__ = APP_VERSION
 __all__ = [
     "GBTLLM", "ToolRegistry", "Tool",
     "SimpleAgent", "AgentConfig",

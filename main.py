@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# 开发者: 自由的风
 """
 import sys, os
 if sys.platform == 'win32':

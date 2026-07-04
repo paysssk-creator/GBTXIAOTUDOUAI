@@ -1,0 +1,113 @@
+                <div class="tab-panel active" id="panel-dash">
+                    <div class="grid3" style="margin-bottom:16px">
+                        <div class="card">
+                            <div class="card-header">大模型消耗<span class="st">大模型</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="d-tokens">--</div>
+                                        <div class="lbl">总令牌数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-cost">--</div>
+                                        <div class="lbl">费用</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-calls">--</div>
+                                        <div class="lbl">调用次数</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-model">--</div>
+                                        <div class="lbl">当前模型</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">系统<span class="st" id="d-host">--</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="d-cpu">--</div>
+                                        <div class="lbl">处理器</div>
+                                        <div class="progress">
+                                            <div class="fill p-cpu" id="d-cpubar" style="width:0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-mem">--</div>
+                                        <div class="lbl">内存</div>
+                                        <div class="progress">
+                                            <div class="fill p-mem" id="d-membar" style="width:0"></div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-disk">--</div>
+                                        <div class="lbl">硬盘</div>
+                                        <div class="progress">
+                                            <div class="fill p-disk" id="d-diskbar" style="width:0"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">账户<span class="st">A股</span></div>
+                            <div class="card-body">
+                                <div class="stat-grid">
+                                    <div class="stat-box">
+                                        <div class="val" id="d-cash">--</div>
+                                        <div class="lbl">现金</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-equity">--</div>
+                                        <div class="lbl">净值</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-pnl">--</div>
+                                        <div class="lbl">盈亏</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="val" id="d-pos">--</div>
+                                        <div class="lbl">持仓</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid2">
+                        <div class="card">
+                            <div class="card-header">大模型动态</div>
+                            <div class="card-body">
+                                <table class="data">
+                                    <thead>
+                                        <tr>
+                                            <th>时间</th>
+                                            <th>当前模型</th>
+                                            <th>输入</th>
+                                            <th>输出</th>
+                                            <th>费用</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="d-llmhist"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">自选股<span class="st">A股</span></div>
+                            <div class="card-body">
+                                <table class="data">
+                                    <thead>
+                                        <tr>
+                                            <th>代码</th>
+                                            <th>名称</th>
+                                            <th>价格</th>
+                                            <th>涨跌幅</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="d-watch"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>

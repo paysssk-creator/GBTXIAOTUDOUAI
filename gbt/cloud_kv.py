@@ -59,14 +59,14 @@ class CloudKV:
             cur.execute(f"SELECT pid,key,free,note FROM {self.TABLE} ORDER BY ts DESC")
             rows = cur.fetchall(); cur.close()
             return {r[0]:{"key":r[1],"free":r[2],"note":r[3]} for r in rows}
-        except: return {}
+        except Exception: return {}
 
     def rm(self, pid):
         if not self._conn and not self.connect(): return False
         try:
             cur = self._conn.cursor(); cur.execute(f"DELETE FROM {self.TABLE} WHERE pid=%s",(pid,))
             cur.close(); return True
-        except: return False
+        except Exception: return False
 
     def status(self):
         return f"☁️ {self._node['name']}" if self._node else "未连接"
@@ -80,7 +80,7 @@ def sync_up():
     rows = local.conn.execute("SELECT pid,key,free,note FROM k").fetchall()
     for pid,enc,free,note in rows:
         try: cloud.put(pid, local._dec(enc), bool(free), note or "")
-        except: pass
+        except Exception: pass
     print("✅ 同步完成")
 
 def sync_down():

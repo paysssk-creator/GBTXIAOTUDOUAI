@@ -1,22 +1,40 @@
-# GBT Agent Framework v1.5.1 — 依赖
-# 核心
-openai>=1.0.0,<3.0.0
-python-dotenv>=1.0.0,<2.0.0
-requests>=2.31,<3.0.0
-ollama>=0.1.0,<1.0.0
-# 桌面/操控
-Pillow>=10.0,<12.0.0
-flask>=3.0,<4.0.0
-pyautogui>=0.9,<1.0.0
-pyttsx3>=2.90,<3.0.0
-SpeechRecognition>=3.10,<4.0.0
-pyperclip>=1.8,<2.0.0
-psutil>=5.9,<7.0.0
-# 可选增强
-# tesserocr>=2.6
-# easyocr>=1.7
-# opencv-python>=4.8
-# bleak>=0.21
-# screeninfo>=0.8
-# pycaw>=20230407
-# win10toast>=0.9
+# 开发者: 自由的风
+# GBT Pro 依赖锁 · 生产同构环境标准
+# 严格按 SOP v1.1 锁定运行时 + 库 + 系统包版本，避免"看起来一样其实不一样"
+# 配套 .dockerignore / Dockerfile / PyInstaller spec 共同保证密钥不打包
+
+# --- Web 框架 ---
+Flask==3.1.3
+Werkzeug>=3.0.0
+
+# --- 数据采集（A股行情 + akshare 备用源） ---
+akshare==1.18.64
+pandas==3.0.3
+requests==2.34.2
+
+# --- 加密（Futurapay 支付 + HMAC 验签） ---
+cryptography==49.0.0
+qrcode==8.2
+
+# --- 跨地区指纹伪装（L2 探测，跨地区自动调节） ---
+curl-cffi==0.15.0
+
+# --- 桌面 GUI（pywebview） ---
+pywebview==6.2.1
+
+# --- 环境变量（密钥不打包的第五道防线） ---
+python-dotenv>=1.0.0
+huggingface_hub>=0.35.0
+
+# --- 生产 WSGI（生产部署用 waittress，dev 用 Flask 自带） ---
+waitress>=3.0.0
+
+# --- 测试 ---
+pytest>=8.0.0
+pytest-timeout>=2.3.0
+
+# --- 可选：浏览器模拟（L3 探测，默认未装不阻塞） ---
+# playwright>=1.40.0    # 用户按需安装，pip install playwright && playwright install chromium
+
+# --- 打包（一键安装包依赖） ---
+pyinstaller>=6.10.0

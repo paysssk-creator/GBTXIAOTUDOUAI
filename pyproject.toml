@@ -13,33 +13,45 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "openai>=1.0",
-    "requests>=2.31",
-    "python-dotenv>=1.0",
-    "ollama>=0.4",
-    "Pillow>=10.0",
-    "pyautogui>=0.9",
-    "pyttsx3>=2.90",
-    "SpeechRecognition>=3.10",
-    "pyperclip>=1.8",
-    "psutil>=5.9",
+    # === synced with requirements.txt v1.6 ===
+    # Core
+    "openai>=1.0.0,<3.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "requests>=2.31,<3.0.0",
+    "flask>=3.0,<4.0.0",
+    "aiohttp>=3.9",
+    # Desktop / Controls
+    "psutil>=5.9,<7.0.0",
+    "pyautogui>=0.9,<1.0.0",
+    "pyperclip>=1.8,<2.0.0",
+    "keyboard>=0.13",
+    "Pillow>=10.0,<12.0.0",
+    # Voice / Audio
+    "edge-tts>=6.1",
+    "SpeechRecognition>=3.10,<5.0.0",
+    "pycaw>=20240210",
+    "pyttsx3>=2.90,<3.0.0",
+    # Bluetooth / BLE
+    "bleak>=0.21",
+    # COM Interop (Windows)
+    "comtypes>=1.4",
+    "pywin32>=306",
+    # Data / Analysis
+    "numpy>=1.26",
+    "pandas>=2.2",
+    # Web / Scraping
+    "lxml>=5.2",
+    "beautifulsoup4>=4.12",
 ]
 
 [project.optional-dependencies]
-full = [
-    "flask>=3.0",
-    "tesserocr>=2.6",
-    "easyocr>=1.7",
+ocr = [
     "opencv-python>=4.8",
-    "screeninfo>=0.8",
-    "pycaw>=20230407",
-    "bleak>=0.21",
-    "win10toast>=0.9",
+    "easyocr>=1.7",
+    "pytesseract>=0.3",
 ]
-desktop = [
-    "flask>=3.0",
-    "pywebview>=5.0",
-    "screeninfo>=0.8",
+browser = [
+    "playwright>=1.45",
 ]
 build = [
     "pyinstaller>=6.0",
@@ -57,3 +69,23 @@ gbt-desktop = "desktop.app:main"
 
 [tool.setuptools.packages.find]
 include = ["gbt*", "agents*", "tools*", "desktop*"]
+
+[tool.pyright]
+exclude = [
+    ".venv",
+    "venv",
+    "**/__pycache__",
+    "build",
+    "build_*",
+    "dist",
+    "dist_*",
+    "screenshots",
+]
+
+# === pytest config (T-003, disabled · pytest 9.1.1 + Python 3.14 在 Windows 上有 capture/unconfigure bug)
+# 开发者: 自由的风
+# [tool.pytest.ini_options]
+# testpaths = ["tests"]
+# python_files = ["test_*.py"]
+# python_functions = ["test_*"]
+# addopts = "-ra"

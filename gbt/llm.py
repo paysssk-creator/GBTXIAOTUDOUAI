@@ -3,11 +3,18 @@ llm.py — GBT全模型LLM抽象层
 基于 hello-agents 模式，支持13大模型 + 自动降级
 """
 
-import os, sys, time, socket
+import os, sys, time, socket, logging
 from typing import Optional, List, Dict, Any, Iterator
 from openai import OpenAI
 
 from .providers import PROVIDERS, AutoKeyConfig
+
+RETRY_MAX = 3
+RETRY_DELAY = 1.5
+RETRY_CODES = [429, 500, 502, 503, 504]
+RETRY_BACKOFF = 2
+
+L = logging.getLogger("gbt.llm")
 
 
 class GBTLLM:
@@ -62,7 +69,7 @@ class GBTLLM:
                 pid = ek.replace("_API_KEY","").lower()
                 val = db.get(pid)
                 if val: return val
-        except: pass
+        except Exception: pass
         for ek in cfg["env_keys"]:
             v = os.getenv(ek)
             if not v:
@@ -140,10 +147,9 @@ class GBTLLM:
             return False
 
     def invoke(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """非流式调用"""
+        """非流式调用 — 内置3次重试 + 指数退避"""
         t = kwargs.get("temperature", self.temperature)
         mt = kwargs.get("max_tokens", self.max_tokens)
-        print(f"🧠 [{self.provider_name}] {self.model}...")
         start = time.time()
         prompt_text = ""
         try:
@@ -154,22 +160,42 @@ class GBTLLM:
             )
         except Exception:
             prompt_text = "<multimodal message>"
-        try:
-            resp = self._client.chat.completions.create(
-                model=self.model, messages=messages,
-                temperature=t, max_tokens=mt, stream=False)
-            content = (resp.choices[0].message.content or "") if resp.choices else ""
-            latency = time.time() - start
-            print(f"✅ [{self.provider_name}] {latency:.1f}s {len(content)}chars")
+
+        last_error = None
+        for attempt in range(1, RETRY_MAX + 1):
             try:
-                from gbt.llm_metrics import record_llm_call
-                record_llm_call(self.provider, self.model, prompt_text, content, latency)
-            except Exception:
-                pass
-            return content
-        except Exception as e:
-            print(f"❌ [{self.provider_name}] 失败: {e}")
-            raise
+                L.info(f"[{self.provider_name}]{self.model} attempt {attempt}/{RETRY_MAX}")
+                resp = self._client.chat.completions.create(
+                    model=self.model, messages=messages,
+                    temperature=t, max_tokens=mt, stream=False)
+                content = (resp.choices[0].message.content or "") if resp.choices else ""
+                latency = time.time() - start
+                L.info(f"[{self.provider_name}] {latency:.1f}s {len(content)}chars")
+                try:
+                    from gbt.llm_metrics import record_llm_call
+                    record_llm_call(self.provider, self.model, prompt_text, content, latency)
+                except Exception:
+                    pass
+                return content
+            except Exception as e:
+                last_error = e
+                err_str = str(e)
+                # 判断是否可重试
+                retryable = any(
+                    str(code) in err_str for code in RETRY_CODES
+                ) or "timeout" in err_str.lower() or "connection" in err_str.lower()
+                
+                if attempt < RETRY_MAX and retryable:
+                    wait = RETRY_BACKOFF ** attempt
+                    L.warning(f"[{self.provider_name}] 重试 {attempt}/{RETRY_MAX}: {err_str[:80]} (等待{wait:.1f}s)")
+                    time.sleep(wait)
+                elif attempt >= RETRY_MAX:
+                    break
+                else:
+                    break  # 不可重试的错误直接抛出
+
+        L.error(f"[{self.provider_name}] 全部 {RETRY_MAX} 次重试失败: {last_error}")
+        raise last_error
 
     def stream_invoke(self, messages: List[Dict[str, str]], **kwargs) -> Iterator[str]:
         """流式调用"""

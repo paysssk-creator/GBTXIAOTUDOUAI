@@ -135,7 +135,7 @@ class KeyManagerWindow:
                 from gbt.keydb import KeyDB
                 url = KeyDB().FREE_TIER.get(pid, {}).get("url", "")
                 if url: webbrowser.open(url)
-            except: pass
+            except Exception: pass
 
         ttk.Button(btn_frame, text="✏ 添加密钥", command=self._add_key_dialog).pack(side="left", padx=3)
         ttk.Button(btn_frame, text="📋 复制选中", command=self._copy_selected).pack(side="left", padx=3)
@@ -157,7 +157,7 @@ class KeyManagerWindow:
         try:
             from gbt.keydb import KeyDB
             opts = [f"{p} - {i['name']}" for p,i in KeyDB().FREE_TIER.items()]
-        except: opts = ["zhipu - GLM"]
+        except Exception: opts = ["zhipu - GLM"]
         ttk.Combobox(d, textvariable=pv, values=opts, width=28, font=("Consolas",10)).pack(padx=15,pady=3)
         if opts: pv.set(opts[0])
         tk.Label(d, text="API Key:", bg="#1a1a2e", fg="#eee", font=("Arial",10)).pack(anchor="w", padx=15, pady=(10,2))

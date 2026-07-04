@@ -1,0 +1,62 @@
+# 开发者: 自由的风
+# GBT Pro · Docker 镜像构建排除清单 · 第三道密钥防线
+# 严格遵守"密钥不打包"铁律：绝不让 .env / .git / 审计日志 / 缓存进入镜像
+
+# ---- 密钥 & 配置文件（绝不能进镜像）----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+
+# ---- 版本控制 ----
+.git/
+.gitignore
+
+# ---- 审计与日志（含敏感访问记录）----
+data/audit/
+data/logs/
+*.log
+.dbg/
+
+# ---- 缓存与临时文件 ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- 构建产物 ----
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- 打包产物（一键安装包在 release/，不进镜像）----
+release/*.exe
+release/*.msi
+release/*.zip
+
+# ---- IDE 配置 ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# ---- 文档（避免污染镜像）----
+docs/
+*.md
+!README.md
+
+# ---- 测试覆盖与预览数据 ----
+.coverage
+htmlcov/
+.pytest_cache/
+data/preview/
+
+# ---- 镜像空间插件（含外部项目源码，不应混入主镜像）----
+gbt/mirror_space/jingxiangduoweidukongjian/

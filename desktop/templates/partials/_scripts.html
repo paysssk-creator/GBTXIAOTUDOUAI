@@ -1,0 +1,1095 @@
+<script>
+    var D = document, currentTab = "dash", authState = { token: "", profile: null, balance: null, oauthProviders: {}, oauthState: "", oauthPollTimer: 0 }, titles = { dash: "仪表盘", llm: "大模型中心", chat: "智能 对话", trade: "A股行情", account: "账户", pilot: "自主操盘", hacker: "黑客 49", desktop: "电脑操控", mcp: "MCP服务器", mirror: "镜像空间", auth: "登录认证", connect: "连接大模型", recharge: "充值激活" };
+    function $(id) { return D.getElementById(id) }
+    function qs(sel) { return D.querySelectorAll(sel) }
+    function api(url, cb, method, body) { var x = new XMLHttpRequest(), done = false; function finish(data, err) { if (done) return; done = true; cb(data, err) } var _sep = url.indexOf("?") >= 0 ? "&" : "?"; x.open(method || "GET", url + _sep + "_=" + Date.now(), true); if (body) x.setRequestHeader("Content-Type", "application/json"); if (authState.token) x.setRequestHeader("X-Auth-Token", authState.token); x.onreadystatechange = function () { if (x.readyState === 4) { var d = null; if (x.responseText) { try { d = JSON.parse(x.responseText) } catch (e) { d = null } } if (x.status >= 200 && x.status < 300) { finish(d || {}, null) } else { finish(d, (d && (d.error || d.message)) || ("HTTP " + x.status)) } } }; x.onerror = function () { finish(null, "Net") }; x.timeout = 60000; x.ontimeout = function () { finish(null, "请求超时，请稍后重试") }; try { x.send(body || null) } catch (e) { finish(null, String(e)) } }
+    function esc(s) { var e = D.createElement("span"); e.textContent = s || ""; return e.innerHTML }
+    function setTxt(id, value) { var el = $(id); if (el) el.textContent = value }
+    function getStoredToken() { try { return localStorage.getItem("gbt_auth_token") || "" } catch (e) { return "" } }
+    function setStoredToken(token) { authState.token = token || ""; try { if (token) localStorage.setItem("gbt_auth_token", token); else localStorage.removeItem("gbt_auth_token") } catch (e) { } }
+    function fmtTime(v) { if (!v) return "--"; try { return new Date(v).toLocaleString() } catch (e) { return v } }
+    function updateAuthUI() {
+        var profile = authState.profile || null, balance = authState.balance || null;
+        var loggedIn = !!(authState.token && profile);
+        var currentUser = loggedIn ? (profile.display_name || profile.username || "已登录用户") : "访客";
+        var plan = loggedIn ? (profile.plan || "free") : ((balance && balance.plan) || "free");
+        var remaining = loggedIn ? (profile.tokens_remaining || 0) : ((balance && balance.remaining) || 0);
+        var used = loggedIn ? (profile.tokens_used || 0) : ((balance && balance.used) || 0);
+        var chip = $("auth-chip"), logoutBtn = $("logout-btn"), authStateEl = $("auth-state"), authTip = $("auth-tip"), rechargeTarget = $("recharge-target");
+        setTxt("auth-user", loggedIn ? currentUser : "未登录");
+        setTxt("auth-email", loggedIn ? (profile.email || "--") : "--");
+        setTxt("auth-provider", loggedIn ? (profile.auth_provider || "local").toUpperCase() : "--");
+        setTxt("auth-plan", plan);
+        setTxt("auth-remaining", Number(remaining || 0).toLocaleString());
+        setTxt("auth-used", Number(used || 0).toLocaleString());
+        setTxt("auth-last-login", loggedIn ? fmtTime(profile.last_login) : "--");
+        setTxt("a-user", currentUser);
+        setTxt("a-plan", plan);
+        setTxt("a-tokens", Number(remaining || 0).toLocaleString());
+        setTxt("a-auth", loggedIn ? "已登录" : "未登录");
+        if (authStateEl) {
+            authStateEl.textContent = loggedIn ? "已登录" : "访客模式";
+            authStateEl.style.color = loggedIn ? "var(--g)" : "var(--t3)";
+        }
+        if (chip) {
+            chip.textContent = loggedIn ? (currentUser + " · " + Number(remaining || 0).toLocaleString() + "T") : ("访客模式 · " + Number(remaining || 0).toLocaleString() + "T");
+            chip.style.color = loggedIn ? "var(--g)" : "var(--t2)";
+        }
+        if (logoutBtn) logoutBtn.disabled = !authState.token;
+        if (authTip) authTip.textContent = loggedIn ? ("当前会话已绑定 `" + currentUser + "` · 授权源 " + ((profile.auth_provider || "local").toUpperCase()) + "，聊天扣费与充值都写入个人账户。") : "未登录时，AI对话与充值默认作用于访客余额 `_default`。";
+        if (rechargeTarget) rechargeTarget.textContent = loggedIn ? ("当前充值对象：" + currentUser + "（个人账户）") : "当前充值对象：访客余额 `_default`";
+        setTxt("chat-auth-tip", loggedIn ? ("已绑定 " + currentUser + " · 剩余 " + Number(remaining || 0).toLocaleString() + " 令牌") : ("未登录，当前扣费走访客余额 · 剩余 " + Number(remaining || 0).toLocaleString() + " 令牌"));
+    }
+    function clearAuth(silentMessage) {
+        setStoredToken("");
+        authState.profile = null;
+        authState.balance = null;
+        updateAuthUI();
+        loadTokenBalance(true);
+        if (silentMessage) toast(silentMessage);
+    }
+    function loadTokenBalance(silent) {
+        api("/api/token/balance", function (d, err) {
+            if (d && d.ok) {
+                authState.balance = d;
+                if (authState.profile) {
+                    authState.profile.plan = d.plan;
+                    authState.profile.tokens_total = d.tokens;
+                    authState.profile.tokens_used = d.used;
+                    authState.profile.tokens_remaining = d.remaining;
+                }
+                updateAuthUI();
+                return;
+            }
+            if ((err || "").indexOf("会话过期") >= 0 || (err || "").indexOf("401") >= 0) {
+                clearAuth(silent ? "" : "会话过期，请重新登录");
+                return;
+            }
+            if (!silent) toast(err || (d && (d.error || d.message)) || "余额读取失败");
+        });
+    }
+    function loadProfile(silent) {
+        if (!authState.token) {
+            authState.profile = null;
+            updateAuthUI();
+            loadTokenBalance(true);
+            return;
+        }
+        api("/api/auth/profile", function (d, err) {
+            if (d && d.ok) {
+                authState.profile = d.profile || null;
+                updateAuthUI();
+                loadTokenBalance(true);
+                return;
+            }
+            if ((err || "").indexOf("会话过期") >= 0 || (err || "").indexOf("401") >= 0) {
+                clearAuth(silent ? "" : "会话过期，请重新登录");
+                return;
+            }
+            if (!silent) toast(err || (d && (d.error || d.message)) || "读取账户失败");
+        });
+    }
+    function renderOAuthProviders(list) {
+        var wrap = $("oauth-provider-grid");
+        if (!wrap) return;
+        var visible = (list || []).filter(function (p) { return !!(p && p.implemented && p.configured); });
+        var html = [];
+        for (var i = 0; i < visible.length; i++) {
+            var p = visible[i] || {};
+            var enabled = true;
+            var status = p.status_text || "可用";
+            var bg = "linear-gradient(135deg,#0f172a,#111827)";
+            html.push(
+                '<button onclick="oauthLogin(\'' + (p.provider || '') + '\')"'
+                + ' style="text-align:left;padding:10px;border-radius:10px;border:1px solid var(--b);background:' + bg + ';color:var(--t);cursor:' + (enabled ? 'pointer' : 'not-allowed') + ';opacity:' + (enabled ? '1' : '0.65') + ';"'
+                + (enabled ? '' : ' disabled')
+                + '>'
+                + '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'
+                + '<span style="font-weight:700;font-size:13px">' + (p.label || p.provider || 'OAuth') + '</span>'
+                + '<span style="font-size:10px;color:var(--t2)">' + status + '</span>'
+                + '</div>'
+                + '<div style="margin-top:4px;font-size:11px;color:var(--t2)">' + (p.category || '其他') + ' · ' + (p.provider || '') + '</div>'
+                + '</button>'
+            );
+        }
+        wrap.innerHTML = html.join("");
+        wrap.style.display = visible.length ? "grid" : "none";
+    }
+    function loadOAuthProviders(silent) {
+        api("/api/auth/oauth/providers", function (d, err) {
+            if (d && d.ok && d.providers) {
+                var list = d.providers || [];
+                var map = {};
+                for (var i = 0; i < list.length; i++) map[list[i].provider] = list[i];
+                authState.oauthProviders = map;
+                renderOAuthProviders(list);
+                var note = $("oauth-provider-note");
+                if (note) {
+                    var ready = list.filter(function (x) { return x.implemented && x.configured }).map(function (x) { return x.label });
+                    note.textContent = ready.length
+                        ? ("已启用授权入口：" + ready.join(" / ") + "。未配置和待适配入口已隐藏，当前界面只保留可直接使用的登录方式。")
+                        : ("当前未启用第三方授权，已自动隐藏全部未配置入口。请先使用下方本地账号密码登录。");
+                }
+                return;
+            }
+            if (!silent) toast(err || "读取 OAuth 配置失败");
+        });
+    }
+    function stopOauthPoll() {
+        if (authState.oauthPollTimer) { try { clearInterval(authState.oauthPollTimer) } catch (e) { } }
+        authState.oauthPollTimer = 0;
+        authState.oauthState = "";
+    }
+    function oauthLogin(provider) {
+        var meta = authState.oauthProviders[provider] || {};
+        if (!meta.implemented) { toast((meta.label || provider) + " 已入入口矩阵，但桌面端适配器还没完成"); return }
+        if (!meta.configured) { toast((meta.label || provider) + " 授权尚未配置"); return }
+        api("/api/auth/oauth/start/" + provider, function (d, err) {
+            if (!(d && d.ok && d.state && d.auth_url)) {
+                toast((d && (d.error || d.message)) || err || "授权启动失败");
+                return;
+            }
+            authState.oauthState = d.state;
+            if (!d.opened) {
+                try { window.open(d.auth_url, "_blank", "noopener") } catch (e) { }
+            }
+            stopOauthPoll();
+            authState.oauthState = d.state;
+            authState.oauthPollTimer = setInterval(function () {
+                api("/api/auth/oauth/poll?state=" + encodeURIComponent(d.state), function (r) {
+                    if (r && r.status === "pending") return;
+                    stopOauthPoll();
+                    if (r && r.status === "success" && r.token) {
+                        setStoredToken(r.token);
+                        authState.profile = null;
+                        authState.balance = null;
+                        toast((meta.label || provider) + " 授权成功");
+                        loadProfile(true);
+                        return;
+                    }
+                    toast((r && (r.error || r.message)) || "授权失败");
+                });
+            }, 1500);
+            toast("已打开 " + (meta.label || provider) + " 授权页，请在浏览器完成登录");
+        }, "POST", "{}");
+    }
+    function loadAuth() { loadProfile(false); loadOAuthProviders(true) }
+    function registerUser() {
+        var username = $("register-username").value.trim(), email = $("register-email").value.trim(), password = $("register-password").value.trim();
+        if (username.length < 3) { toast("用户名至少3个字符"); return }
+        if (password.length < 6) { toast("密码至少6个字符"); return }
+        api("/api/auth/register", function (d, err) {
+            if (d && d.ok) {
+                toast(d.message || "注册成功");
+                $("login-username").value = username;
+                $("login-password").focus();
+                $("register-password").value = "";
+            } else {
+                toast((d && (d.message || d.error)) || err || "注册失败");
+            }
+        }, "POST", JSON.stringify({ username: username, email: email, password: password }));
+    }
+    function loginUser() {
+        var username = $("login-username").value.trim(), password = $("login-password").value.trim();
+        if (!username || !password) { toast("请输入用户名和密码"); return }
+        api("/api/auth/login", function (d, err) {
+            if (d && d.ok && d.token) {
+                setStoredToken(d.token);
+                authState.profile = null;
+                authState.balance = null;
+                toast(d.message || "登录成功");
+                $("login-password").value = "";
+                loadProfile(true);
+            } else {
+                toast((d && (d.message || d.error)) || err || "登录失败");
+            }
+        }, "POST", JSON.stringify({ username: username, password: password }));
+    }
+    function logoutUser() {
+        if (!authState.token) { toast("当前未登录"); return }
+        api("/api/auth/logout", function (d, err) {
+            setStoredToken("");
+            authState.profile = null;
+            authState.balance = null;
+            updateAuthUI();
+            loadTokenBalance(true);
+            toast((d && (d.message || d.error)) || err || "已退出");
+        }, "POST", JSON.stringify({ token: authState.token }));
+    }
+
+    qs(".n-item").forEach(function (el) { el.onclick = function () { switchTab(this.dataset.tab) } })
+    function switchTab(tab) { currentTab = tab; D.getElementById("page-title").textContent = titles[tab] || tab; qs(".n-item").forEach(function (e) { e.classList.toggle("active", e.dataset.tab === tab) }); qs(".tab-panel").forEach(function (e) { e.classList.toggle("active", e.id === "panel-" + tab) }); if (tab === "pilot") loadPilot(); if (tab === "hacker") loadHacker(); if (tab === "trade") loadTrade(); if (tab === "desktop") loadDesktop(); if (tab === "mcp") loadMCP(); if (tab === "mirror") loadMirror(); if (tab === "llm") loadLLM(); if (tab === "chat") loadChat(); if (tab === "account") load账户(); if (tab === "auth") loadAuth() }
+
+    var toastQ = [], toastSeen = {};
+    function isSoftNotice(msg) { return /授权尚未配置|适配器还没完成|读取 OAuth 配置失败|支付链路未配置/.test(msg || "") }
+    function routeSoftNotice(msg) {
+        var note = $("oauth-provider-note") || $("auth-tip");
+        if (note && msg) note.textContent = msg;
+    }
+    function toast(msg) {
+        msg = (msg || "").trim();
+        if (!msg) return;
+        var key = msg.replace(/\s+/g, " ");
+        var now = Date.now();
+        var last = toastSeen[key] || 0;
+        if (isSoftNotice(msg)) {
+            routeSoftNotice(msg);
+            if (now - last < 60000) return;
+            toastSeen[key] = now;
+            return;
+        }
+        if (now - last < 8000) return;
+        toastSeen[key] = now;
+        toastQ.push(msg);
+        if (toastQ.length > 5) toastQ.shift();
+        var t = $("toast"), h = "";
+        for (var i = 0; i < toastQ.length; i++)h += '<div class="tst">' + esc(toastQ[i]) + '</div>';
+        t.innerHTML = h;
+        setTimeout(function () {
+            toastQ.shift();
+            var h2 = "";
+            for (var j = 0; j < toastQ.length; j++)h2 += '<div class="tst">' + esc(toastQ[j]) + '</div>';
+            t.innerHTML = h2
+        }, 3000)
+    }
+    var tradeState = { indices: [], watchlist: [], selectedCode: "", stockDetail: null };
+    function fmtNum(v, digits) { var n = Number(v || 0); return n.toLocaleString(undefined, { minimumFractionDigits: digits || 0, maximumFractionDigits: digits || 0 }) }
+    function fmtPct(v) { var n = Number(v || 0); return (n >= 0 ? "+" : "") + n.toFixed(2) + "%" }
+    function pctCls(v) { return Number(v || 0) >= 0 ? "g" : "r" }
+    function fmtYi(v) { var n = Number(v || 0); return n ? (n.toFixed(2) + "亿") : "--" }
+    function fmtWan(v) { var n = Number(v || 0); return n ? ((n / 10000).toFixed(2) + "万手") : "--" }
+    function strengthText(v) { var n = Number(v || 0); if (n >= 3) return "领涨"; if (n >= 1) return "强势"; if (n > -1) return "震荡"; if (n > -3) return "承压"; return "弱势" }
+    function marketRiskText(v) { var n = Number(v || 0); if (n >= 2) return "偏热"; if (n >= 0.5) return "回暖"; if (n > -0.5) return "中性"; if (n > -2) return "偏冷"; return "走弱" }
+    function tradeStyleText(indices) {
+        var growth = [], value = [];
+        for (var i = 0; i < indices.length; i++) {
+            var name = (indices[i].name || ""), pct = Number(indices[i].pct || 0);
+            if (name.indexOf("创业") >= 0 || name.indexOf("科创") >= 0) growth.push(pct);
+            if (name.indexOf("上证") >= 0 || name.indexOf("沪深300") >= 0 || name.indexOf("深证") >= 0) value.push(pct);
+        }
+        var ga = growth.length ? growth.reduce(function (a, b) { return a + b }, 0) / growth.length : 0;
+        var va = value.length ? value.reduce(function (a, b) { return a + b }, 0) / value.length : 0;
+        if (ga - va > 0.7) return "成长主导";
+        if (va - ga > 0.7) return "权重主导";
+        return "均衡轮动";
+    }
+    function renderTradeDetail(detail) {
+        if (!detail || !detail.ok) {
+            setTxt("trade-detail-code", "--");
+            setTxt("trade-detail-name", "暂无个股详情");
+            setTxt("trade-detail-sub", "点击自选股查看实时行情");
+            setTxt("trade-detail-price", "--");
+            setTxt("trade-detail-move", "--");
+            ["trade-detail-open", "trade-detail-high", "trade-detail-low", "trade-detail-prev", "trade-detail-amplitude", "trade-detail-amount", "trade-detail-volume", "trade-detail-mcap", "trade-detail-fcap"].forEach(function (id) { setTxt(id, "--") });
+            setTxt("trade-detail-insight", "等待个股行情数据...");
+            return;
+        }
+        var cls = pctCls(detail.pct || 0), price = Number(detail.price || 0);
+        setTxt("trade-detail-code", detail.code || "--");
+        setTxt("trade-detail-name", detail.name || detail.code || "--");
+        setTxt("trade-detail-sub", "实时结构化行情 · 东方财富");
+        setTxt("trade-detail-price", price ? price.toFixed(2) : "--");
+        setTxt("trade-detail-move", (detail.change >= 0 ? "+" : "") + Number(detail.change || 0).toFixed(2) + " / " + fmtPct(detail.pct || 0));
+        $("trade-detail-move").className = "trade-detail-move " + cls;
+        setTxt("trade-detail-open", detail.open ? Number(detail.open).toFixed(2) : "--");
+        setTxt("trade-detail-high", detail.high ? Number(detail.high).toFixed(2) : "--");
+        setTxt("trade-detail-low", detail.low ? Number(detail.low).toFixed(2) : "--");
+        setTxt("trade-detail-prev", detail.prev_close ? Number(detail.prev_close).toFixed(2) : "--");
+        setTxt("trade-detail-amplitude", typeof detail.amplitude !== "undefined" ? Number(detail.amplitude).toFixed(2) + "%" : "--");
+        setTxt("trade-detail-amount", fmtYi(detail.amount));
+        setTxt("trade-detail-volume", fmtWan(detail.volume));
+        setTxt("trade-detail-mcap", fmtYi(detail.market_cap));
+        setTxt("trade-detail-fcap", fmtYi(detail.float_cap));
+        setTxt("trade-detail-insight", "当前 " + (detail.name || detail.code || "") + " 报 " + (price ? price.toFixed(2) : "--") + "，涨跌幅 " + fmtPct(detail.pct || 0) + "，振幅 " + (typeof detail.amplitude !== "undefined" ? Number(detail.amplitude).toFixed(2) + "%" : "--") + "。盘中区间 " + (detail.low ? Number(detail.low).toFixed(2) : "--") + " - " + (detail.high ? Number(detail.high).toFixed(2) : "--") + "，成交额 " + fmtYi(detail.amount) + "，适合结合策略信号进一步判断强弱延续。");
+    }
+    function loadTradeDetail(code, days) {
+        code = (code || "").trim();
+        if (!code) return;
+        tradeState.selectedCode = code;
+        $("trade-search-input").value = code;
+        days = Number(days || tradeState.periodDays || 60);
+        tradeState.periodDays = days;
+        api("/api/market/stock/" + code + "/history?days=" + days, function (d) {
+            if (!d || !d.ok) {
+                toast("暂无该股行情：" + (d && d.error || "网络异常"));
+                return;
+            }
+            tradeState.history = d;
+            tradeState.stockDetail = d.quote || null;
+            renderTradeDetail(tradeState.stockDetail);
+            renderTradeProChart(d.klines || [], d.summary || {});
+            renderTradeProTech(d.summary || {});
+        }, "GET");
+    }
+    function tradeProSearch() {
+        var v = $("trade-search-input").value || "";
+        v = v.replace(/\s+/g, "");
+        var code = /^\d{6}$/.test(v) ? v : "";
+        if (!code) {
+            var wl = tradeState.watchlist || [];
+            for (var i = 0; i < wl.length; i++) {
+                if ((wl[i].name || "").indexOf(v) >= 0 || (wl[i].code || "") === v) { code = wl[i].code; break }
+            }
+        }
+        if (!code) { toast("未识别股票：" + v + "，请输入 6 位代码或自选名称"); return }
+        loadTradeDetail(code, tradeState.periodDays || 60);
+    }
+    function tradeProPeriod(btn, days) {
+        var btns = $("trade-pro-period").querySelectorAll("button");
+        for (var i = 0; i < btns.length; i++) btns[i].classList.toggle("active", btns[i] === btn);
+        loadTradeDetail(tradeState.selectedCode || (tradeState.stockDetail && tradeState.stockDetail.code) || "", days);
+    }
+    // —— 流式逐字推入（前端模拟"实时推理"视觉，避免 SSE 改造） ——
+    function streamReveal(el, text, ms) {
+        if (!el) return;
+        if (!text) { el.textContent = ""; return }
+        ms = ms || 18;
+        el.textContent = "";
+        el.classList.add("is-streaming");
+        var i = 0, batchSize = 2;
+        var iv = setInterval(function () {
+            if (i >= text.length) { clearInterval(iv); el.classList.remove("is-streaming"); el.scrollTop = el.scrollHeight; return }
+            var step = Math.min(batchSize, text.length - i);
+            el.textContent += text.substr(i, step);
+            i += step;
+            el.scrollTop = el.scrollHeight;
+        }, ms);
+    }
+    function tradeProAnalyze() {
+        var code = tradeState.selectedCode;
+        if (!code) { toast("请先选中个股"); return }
+        var s = tradeState.history && tradeState.history.summary;
+        var hint = s ? "技术摘要：MA形态=" + (s.ma_pattern || "--") + "、RSI=" + s.rsi + "、MACD=" + (s.macd && s.macd.signal) + "、支撑=" + s.support + "、压力=" + s.resist : "";
+        var target = $("trade-detail-insight");
+        if (target) { target.textContent = "正在生成诊断…（首次调用 智能-Reasoner 可能需 8–20 秒）"; target.classList.add("is-streaming") }
+        api("/api/chat", function (resp) {
+            if (!resp || !resp.ok) {
+                if (target) { target.classList.remove("is-streaming"); target.textContent = "诊断失败：" + (resp && resp.error || "未知错误") }
+                toast("诊断失败：" + (resp && resp.error || "未知错误"));
+                return;
+            }
+            streamReveal(target, resp.response || "", 16);
+            toast("诊断已生成，扣费 " + (resp.tokens_consumed || 0) + "T");
+        }, "POST", JSON.stringify({
+            text: "请以专业 智能 股票交易终端视角，分析个股 " + code + "。" + hint + " 用 4–6 句话输出关键支撑压力、量价信号、买卖点位风险。",
+            deep_reasoning: true
+        }));
+    }
+    function renderTradeProChart(klines, summary) {
+        var box = $("trade-pro-chart");
+        if (!box) return;
+        var info = $("trade-pro-chart-info");
+        if (!klines || klines.length < 2) { box.innerHTML = "暂无 K 线数据"; info && (info.textContent = ""); return }
+        var W = 720, H = 240, padL = 38, padR = 56, padT = 24, padB = 26, n = klines.length;
+        var innerW = W - padL - padR, innerH = H - padT - padB;
+        var closes = klines.map(function (k) { return k.close });
+        var highs = klines.map(function (k) { return k.high }), lows = klines.map(function (k) { return k.low }), vols = klines.map(function (k) { return k.volume || 0 });
+        var mas = [
+            { seq: (summary && summary.ma5_seq) || [], color: "#ffd166", label: "MA5" },
+            { seq: (summary && summary.ma10_seq) || [], color: "#06d6a0", label: "MA10" },
+            { seq: (summary && summary.ma20_seq) || [], color: "#118ab2", label: "MA20" }
+        ];
+        var allHigh = highs.slice(), allLow = lows.slice();
+        for (var mi = 0; mi < mas.length; mi++) {
+            for (var j = 0; j < mas[mi].seq.length; j++) {
+                var v = mas[mi].seq[j];
+                if (v == null) continue;
+                if (v > allHigh[j]) allHigh[j] = v;
+                if (v < allLow[j]) allLow[j] = v;
+            }
+        }
+        var maxH = Math.max.apply(null, allHigh), minL = Math.min.apply(null, allLow);
+        var maxV = Math.max.apply(null, vols), minV = Math.min.apply(null, vols);
+        var yScale = function (v) { return padT + (1 - (v - minL) / (maxH - minL || 1)) * innerH };
+        var barH = function (v) { return ((v - minV) / (maxV - minV || 1)) * (innerH * 0.26) };
+        var xStep = innerW / n, bw = Math.max(2, xStep * 0.55);
+        var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="trade-pro-svg">';
+        // 顶部图例
+        for (var li = 0; li < mas.length; li++) {
+            var lx = padL + li * 70;
+            svg += '<rect x="' + lx + '" y="4" width="10" height="10" rx="2" fill="' + mas[li].color + '"/>';
+            svg += '<text x="' + (lx + 14) + '" y="13" fill="rgba(220,228,238,0.7)" font-size="10">' + mas[li].label + '</text>';
+        }
+        for (var g = 0; g < 4; g++) {
+            var yv = padT + innerH * g / 3, v = maxH - (maxH - minL) * g / 3;
+            svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + yv + '" y2="' + yv + '" stroke="rgba(255,255,255,0.06)" />';
+            svg += '<text x="6" y="' + (yv + 4) + '" fill="rgba(180,196,219,0.55)" font-size="10">' + v.toFixed(2) + '</text>';
+        }
+        svg += '<line x1="' + (W - padR) + '" x2="' + (W - padR) + '" y1="' + padT + '" y2="' + (H - padB) + '" stroke="rgba(255,255,255,0.08)" />';
+        // K 线
+        for (var i = 0; i < n; i++) {
+            var k = klines[i], x = padL + i * xStep + (xStep - bw) / 2;
+            var up = k.close >= k.open, col = up ? "#ef4d4d" : "#26b37b";
+            var yOpen = yScale(k.open), yClose = yScale(k.close), yHigh = yScale(k.high), yLow = yScale(k.low);
+            var bh = Math.max(1, Math.abs(yClose - yOpen));
+            svg += '<line x1="' + (x + bw / 2) + '" x2="' + (x + bw / 2) + '" y1="' + yHigh + '" y2="' + yLow + '" stroke="' + col + '" stroke-width="1" />';
+            svg += '<rect x="' + x + '" y="' + (up ? yClose : yOpen) + '" width="' + bw + '" height="' + bh + '" fill="' + col + '" />';
+            if (vols.length && maxV > 0) {
+                var vh = barH(k.volume || 0), vy = H - padB - vh;
+                svg += '<rect x="' + x + '" y="' + vy + '" width="' + bw + '" height="' + vh + '" fill="' + col + '" opacity="0.18" />';
+            }
+        }
+        // 均线叠加 — 单色平滑折线
+        for (var mli = 0; mli < mas.length; mli++) {
+            var seq = mas[mli].seq, color = mas[mli].color, label = mas[mli].label;
+            var pts = [];
+            for (var j = 0; j < n; j++) {
+                var v = seq[j];
+                if (v == null) { pts.push(null); continue }
+                var cx = padL + (j + 0.5) * xStep;
+                pts.push(cx.toFixed(2) + "," + yScale(v).toFixed(2));
+            }
+            var drawn = [];
+            for (var p = 0; p < pts.length; p++) {
+                if (pts[p] == null) {
+                    if (drawn.length >= 2) svg += '<polyline points="' + drawn.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.4" stroke-linejoin="round" />';
+                    drawn = [];
+                } else { drawn.push(pts[p]) }
+            }
+            if (drawn.length >= 2) svg += '<polyline points="' + drawn.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="1.4" stroke-linejoin="round" />';
+        }
+        svg += '<text x="' + padL + '" y="' + (H - 6) + '" fill="rgba(180,196,219,0.55)" font-size="10">' + esc(klines[0].date || "") + '</text>';
+        svg += '<text x="' + (W - padR) + '" y="' + (H - 6) + '" fill="rgba(180,196,219,0.55)" font-size="10" text-anchor="end">' + esc(klines[klines.length - 1].date || "") + '</text>';
+        svg += '</svg>';
+        box.innerHTML = svg;
+        if (info) info.textContent = "区间高 " + maxH.toFixed(2) + " · 区间低 " + minL.toFixed(2) + " · 成交峰值 " + (maxV ? (maxV / 10000).toFixed(2) + "万手" : "--");
+    }
+    function renderTradeProTech(s) {
+        var box = $("trade-pro-tech");
+        if (!box) return;
+        if (!s || !s.ok) {
+            box.innerHTML = '<div class="trade-pro-tech-empty">' + esc((s && s.error) || "暂无技术指标摘要") + '</div>';
+            return;
+        }
+        var tone = function (v, gt) { if (v == null) return "muted"; return v > gt ? "g" : (v < -gt ? "r" : "n") };
+        var macd = s.macd || {};
+        var html = '' +
+            '<div class="trade-pro-tech-grid">' +
+            techCard("均线形态", esc(s.ma_pattern || "--"), s.ma_pattern && s.ma_pattern.indexOf("多") >= 0 ? "g" : "r") +
+            techCard("MA5/10/20", '<span class="tech-line">' + numOrDash(s.ma5) + ' / ' + numOrDash(s.ma10) + ' / ' + numOrDash(s.ma20) + '</span>', "n", numOrDash(s.ma5, true), numOrDash(s.ma10, true), numOrDash(s.ma20, true)) +
+            techCard("BIAS", '<span class="tech-line">' + numOrDash(s.bias5) + ' / ' + numOrDash(s.bias10) + ' / ' + numOrDash(s.bias20) + '</span>', tone(s.bias5, 3), null, null, null, "%") +
+            techCard("RSI(14)", numOrDash(s.rsi) + ' · ' + esc(s.rsi_zone || "--"), Number(s.rsi) >= 70 ? "r" : (Number(s.rsi) <= 30 ? "g" : "n")) +
+            techCard("MACD", '<span class="tech-line">DIF ' + numOrDash(macd.dif) + ' / DEA ' + numOrDash(macd.dea) + '</span><span class="tech-line muted">BAR ' + numOrDash(macd.bar) + ' · ' + esc(macd.signal || "--") + '</span>', macd.bar > 0 ? "g" : "r") +
+            techCard("量比(近5日)", numOrDash(s.vol_ratio), Number(s.vol_ratio) >= 1.5 ? "g" : (Number(s.vol_ratio) >= 0.7 ? "n" : "r")) +
+            techCard("20日振幅", numOrDash(s.amp20) + "%", tone(s.amp20, 6)) +
+            techCard("支撑 / 压力", '<span class="tech-line">' + numOrDash(s.support) + ' / ' + numOrDash(s.resist) + '</span>', "n") +
+            '</div>';
+        box.innerHTML = html;
+    }
+    function techCard(title, value, cls) {
+        return '<div class="trade-pro-tech-card ' + (cls || "n") + '"><div class="t">' + esc(title) + '</div><div class="v">' + value + '</div></div>';
+    }
+    function numOrDash(v, raw) {
+        if (v == null || v === "" || isNaN(Number(v))) return "--";
+        return raw ? String(v) : Number(v).toFixed(2);
+    }
+    function renderTradeWatchlist(watchlist) {
+        var rows = "", focus = "", strong = 0, sorted = (watchlist || []).slice().sort(function (a, b) { return Number(b.change_pct || 0) - Number(a.change_pct || 0) });
+        for (var i = 0; i < sorted.length; i++) {
+            var w = sorted[i] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct), tag = strengthText(pct);
+            if (pct > 0) strong++;
+            rows += "<tr class='trade-watch-row" + (tradeState.selectedCode === code ? " active" : "") + "' onclick=\"loadTradeDetail('" + esc(code) + "')\"><td>" + esc(code) + "</td><td>" + esc(name) + "</td><td>" + (price ? price.toFixed(2) : "--") + "</td><td class='" + cls + "'>" + (price ? fmtPct(pct) : "--") + "</td><td class='" + cls + "'>" + tag + "</td></tr>";
+            focus += '<div class="trade-focus-item' + (tradeState.selectedCode === code ? " active" : "") + '" onclick="loadTradeDetail(\'' + esc(code) + '\')"><div><div class="trade-focus-name">' + esc(name) + '</div><div class="trade-focus-code">' + esc(code) + '</div></div><div style="text-align:right"><div class="trade-focus-price">' + (price ? price.toFixed(2) : "--") + '</div><div class="' + cls + '">' + (price ? fmtPct(pct) : "--") + " · " + tag + "</div></div></div>";
+        }
+        $("trade-wl").innerHTML = rows || "<tr><td colspan=5 style=color:var(--t3)>暂无自选数据</td></tr>";
+        $("trade-focus-list").innerHTML = focus || '<div style="color:var(--t3)">暂无自选观察列表</div>';
+        setTxt("trade-watch-strong", (watchlist || []).length ? (strong + "/" + watchlist.length) : "--");
+        if (!tradeState.selectedCode && sorted.length) loadTradeDetail(sorted[0].code || sorted[0][0] || "");
+    }
+    function renderTradeMarket(indices) {
+        var mt = $("ticker");
+        if (!indices || !indices.length) {
+            if (mt) mt.innerHTML = "<span style=color:var(--t3)>市场离线</span>";
+            $("trade-index-cards").innerHTML = '<div style="color:var(--t3)">暂无指数数据</div>';
+            $("trade-idx").innerHTML = '<div style="color:var(--t3)">暂无指数数据</div>';
+            $("trade-pulse").textContent = "等待行情数据...";
+            return;
+        }
+        var tickerHtml = "", cardHtml = "", pulseHtml = "", up = 0, down = 0, sum = 0;
+        var sorted = indices.slice().sort(function (a, b) { return Number(b.pct || 0) - Number(a.pct || 0) });
+        for (var i = 0; i < indices.length; i++) {
+            var x = indices[i] || {}, pct = Number(x.pct || 0), price = Number(x.price || 0), change = Number(x.change || 0), cls = pctCls(pct);
+            if (pct >= 0) up++; else down++;
+            sum += pct;
+            tickerHtml += '<div class="t-item"><span class="t-name">' + esc(x.name || "") + '</span><span class="t-val ' + cls + '">' + (price ? price.toFixed(2) : "--") + '</span><span class="' + cls + '" style="font-size:10px">' + fmtPct(pct) + "</span></div>";
+            cardHtml += '<div class="trade-index-card ' + cls + '"><div class="trade-index-top"><span class="trade-index-name">' + esc(x.name || "") + '</span><span class="trade-index-code">' + esc(x.code || "") + '</span></div><div class="trade-index-price">' + (price ? price.toFixed(2) : "--") + '</div><div class="trade-index-move"><span class="' + cls + '">' + (change >= 0 ? "+" : "") + change.toFixed(2) + '</span><span class="' + cls + '">' + fmtPct(pct) + "</span></div></div>";
+            pulseHtml += '<div class="trade-pulse-row"><span>' + esc(x.name || "") + '</span><span class="' + cls + '">' + fmtPct(pct) + "</span></div>";
+        }
+        var avg = indices.length ? (sum / indices.length) : 0;
+        var breadth = indices.length ? Math.round(up / indices.length * 100) : 0;
+        var leader = sorted[0] || {}, laggard = sorted[sorted.length - 1] || {};
+        var style = tradeStyleText(indices);
+        if (mt) mt.innerHTML = tickerHtml || "<span style=color:var(--t3)>暂无数据</span>";
+        $("trade-index-cards").innerHTML = cardHtml;
+        $("trade-idx").innerHTML = pulseHtml;
+        $("trade-pulse").innerHTML = '当前指数平均涨跌幅 <span class="' + pctCls(avg) + '">' + fmtPct(avg) + '</span>，多头占比 <span>' + breadth + '%</span>。当前由 <span>' + esc(style) + '</span> 主导，领涨指数为 <span class="g">' + esc(leader.name || "--") + '</span>，最弱指数为 <span class="r">' + esc(laggard.name || "--") + '</span>。';
+        setTxt("trade-time", new Date().toLocaleTimeString());
+        setTxt("trade-breadth", breadth + "%");
+        setTxt("trade-up", String(up));
+        setTxt("trade-down", String(down));
+        setTxt("trade-avg", fmtPct(avg));
+        $("trade-avg").className = "val " + pctCls(avg);
+        setTxt("trade-style", style);
+        setTxt("trade-risk", marketRiskText(avg));
+        setTxt("trade-leader", leader.name || "--");
+        $("trade-leader").className = "val g";
+        setTxt("trade-laggard", laggard.name || "--");
+        $("trade-laggard").className = "val r";
+    }
+    function refresh() {
+        api("/api/dashboard", function (d) {
+            if (!d) return;
+            var lm = d.llm || {}, tt = lm.totals || {}, ct = lm.current || {};
+            $("d-tokens").textContent = (tt.tokens_total || 0).toLocaleString();
+            $("d-cost").textContent = "\u00a5" + (tt.cost_rmb || 0).toFixed(4);
+            $("d-calls").textContent = (tt.requests || 0).toLocaleString();
+            $("d-model").textContent = ct.model || "--";
+            var hh = "", hist = lm.history || [];
+            for (var hi = Math.max(0, hist.length - 10); hi < hist.length; hi++) {
+                var h = hist[hi];
+                hh += "<tr><td>" + esc(h.time || "") + "</td><td>" + esc(h.model || "") + "</td><td>" + (h.tokens_in || 0) + "</td><td>" + (h.tokens_out || 0) + "</td><td>\u00a5" + (h.cost_rmb || 0).toFixed(4) + "</td></tr>";
+            }
+            $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";
+            var td = d.trade || {}, acct = td.account || {};
+            $("d-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString();
+            $("d-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString();
+            var pnl = acct.pnl || 0;
+            $("d-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString();
+            $("d-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)";
+            $("d-pos").textContent = acct.positions || "0";
+            var wl = "", watchlist = td.watchlist || [];
+            tradeState.watchlist = watchlist;
+            for (var wi = 0; wi < watchlist.length; wi++) {
+                var w = watchlist[wi] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct);
+                wl += "<tr><td>" + esc(code) + "</td><td>" + esc(name) + "</td><td>" + (price ? price.toFixed(2) : "--") + "</td><td class='" + cls + "'>" + (price ? fmtPct(pct) : "--") + "</td></tr>";
+            }
+            $("d-watch").innerHTML = wl || "<tr><td colspan=4 style=color:var(--t3)>暂无数据</td></tr>";
+            renderTradeWatchlist(watchlist);
+            var sy = d.system || {};
+            var cpu = sy.cpu || 0, mem = sy.memory || 0, dsk = sy.disk || 0;
+            $("d-cpu").textContent = cpu.toFixed(1) + "%";
+            $("d-cpubar").style.width = cpu + "%";
+            $("d-mem").textContent = mem.toFixed(1) + "%";
+            $("d-membar").style.width = mem + "%";
+            $("d-disk").textContent = dsk.toFixed(1) + "%";
+            $("d-diskbar").style.width = dsk + "%";
+            $("d-host").textContent = sy.host || "";
+            $("sys-info").textContent = "处理器 " + cpu.toFixed(0) + "% | MEM " + mem.toFixed(0) + "%";
+            var srvs = (d.mcp || {}).servers || [];
+            $("mcp-cnt").textContent = srvs.length + " online";
+            $("mcp-badge").textContent = srvs.length;
+            loadMarket();
+        });
+    }
+
+    function loadMarket() {
+        api("/api/market", function (d) {
+            if (!d || !d.ok) {
+                renderTradeMarket([]);
+                return;
+            }
+            tradeState.indices = d.indices || [];
+            renderTradeMarket(tradeState.indices);
+        });
+    }
+
+    // 黑客 49 项能力：UI 显示中文，能力 id 与后端约定不变
+    var __capLabels = {
+        "screenshot": "屏幕截图",
+        "browser_open": "打开浏览器",
+        "window_maximize": "窗口最大化",
+        "keyboard_type": "键盘输入",
+        "keyboard_hotkey": "键盘快捷键",
+        "mouse_click": "鼠标点击",
+        "process_list": "进程列表",
+        "process_kill": "结束进程",
+        "window_focus": "聚焦窗口",
+        "volume_control": "音量调节",
+        "system_lock": "锁屏",
+        "system_status": "系统状态",
+        "market_scan": "市场扫描",
+        "stock_lookup": "个股查询",
+        "pilot_action": "自动操盘",
+        "trade_execute": "下单执行",
+        "code_review": "代码审查",
+        "debug_trace": "调试追踪",
+        "search_web": "全网搜索",
+        "news_pull": "新闻抓取",
+        "csv_export": "导出表格",
+        "calendar_sync": "日程同步",
+        "alert_set": "价格预警",
+        "alert_list": "预警列表",
+        "logger_tail": "日志跟踪",
+        "file_read": "读取文件",
+        "file_write": "写入文件",
+        "send_email": "发送邮件",
+        "wechat_push": "微信推送",
+        "dingtalk_push": "钉钉推送",
+        "browser_navigate": "网页跳转",
+        "browser_click": "页面点击",
+        "browser_fill": "页面填表",
+        "browser_screenshot": "截图保存",
+        "browser_extract": "数据提取",
+        "ocr_image": "图片识别",
+        "voice_tts": "语音播报",
+        "voice_input": "语音识别",
+        "calendar_today": "今日日历",
+        "weather_now": "当前天气",
+        "weather_forecast": "天气预报",
+        "translate_text": "文本翻译",
+        "summarize_text": "文本摘要",
+        "regex_match": "正则匹配",
+        "json_format": "格式化 JSON",
+        "diff_compare": "差异比较",
+        "uuid_gen": "生成主键",
+        "hash_md5": "哈希摘要",
+        "password_gen": "生成密码",
+        "qr_make": "二维码生成"
+    };
+    function _capLabel(id) { return __capLabels[id] || id; }
+    function loadHacker() { api("/api/hacker/capabilities", function (d) { if (!d) return; $("hack-cnt").textContent = d.total + " 项能力"; var h = "", caps = d.capabilities || []; for (var i = 0; i < caps.length; i++) { var c = caps[i]; h += '<div class="btn-cap" onclick="execCap(\'' + esc(c.id) + '\')"><div class="c-dot" style="background:' + (c.mcp ? "var(--g)" : "var(--a)") + '"></div>' + esc(_capLabel(c.id)) + "</div>" } $("hack-grid").innerHTML = h }) }
+    function execCap(cid) { var log = $("hack-log"); if (log) log.textContent = "> " + cid + "..."; api("/api/hacker/exec", function (d) { var tm = new Date().toLocaleTimeString(); if (log) log.textContent = "[" + tm + "] " + (d && d.ok ? "成功" : "失败") + " " + cid + "\n" + (d ? d.data || d.error || "" : "") + "\n---\n" + log.textContent; toast((d && d.ok ? "成功：" : "失败：") + cid) }, "POST", JSON.stringify({ id: cid, action: "运行" })) }
+
+    // 桌面操控：UI 显示中文，内部 action id 与后端约定一致（不可翻译）
+    function loadDesktop() {
+        var acts = [
+            ["屏幕截图", "screenshot"], ["打开浏览器", "browser_open"], ["窗口最大化", "window_maximize"],
+            ["键盘输入", "keyboard_type"], ["键盘快捷键", "keyboard_hotkey"], ["鼠标点击", "mouse_click"],
+            ["进程列表", "process_list"], ["结束进程", "process_kill"], ["聚焦窗口", "window_focus"],
+            ["音量调节", "volume_control"], ["锁屏", "system_lock"]
+        ];
+        window.__deskActs = acts;
+        var h = "";
+        for (var i = 0; i < acts.length; i++) {
+            var label = acts[i][0];
+            h += '<div class="btn-cap" onclick="execDesk(\'' + label + '\')"><div class="c-dot" style="background:var(--a)"></div>' + label + "</div>";
+        }
+        $("desk-grid").innerHTML = h;
+    }
+    function execDesk(label) {
+        var log = $("desk-log");
+        var cid = label;
+        try {
+            for (var i = 0; i < (window.__deskActs || []).length; i++) {
+                if (window.__deskActs[i][0] === label) { cid = window.__deskActs[i][1]; break }
+            }
+        } catch (e) { }
+        if (log) log.textContent = "> " + label + " (" + cid + ")...";
+        api("/api/hacker/exec", function (d) {
+            var tm = new Date().toLocaleTimeString();
+            if (log) log.textContent = "[" + tm + "] " + (d && d.ok ? "成功" : "失败") + " " + label + "\n" + (d ? d.data || d.error || "" : "") + "\n---\n" + log.textContent;
+            toast((d && d.ok ? "成功：" : "失败：") + label);
+        }, "POST", JSON.stringify({ id: cid, action: "运行" }));
+    }
+
+    function loadMCP() { api("/api/dashboard", function (d) { var srvs = (d && d.mcp || {}).servers || []; var h = ""; for (var i = 0; i < srvs.length; i++) { var s = srvs[i], n = typeof s === "string" ? s : (s.id || s.name || ""); h += '<div class="btn-cap"><div class="c-dot" style="background:var(--g)"></div>' + esc(n) + "</div>" } $("mcp-grid").innerHTML = h || "<span style=color:var(--t3)>暂未配置服务器</span>" }) }
+
+    function loadLLM() {
+        api("/api/config/llm", function (cfg) {
+            var a = cfg && cfg.available || [];
+            var h = "";
+            for (var i = 0; i < a.length; i++) {
+                var av = a[i];
+                h += '<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid var(--b)">'
+                    + '<div class="c-dot" style="background:' + (av.status === "available" ? "var(--g)" : "var(--t3)") + ';width:8px;height:8px;border-radius:50%"></div>'
+                    + '<span style="flex:1;font-weight:600">' + esc(av.name) + '</span>'
+                    + '<span style="font-size:10px;color:' + (av.status === "available" ? "var(--g)" : "var(--t3)") + '">' + esc(av.status) + '</span>'
+                    + '</div>';
+            }
+            $("llm-list").innerHTML = h || '<span style=color:var(--t3)>扫描中...</span>';
+        })
+        // Also load LLM metrics
+        api("/api/dashboard", function (d) {
+            if (!d) return;
+            var lm = d.llm || {}, tt = lm.totals || {}, ct = lm.current || {};
+            var h = "", hist = lm.history || [];
+            for (var hi = Math.max(0, hist.length - 20); hi < hist.length; hi++) {
+                var hh = hist[hi];
+                h += "<tr><td>" + esc(hh.time || "") + "</td><td>" + esc(hh.model || "") + "</td><td>"
+                    + (hh.tokens_in || 0) + "</td><td>" + (hh.tokens_out || 0) + "</td><td>¥"
+                    + (hh.cost_rmb || 0).toFixed(4) + "</td></tr>";
+            }
+            $("d-llmhist").innerHTML = h || '<tr><td colspan=5 style=color:var(--t3)>暂无调用记录</td></tr>';
+        })
+    }
+    function send对话() {
+        var inp = $("llm-input"), out = $("llm-out"), txt = inp.value.trim();
+        if (!txt) return;
+        inp.value = "";
+        out.textContent = "⏳ 调用大模型中...";
+        api("/api/chat", function (d) {
+            if (!d) { out.textContent = "错误: 无响应"; return }
+            if (d.ok) {
+                var m = d.metrics || {};
+                out.textContent = "[" + (d.provider || "LLM") + " " + (d.model || "") + "]\n"
+                    + "令牌: " + (m.tokens_in || 0) + " in + " + (m.tokens_out || 0) + " out"
+                    + " | Cost: ¥" + (m.cost_rmb || 0).toFixed(6) + "\n"
+                    + "──────────────────────────\n"
+                    + (d.response || "");
+            } else {
+                out.textContent = "✗ " + (d.error || "调用失败");
+            }
+        }, "POST", JSON.stringify({ text: txt }))
+    }
+
+    // ── 智能 对话 (chat panel) ──
+    var chatHistory = [];
+
+    function addChatMsg(role, text, reasoning) {
+        var container = $("chat-messages");
+        var cls = role === "user" ? "user" : "assistant";
+        var html = '<div class="chat-msg ' + cls + '">';
+        html += '<div class="msg-avatar">' + (role === "user" ? "我" : "AI") + '</div>';
+        html += '<div class="msg-bubble">';
+        if (reasoning) {
+            html += '<div class="msg-reasoning" style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px;border-left:3px solid var(--brand-primary)"><b>思考过程:</b><br>' + esc(reasoning) + '</div>';
+        }
+        html += '<div class="msg-text">' + (text || "").replace(/\n/g, "<br>") + '</div>';
+        html += '</div></div>';
+        container.innerHTML += html;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function sendChat() {
+        var inp = $("chat-input"), txt = inp.value.trim();
+        if (!txt) return;
+        var deep = $("deep-mode").checked;
+        if (guideChatAccess()) return;
+        inp.value = "";
+        addChatMsg("user", txt);
+        // 加载动画
+        var container = $("chat-messages");
+        var loadingId = "loading-" + Date.now();
+        container.innerHTML += '<div id="' + loadingId + '" class="chat-msg assistant"><div class="msg-avatar">智</div><div class="msg-bubble"><div class="msg-text" style="color:var(--t3)">⏳ 思考中' + (deep ? '(深度推理)' : '') + '...</div></div></div>';
+        container.scrollTop = container.scrollHeight;
+        api("/api/chat", function (d) {
+            var el = D.getElementById(loadingId);
+            if (el) el.remove();
+            if (!d) { addChatMsg("assistant", "错误: 无响应"); return }
+            if (d.ok) {
+                var reasoning = d.reasoning || "";
+                addChatMsg("assistant", d.response || "", reasoning);
+                var m = d.metrics || {};
+                if (typeof d.tokens_remaining !== "undefined") {
+                    if (authState.profile) authState.profile.tokens_remaining = d.tokens_remaining;
+                    loadTokenBalance(true);
+                }
+                if (m.tokens_in || m.tokens_out) {
+                    toast((deep ? "推理" : "Chat") + " in:" + (m.tokens_in || 0) + " out:" + (m.tokens_out || 0) + (m.reasoning_tokens ? " r:" + m.reasoning_tokens : "") + (typeof d.tokens_remaining !== "undefined" ? (" 剩余:" + d.tokens_remaining) : ""));
+                }
+            } else {
+                if ((d.error || "").indexOf("会话过期") >= 0) { clearAuth("会话过期，请重新登录"); }
+                addChatMsg("assistant", "✗ " + (d.error || "调用失败"));
+            }
+        }, "POST", JSON.stringify({ text: txt, deep_reasoning: deep, token: authState.token }));
+    }
+
+    function loadChat() {
+        // 确保 DeepSeek badge 亮起
+        api("/api/status", function (d) {
+            var badge = $("chat-badge");
+            if (badge && d && d.keys_available > 0) {
+                badge.style.background = "var(--g)";
+                badge.textContent = "●";
+            }
+        });
+        updateAuthUI();
+    }
+    function guideChatAccess() {
+        var remaining = (authState.balance && typeof authState.balance.remaining !== "undefined")
+            ? Number(authState.balance.remaining || 0) : 0;
+        if (!authState.token && remaining <= 0) {
+            addChatMsg("assistant", "当前是访客模式，令牌为 0。请先登录领取新用户 10000 tokens，或前往充值激活后再开始对话。");
+            routeSoftNotice("模型已连接，但当前访客余额为 0。请先登录领取新用户令牌，或前往充值激活后再开始对话。");
+            switchTab("auth");
+            return true;
+        }
+        if (authState.token && remaining <= 0) {
+            addChatMsg("assistant", "当前账号令牌余额不足，请先前往充值激活后再继续对话。");
+            switchTab("recharge");
+            return true;
+        }
+        return false;
+    }
+
+    function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; $("a-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString(); $("a-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString(); var pnl = acct.pnl || 0; $("a-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(); $("a-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; $("a-pos").textContent = acct.positions || "0"; loadTokenBalance(true) }) }
+    function loadTrade() { refresh(); loadMarket(); if (tradeState.selectedCode) loadTradeDetail(tradeState.selectedCode); restoreLastRecap(); }
+    function restoreLastRecap() {
+        try {
+            var raw = localStorage.getItem("gbt_last_recap");
+            if (!raw) return;
+            var last = JSON.parse(raw);
+            if (last && last.report) {
+                $("recap-report").textContent = last.report;
+                $("recap-headline").textContent = last.headline || "上次复盘已恢复";
+                $("recap-time").textContent = last.time || "已恢复";
+                if (last.tokens_consumed) $("recap-meta").textContent = "上次消耗 " + last.tokens_consumed + " 令牌 · 模型 " + (last.model || "deepseek-reasoner");
+            }
+        } catch (e) { }
+    }
+    function recapGenerate() {
+        var btn = $("recap-btn");
+        var token = getStoredToken();
+        btn.disabled = true;
+        var oldText = btn.textContent;
+        btn.textContent = "正在生成复盘…";
+        $("recap-headline").textContent = "正在拉取实时市场快照…";
+        $("recap-report").textContent = "DeepSeek-Reasoner 正在思考，按行业标准一般需要 8–30 秒，请耐心等待…";
+        $("recap-report").classList.add("is-streaming");
+        $("recap-meta").textContent = "";
+        api("/api/market/recap", function (resp) {
+            btn.disabled = false;
+            btn.textContent = oldText;
+            if (!resp || !resp.ok) {
+                toast("复盘生成失败：" + (resp && resp.error || "未知错误"));
+                $("recap-report").textContent = "生成失败：" + (resp && resp.error || "未知错误");
+                $("recap-report").classList.remove("is-streaming");
+                return;
+            }
+            $("recap-headline").textContent = resp.headline || "今日市场复盘已生成";
+            $("recap-time").textContent = "已生成 · " + new Date().toLocaleTimeString("zh-CN");
+            $("recap-meta").textContent = "模型 " + (resp.model || "deepseek-reasoner") + " · 消耗 " + (resp.tokens_consumed || 0) + " Tokens · " + (resp.user || "_default");
+            streamReveal($("recap-report"), resp.report || "", 12);
+            try { localStorage.setItem("gbt_last_recap", JSON.stringify({ report: resp.report, headline: resp.headline, model: resp.model, tokens_consumed: resp.tokens_consumed, time: new Date().toLocaleTimeString("zh-CN") })) } catch (e) { }
+        }, "POST", JSON.stringify({ token: token, today: new Date().toISOString().slice(0, 10) }));
+    }
+
+    // ── LLM 连接 ──
+    function saveLLM() {
+        var p = $("cfg-provider").value, k = $("cfg-apikey").value.trim(), m = $("cfg-model").value.trim();
+        if (!k) { toast("请先输入 API Key"); return }
+        var btn = document.querySelector('#panel-connect button.save');
+        btn.disabled = true; btn.textContent = "连接中...";
+        api("/api/config/llm", function (d) {
+            btn.disabled = false; btn.textContent = "保存并连接";
+            if (!d) { toast("连接失败: 无响应"); return }
+            var msg = d.message || "";
+            if (d.ok) {
+                api("/api/token/balance", function (bal) {
+                    if (bal && bal.ok) authState.balance = bal;
+                    updateAuthUI();
+                    if (!authState.token && bal && typeof bal.remaining !== "undefined" && Number(bal.remaining || 0) <= 0) {
+                        routeSoftNotice("模型已连接，但当前访客余额为 0。请先登录领取新用户令牌，或前往充值激活后再开始对话。");
+                        switchTab("auth");
+                        return;
+                    }
+                    toast("连接成功!");
+                });
+                return;
+            }
+            else { toast("警告: " + msg); }
+        }, "POST", JSON.stringify({ provider: p, api_key: k, model: m }))
+        $("cfg-apikey").value = ""
+    }
+    // ── Token 充值 ──
+    function doRecharge() {
+        var c = $("recharge-code").value.trim().toUpperCase();
+        if (!c || c.length < 8) { toast("请输入有效激活码"); return }
+        api("/api/token/recharge", function (d, err) {
+            if (d && d.ok) {
+                toast(d.message || "充值成功");
+                loadProfile(true);
+                loadTokenBalance(false);
+            } else {
+                if ((err || "").indexOf("会话过期") >= 0) clearAuth("会话过期，请重新登录");
+                toast((d && (d.message || d.error)) || err || "充值失败");
+            }
+        }, "POST", JSON.stringify({ code: c, token: authState.token }))
+        $("recharge-code").value = ""
+    }
+
+    // ── 自主操盘 ──
+    function pilotStart() {
+        api("/api/pilot/start", function (d) {
+            if (d && d.ok) {
+                toast("自主操盘已启动!"); loadPilot()
+            } else { toast("启动失败: " + (d ? d.error : "?")) }
+        })
+    }
+    function pilotStop() {
+        api("/api/pilot/stop", function (d) {
+            if (d && d.ok) {
+                toast("自主操盘已停止"); loadPilot()
+            } else { toast("停止失败") }
+        })
+    }
+    function loadPilot() {
+        api("/api/pilot/status", function (d) {
+            if (!d) return
+            var running = d.running
+            $("pilot-st").textContent = running ? "运行中" : "已停止"
+            $("pilot-st").style.color = running ? "var(--g)" : "var(--t3)"
+            $("pilot-start-btn").style.display = running ? "none" : "block"
+            $("pilot-stop-btn").style.display = running ? "block" : "none"
+            $("pilot-badge").textContent = running ? "●" : "○"
+            $("pilot-badge").style.color = running ? "var(--g)" : "var(--t3)"
+            $("p-scan").textContent = d.scan_count
+            $("p-trade").textContent = d.trade_count
+            $("p-signal").textContent = d.signal_count
+            $("p-pnl").textContent = "¥" + (d.pnl || 0).toFixed(2)
+            $("p-mode").textContent = d.mode
+            $("p-sl").textContent = (d.stop_loss_pct || 0) + "%"
+            $("p-tp").textContent = (d.take_profit_pct || 0) + "%"
+            $("p-int").textContent = (d.scan_interval_sec || 60) + "s"
+            $("p-slast").textContent = d.last_scan || "--"
+            // Signals
+            var tb = $("p-signals");
+            tb.innerHTML = "";
+            (d.watchlist || []).forEach(function (wl) {
+                var sig = (d.logs || []).slice(-1);
+                tb.innerHTML += "<tr><td>" + wl[0] + "</td><td>" + wl[1] + "</td><td>--</td><td>--</td><td>等待</td></tr>"
+            })
+            // Log
+            $("p-log").textContent = (d.logs || []).slice(-30).join("\n") || "就绪"
+
+            // Also fetch signals
+            api("/api/pilot/signals", function (sd) {
+                if (!sd || !sd.signals) return
+                tb.innerHTML = "";
+                sd.signals.forEach(function (s) {
+                    tb.innerHTML += "<tr><td>" + s.code + "</td><td>" + s.name + "</td><td>¥" + s.price + "</td><td class='" + (s.change_pct >= 0 ? "g" : "r") + "'>" + (s.change_pct >= 0 ? "+" : "") + s.change_pct + "%</td><td><span style='color:" + (s.signal === "BUY" ? "var(--g)" : s.signal === "SELL" ? "var(--r)" : "var(--t3)") + "'>" + s.signal + "</span></td></tr>"
+                })
+            })
+        })
+    }
+
+    setStoredToken(getStoredToken());
+    updateAuthUI();
+    loadProfile(true);
+    refresh(); setInterval(refresh, 5000)
+</script>
+</body>
+
+</html> })
+}
+function pilotStop() {
+api("/api/pilot/stop", function (d) {
+if (d && d.ok) {
+toast("自主操盘已停止"); loadPilot()
+} else { toast("停止失败") }
+})
+}
+function loadPilot() {
+api("/api/pilot/status", function (d) {
+if (!d) return
+var running = d.running
+$("pilot-st").textContent = running ? "运行中" : "已停止"
+$("pilot-st").style.color = running ? "var(--g)" : "var(--t3)"
+$("pilot-start-btn").style.display = running ? "none" : "block"
+$("pilot-stop-btn").style.display = running ? "block" : "none"
+$("pilot-badge").textContent = running ? "●" : "○"
+$("pilot-badge").style.color = running ? "var(--g)" : "var(--t3)"
+$("p-scan").textContent = d.scan_count
+$("p-trade").textContent = d.trade_count
+$("p-signal").textContent = d.signal_count
+$("p-pnl").textContent = "¥" + (d.pnl || 0).toFixed(2)
+$("p-mode").textContent = d.mode
+$("p-sl").textContent = (d.stop_loss_pct || 0) + "%"
+$("p-tp").textContent = (d.take_profit_pct || 0) + "%"
+$("p-int").textContent = (d.scan_interval_sec || 60) + "s"
+$("p-slast").textContent = d.last_scan || "--"
+// Signals
+var tb = $("p-signals");
+tb.innerHTML = "";
+(d.watchlist || []).forEach(function (wl) {
+var sig = (d.logs || []).slice(-1);
+tb.innerHTML += "<tr>
+    <td>" + wl[0] + "</td>
+    <td>" + wl[1] + "</td>
+    <td>--</td>
+    <td>--</td>
+    <td>等待</td>
+</tr>"
+})
+// Log
+$("p-log").textContent = (d.logs || []).slice(-30).join("\n") || "就绪"
+
+// Also fetch signals
+api("/api/pilot/signals", function (sd) {
+if (!sd || !sd.signals) return
+tb.innerHTML = "";
+sd.signals.forEach(function (s) {
+tb.innerHTML += "<tr>
+    <td>" + s.code + "</td>
+    <td>" + s.name + "</td>
+    <td>¥" + s.price + "</td>
+    <td class='" + (s.change_pct >= 0 ? "g" : "r") + "'>" + (s.change_pct >= 0 ? "+" : "") + s.change_pct + "%</td>
+    <td><span style='color:" + (s.signal === "BUY" ? "var(--g)" : s.signal === "SELL" ? "var(--r)" : "var(--t3)") + "'>"
+            + s.signal + "</span></td>
+</tr>"
+})
+})
+})
+}
+
+setStoredToken(getStoredToken());
+updateAuthUI();
+loadProfile(true);
+refresh(); setInterval(refresh, 5000)
+</script>
+</body>
+
+</html> } else { toast("停止失败") }
+})
+}
+function loadPilot() {
+api("/api/pilot/status", function (d) {
+if (!d) return
+var running = d.running
+$("pilot-st").textContent = running ? "运行中" : "已停止"
+$("pilot-st").style.color = running ? "var(--g)" : "var(--t3)"
+$("pilot-start-btn").style.display = running ? "none" : "block"
+$("pilot-stop-btn").style.display = running ? "block" : "none"
+$("pilot-badge").textContent = running ? "●" : "○"
+$("pilot-badge").style.color = running ? "var(--g)" : "var(--t3)"
+$("p-scan").textContent = d.scan_count
+$("p-trade").textContent = d.trade_count
+$("p-signal").textContent = d.signal_count
+$("p-pnl").textContent = "¥" + (d.pnl || 0).toFixed(2)
+$("p-mode").textContent = d.mode
+$("p-sl").textContent = (d.stop_loss_pct || 0) + "%"
+$("p-tp").textContent = (d.take_profit_pct || 0) + "%"
+$("p-int").textContent = (d.scan_interval_sec || 60) + "s"
+$("p-slast").textContent = d.last_scan || "--"
+// Signals
+var tb = $("p-signals");
+tb.innerHTML = "";
+(d.watchlist || []).forEach(function (wl) {
+var sig = (d.logs || []).slice(-1);
+tb.innerHTML += "<tr>
+    <td>" + wl[0] + "</td>
+    <td>" + wl[1] + "</td>
+    <td>--</td>
+    <td>--</td>
+    <td>等待</td>
+</tr>"
+})
+// Log
+$("p-log").textContent = (d.logs || []).slice(-30).join("\n") || "就绪"
+
+// Also fetch signals
+api("/api/pilot/signals", function (sd) {
+if (!sd || !sd.signals) return
+tb.innerHTML = "";
+sd.signals.forEach(function (s) {
+tb.innerHTML += "<tr>
+    <td>" + s.code + "</td>
+    <td>" + s.name + "</td>
+    <td>¥" + s.price + "</td>
+    <td class='" + (s.change_pct >= 0 ? "g" : "r") + "'>" + (s.change_pct >= 0 ? "+" : "") + s.change_pct + "%</td>
+    <td><span style='color:" + (s.signal === "BUY" ? "var(--g)" : s.signal === "SELL" ? "var(--r)" : "var(--t3)") + "'>"
+            + s.signal + "</span></td>
+</tr>"
+})
+})
+})
+}
+
+setStoredToken(getStoredToken());
+updateAuthUI();
+loadProfile(true);
+refresh(); setInterval(refresh, 5000)
+</script>
+</body>
+
+</html>

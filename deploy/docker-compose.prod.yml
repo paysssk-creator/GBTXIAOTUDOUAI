@@ -1,0 +1,36 @@
+# GBT Pro — 生产环境
+# 严格使用 image tag，禁止任何 `build:` 上下文
+# 启动入口不可变，路由切换由外部 atomic_switch.py 控制
+
+services:
+  gbt-prod:
+    image: gbt-pro:${GBT_RELEASE_TAG}
+    container_name: gbt-prod
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8765:8765"
+    env_file:
+      - ./.env.prod
+    environment:
+      GBT_ROLE: prod
+      GBT_PORT: "8765"
+      GBT_BIND: "0.0.0.0"
+    volumes:
+      - gbt_prod_data:/app/data
+      - gbt_prod_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "/app/deploy/healthcheck.py"]
+      interval: 10s
+      timeout: 4s
+      retries: 4
+    stop_grace_period: 15s
+    networks:
+      - gbt_net
+
+networks:
+  gbt_net:
+    driver: bridge
+
+volumes:
+  gbt_prod_data:
+  gbt_prod_logs:

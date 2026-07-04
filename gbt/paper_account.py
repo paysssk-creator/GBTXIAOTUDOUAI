@@ -1,115 +1,120 @@
-"""Paper Trading Account - Real market-connected P&L tracking"""
-import json, os, time, threading
-from datetime import datetime
+"""
+Paper Trading Account — 模拟交易账户（可量化、可查询每笔成交）
+"""
+import json, os, time
+from datetime import datetime, timedelta
 
-ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), "..", "paper_account.json")
-LOCK = threading.Lock()
+STATE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "paper_account.json")
 
-DEFAULT_ACCOUNT = {
-    "cash": 100000.00,
-    "equity": 100000.00,
-    "pnl": 0.0,
-    "pnl_pct": 0.0,
-    "positions": {},
-    "orders": [],
-    "trade_history": [],
-    "created": datetime.now().isoformat(),
-    "last_prices": {}
-}
+def _init_state():
+    return {
+        "cash": 100000.0,
+        "equity": 100000.0,
+        "pnl": 0.0,
+        "positions": {},   # {code: {shares, avg_cost, market_price, market_value, pnl}}
+        "orders": [],       # [{id, time, code, name, side, price, shares, status}]
+        "trades": [],       # [{id, time, code, name, side, price, shares, value}]
+        "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
 
-def load():
-    try:
-        if os.path.exists(ACCOUNT_FILE):
-            with open(ACCOUNT_FILE, "r", encoding="utf-8") as f:
-                return json.loads(f.read())
-    except:
-        pass
-    return dict(DEFAULT_ACCOUNT)
+def _load():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    s = _init_state()
+    _save(s)
+    return s
 
-def save(acct):
-    try:
-        os.makedirs(os.path.dirname(ACCOUNT_FILE), exist_ok=True)
-        with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
-            json.dump(acct, f, ensure_ascii=False, indent=2, default=str)
-    except:
-        pass
+def _save(state):
+    state["updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
 
-def get_status():
-    """Return current account status with real P&L"""
-    with LOCK:
-        acct = load()
-        positions = acct.get("positions", {})
-        total_value = acct["cash"]
-        # Update position values from last prices
-        for code, pos in list(positions.items()):
-            if pos.get("shares", 0) > 0:
-                price = acct.get("last_prices", {}).get(code, pos.get("avg_price", 0))
-                pos["current_price"] = price
-                pos["market_value"] = pos["shares"] * price
-                pos["unrealized_pnl"] = pos["market_value"] - pos["shares"] * pos["avg_price"]
-                total_value += pos["market_value"]
-        acct["equity"] = round(total_value, 2)
-        acct["pnl"] = round(total_value - 100000.0, 2)
-        acct["pnl_pct"] = round(acct["pnl"] / 100000.0 * 100, 2) if 100000.0 > 0 else 0
-        save(acct)
-        return {
-            "cash": acct["cash"],
-            "equity": acct["equity"],
-            "pnl": acct["pnl"],
-            "pnl_pct": acct["pnl_pct"],
-            "positions": len(positions),
-            "position_list": list(positions.values()),
-            "trade_count": len(acct.get("trade_history", []))
-        }
+def get_state():
+    """完整账户状态"""
+    s = _load()
+    # recalculate equity
+    equity = s.get("cash", 0)
+    total_pnl = 0.0
+    for pos in s.get("positions", {}).values():
+        equity += pos.get("market_value", 0)
+        total_pnl += pos.get("pnl", 0)
+    s["equity"] = round(equity, 2)
+    s["total_pnl"] = round(total_pnl, 2)
+    s["position_count"] = len(s.get("positions", {}))
+    return s
 
-def update_price(code, price):
-    """Update last known price from market"""
-    with LOCK:
-        acct = load()
-        acct.setdefault("last_prices", {})[code] = price
-        save(acct)
-
-def buy(code, shares, price, name=""):
-    """Buy shares at price"""
-    with LOCK:
-        acct = load()
-        cost = shares * price * 1.0003  # commission
-        if acct["cash"] < cost:
-            return {"ok": False, "error": f"Not enough cash: need {cost:.2f}, have {acct['cash']:.2f}"}
-        acct["cash"] = round(acct["cash"] - cost, 2)
-        pos = acct.setdefault("positions", {}).setdefault(code, {
-            "code": code, "name": name, "shares": 0, "avg_price": 0, "market_value": 0, "unrealized_pnl": 0
-        })
-        old_total = pos["shares"] * pos["avg_price"]
-        pos["shares"] += shares
-        pos["avg_price"] = round((old_total + shares * price) / pos["shares"], 3)
-        pos["market_value"] = pos["shares"] * price
-        acct["last_prices"][code] = price
-        acct["trade_history"].append({
-            "action": "buy", "code": code, "shares": shares, "price": price,
-            "time": datetime.now().isoformat(), "cost": round(cost, 2)
-        })
-        save(acct)
-        return {"ok": True, "shares": pos["shares"], "avg_price": pos["avg_price"], "cost": round(cost, 2)}
-
-def sell(code, shares, price):
-    """Sell shares at price"""
-    with LOCK:
-        acct = load()
-        pos = acct.get("positions", {}).get(code)
-        if not pos or pos["shares"] < shares:
-            return {"ok": False, "error": f"Not enough shares: have {pos['shares'] if pos else 0}, need {shares}"}
-        revenue = shares * price * 0.9987  # after stamp tax + commission
-        acct["cash"] = round(acct["cash"] + revenue, 2)
+def place_order(code, name, side, price, shares):
+    """下单 — BUY/SELL"""
+    s = _load()
+    cost = round(price * shares, 2)
+    order_id = f"ORD-{int(time.time()*1000)}"
+    
+    if side.upper() == "BUY":
+        if s.get("cash", 0) < cost:
+            return {"ok": False, "error": f"资金不足: 需¥{cost:,.2f}，可用¥{s['cash']:,.2f}"}
+        s["cash"] = round(s["cash"] - cost, 2)
+        # update position
+        if code not in s["positions"]:
+            s["positions"][code] = {"code": code, "name": name, "shares": 0, "avg_cost": 0.0,
+                                    "market_price": price, "market_value": 0.0, "pnl": 0.0}
+        pos = s["positions"][code]
+        total_shares = pos["shares"] + shares
+        pos["avg_cost"] = round((pos["avg_cost"] * pos["shares"] + cost) / total_shares, 4)
+        pos["shares"] = total_shares
+        pos["market_price"] = price
+        pos["market_value"] = round(total_shares * price, 2)
+        pos["pnl"] = round(pos["market_value"] - total_shares * pos["avg_cost"], 2)
+    else:  # SELL
+        if code not in s["positions"]:
+            return {"ok": False, "error": f"无持仓: {code}"}
+        pos = s["positions"][code]
+        if pos["shares"] < shares:
+            return {"ok": False, "error": f"持仓不足: 持有{pos['shares']}股，卖出{shares}股"}
+        s["cash"] = round(s["cash"] + cost, 2)
         pos["shares"] -= shares
-        if pos["shares"] <= 0:
-            del acct["positions"][code]
-        else:
-            pos["market_value"] = pos["shares"] * price
-        acct["last_prices"][code] = price
-        acct["trade_history"].append({
-            "action": "sell", "code": code, "shares": shares, "price": price,
-            "time": datetime.now().isoformat(), "revenue": round(revenue, 2)
-        })
-        save(acct)
-        return {"ok": True, "shares": pos.get("shares", 0) if code in acct.get("positions", {}) else 0, "revenue": round(revenue, 2)}
+        pos["market_price"] = price
+        pos["market_value"] = round(pos["shares"] * price, 2)
+        pos["pnl"] = round(pos["market_value"] - pos["shares"] * pos["avg_cost"], 2)
+        if pos["shares"] == 0:
+            s["positions"].pop(code, None)
+    
+    # record trade
+    trade = {
+        "id": order_id,
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "code": code,
+        "name": name,
+        "side": side.upper(),
+        "price": price,
+        "shares": shares,
+        "value": cost,
+    }
+    s["trades"].append(trade)
+    s["orders"].append({**trade, "status": "FILLED"})
+    
+    # recalc pnl
+    s["pnl"] = round(s["equity"] - 100000.0, 2)
+    _save(s)
+    return {"ok": True, "order_id": order_id, "trade": trade, "cash": s["cash"],
+            "positions": list(s["positions"].values())}
+
+def get_trades(limit=50):
+    """成交记录"""
+    s = _load()
+    return s.get("trades", [])[-limit:]
+
+def get_orders(limit=50):
+    """委托记录"""
+    s = _load()
+    return s["orders"][-limit:]
+
+def reset():
+    """重置账户"""
+    s = _init_state()
+    _save(s)
+    return {"ok": True, "cash": s["cash"]}

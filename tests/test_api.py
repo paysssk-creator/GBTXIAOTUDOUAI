@@ -1,9 +1,12 @@
 """
 test_api.py — GBT API 冒烟测试
 验证所有核心端点可访问
+开发者: 自由的风
 """
-import sys, io, json, urllib.request
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+import sys, json, urllib.request
+# 注意：不要劫持 sys.stdout，否则会破坏 pytest 9 的 capture 系统
+import os
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 API = "http://localhost:8765/api"
 ENDPOINTS = [

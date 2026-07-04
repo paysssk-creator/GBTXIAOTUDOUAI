@@ -24,7 +24,7 @@ def inject_knowledge():
                 msg.SYSTEM_PROMPT = msg.SYSTEM_PROMPT + "\n" + SYSTEM_KNOWLEDGE
             if hasattr(msg, 'DEFAULT_SYSTEM'):
                 msg.DEFAULT_SYSTEM = msg.DEFAULT_SYSTEM + "\n" + SYSTEM_KNOWLEDGE
-        except:
+        except Exception:
             pass
             
         print("[KNOWLEDGE] A-Share + Desktop expertise injected")
