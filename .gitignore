@@ -60,3 +60,56 @@ _patch*.py
 _build*.py  
 _fix2.py 
 .gbt_keys.db 
+**/.codewhale/*
+!**/.codewhale/constitution.json
+.deepseek/
+.aider*
+
+# Windows user directory system files
+NTUSER.DAT*
+ntuser.dat*
+ntuser.ini
+NUL
+AppData/
+Contacts/
+Documents/
+Downloads/
+Favorites/
+Library/
+Links/
+Music/
+OneDrive/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+Desktop/
+.config/
+.cache/
+.local/
+.kube/
+.matplotlib/
+.ssh/
+.wslconfig
+.profile
+.gitconfig
+
+# External tools/cache
+.bun/
+.cargo/
+.rustup/
+.ollama/
+.docker/
+.claude/
+.claude.json
+.clawhub/
+.codex/
+.gemini/
+.trae/
+.codewhale/
+
+# Other projects (own git repos)
+GBT-JXDWD/
+GBTXIAOTUDOUAI/
+ClawX/
+cai_ref/
