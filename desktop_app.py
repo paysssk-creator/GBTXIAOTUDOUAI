@@ -25,7 +25,7 @@ def dashboard():
 
 @app.route("/market")
 def market_page():
-    mp=os.path.join(os.path.dirname(__file__),"desktop","templates","market.html")
+    mp=os.path.join(os.path.dirname(__file__),"gbt_templates","market.html")
     if os.path.exists(mp):
         html=open(mp,"r",encoding="utf-8").read()
     else:

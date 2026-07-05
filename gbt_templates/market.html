@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GBT Pro — 市场</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e14;color:#e6e8ec;min-height:100vh}
+.header{background:#11161e;padding:12px 20px;display:flex;align-items:center;gap:20px;border-bottom:1px solid #1a2230}
+.header h1{font-size:18px;color:#6366f1}
+.nav{display:flex;gap:8px}
+.nav a{color:#8b949e;text-decoration:none;padding:6px 14px;border-radius:6px;font-size:13px}
+.nav a.active{background:#6366f1;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:20px}
+.card{background:#11161e;border-radius:10px;padding:16px;border:1px solid #1a2230}
+.card-header{font-size:12px;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.price{font-size:28px;font-weight:700;color:#e6e8ec}
+.change{font-size:14px;margin-top:4px}
+.up{color:#22c55e}.down{color:#ef4444}
+.sub{font-size:11px;color:#8b949e}
+.market-panel{grid-column:1/-1}
+.market-panel .card{height:300px;overflow-y:auto}
+.stock-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1a2230;font-size:14px}
+.stock-row:hover{background:#151b24}
+.stock-name{color:#8b949e;font-size:12px}
+.row-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.status{font-size:11px;color:#8b949e;text-align:center;padding:20px}
+.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.btn{background:#6366f1;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+.btn:hover{background:#5558e6}
+.input{background:#0a0e14;border:1px solid #1a2230;color:#e6e8ec;padding:8px 12px;border-radius:6px;font-size:13px;width:120px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚡ GBT Pro</h1>
+  <div class="nav">
+    <a href="/dashboard">仪表盘</a>
+    <a href="/market" class="active">市场</a>
+  </div>
+  <span style="margin-left:auto;font-size:11px;color:#8b949e" id="clock">--</span>
+</div>
+
+<div class="grid" id="app">
+  <div class="status">⏳ 加载市场数据...</div>
+</div>
+
+<script>
+const $=(s)=>document.querySelector(s);
+const $$=(s)=>document.querySelectorAll(s);
+
+async function fetchJSON(url){try{const r=await fetch(url);return await r.json()}catch(e){return{}}}
+
+function fmt(n,d=2){return Number(n||0).toFixed(d)}
+function pct(v,green=true){const c=v>=0?(green?'up':'down'):'down';return`<span class="${c}">${v>=0?'+':''}${fmt(v)}%</span>`}
+
+async function loadMarket(){
+  const market=await fetchJSON('/api/market');
+  const dash=await fetchJSON('/api/dashboard');
+  const trade=dash.trade||{};
+  
+  let html='';
+  
+  // 指数卡片
+  if(market.indices){
+    market.indices.forEach(idx=>{
+      const up=idx.pct>=0;
+      html+=`<div class="card">
+        <div class="card-header">${idx.name}</div>
+        <div class="price">${fmt(idx.price)}</div>
+        <div class="change ${up?'up':'down'}">${up?'+':''}${fmt(idx.change)} (${up?'+':''}${fmt(idx.pct)}%)</div>
+        <div class="sub">${idx.code}</div>
+      </div>`;
+    });
+  }
+  
+  // 账户卡片
+  const acct=trade.account||{};
+  html+=`<div class="card">
+    <div class="card-header">模拟账户</div>
+    <div class="price" style="font-size:22px">¥${fmt(acct.cash||0)}</div>
+    <div class="sub">权益: ¥${fmt(acct.equity||0)} | 盈亏: <span class="${(acct.pnl||0)>=0?'up':'down'}">${fmt(acct.pnl||0)}</span></div>
+    <div class="sub">持仓: ${acct.positions||0} 笔 | 交易: ${acct.trade_count||0} 次</div>
+  </div>`;
+  
+  // 系统
+  const sys=dash.system||{};
+  html+=`<div class="card">
+    <div class="card-header">系统状态</div>
+    <div class="sub">CPU: ${sys.cpu||'?'}% | 内存: ${sys.memory||'?'}%</div>
+    <div class="sub">磁盘: ${sys.disk||'?'}%</div>
+    <div class="sub">${sys.host||'--'}</div>
+  </div>`;
+  
+  // 快速操作
+  html+=`<div class="card">
+    <div class="card-header">快速操作</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <input class="input" id="stockCode" placeholder="股票代码" style="flex:1">
+      <button class="btn" onclick="lookup()">查询</button>
+    </div>
+    <div id="stockResult" class="sub" style="margin-top:8px"></div>
+  </div>`;
+  
+  $('#'+'app').innerHTML=html;
+}
+
+async function lookup(){
+  const code=$('#'+'stockCode').value.trim();
+  if(!code)return;
+  const data=await fetchJSON('/api/market');
+  $('#'+'stockResult').innerHTML='<span class="sub">查询中...</span>';
+  // 直接查东方财富
+  try{
+    const prefix=code.startsWith('6')||code.startsWith('68')?'1':'0';
+    const r=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?fields=f43,f44,f45,f46,f47,f48,f50,f57,f58,f60,f116,f117,f170&secid=${prefix}.${code}`);
+    const d=await r.json();
+    const s=d.data||{};
+    const p=s.f43||0;const chg=s.f170||0;const pct=s.f170?(chg/(p-chg)*100):0;
+    $('#'+'stockResult').innerHTML=`
+      <div style="font-size:16px;font-weight:700">${s.f58||code} <span class="${chg>=0?'up':'down'}">${fmt(p)}</span></div>
+      <div class="sub">涨跌: <span class="${chg>=0?'up':'down'}">${chg>=0?'+':''}${fmt(chg)} (${chg>=0?'+':''}${fmt(pct)}%)</span></div>
+      <div class="sub">最高: ${fmt(s.f44)} | 最低: ${fmt(s.f45)} | 昨收: ${fmt(s.f60)}</div>`;
+  }catch(e){
+    $('#'+'stockResult').innerHTML='<span class="down">查询失败</span>';
+  }
+}
+
+loadMarket();
+setInterval(loadMarket,30000);
+setInterval(()=>{$('#'+'clock').textContent=new Date().toLocaleTimeString('zh-CN')},1000);
+</script>
+</body>
+</html>
