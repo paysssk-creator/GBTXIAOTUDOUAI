@@ -1,96 +1,55 @@
 <!DOCTYPE html>
-<html lang="zh">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GBT Pro — 市场</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e14;color:#e6e8ec;min-height:100vh}
-.header{background:#11161e;padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #1a2230}
-.header h1{font-size:16px;color:#6366f1}
-.nav{display:flex;gap:4px}
-.nav a{color:#8b949e;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:12px}
-.nav a.active{background:#6366f1;color:#fff}
-.main{display:grid;grid-template-columns:1fr 340px;gap:12px;padding:12px;height:calc(100vh - 46px)}
-.panel{background:#11161e;border-radius:8px;border:1px solid #1a2230;overflow:hidden}
-.panel-hd{font-size:11px;color:#8b949e;padding:10px 14px;border-bottom:1px solid #1a2230;text-transform:uppercase;letter-spacing:.5px}
-.idx-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1a2230}
-.idx-card{background:#11161e;padding:14px}
-.idx-name{font-size:11px;color:#8b949e}
-.idx-price{font-size:22px;font-weight:700;margin:4px 0;color:#e6e8ec}
-.idx-chg{font-size:12px}.up{color:#22c55e}.down{color:#ef4444}
-.wlist{overflow-y:auto;max-height:calc(100% - 30px)}
-.wl-row{display:grid;grid-template-columns:1fr 70px 80px 60px;padding:8px 14px;font-size:13px;border-bottom:1px solid #151b24;align-items:center;cursor:pointer}
-.wl-row:hover{background:#151b24}
-.wl-code{font-size:11px;color:#8b949e}.wl-name{font-size:13px}
-.heat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
-.heat-tag{background:#151b24;padding:8px 10px;border-radius:6px;font-size:12px;display:flex;justify-content:space-between}
-.tag-name{color:#8b949e}.tag-pct{font-weight:600}
-.input{background:#0a0e14;border:1px solid #1a2230;color:#e6e8ec;padding:7px 10px;border-radius:4px;font-size:12px;width:100px}
-.btn{background:#6366f1;color:#fff;border:none;padding:7px 14px;border-radius:4px;cursor:pointer;font-size:12px}.btn:hover{background:#5558e6}
-.lookup{padding:12px}
-.result{padding:0 12px 12px;font-size:12px}
-.status{padding:20px;text-align:center;color:#8b949e;font-size:12px}
-.spin{display:inline-block;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-</style></head>
-<body>
-<div class="header"><h1>GBT Pro</h1>
-<div class="nav"><a href="/dashboard">仪表盘</a><a href="/market" class="active">市场</a></div>
-<span style="margin-left:auto;font-size:11px;color:#8b949e" id="clock"></span></div>
-
+<html lang="zh"><head><meta charset="UTF-8"><title>GBT Pro — 市场</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Segoe UI,system-ui,sans-serif;background:#0a0e14;color:#e6e8ec}
+.hdr{background:#11161e;padding:8px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a2230}
+.hdr h1{font-size:15px;color:#6366f1}
+.nav a{color:#8b949e;text-decoration:none;padding:4px 10px;border-radius:4px;font-size:11px}
+.nav a.on{background:#6366f1;color:#fff}
+.main{display:grid;grid-template-columns:1fr 320px;gap:8px;padding:8px;height:calc(100vh - 40px)}
+.pn{background:#11161e;border:1px solid #1a2230;border-radius:6px;overflow:hidden}
+.ph{font-size:10px;color:#8b949e;padding:8px 12px;border-bottom:1px solid #1a2230;letter-spacing:.5px}
+.idx{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1a2230}
+.ic{background:#11161e;padding:12px}.in{font-size:10px;color:#8b949e}.ip{font-size:20px;font-weight:700;margin:2px 0}.icg{font-size:11px}.up{color:#22c55e}.dn{color:#ef4444}
+.wl{overflow-y:auto;max-height:calc(100% - 80px)}
+.wr{display:grid;grid-template-columns:1fr 65px 75px 50px;padding:7px 12px;font-size:12px;border-bottom:1px solid #151b24;align-items:center;cursor:pointer}
+.wr:hover{background:#151b24}.wc{font-size:10px;color:#8b949e}
+.lkp{padding:8px 12px;display:flex;gap:4px}
+.inp{background:#0a0e14;border:1px solid #1a2230;color:#e6e8ec;padding:5px 8px;border-radius:3px;font-size:11px;width:80px}
+.bt{background:#6366f1;color:#fff;border:none;padding:5px 12px;border-radius:3px;cursor:pointer;font-size:11px}.bt:hover{background:#5558e6}
+.st{text-align:center;color:#8b949e;padding:20px;font-size:11px}
+</style></head><body>
+<div class="hdr"><h1>GBT Pro</h1><div class="nav"><a href="/dashboard">仪表盘</a><a href="/market" class="on">市场</a></div><span style="margin-left:auto;font-size:10px;color:#8b949e" id="clk"></span></div>
 <div class="main">
-<div class="panel" id="left">
-<div class="panel-hd">市场指数</div>
-<div class="idx-grid" id="indices"><div class="status"><span class="spin">◌</span> 加载中...</div></div>
-<div class="panel-hd" style="margin-top:12px">热门概念</div>
-<div class="heat-grid" id="hot"><div class="status">加载中...</div></div>
-</div>
-<div class="panel" id="right">
-<div class="panel-hd">自选股</div>
-<div class="lookup"><div style="display:flex;gap:6px">
-<input class="input" id="code" placeholder="代码" value="600519"><input class="input" id="code2" placeholder="代码" value="000858"><button class="btn" onclick="addWatch()">+加</button></div></div>
-<div class="wlist" id="watch"><div class="status">加载中...</div></div>
-</div></div>
-
+<div class="pn"><div class="ph">指数</div><div class="idx" id="idx"><div class="st">加载中...</div></div></div>
+<div class="pn"><div class="ph">自选股</div>
+<div class="lkp"><input class="inp" id="cd" placeholder="代码"><button class="bt" onclick="addW()">+</button><button class="bt" style="background:#ef4444" onclick="clearW()">清</button></div>
+<div class="wl" id="wl"><div class="st">加载中...</div></div></div></div>
 <script>
-const WATCH=['600519','000858','300750','601318','600036','000333','002594','688981','601012','600276'];
-let prices={};
+const $=s=>document.querySelector(s);
+let w=JSON.parse(localStorage.getItem('gbt_watch')||'["600519","000858","300750","601318","600036","000333","002594","688981","601012","600276"]');
 
 async function api(u){try{const r=await fetch(u);return await r.json()}catch(e){return{}}}
 function f(n,d=2){return Number(n||0).toFixed(d)}
 
-async function fetchPrice(code){
-  const p=code.startsWith('6')?'1':'0';
-  const r=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?fields=f43,f44,f45,f46,f47,f48,f50,f57,f58,f60,f170,f116&secid=${p}.${code}`);
-  const d=await r.json(); const s=d.data||{};
-  return {code,name:s.f58||code,price:s.f43||0,change:s.f170||0,high:s.f44||0,low:s.f45||0,open:s.f46||0,prev:s.f60||0,vol:s.f47||0,turnover:s.f48||0,pe:s.f116||0};
-}
-
-async function loadAll(){
-  $('#'+'clock').textContent=new Date().toLocaleTimeString('zh-CN');
-  const market=await api('/api/market');
-  if(market.indices){
-    let h='';
-    market.indices.forEach(i=>{const u=i.pct>=0;h+=`<div class="idx-card"><div class="idx-name">${i.name}</div><div class="idx-price">${f(i.price)}</div><div class="idx-chg ${u?'up':'down'}">${u?'+':''}${f(i.change)} (${u?'+':''}${f(i.pct)}%)</div></div>`});
-    $('#'+'indices').innerHTML=h;
-  }
+async function load(){
+  $('#'+'clk').textContent=new Date().toLocaleTimeString('zh-CN');
+  const m=await api('/api/market');
+  if(m.indices){let h='';m.indices.forEach(i=>{const u=i.pct>=0;h+=`<div class="ic"><div class="in">${i.name}</div><div class="ip">${f(i.price)}</div><div class="icg ${u?'up':'dn'}">${u?'+':''}${f(i.change)} (${u?'+':''}${f(i.pct)}%)</div></div>`});$('#'+'idx').innerHTML=h}
 
   let wh='';
-  for(const c of WATCH){
-    try{const s=await fetchPrice(c);prices[c]=s;
-      const u=s.change>=0;const pct=s.prev?(s.change/s.prev*100):0;
-      wh+=`<div class="wl-row"><div><span class="wl-name">${s.name}</span><br><span class="wl-code">${c}</span></div><div style="font-weight:700">${f(s.price)}</div><div class="${u?'up':'down'}">${u?'+':''}${f(s.change)}<br><span style="font-size:10px">${u?'+':''}${f(pct)}%</span></div><div class="sub" style="font-size:10px;color:#8b949e">量:${(s.vol/10000).toFixed(0)}万</div></div>`;
+  for(let c of w){
+    try{const p=c.startsWith('6')?'1':'0';const r=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?fields=f43,f58,f170,f47&secid=${p}.${c}`);const d=await r.json();const s=d.data||{};
+      const pr=s.f43/100;const chg=s.f170/100;const pct=chg&&pr?((chg/(pr-chg))*100):0;const u=chg>=0;
+      wh+=`<div class="wr"><div><span>${s.f58||c}</span><br><span class="wc">${c}</span></div><div style="font-weight:600">${f(pr)}</div><div class="${u?'up':'dn'}">${u?'+':''}${f(chg)}<br><span style="font-size:9px">${u?'+':''}${f(pct)}%</span></div><div style="font-size:9px;color:#8b949e">${((s.f47||0)/10000).toFixed(0)}万</div></div>`;
     }catch(e){}
   }
-  $('#'+'watch').innerHTML=wh||'<div class="status">无数据</div>';
-
-  // 热门概念
-  $('#'+'hot').innerHTML=[{n:'AI芯片',p:3.2},{n:'新能源',p:-1.5},{n:'半导体',p:2.8},{n:'白酒',p:0.6},{n:'医药',p:-0.8},{n:'机器人',p:4.1}].map(t=>`<div class="heat-tag"><span class="tag-name">${t.n}</span><span class="tag-pct ${t.p>=0?'up':'down'}">${t.p>=0?'+':''}${t.p}%</span></div>`).join('');
+  $('#'+'wl').innerHTML=wh||'<div class="st">无数据</div>';
 }
 
-function addWatch(){
-  const c=$('#'+'code').value.trim();
-  if(c&&!WATCH.includes(c)){WATCH.unshift(c);loadAll()}
-}
+function addW(){const c=$('#'+'cd').value.trim();if(c&&!w.includes(c)){w.unshift(c);saveW()}}
+function clearW(){w=[];saveW()}
+function saveW(){localStorage.setItem('gbt_watch',JSON.stringify(w));load()}
 
-const $=s=>document.querySelector(s);
-loadAll();setInterval(loadAll,15000);
+load();setInterval(load,10000);
 </script></body></html>
