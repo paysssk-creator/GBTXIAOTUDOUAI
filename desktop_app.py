@@ -23,6 +23,17 @@ def dashboard():
     resp.headers['Expires']='0'
     return resp
 
+@app.route("/market")
+def market_page():
+    mp=os.path.join(os.path.dirname(__file__),"desktop","templates","market.html")
+    if os.path.exists(mp):
+        html=open(mp,"r",encoding="utf-8").read()
+    else:
+        html="<h1>Market page not found</h1>"
+    resp=app.make_response(html)
+    resp.headers['Cache-Control']='no-cache'
+    return resp
+
 @app.route("/api/status")
 def status():
     from gbt.providers import AutoKeyConfig
