@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="UTF-8"><title>GBT Pro — 仪表盘</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Segoe UI,system-ui,sans-serif;background:#0a0e14;color:#e6e8ec}
+.hdr{background:#11161e;padding:8px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1a2230}
+.hdr h1{font-size:15px;color:#6366f1}
+.nav{display:flex;gap:8px}.nav a{color:#8b949e;text-decoration:none;padding:4px 10px;font-size:11px;border-radius:4px}
+.nav a.on{background:#6366f1;color:#fff}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;padding:10px}
+.c{background:#11161e;border:1px solid #1a2230;border-radius:6px;padding:14px}
+.ch{font-size:10px;color:#8b949e;letter-spacing:.5px;margin-bottom:6px}
+.cv{font-size:22px;font-weight:700}.up{color:#22c55e}.dn{color:#ef4444}
+.cs{font-size:11px;color:#8b949e;margin-top:4px}
+.st{text-align:center;color:#8b949e;padding:30px;font-size:12px}
+.bar{height:4px;border-radius:2px;margin-top:8px;background:#1a2230;overflow:hidden}
+.bf{height:100%;border-radius:2px;transition:width .5s}
+</style></head><body>
+<div class="hdr"><h1>GBT Pro</h1><div class="nav"><a href="/dashboard" class="on">仪表盘</a><a href="/market">市场</a></div><span style="margin-left:auto;font-size:10px;color:#8b949e" id="clk"></span></div>
+<div class="g" id="app"><div class="st">加载中...</div></div>
+<script>
+const $=s=>document.querySelector(s);
+async function api(u){try{return await(await fetch(u)).json()}catch(e){return{}}}
+function f(n,d=2){return Number(n||0).toFixed(d)}
+
+async function load(){
+  $('#'+'clk').textContent=new Date().toLocaleTimeString('zh-CN');
+  const d=await api('/api/dashboard'),s=d.system||{},t=d.trade||{},a=t.account||{},l=d.llm||{};
+
+  let h='';
+  // 账户
+  const pnl=a.pnl||0,up=pnl>=0;
+  h+=`<div class="c"><div class="ch">模拟账户</div><div class="cv">¥${f(a.cash||0,0)}</div><div class="cs">权益 ¥${f(a.equity||0,0)} | 盈亏 <span class="${up?'up':'dn'}">${up?'+':''}${f(pnl)}</span></div><div class="cs">持仓 ${a.positions||0} 笔 | 交易 ${a.trade_count||0} 次</div></div>`;
+
+  // 系统
+  const cpu=s.cpu||0,mem=s.memory||0;
+  h+=`<div class="c"><div class="ch">系统</div><div class="cv">CPU</div><div class="bar"><div class="bf" style="width:${cpu}%;background:${cpu>80?'#ef4444':cpu>50?'#f59e0b':'#22c55e'}"></div></div><div class="cs">${f(cpu)}%</div><div class="cv" style="margin-top:8px">内存</div><div class="bar"><div class="bf" style="width:${mem}%;background:${mem>80?'#ef4444':mem>50?'#f59e0b':'#22c55e'}"></div></div><div class="cs">${f(mem)}%</div><div class="cs">磁盘 ${f(s.disk||0)}% | ${s.host||'--'}</div></div>`;
+
+  // LLM
+  h+=`<div class="c"><div class="ch">LLM 用量</div><div class="cv">${(l.totals?.tokens_total||0).toLocaleString()}</div><div class="cs">Tokens累计 | ¥${f(l.totals?.cost_rmb||0,4)}</div><div class="cs">请求 ${l.totals?.requests||0}次 | 延迟 ${f(l.totals?.avg_latency_s||0)}s</div></div>`;
+
+  // 快捷操作
+  h+=`<div class="c"><div class="ch">快捷操作</div><div class="cv" style="font-size:14px;font-weight:400"><a href="/market" style="color:#6366f1">→ 市场</a></div><div class="cs" style="margin-top:4px"><a href="/market" style="color:#6366f1">→ 股票查询</a></div><div class="cs">服务器: ${new Date().toLocaleString('zh-CN')}</div></div>`;
+
+  $('#'+'app').innerHTML=h;
+}
+load();setInterval(load,15000);
+</script></body></html>
