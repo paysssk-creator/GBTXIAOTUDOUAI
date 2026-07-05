@@ -23,7 +23,19 @@ from gbt.message import Message
 # GBT系统提示词
 GBT_SYSTEM_PROMPT = """你是 GBT小土豆全能开发者，一个AI原生的全能开发Agent。
 
+## 铁律（每次必执行，禁止跳过）
+0. 收到任何任务 → 第一步必须调用 gbt.analyze_intent 分析上下文
+   → auto组自动执行 → confirm组(攻击类)展示给用户确认
+   → 不要自己猜用什么工具，让意图代理帮你判断
+1. 扫描不漏文件、结论不靠猜 — 逐文件过，禁止"应该没问题"
+2. 改完复查两遍 — 第一轮发现问题，第二轮确认零遗漏
+3. 报错一个不留 — 哪怕无害假阳性也不行
+4. 完工必须清理 — 临时文件、旧进程、无用后台任务全清
+
 ## 核心能力
+- 🧭 意图代理 (gbt.analyze_intent / execute_intent / confirm_execute)
+  → Kimi API语义级意图理解，自动发现 52 个能力模块
+  → 三级分级: auto自动执行 / suggest建议 / confirm需确认
 - 🔍 代码扫描与安全审计 (scanner)
 - 📋 项目健康审计 (audit)
 - 🧬 6步自进化闭环 (evolve)
@@ -33,11 +45,14 @@ GBT_SYSTEM_PROMPT = """你是 GBT小土豆全能开发者，一个AI原生的全
 - 🖥️ 桌面控制 (desktop)
 - 📧 邮箱监控 (email)
 - 🪞 镜像部署 (deploy)
+- ⚔ 攻击工具链 (sqli_tester/xss_tester/brute_forcer/command_injector/WAF绕过等19个)
+  → 攻击类自动进入 confirm 组，需用户确认后通过 gbt.confirm_execute 执行
 
 ## 工作原则
 - 所有代码修改必须走6步闭环: 自查→扫描→备份→修复→审查→进化
 - 禁止裸改代码，必须先git备份
 - 金融数据必须来自真实API，禁止捏造
+- 遇到问题先 gbt.analyze_intent，没有的能力 web_search 抓开源工具
 
 ## 回复风格
 - 简洁专业，用emoji标记关键信息
@@ -100,6 +115,69 @@ class GBTAgent(SimpleAgent):
         self._tools.register("winctl", "Windows系统操控: screen/voice/bt/wifi/keyboard/mouse/volume/camera/notify/clipboard/lock/shutdown",
                             self._tool_winctl,
                             {"feature": "功能", "action": "操作", "params": "参数"})
+        # 意图代理工具（集成 GBT-JXDWD IntentBroker）
+        self._tools.register("gbt.analyze_intent",
+                            "意图分析 — 传入上下文，Kimi API语义级识别需要哪些能力。返回 auto/suggest/confirm 三级推荐",
+                            self._tool_analyze_intent,
+                            {"context": "当前任务上下文描述"})
+        self._tools.register("gbt.execute_intent",
+                            "意图执行 — 分析上下文，auto_exec=true时自动执行安全能力",
+                            self._tool_execute_intent,
+                            {"context": "上下文", "target": "可选目标", "auto_exec": "是否自动执行(true/false)"})
+        self._tools.register("gbt.confirm_execute",
+                            "确认执行 — 用户确认后执行 pending 组中的攻击/建议能力",
+                            self._tool_confirm_execute,
+                            {"pending_json": "execute_intent返回的pending数组JSON", "target": "攻击目标"})
+
+    def _tool_analyze_intent(self, context: str = "") -> str:
+        try:
+            import sys; sys.path.insert(0, "GBT-JXDWD/sandbox")
+            from smart_scheduler import get_scheduler
+            s = get_scheduler()
+            r = s.analyze_intent(context)
+            auto = len(r.get("auto", []))
+            suggest = len(r.get("suggest", []))
+            confirm = len(r.get("confirm", []))
+            lines = [f"🧭 意图分析: auto={auto} suggest={suggest} confirm={confirm}"]
+            for rec in r.get("auto", [])[:3]:
+                lines.append(f"  [auto] {rec['capability']}.{rec['action']}: {rec.get('reason','')[:60]}")
+            for rec in r.get("confirm", [])[:3]:
+                lines.append(f"  [⏳确认] {rec['capability']}.{rec['action']}: {rec.get('reason','')[:60]}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"意图分析失败: {e}"
+
+    def _tool_execute_intent(self, context: str = "", target: str = "", auto_exec: str = "false") -> str:
+        try:
+            import sys, json; sys.path.insert(0, "GBT-JXDWD/sandbox")
+            from smart_scheduler import get_scheduler
+            s = get_scheduler()
+            ae = auto_exec.lower() in ("true", "1", "yes")
+            r = s.execute_intent(context, target=target or None, auto_exec=ae)
+            lines = [f"🧭 意图执行: executed={len(r.get('executed',[]))} pending={len(r.get('pending',[]))}"]
+            for ex in r.get("executed", [])[:5]:
+                ok = "OK" if ex.get("ok") else "FAIL"
+                lines.append(f"  [{ok}] {ex['capability']}.{ex['action']}: {ex.get('summary','')[:60]}")
+            for p in r.get("pending", [])[:3]:
+                lines.append(f"  [⏳] {p.get('capability','')}.{p.get('action','')} — 待确认")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"意图执行失败: {e}"
+
+    def _tool_confirm_execute(self, pending_json: str = "[]", target: str = "") -> str:
+        try:
+            import sys, json; sys.path.insert(0, "GBT-JXDWD/sandbox")
+            from smart_scheduler import get_scheduler
+            s = get_scheduler()
+            pending = json.loads(pending_json)
+            r = s.execute_pending(pending, target=target or None)
+            lines = [f"⚔ 确认执行: passed={r.get('passed',0)} failed={r.get('failed',0)}"]
+            for ex in r.get("executed", []):
+                ok = "OK" if ex.get("ok") else "FAIL"
+                lines.append(f"  [{ok}] {ex['capability']}.{ex['action']}: {ex.get('summary','')[:60]}")
+            return "\n".join(lines)
+        except Exception as e:
+            return f"确认执行失败: {e}"
 
     def _tool_help(self, action: str = "help") -> str:
         if action == "tools":
