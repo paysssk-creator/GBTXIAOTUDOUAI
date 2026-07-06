@@ -1,0 +1,126 @@
+{
+  "saved_at": 1783149077,
+  "broker": null,
+  "stock_code": null,
+  "evidence": {
+    "ok": true,
+    "screenshot_path": "screenshots/trade_probe_20260704_141117.png",
+    "report_path": "audit_evidence/trade_probe_20260704_141117.json"
+  },
+  "snapshot": {
+    "broker": "",
+    "stock_code": "",
+    "trade_action": "",
+    "price": 0.0,
+    "lots": 0,
+    "snapshot": {
+      "broker": null,
+      "stock_code": null,
+      "trade_action": null,
+      "focus_state": null,
+      "page_nav_state": {
+        "ok": false,
+        "skipped": true,
+        "reason": "未识别到券商窗口，暂不切页"
+      },
+      "window_state": {
+        "ok": true,
+        "active_window": {
+          "ok": true,
+          "title": "audit.py - GBTXIAOTUDOUAI - Trae",
+          "left": 65,
+          "top": 77,
+          "width": 1570,
+          "height": 805
+        },
+        "window_count": 14,
+        "observed_titles": [
+          "✅ CodeWhale",
+          "C:\\Users\\ADMIN\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "audit.py - GBTXIAOTUDOUAI - Trae",
+          "GBT Pro — 自主操盘·智能交易终端 - Google Chrome",
+          "‎GBT全能小土豆CC – (2515202)",
+          "CWebviewHostWnd",
+          "WeChat",
+          "桌面 - 文件资源管理器",
+          "GBT 镜像多维度空间",
+          "Hugging Face – The AI community building the future. - Google Chrome",
+          "*npx.ps1 - Notepad",
+          "Realtek Audio Console",
+          "Windows 输入体验",
+          "Program Manager"
+        ],
+        "broker_windows": []
+      },
+      "active_window": {
+        "ok": true,
+        "title": "audit.py - GBTXIAOTUDOUAI - Trae",
+        "left": 65,
+        "top": 77,
+        "width": 1570,
+        "height": 805
+      },
+      "login_state": {
+        "ok": true,
+        "logged_in": false,
+        "confidence": 0.0,
+        "keywords": [],
+        "error": null
+      },
+      "anchor_state": {
+        "ok": true,
+        "found": false,
+        "anchors": {},
+        "keywords": {
+          "stock_code": [],
+          "price": [],
+          "lots": [],
+          "buy_btn": [],
+          "sell_btn": [],
+          "confirm_btn": []
+        },
+        "error": null
+      },
+      "entrust_state": {
+        "ok": true,
+        "found": false,
+        "panel": "entrust",
+        "broker": "东方财富",
+        "bounds": null,
+        "codes": [],
+        "matched_lines": [],
+        "metrics": [],
+        "rows": [],
+        "summary": {},
+        "error": null
+      },
+      "position_state": {
+        "ok": true,
+        "found": false,
+        "panel": "position",
+        "broker": "东方财富",
+        "bounds": null,
+        "codes": [],
+        "matched_lines": [],
+        "metrics": [],
+        "rows": [],
+        "summary": {},
+        "error": null
+      },
+      "takeover_phase": "await_broker_window",
+      "next_step": "请先打开并停留在真实券商交易客户端，AI 再继续接管。",
+      "ready": false,
+      "human_action_required": true
+    },
+    "confirm_state": {
+      "ok": true,
+      "found": false,
+      "confirm_btn": null,
+      "keywords": [],
+      "error": null
+    },
+    "warnings": [
+      "请先打开并停留在真实券商交易客户端，AI 再继续接管。"
+    ]
+  }
+}

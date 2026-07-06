@@ -1,0 +1,222 @@
+{
+  "saved_at": 1783185650,
+  "mode": "app_only",
+  "confirm": true,
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "trade_action": "buy",
+  "price": 1420.55,
+  "lots": 100,
+  "precheck": {
+    "ok": true,
+    "broker": "同花顺",
+    "stock_code": "600519",
+    "focus_state": {
+      "ok": true,
+      "skipped": true,
+      "reason": "APP-only 模式不依赖外部券商窗口"
+    },
+    "window_state": {
+      "ok": true,
+      "active_window": null,
+      "broker_windows": [],
+      "observed_titles": [],
+      "window_count": 0
+    },
+    "active_window": null,
+    "login_state": {
+      "ok": true,
+      "logged_in": true,
+      "confidence": 1.0,
+      "keywords": [
+        "APP-only"
+      ],
+      "error": null
+    },
+    "page_nav_state": {
+      "ok": true,
+      "skipped": true,
+      "reason": "APP-only 模式不执行外部切页"
+    },
+    "anchor_state": {
+      "ok": true,
+      "found": false,
+      "anchors": {},
+      "keywords": {},
+      "error": null
+    },
+    "entrust_state": {
+      "ok": true,
+      "found": true,
+      "panel": "entrust",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [
+        "600519"
+      ],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    },
+    "position_state": {
+      "ok": true,
+      "found": true,
+      "panel": "position",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [
+        "600519"
+      ],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    },
+    "human_action_required": false,
+    "ready": true,
+    "takeover_phase": "app_only",
+    "next_step": "APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+    "app_only": true,
+    "confirm_state": {
+      "ok": true,
+      "found": false,
+      "confirm_btn": null,
+      "keywords": [
+        "APP-only"
+      ],
+      "error": null
+    },
+    "price": 1420.55,
+    "lots": 100,
+    "precheck_passed": true,
+    "can_fill_form": true,
+    "can_submit_confirm": false,
+    "missing_payload": [],
+    "missing_fill_anchors": [],
+    "next_action_id": "trade_form_fill",
+    "supported_actions": [
+      "trade_form_fill",
+      "trade_submit_confirm",
+      "trade_result_watch"
+    ],
+    "risk_gate": {
+      "dry_run_supported": true,
+      "confirm_required_actions": [
+        "trade_submit_confirm"
+      ],
+      "human_action_required": false
+    },
+    "warnings": [
+      "APP内闭环模式已启用，请直接补齐参数并执行安全预演。"
+    ],
+    "capture_evidence": true,
+    "evidence": {
+      "ok": true,
+      "screenshot_path": "screenshots/trade_probe_20260705_002050_同花顺_600519.png",
+      "report_path": "audit_evidence/trade_probe_20260705_002050_同花顺_600519.json"
+    }
+  },
+  "steps": [
+    {
+      "id": "trade_form_fill",
+      "result": {
+        "ok": true,
+        "time": "00:20:50",
+        "data": "APP内已锁定交易参数：股票代码 600519 -> 价格 1420.55 -> 手数 100",
+        "stock_code": "600519",
+        "price": 1420.55,
+        "lots": 100,
+        "anchor_state": {
+          "ok": false,
+          "found": false,
+          "anchors": {},
+          "keywords": {},
+          "error": "OCR引擎未就绪"
+        },
+        "broker": "同花顺",
+        "app_only": true
+      }
+    },
+    {
+      "id": "trade_submit_confirm",
+      "result": {
+        "ok": true,
+        "time": "00:20:50",
+        "data": "APP内已确认提交：buy 600519",
+        "confirm_state": {
+          "ok": true,
+          "found": true,
+          "confirm_btn": null,
+          "keywords": [
+            "APP-only"
+          ],
+          "error": null
+        },
+        "stock_code": "600519",
+        "broker": "同花顺",
+        "app_only": true
+      }
+    },
+    {
+      "id": "trade_result_watch",
+      "result": {
+        "ok": true,
+        "time": "00:20:50",
+        "data": "APP内结果回看已生成\n委托区代码：600519\n持仓区代码：600519",
+        "watch_state": {
+          "ok": true,
+          "found": true,
+          "keywords": [
+            "APP内已提交"
+          ],
+          "entrust_state": {
+            "ok": true,
+            "found": true,
+            "panel": "entrust",
+            "broker": "同花顺",
+            "bounds": null,
+            "codes": [
+              "600519"
+            ],
+            "matched_lines": [],
+            "metrics": [],
+            "rows": [],
+            "summary": {},
+            "error": null
+          },
+          "position_state": {
+            "ok": true,
+            "found": true,
+            "panel": "position",
+            "broker": "同花顺",
+            "bounds": null,
+            "codes": [
+              "600519"
+            ],
+            "matched_lines": [],
+            "metrics": [],
+            "rows": [],
+            "summary": {},
+            "error": null
+          },
+          "error": null
+        },
+        "broker": "同花顺",
+        "app_only": true
+      }
+    }
+  ],
+  "validation_state": {
+    "passed": true,
+    "stage": "result_watch",
+    "blocked_reason": null,
+    "criteria": {
+      "precheck_ready": true,
+      "fill_available": true,
+      "submit_available": false
+    }
+  }
+}

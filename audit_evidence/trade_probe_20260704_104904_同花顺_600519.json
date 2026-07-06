@@ -1,0 +1,91 @@
+{
+  "saved_at": 1783136944,
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "evidence": {
+    "ok": true,
+    "screenshot_path": "screenshots/trade_probe_20260704_104904_同花顺_600519.png",
+    "report_path": "audit_evidence/trade_probe_20260704_104904_同花顺_600519.json"
+  },
+  "snapshot": {
+    "broker": "同花顺",
+    "stock_code": "600519",
+    "focus_state": {
+      "ok": false,
+      "error": "未找到匹配的券商窗口",
+      "scan": {
+        "ok": true,
+        "active_window": {
+          "ok": true,
+          "title": "WeChat",
+          "left": 75,
+          "top": 64,
+          "width": 875,
+          "height": 625
+        },
+        "window_count": 30,
+        "broker_windows": []
+      }
+    },
+    "window_state": {
+      "ok": true,
+      "active_window": {
+        "ok": true,
+        "title": "WeChat",
+        "left": 75,
+        "top": 64,
+        "width": 875,
+        "height": 625
+      },
+      "window_count": 30,
+      "broker_windows": []
+    },
+    "login_state": {
+      "ok": true,
+      "logged_in": false,
+      "confidence": 0.0,
+      "keywords": [],
+      "error": null
+    },
+    "anchor_state": {
+      "ok": true,
+      "found": false,
+      "anchors": {},
+      "keywords": {
+        "stock_code": [],
+        "price": [],
+        "lots": [],
+        "buy_btn": [],
+        "sell_btn": [],
+        "confirm_btn": []
+      },
+      "error": null
+    },
+    "entrust_state": {
+      "ok": true,
+      "found": false,
+      "panel": "entrust",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    },
+    "position_state": {
+      "ok": true,
+      "found": false,
+      "panel": "position",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    }
+  }
+}

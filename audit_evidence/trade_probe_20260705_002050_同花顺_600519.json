@@ -1,0 +1,103 @@
+{
+  "saved_at": 1783185650,
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "evidence": {
+    "ok": true,
+    "screenshot_path": "screenshots/trade_probe_20260705_002050_同花顺_600519.png",
+    "report_path": "audit_evidence/trade_probe_20260705_002050_同花顺_600519.json"
+  },
+  "snapshot": {
+    "broker": "同花顺",
+    "stock_code": "600519",
+    "trade_action": "buy",
+    "price": 1420.55,
+    "lots": 100,
+    "snapshot": {
+      "ok": true,
+      "broker": "同花顺",
+      "stock_code": "600519",
+      "focus_state": {
+        "ok": true,
+        "skipped": true,
+        "reason": "APP-only 模式不依赖外部券商窗口"
+      },
+      "window_state": {
+        "ok": true,
+        "active_window": null,
+        "broker_windows": [],
+        "observed_titles": [],
+        "window_count": 0
+      },
+      "active_window": null,
+      "login_state": {
+        "ok": true,
+        "logged_in": true,
+        "confidence": 1.0,
+        "keywords": [
+          "APP-only"
+        ],
+        "error": null
+      },
+      "page_nav_state": {
+        "ok": true,
+        "skipped": true,
+        "reason": "APP-only 模式不执行外部切页"
+      },
+      "anchor_state": {
+        "ok": true,
+        "found": false,
+        "anchors": {},
+        "keywords": {},
+        "error": null
+      },
+      "entrust_state": {
+        "ok": true,
+        "found": true,
+        "panel": "entrust",
+        "broker": "同花顺",
+        "bounds": null,
+        "codes": [
+          "600519"
+        ],
+        "matched_lines": [],
+        "metrics": [],
+        "rows": [],
+        "summary": {},
+        "error": null
+      },
+      "position_state": {
+        "ok": true,
+        "found": true,
+        "panel": "position",
+        "broker": "同花顺",
+        "bounds": null,
+        "codes": [
+          "600519"
+        ],
+        "matched_lines": [],
+        "metrics": [],
+        "rows": [],
+        "summary": {},
+        "error": null
+      },
+      "human_action_required": false,
+      "ready": true,
+      "takeover_phase": "app_only",
+      "next_step": "APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+      "app_only": true
+    },
+    "confirm_state": {
+      "ok": true,
+      "found": false,
+      "confirm_btn": null,
+      "keywords": [
+        "APP-only"
+      ],
+      "error": null
+    },
+    "warnings": [
+      "APP内闭环模式已启用，请直接补齐参数并执行安全预演。"
+    ]
+  }
+}

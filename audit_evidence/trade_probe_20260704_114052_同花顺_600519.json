@@ -1,0 +1,121 @@
+{
+  "saved_at": 1783140052,
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "evidence": {
+    "ok": true,
+    "screenshot_path": "screenshots/trade_probe_20260704_114052_同花顺_600519.png",
+    "report_path": "audit_evidence/trade_probe_20260704_114052_同花顺_600519.json"
+  },
+  "snapshot": {
+    "broker": "同花顺",
+    "stock_code": "600519",
+    "focus_state": {
+      "ok": false,
+      "error": "未找到匹配的券商窗口",
+      "scan": {
+        "ok": true,
+        "active_window": {
+          "ok": true,
+          "title": "GBT Pro — 自主操盘·AI智能交易终端",
+          "left": 128,
+          "top": 128,
+          "width": 1600,
+          "height": 1000
+        },
+        "window_count": 13,
+        "observed_titles": [
+          "✅ CodeWhale",
+          "GBT Pro — 自主操盘·AI智能交易终端",
+          "audit.py - GBTXIAOTUDOUAI - Trae",
+          "‎GBT全能小土豆CC – (2497413)",
+          "CWebviewHostWnd",
+          "WeChat",
+          "桌面 - 文件资源管理器",
+          "GBT 镜像多维度空间",
+          "Hugging Face – The AI community building the future. - Google Chrome",
+          "*npx.ps1 - Notepad",
+          "Realtek Audio Console",
+          "Windows 输入体验",
+          "Program Manager"
+        ],
+        "broker_windows": []
+      }
+    },
+    "window_state": {
+      "ok": true,
+      "active_window": {
+        "ok": true,
+        "title": "GBT Pro — 自主操盘·AI智能交易终端",
+        "left": 128,
+        "top": 128,
+        "width": 1600,
+        "height": 1000
+      },
+      "window_count": 13,
+      "observed_titles": [
+        "✅ CodeWhale",
+        "GBT Pro — 自主操盘·AI智能交易终端",
+        "audit.py - GBTXIAOTUDOUAI - Trae",
+        "‎GBT全能小土豆CC – (2497416)",
+        "CWebviewHostWnd",
+        "WeChat",
+        "桌面 - 文件资源管理器",
+        "GBT 镜像多维度空间",
+        "Hugging Face – The AI community building the future. - Google Chrome",
+        "*npx.ps1 - Notepad",
+        "Realtek Audio Console",
+        "Windows 输入体验",
+        "Program Manager"
+      ],
+      "broker_windows": []
+    },
+    "login_state": {
+      "ok": true,
+      "logged_in": false,
+      "confidence": 0.0,
+      "keywords": [],
+      "error": null
+    },
+    "anchor_state": {
+      "ok": true,
+      "found": false,
+      "anchors": {},
+      "keywords": {
+        "stock_code": [],
+        "price": [],
+        "lots": [],
+        "buy_btn": [],
+        "sell_btn": [],
+        "confirm_btn": []
+      },
+      "error": null
+    },
+    "entrust_state": {
+      "ok": true,
+      "found": false,
+      "panel": "entrust",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    },
+    "position_state": {
+      "ok": true,
+      "found": false,
+      "panel": "position",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [],
+      "matched_lines": [],
+      "metrics": [],
+      "rows": [],
+      "summary": {},
+      "error": null
+    }
+  }
+}

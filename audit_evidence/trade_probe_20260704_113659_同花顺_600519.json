@@ -1,0 +1,165 @@
+{
+  "saved_at": 1783139819,
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "evidence": {
+    "ok": true,
+    "screenshot_path": "screenshots/trade_probe_20260704_113659_同花顺_600519.png",
+    "report_path": "audit_evidence/trade_probe_20260704_113659_同花顺_600519.json"
+  },
+  "snapshot": {
+    "broker": "同花顺",
+    "stock_code": "600519",
+    "focus_state": {
+      "ok": false,
+      "error": "未找到匹配的券商窗口",
+      "scan": {
+        "ok": true,
+        "active_window": {
+          "ok": true,
+          "title": "audit.py - GBTXIAOTUDOUAI - Trae",
+          "left": 65,
+          "top": 77,
+          "width": 1570,
+          "height": 805
+        },
+        "window_count": 13,
+        "observed_titles": [
+          "✅ CodeWhale",
+          "audit.py - GBTXIAOTUDOUAI - Trae",
+          "GBT Pro — 自主操盘·AI智能交易终端",
+          "‎GBT全能小土豆CC – (2499575)",
+          "CWebviewHostWnd",
+          "WeChat",
+          "桌面 - 文件资源管理器",
+          "GBT 镜像多维度空间",
+          "Hugging Face – The AI community building the future. - Google Chrome",
+          "*npx.ps1 - Notepad",
+          "Realtek Audio Console",
+          "Windows 输入体验",
+          "Program Manager"
+        ],
+        "broker_windows": []
+      }
+    },
+    "window_state": {
+      "ok": true,
+      "active_window": {
+        "ok": true,
+        "title": "audit.py - GBTXIAOTUDOUAI - Trae",
+        "left": 65,
+        "top": 77,
+        "width": 1570,
+        "height": 805
+      },
+      "window_count": 13,
+      "observed_titles": [
+        "✅ CodeWhale",
+        "audit.py - GBTXIAOTUDOUAI - Trae",
+        "GBT Pro — 自主操盘·AI智能交易终端",
+        "‎GBT全能小土豆CC – (2499576)",
+        "CWebviewHostWnd",
+        "WeChat",
+        "桌面 - 文件资源管理器",
+        "GBT 镜像多维度空间",
+        "Hugging Face – The AI community building the future. - Google Chrome",
+        "*npx.ps1 - Notepad",
+        "Realtek Audio Console",
+        "Windows 输入体验",
+        "Program Manager"
+      ],
+      "broker_windows": []
+    },
+    "login_state": {
+      "ok": true,
+      "logged_in": false,
+      "confidence": 0.0,
+      "keywords": [],
+      "error": null
+    },
+    "anchor_state": {
+      "ok": true,
+      "found": false,
+      "anchors": {},
+      "keywords": {
+        "stock_code": [],
+        "price": [],
+        "lots": [],
+        "buy_btn": [],
+        "sell_btn": [],
+        "confirm_btn": []
+      },
+      "error": null
+    },
+    "entrust_state": {
+      "ok": true,
+      "found": true,
+      "panel": "entrust",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [
+        "600519"
+      ],
+      "matched_lines": [
+        "和 源 代 码 199 anet_probe 》 b ro ke 同 花 顺 'stock_code' ： 600519"
+      ],
+      "metrics": [],
+      "rows": [
+        {
+          "raw": "和 源 代 码 199 anet_probe 》 b ro ke 同 花 顺 'stock_code' ： 600519",
+          "code": "600519",
+          "action": "",
+          "status": "",
+          "price": "199",
+          "quantity": "",
+          "amount": "",
+          "available": "",
+          "market_value": "",
+          "profit": ""
+        }
+      ],
+      "summary": {
+        "row_count": 1,
+        "codes": [
+          "600519"
+        ]
+      },
+      "error": null
+    },
+    "position_state": {
+      "ok": true,
+      "found": true,
+      "panel": "position",
+      "broker": "同花顺",
+      "bounds": null,
+      "codes": [
+        "600519"
+      ],
+      "matched_lines": [
+        "和 源 代 码 199 anet_probe 》 b ro ke 同 花 顺 'stock_code' ： 600519"
+      ],
+      "metrics": [],
+      "rows": [
+        {
+          "raw": "和 源 代 码 199 anet_probe 》 b ro ke 同 花 顺 'stock_code' ： 600519",
+          "code": "600519",
+          "action": "",
+          "status": "",
+          "price": "",
+          "quantity": "199",
+          "amount": "",
+          "available": "",
+          "market_value": "",
+          "profit": ""
+        }
+      ],
+      "summary": {
+        "row_count": 1,
+        "codes": [
+          "600519"
+        ]
+      },
+      "error": null
+    }
+  }
+}
