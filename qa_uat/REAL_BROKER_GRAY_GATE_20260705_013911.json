@@ -1,0 +1,560 @@
+{
+  "started_at": "2026-07-05T01:39:14.1369006+07:00",
+  "base_url": "http://127.0.0.1:8765",
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "trade_action": "buy",
+  "app_only_preview": true,
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "candidate_zip": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip",
+  "sha256": "2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f",
+  "runtime_dir": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel",
+  "checklist_path": "qa_uat\\REAL_BROKER_GRAY_ACCEPTANCE_20260705.md",
+  "steps": [
+    {
+      "name": "01-候选包与哈希一致性",
+      "status": "PASS",
+      "ms": 467,
+      "detail": "zip_hash_ok=2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f",
+      "payload": {
+        "zip": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip",
+        "sha_file": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip.sha256.txt"
+      },
+      "response": {
+        "sha256": "2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f"
+      }
+    },
+    {
+      "name": "02-运行时指针检查",
+      "status": "PASS",
+      "ms": 18,
+      "detail": "runtime_exe=c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel\\GBT_Pro_v1.1.19_dir_parallel.exe",
+      "payload": {
+        "runtime_ini": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\current_runtime.ini"
+      },
+      "response": {
+        "runtime_dir": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel",
+        "runtime_exe": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel\\GBT_Pro_v1.1.19_dir_parallel.exe"
+      }
+    },
+    {
+      "name": "03-服务状态",
+      "status": "PASS",
+      "ms": 1201,
+      "detail": "version=v1.1.19 role=desktop",
+      "payload": null,
+      "response": {
+        "keys_available": 3,
+        "keys_total": 14,
+        "llm": "Akashic/DeepSeek/Ollama",
+        "mcp_count": 0,
+        "model": "auto",
+        "ok": true,
+        "release_tag": "v1.1.19-desktop-runtime",
+        "role": "desktop",
+        "version": "v1.1.19"
+      }
+    },
+    {
+      "name": "04-真实动作链冒烟",
+      "status": "PASS",
+      "ms": 186,
+      "detail": "chat_action_ok",
+      "payload": {
+        "deep_reasoning": false,
+        "text": "打开浏览器"
+      },
+      "response": {
+        "action_payload": {
+          "dry_run": false,
+          "id": "browser_open"
+        },
+        "brain_mode": "local",
+        "deep_reasoning": false,
+        "desktop_result": {
+          "data": "已打开浏览器：https://finance.eastmoney.com",
+          "ok": true,
+          "target": "https://finance.eastmoney.com",
+          "time": "01:39:13"
+        },
+        "dry_run": false,
+        "executed_action": "browser_open",
+        "metrics": {
+          "cost_rmb": 0,
+          "model": "desktop-executor",
+          "time": "01:39:13",
+          "tokens_in": 0,
+          "tokens_out": 0
+        },
+        "model": "desktop-executor",
+        "ok": true,
+        "provider": "GBT Runtime",
+        "reasoning": null,
+        "requires_confirmation": false,
+        "response": "已打开浏览器：https://finance.eastmoney.com",
+        "tokens_consumed": 0,
+        "tokens_remaining": null
+      }
+    },
+    {
+      "name": "05-接管预检",
+      "status": "PASS",
+      "ms": 38,
+      "detail": "precheck=passed next=trade_form_fill",
+      "payload": {
+        "id": "trade_takeover_precheck",
+        "broker": "同花顺",
+        "price": 1420.55,
+        "auto_navigate": true,
+        "stock_code": "600519",
+        "app_only": true,
+        "lots": 100,
+        "auto_focus": true,
+        "trade_action": "buy"
+      },
+      "response": {
+        "active_window": null,
+        "anchor_state": {
+          "anchors": {},
+          "error": null,
+          "found": false,
+          "keywords": {},
+          "ok": true
+        },
+        "app_only": true,
+        "broker": "同花顺",
+        "can_fill_form": true,
+        "can_submit_confirm": false,
+        "capture_evidence": false,
+        "confirm_state": {
+          "confirm_btn": null,
+          "error": null,
+          "found": false,
+          "keywords": [
+            "APP-only"
+          ],
+          "ok": true
+        },
+        "data": "接管券商：同花顺\n接管阶段：app_only\n预检结论：已进入可接管态\n填单条件：已满足\n确认弹窗：未识别\n下一动作：trade_form_fill\n风险提示：APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+        "entrust_state": {
+          "bounds": null,
+          "broker": "同花顺",
+          "codes": [
+            "600519"
+          ],
+          "error": null,
+          "found": true,
+          "matched_lines": [],
+          "metrics": [],
+          "ok": true,
+          "panel": "entrust",
+          "rows": [],
+          "summary": {}
+        },
+        "evidence": null,
+        "focus_state": {
+          "ok": true,
+          "reason": "APP-only 模式不依赖外部券商窗口",
+          "skipped": true
+        },
+        "human_action_required": false,
+        "login_state": {
+          "confidence": 1.0,
+          "error": null,
+          "keywords": [
+            "APP-only"
+          ],
+          "logged_in": true,
+          "ok": true
+        },
+        "lots": 100,
+        "missing_fill_anchors": [],
+        "missing_payload": [],
+        "next_action_id": "trade_form_fill",
+        "next_step": "APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+        "ok": true,
+        "page_nav_state": {
+          "ok": true,
+          "reason": "APP-only 模式不执行外部切页",
+          "skipped": true
+        },
+        "position_state": {
+          "bounds": null,
+          "broker": "同花顺",
+          "codes": [
+            "600519"
+          ],
+          "error": null,
+          "found": true,
+          "matched_lines": [],
+          "metrics": [],
+          "ok": true,
+          "panel": "position",
+          "rows": [],
+          "summary": {}
+        },
+        "precheck_passed": true,
+        "price": 1420.55,
+        "ready": true,
+        "risk_gate": {
+          "confirm_required_actions": [
+            "trade_submit_confirm"
+          ],
+          "dry_run_supported": true,
+          "human_action_required": false
+        },
+        "stock_code": "600519",
+        "supported_actions": [
+          "trade_form_fill",
+          "trade_submit_confirm",
+          "trade_result_watch"
+        ],
+        "takeover_phase": "app_only",
+        "time": "01:39:13",
+        "warnings": [
+          "APP内闭环模式已启用，请直接补齐参数并执行安全预演。"
+        ],
+        "window_state": {
+          "active_window": null,
+          "broker_windows": [],
+          "observed_titles": [],
+          "ok": true,
+          "window_count": 0
+        }
+      }
+    },
+    {
+      "name": "06-唯一下一步预演",
+      "status": "PASS",
+      "ms": 33,
+      "detail": "planned=trade_form_fill",
+      "payload": {
+        "id": "trade_execute_next",
+        "auto_navigate": true,
+        "dry_run": true,
+        "app_only": true,
+        "stock_code": "600519",
+        "broker": "同花顺",
+        "price": 1420.55,
+        "trade_action": "buy",
+        "auto_focus": true,
+        "lots": 100
+      },
+      "response": {
+        "app_only": true,
+        "auto_selected": true,
+        "data": "预演执行唯一下一步：trade_form_fill",
+        "dry_run": true,
+        "executed_action": "trade_form_fill",
+        "ok": true,
+        "planned_action": "trade_form_fill",
+        "precheck": {
+          "active_window": null,
+          "anchor_state": {
+            "anchors": {},
+            "error": null,
+            "found": false,
+            "keywords": {},
+            "ok": true
+          },
+          "app_only": true,
+          "broker": "同花顺",
+          "can_fill_form": true,
+          "can_submit_confirm": false,
+          "capture_evidence": false,
+          "confirm_state": {
+            "confirm_btn": null,
+            "error": null,
+            "found": false,
+            "keywords": [
+              "APP-only"
+            ],
+            "ok": true
+          },
+          "entrust_state": {
+            "bounds": null,
+            "broker": "同花顺",
+            "codes": [
+              "600519"
+            ],
+            "error": null,
+            "found": true,
+            "matched_lines": [],
+            "metrics": [],
+            "ok": true,
+            "panel": "entrust",
+            "rows": [],
+            "summary": {}
+          },
+          "evidence": null,
+          "focus_state": {
+            "ok": true,
+            "reason": "APP-only 模式不依赖外部券商窗口",
+            "skipped": true
+          },
+          "human_action_required": false,
+          "login_state": {
+            "confidence": 1.0,
+            "error": null,
+            "keywords": [
+              "APP-only"
+            ],
+            "logged_in": true,
+            "ok": true
+          },
+          "lots": 100,
+          "missing_fill_anchors": [],
+          "missing_payload": [],
+          "next_action_id": "trade_form_fill",
+          "next_step": "APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+          "ok": true,
+          "page_nav_state": {
+            "ok": true,
+            "reason": "APP-only 模式不执行外部切页",
+            "skipped": true
+          },
+          "position_state": {
+            "bounds": null,
+            "broker": "同花顺",
+            "codes": [
+              "600519"
+            ],
+            "error": null,
+            "found": true,
+            "matched_lines": [],
+            "metrics": [],
+            "ok": true,
+            "panel": "position",
+            "rows": [],
+            "summary": {}
+          },
+          "precheck_passed": true,
+          "price": 1420.55,
+          "ready": true,
+          "risk_gate": {
+            "confirm_required_actions": [
+              "trade_submit_confirm"
+            ],
+            "dry_run_supported": true,
+            "human_action_required": false
+          },
+          "stock_code": "600519",
+          "supported_actions": [
+            "trade_form_fill",
+            "trade_submit_confirm",
+            "trade_result_watch"
+          ],
+          "takeover_phase": "app_only",
+          "warnings": [
+            "APP内闭环模式已启用，请直接补齐参数并执行安全预演。"
+          ],
+          "window_state": {
+            "active_window": null,
+            "broker_windows": [],
+            "observed_titles": [],
+            "ok": true,
+            "window_count": 0
+          }
+        },
+        "time": "01:39:13"
+      }
+    },
+    {
+      "name": "07-闭环验证预演",
+      "status": "PASS",
+      "ms": 367,
+      "detail": "evidence_plan=audit_evidence/trade_validate_20260705_013914_同花顺_600519.json",
+      "payload": {
+        "capture_evidence": true,
+        "id": "trade_live_validate",
+        "auto_navigate": true,
+        "dry_run": true,
+        "app_only": true,
+        "stock_code": "600519",
+        "broker": "同花顺",
+        "price": 1420.55,
+        "trade_action": "buy",
+        "auto_focus": true,
+        "lots": 100
+      },
+      "response": {
+        "app_only": true,
+        "confirm": false,
+        "data": "预演闭环验证：同花顺 -> 预检 -> 填单 -> 提交 -> 结果回看",
+        "dry_run": true,
+        "ok": true,
+        "report": {
+          "broker": "同花顺",
+          "confirm": false,
+          "evidence": {
+            "report_path": "audit_evidence/trade_validate_20260705_013914_同花顺_600519.json",
+            "screenshot_path": "screenshots/trade_validate_20260705_013914_同花顺_600519.png"
+          },
+          "lots": 100,
+          "mode": "app_only",
+          "precheck": {
+            "active_window": null,
+            "anchor_state": {
+              "anchors": {},
+              "error": null,
+              "found": false,
+              "keywords": {},
+              "ok": true
+            },
+            "app_only": true,
+            "broker": "同花顺",
+            "can_fill_form": true,
+            "can_submit_confirm": false,
+            "capture_evidence": true,
+            "confirm_state": {
+              "confirm_btn": null,
+              "error": null,
+              "found": false,
+              "keywords": [
+                "APP-only"
+              ],
+              "ok": true
+            },
+            "entrust_state": {
+              "bounds": null,
+              "broker": "同花顺",
+              "codes": [
+                "600519"
+              ],
+              "error": null,
+              "found": true,
+              "matched_lines": [],
+              "metrics": [],
+              "ok": true,
+              "panel": "entrust",
+              "rows": [],
+              "summary": {}
+            },
+            "evidence": {
+              "ok": true,
+              "report_path": "audit_evidence/trade_probe_20260705_013913_同花顺_600519.json",
+              "screenshot_path": "screenshots/trade_probe_20260705_013913_同花顺_600519.png"
+            },
+            "focus_state": {
+              "ok": true,
+              "reason": "APP-only 模式不依赖外部券商窗口",
+              "skipped": true
+            },
+            "human_action_required": false,
+            "login_state": {
+              "confidence": 1.0,
+              "error": null,
+              "keywords": [
+                "APP-only"
+              ],
+              "logged_in": true,
+              "ok": true
+            },
+            "lots": 100,
+            "missing_fill_anchors": [],
+            "missing_payload": [],
+            "next_action_id": "trade_form_fill",
+            "next_step": "APP内闭环模式已启用，请直接补齐参数并执行安全预演。",
+            "ok": true,
+            "page_nav_state": {
+              "ok": true,
+              "reason": "APP-only 模式不执行外部切页",
+              "skipped": true
+            },
+            "position_state": {
+              "bounds": null,
+              "broker": "同花顺",
+              "codes": [
+                "600519"
+              ],
+              "error": null,
+              "found": true,
+              "matched_lines": [],
+              "metrics": [],
+              "ok": true,
+              "panel": "position",
+              "rows": [],
+              "summary": {}
+            },
+            "precheck_passed": true,
+            "price": 1420.55,
+            "ready": true,
+            "risk_gate": {
+              "confirm_required_actions": [
+                "trade_submit_confirm"
+              ],
+              "dry_run_supported": true,
+              "human_action_required": false
+            },
+            "stock_code": "600519",
+            "supported_actions": [
+              "trade_form_fill",
+              "trade_submit_confirm",
+              "trade_result_watch"
+            ],
+            "takeover_phase": "app_only",
+            "warnings": [
+              "APP内闭环模式已启用，请直接补齐参数并执行安全预演。"
+            ],
+            "window_state": {
+              "active_window": null,
+              "broker_windows": [],
+              "observed_titles": [],
+              "ok": true,
+              "window_count": 0
+            }
+          },
+          "price": 1420.55,
+          "saved_at": 1783190354,
+          "steps": [],
+          "stock_code": "600519",
+          "trade_action": "buy",
+          "validation_state": {
+            "blocked_reason": null,
+            "criteria": {
+              "fill_available": true,
+              "precheck_ready": true,
+              "submit_available": false
+            },
+            "passed": false,
+            "stage": "precheck"
+          }
+        },
+        "time": "01:39:13"
+      }
+    },
+    {
+      "name": "08-发布门禁状态检查",
+      "status": "PASS",
+      "ms": 55,
+      "detail": "gate_status=blocked_pending_real_broker_gray_acceptance",
+      "payload": null,
+      "response": {
+        "status": "blocked_pending_real_broker_gray_acceptance",
+        "production_release_allowed": false,
+        "checklist_path": "qa_uat\\REAL_BROKER_GRAY_ACCEPTANCE_20260705.md",
+        "required_rehearsals": [
+          "forward_rehearsal",
+          "rollback_rehearsal"
+        ],
+        "required_evidence": [
+          "screenshots/trade_validate_*.png",
+          "audit_evidence/trade_validate_*.json",
+          "gray_machine_screenshot",
+          "broker_login_screenshot",
+          "rollback_log"
+        ],
+        "next_action": "完成真实券商登录态灰度验收并补齐回滚演练归档"
+      }
+    }
+  ],
+  "manual_pending": [
+    "真实券商窗口登录态检查",
+    "真实 trade_panel_probe 回读确认",
+    "最小风险单量灰度执行",
+    "回滚演练留档",
+    "签收人复核"
+  ]
+}

@@ -50,3 +50,37 @@ def test_llm_chat_capability_scope_query():
     assert "无法直接操控电脑" not in (j.get("response") or "")
     assert "电脑直接操作" in (j.get("response") or "")
     assert "外部操控栈" in (j.get("response") or "")
+
+
+
+def test_llm_chat_browser_open_routes_to_desktop_exec_dry_run():
+    """POST /api/chat 命中打开浏览器指令时应转到真实桌面执行链"""
+    code, body = post("/api/chat", {"text": "打开东方财富", "dry_run": True})
+    assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert j["ok"] is True
+    assert j["model"] == "desktop-executor"
+    assert j["executed_action"] == "browser_open"
+    assert "预演打开" in (j.get("response") or "")
+
+
+def test_llm_chat_keyboard_type_routes_to_desktop_exec_dry_run():
+    """POST /api/chat 命中输入指令时应走键盘输入执行链"""
+    code, body = post("/api/chat", {"text": "输入 hello gbt", "dry_run": True})
+    assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert j["ok"] is True
+    assert j["model"] == "desktop-executor"
+    assert j["executed_action"] == "keyboard_type"
+    assert "预演键盘输入" in (j.get("response") or "")
+
+
+def test_llm_chat_trade_precheck_routes_to_real_chain_dry_run():
+    """POST /api/chat 命中操盘指令时应路由到真实操盘预检链，而不是虚拟问答"""
+    code, body = post("/api/chat", {"text": "买入 600519 价格 1420.55 数量 100", "dry_run": True})
+    assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert j["ok"] is True
+    assert j["model"] == "desktop-executor"
+    assert j["executed_action"] == "trade_takeover_precheck"
+    assert "预演接管后预检" in (j.get("response") or "")

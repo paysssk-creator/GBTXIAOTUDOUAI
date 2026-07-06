@@ -8,6 +8,7 @@
 from flask import Blueprint, jsonify, request, render_template_string
 import os, json, time
 from gbt.api.llm import _resolve_token_user
+from gbt.api.dash import _live_account_from_screen
 bp = Blueprint("account", __name__)
 
 
@@ -21,21 +22,25 @@ def _recharge_removed_response():
 
 @bp.route("/api/account")
 def api_account():
-    """完整账户状态 — 持仓明细 + 成交记录"""
+    """真实账户状态 — 优先读取券商界面回读"""
     try:
-        from gbt.paper_account import get_state, get_trades
-        state = get_state()
-        trades = get_trades(30)
+        live = _live_account_from_screen()
+        position_state = ((live.get("window_state") or {}).get("position_state") or {}) if live.get("connected") else {}
+        rows = (position_state.get("rows") or []) if isinstance(position_state, dict) else []
         return jsonify({
             "ok": True,
-            "cash": state["cash"],
-            "equity": state["equity"],
-            "pnl": state["total_pnl"],
-            "positions": list(state["positions"].values()),
-            "position_count": len(state["positions"]),
-            "trades": trades,
-            "created": state.get("created", ""),
-            "updated": state.get("updated", ""),
+            "connected": bool(live.get("connected")),
+            "source": live.get("source"),
+            "reason": live.get("reason", ""),
+            "broker": live.get("broker"),
+            "cash": live.get("cash"),
+            "equity": live.get("equity"),
+            "pnl": live.get("pnl"),
+            "positions": rows,
+            "position_count": live.get("positions", 0),
+            "trades": [],
+            "created": "",
+            "updated": live.get("updated_at", ""),
         })
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:100]})
@@ -53,12 +58,18 @@ def api_account_trades():
 
 @bp.route("/api/account/positions")
 def api_account_positions():
-    """持仓明细 — 每只可查"""
+    """真实持仓明细 — 优先读取券商界面回读"""
     try:
-        from gbt.paper_account import get_state
-        state = get_state()
-        return jsonify({"ok": True, "positions": list(state["positions"].values()),
-                       "cash": state["cash"], "equity": state["equity"]})
+        live = _live_account_from_screen()
+        return jsonify({
+            "ok": True,
+            "connected": bool(live.get("connected")),
+            "positions": [],
+            "cash": live.get("cash"),
+            "equity": live.get("equity"),
+            "source": live.get("source"),
+            "reason": live.get("reason", ""),
+        })
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:100]})
 

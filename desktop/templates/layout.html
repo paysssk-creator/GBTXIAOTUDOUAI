@@ -320,6 +320,7 @@
                                         <label class="pilot-inline-check"><input id="pilot-risk-confirm" type="checkbox"> <span>高风险确认</span></label>
                                         <button onclick="loadPilotTakeoverPrecheck()" class="btn-ui info">刷新接管预检</button>
                                         <button onclick="runPilotNextAction()" id="pilot-next-btn" class="btn-ui success" disabled>执行唯一下一步</button>
+                                        <button onclick="runPilotLiveValidate()" id="pilot-validate-btn" class="btn-ui warn">闭环验证</button>
                                     </div>
                                 </div>
                             </div>
@@ -938,6 +939,8 @@
         function getStoredToken() { try { return localStorage.getItem("gbt_auth_token") || "" } catch (e) { return "" } }
         function setStoredToken(token) { authState.token = token || ""; try { if (token) localStorage.setItem("gbt_auth_token", token); else localStorage.removeItem("gbt_auth_token") } catch (e) { } }
         function fmtTime(v) { if (!v) return "--"; try { return new Date(v).toLocaleString() } catch (e) { return v } }
+    function fmtAccountMoney(v) { var n = Number(v); return (v === null || v === undefined || v === "" || !isFinite(n)) ? "--" : ("¥" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })) }
+    function renderAccountMetrics(prefix, acct) { acct = acct || {}; var connected = !!acct.connected; setTxt(prefix + "-cash", connected ? fmtAccountMoney(acct.cash) : "--"); setTxt(prefix + "-equity", connected ? fmtAccountMoney(acct.equity) : "--"); setTxt(prefix + "-pos", connected ? String(acct.positions == null ? 0 : acct.positions) : "--"); var pnlEl = $(prefix + "-pnl"); if (pnlEl) { if (connected && acct.pnl !== null && acct.pnl !== undefined && acct.pnl !== "") { var pnl = Number(acct.pnl || 0); pnlEl.textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); pnlEl.style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; } else { pnlEl.textContent = "--"; pnlEl.style.color = "var(--t3)"; } } }
         function authProviderLabel(v) {
             var key = String(v || "").toLowerCase();
             if (!key) return "--";
@@ -1519,15 +1522,9 @@
                     var h = hist[hi];
                     hh += "<tr><td>" + esc(h.time || "") + "</td><td>" + esc(h.model || "") + "</td><td>" + (h.tokens_in || 0) + "</td><td>" + (h.tokens_out || 0) + "</td><td>\u00a5" + (h.cost_rmb || 0).toFixed(4) + "</td></tr>";
                 }
-                $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";
-                var td = d.trade || {}, acct = td.account || {};
-                $("d-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString();
-                $("d-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString();
-                var pnl = acct.pnl || 0;
-                $("d-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString();
-                $("d-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)";
-                $("d-pos").textContent = acct.positions || "0";
-                var wl = "", watchlist = td.watchlist || [];
+                $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";            var td = d.trade || {}, acct = td.account || {};
+            renderAccountMetrics("d", acct);
+var wl = "", watchlist = td.watchlist || [];
                 tradeState.watchlist = watchlist;
                 for (var wi = 0; wi < watchlist.length; wi++) {
                     var w = watchlist[wi] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct);
@@ -1584,6 +1581,8 @@
             "trade_position_readback": "持仓区域回读",
             "trade_submit_confirm": "提交交易确认",
             "trade_result_watch": "委托结果回看",
+            "trade_execute_next": "执行唯一下一步",
+            "trade_live_validate": "闭环验证",
             "trade_workflow": "操盘流程",
             "window_maximize": "窗口最大化",
             "keyboard_type": "键盘输入",
@@ -1867,7 +1866,7 @@
             var inp = $("chat-input"), txt = inp.value.trim();
             if (!txt) return;
             var deep = $("deep-mode").checked;
-            if (guideChatAccess()) return;
+            if (guideChatAccess(txt)) return;
             inp.value = "";
             autoResizeChatInput();
             addChatMsg("user", txt);
@@ -1909,22 +1908,15 @@
             updateAuthUI();
         }
 
-        function guideChatAccess() {
-            var remaining = (authState.balance && typeof authState.balance.remaining !== "undefined")
-                ? Number(authState.balance.remaining || 0) : 0;
-            if (!authState.token && remaining <= 0) {
-                addChatMsg("assistant", "当前是访客模式，令牌为 0。请先登录领取新用户 10000 tokens 后再开始对话。");
-                routeSoftNotice("模型已连接，但当前访客额度为 0。请先登录领取新用户令牌后再开始对话。");
-                switchTab("auth");
-                return true;
-            }
-            if (authState.token && remaining <= 0) {
-                addChatMsg("assistant", "当前账号对话额度已用完。当前版本已移除付费模块，请先专注使用电脑操控与自主操盘主能力。");
-                return true;
-            }
+        function isChatDesktopCommand(txt) {
+            txt = String(txt || "").trim();
+            if (!txt) return false;
+            return /(打开|启动|访问|进入|帮我打开|搜索|查询|输入|键入|打字|快捷键|按下|点击|单击|双击|鼠标点击|移动鼠标到|鼠标移动到|自主操盘|操盘预检|交易预检|开始操盘|检查操盘|买入|卖出|下单|填单|委托|确认填单|确认提交|结果回看|回看结果)/.test(txt);
+        }
+        function guideChatAccess(txt) {
             return false;
         }
-        function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; $("a-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString(); $("a-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString(); var pnl = acct.pnl || 0; $("a-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(); $("a-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; $("a-pos").textContent = acct.positions || "0"; loadTokenBalance(true) }) }
+        function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; renderAccountMetrics("a", acct); loadTokenBalance(true) }) }
         function loadTrade() { refresh(); loadMarket(); if (tradeState.selectedCode) loadTradeDetail(tradeState.selectedCode); restoreLastRecap(); }
         function restoreLastRecap() {
             try {
@@ -1981,11 +1973,6 @@
                     api("/api/token/balance", function (bal) {
                         if (bal && bal.ok) authState.balance = bal;
                         updateAuthUI();
-                        if (!authState.token && bal && typeof bal.remaining !== "undefined" && Number(bal.remaining || 0) <= 0) {
-                            routeSoftNotice("模型已连接，但当前访客额度为 0。请先登录领取新用户令牌后再开始对话。");
-                            switchTab("auth");
-                            return;
-                        }
                         toast("连接成功!");
                         loadLLM();
                     });
@@ -2040,7 +2027,7 @@
             return "btn-ui success";
         }
         function pilotPrecheckPayload() {
-            var payload = { id: "trade_takeover_precheck", app_only: true, auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
+            var payload = { id: "trade_takeover_precheck", auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
             var broker = pilotField("pilot-broker"), stock = pilotField("pilot-stock"), price = pilotNumField("pilot-price"), lots = pilotNumField("pilot-lots");
             if (broker) payload.broker = broker;
             if (stock) payload.stock_code = stock;
@@ -2228,7 +2215,7 @@
             }, "POST", JSON.stringify(pilotPrecheckPayload()));
         }
         function pilotNextActionPayload(cid) {
-            var payload = { id: cid, app_only: true, auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
+            var payload = { id: cid, auto_focus: true, auto_navigate: true, trade_action: pilotField("pilot-trade-action") || "buy" };
             var broker = pilotField("pilot-broker"), stock = pilotField("pilot-stock"), price = pilotNumField("pilot-price"), lots = pilotNumField("pilot-lots");
             if (broker) payload.broker = broker;
             if (stock) payload.stock_code = stock;
@@ -2249,48 +2236,106 @@
             }
             return payload;
         }
+
+        function appendPilotLog(title, body) {
+            var log = $("p-log");
+            if (!log) return;
+            log.textContent = "[" + title + "]\n" + (body || "无响应") + "\n---\n" + log.textContent;
+        }
+        function applyPilotExecutionResult(executedId, d) {
+            if (executedId === "trade_panel_probe" && d && d.ok) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, d || {});
+                renderPilotProbe(pilotTakeoverState);
+            }
+            if (executedId === "trade_form_fill" && d) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { fill_preview: d });
+                renderPilotFill(pilotTakeoverState);
+            }
+            if (executedId === "trade_submit_confirm" && d) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { confirm_submit: d });
+                renderPilotConfirmWatch(pilotTakeoverState);
+            }
+            if (executedId === "trade_result_watch" && d) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { watch_result: d });
+                renderPilotConfirmWatch(pilotTakeoverState);
+            }
+            if (executedId === "trade_live_validate" && d) {
+                pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, {
+                    precheck: d.precheck || (pilotTakeoverState && pilotTakeoverState.precheck) || null,
+                    fill_preview: d.form_result || (pilotTakeoverState && pilotTakeoverState.fill_preview),
+                    confirm_submit: d.submit_result || (pilotTakeoverState && pilotTakeoverState.confirm_submit),
+                    watch_result: d.watch_result || (pilotTakeoverState && pilotTakeoverState.watch_result)
+                });
+                renderPilotPrecheck(d.precheck || pilotTakeoverState);
+                renderPilotFill(pilotTakeoverState);
+                renderPilotConfirmWatch(pilotTakeoverState);
+                var resultNote = $("pilot-result-note");
+                if (resultNote && d.evidence && d.evidence.report_path) {
+                    resultNote.textContent = "闭环验证已归档：" + d.evidence.report_path;
+                }
+            }
+        }
+        function executePilotAction(payload, options) {
+            options = options || {};
+            var plannedId = options.plannedId || payload.id;
+            var label = pilotActionLabel(options.labelId || plannedId);
+            var btn = options.button ? $(options.button) : null;
+            var beforeText = btn ? btn.textContent : "";
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = options.pendingText || "执行中...";
+            }
+            appendPilotLog("执行 " + label, options.pendingLog || "正在执行...");
+            api("/api/desktop/exec", function (d) {
+                var executedId = (d && d.executed_action) || options.executedId || plannedId;
+                appendPilotLog(label, d ? (d.data || d.error || "无响应") : "无响应");
+                applyPilotExecutionResult(executedId, d);
+                if (executedId === "trade_submit_confirm" && d && d.ok && options.autoWatchAfterSubmit !== false) {
+                    runPilotResultWatch(true);
+                    return;
+                }
+                if (d && d.ok) {
+                    toast("已执行：" + pilotActionLabel(executedId) + (d.dry_run ? "（预演）" : ""));
+                } else {
+                    toast("执行失败：" + (d ? (d.error || pilotActionLabel(executedId)) : pilotActionLabel(executedId)));
+                }
+                loadPilotTakeoverPrecheck();
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = beforeText || label;
+                }
+            }, "POST", JSON.stringify(payload));
+        }
         function runPilotNextAction() {
-            var state = pilotTakeoverState || {}, cid = state.next_action_id;
-            if (!cid) { toast("请先刷新接管预检"); return }
-            if (cid === "trade_submit_confirm" && !($("pilot-risk-confirm") && $("pilot-risk-confirm").checked)) {
+            var state = pilotTakeoverState || {}, plannedId = state.next_action_id;
+            if (!plannedId) { toast("请先刷新接管预检"); return }
+            if (plannedId === "trade_submit_confirm" && !($("pilot-risk-confirm") && $("pilot-risk-confirm").checked)) {
                 toast("请先勾选高风险确认");
                 return;
             }
-            var btn = $("pilot-next-btn");
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = "执行中...";
+            executePilotAction(pilotNextActionPayload("trade_execute_next"), {
+                plannedId: plannedId,
+                executedId: plannedId,
+                button: "pilot-next-btn"
+            });
+        }
+        function runPilotLiveValidate() {
+            var payload = pilotNextActionPayload("trade_live_validate");
+            payload.capture_evidence = true;
+            if ($("pilot-risk-confirm") && $("pilot-risk-confirm").checked) {
+                payload.confirm = true;
             }
-            api("/api/desktop/exec", function (d) {
-                if ($("p-log")) {
-                    $("p-log").textContent = "[执行 " + pilotActionLabel(cid) + "]\n" + (d ? (d.data || d.error || "") : "无响应") + "\n---\n" + $("p-log").textContent;
-                }
-                if (cid === "trade_panel_probe" && d && d.ok) {
-                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, d || {});
-                    renderPilotProbe(pilotTakeoverState);
-                }
-                if (cid === "trade_form_fill" && d) {
-                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { fill_preview: d });
-                    renderPilotFill(pilotTakeoverState);
-                }
-                if (cid === "trade_submit_confirm" && d) {
-                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { confirm_submit: d });
-                    renderPilotConfirmWatch(pilotTakeoverState);
-                    if (d.ok) { runPilotResultWatch(true); return; }
-                }
-                if (cid === "trade_result_watch" && d) {
-                    pilotTakeoverState = Object.assign({}, pilotTakeoverState || {}, { watch_result: d });
-                    renderPilotConfirmWatch(pilotTakeoverState);
-                }
-                if (d && d.ok) {
-                    toast("已执行：" + pilotActionLabel(cid) + (cid === "trade_form_fill" ? "（预演）" : ""));
-                } else {
-                    toast("执行失败：" + (d ? (d.error || pilotActionLabel(cid)) : pilotActionLabel(cid)));
-                }
-                loadPilotTakeoverPrecheck();
-            }, "POST", JSON.stringify(pilotNextActionPayload(cid)));
+            executePilotAction(payload, {
+                plannedId: "trade_live_validate",
+                executedId: "trade_live_validate",
+                labelId: "trade_live_validate",
+                button: "pilot-validate-btn",
+                pendingText: "验证中...",
+                pendingLog: payload.confirm ? "正在执行闭环验证与证据归档..." : "正在执行闭环预演验证..."
+            });
         }
         function pilotStart() {
+
             api("/api/pilot/start", function (d) {
                 if (d && d.ok) {
                     toast("自主操盘已启动!"); loadPilot()

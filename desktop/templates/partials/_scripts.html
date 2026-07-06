@@ -8,6 +8,8 @@
     function getStoredToken() { try { return localStorage.getItem("gbt_auth_token") || "" } catch (e) { return "" } }
     function setStoredToken(token) { authState.token = token || ""; try { if (token) localStorage.setItem("gbt_auth_token", token); else localStorage.removeItem("gbt_auth_token") } catch (e) { } }
     function fmtTime(v) { if (!v) return "--"; try { return new Date(v).toLocaleString() } catch (e) { return v } }
+    function fmtAccountMoney(v) { var n = Number(v); return (v === null || v === undefined || v === "" || !isFinite(n)) ? "--" : ("¥" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })) }
+    function renderAccountMetrics(prefix, acct) { acct = acct || {}; var connected = !!acct.connected; setTxt(prefix + "-cash", connected ? fmtAccountMoney(acct.cash) : "--"); setTxt(prefix + "-equity", connected ? fmtAccountMoney(acct.equity) : "--"); setTxt(prefix + "-pos", connected ? String(acct.positions == null ? 0 : acct.positions) : "--"); var pnlEl = $(prefix + "-pnl"); if (pnlEl) { if (connected && acct.pnl !== null && acct.pnl !== undefined && acct.pnl !== "") { var pnl = Number(acct.pnl || 0); pnlEl.textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); pnlEl.style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; } else { pnlEl.textContent = "--"; pnlEl.style.color = "var(--t3)"; } } }
     function updateAuthUI() {
         var profile = authState.profile || null, balance = authState.balance || null;
         var loggedIn = !!(authState.token && profile);
@@ -549,15 +551,9 @@
                 var h = hist[hi];
                 hh += "<tr><td>" + esc(h.time || "") + "</td><td>" + esc(h.model || "") + "</td><td>" + (h.tokens_in || 0) + "</td><td>" + (h.tokens_out || 0) + "</td><td>\u00a5" + (h.cost_rmb || 0).toFixed(4) + "</td></tr>";
             }
-            $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";
-            var td = d.trade || {}, acct = td.account || {};
-            $("d-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString();
-            $("d-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString();
-            var pnl = acct.pnl || 0;
-            $("d-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString();
-            $("d-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)";
-            $("d-pos").textContent = acct.positions || "0";
-            var wl = "", watchlist = td.watchlist || [];
+            $("d-llmhist").innerHTML = hh || "<tr><td colspan=5 style=color:var(--t3)>暂无数据</td></tr>";            var td = d.trade || {}, acct = td.account || {};
+            renderAccountMetrics("d", acct);
+var wl = "", watchlist = td.watchlist || [];
             tradeState.watchlist = watchlist;
             for (var wi = 0; wi < watchlist.length; wi++) {
                 var w = watchlist[wi] || {}, code = w.code || w[0] || "", name = w.name || w[1] || "", price = Number(w.price || 0), pct = Number(w.change_pct || 0), cls = pctCls(pct);
@@ -754,7 +750,7 @@
         var inp = $("chat-input"), txt = inp.value.trim();
         if (!txt) return;
         var deep = $("deep-mode").checked;
-        if (guideChatAccess()) return;
+        if (guideChatAccess(txt)) return;
         inp.value = "";
         addChatMsg("user", txt);
         // 加载动画
@@ -795,24 +791,11 @@
         });
         updateAuthUI();
     }
-    function guideChatAccess() {
-        var remaining = (authState.balance && typeof authState.balance.remaining !== "undefined")
-            ? Number(authState.balance.remaining || 0) : 0;
-        if (!authState.token && remaining <= 0) {
-            addChatMsg("assistant", "当前是访客模式，令牌为 0。请先登录领取新用户 10000 tokens，或前往充值激活后再开始对话。");
-            routeSoftNotice("模型已连接，但当前访客余额为 0。请先登录领取新用户令牌，或前往充值激活后再开始对话。");
-            switchTab("auth");
-            return true;
-        }
-        if (authState.token && remaining <= 0) {
-            addChatMsg("assistant", "当前账号令牌余额不足，请先前往充值激活后再继续对话。");
-            switchTab("recharge");
-            return true;
-        }
+    function guideChatAccess(txt) {
         return false;
     }
 
-    function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; $("a-cash").textContent = "\u00a5" + (acct.cash || 0).toLocaleString(); $("a-equity").textContent = "\u00a5" + (acct.equity || 0).toLocaleString(); var pnl = acct.pnl || 0; $("a-pnl").textContent = (pnl >= 0 ? "+" : "") + pnl.toLocaleString(); $("a-pnl").style.color = pnl >= 0 ? "var(--g)" : "var(--r)"; $("a-pos").textContent = acct.positions || "0"; loadTokenBalance(true) }) }
+    function load账户() { api("/api/dashboard", function (d) { if (!d) return; var td = d.trade || {}, acct = td.account || {}; renderAccountMetrics("a", acct); loadTokenBalance(true) }) }
     function loadTrade() { refresh(); loadMarket(); if (tradeState.selectedCode) loadTradeDetail(tradeState.selectedCode); restoreLastRecap(); }
     function restoreLastRecap() {
         try {
@@ -868,11 +851,6 @@
                 api("/api/token/balance", function (bal) {
                     if (bal && bal.ok) authState.balance = bal;
                     updateAuthUI();
-                    if (!authState.token && bal && typeof bal.remaining !== "undefined" && Number(bal.remaining || 0) <= 0) {
-                        routeSoftNotice("模型已连接，但当前访客余额为 0。请先登录领取新用户令牌，或前往充值激活后再开始对话。");
-                        switchTab("auth");
-                        return;
-                    }
                     toast("连接成功!");
                 });
                 return;

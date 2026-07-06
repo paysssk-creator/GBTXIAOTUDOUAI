@@ -1,0 +1,30 @@
+{
+  "version": "v1.1.22",
+  "rehearsal_type": "portable_runtime_validation",
+  "validated_at": "2026-07-05T17:21:38",
+  "listener": {
+    "pid": 20600,
+    "process_name": "GBT_Pro_v1.1.22_dir_parallel",
+    "path": "C:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\user_download\\GBT_Pro_v1.1.22_portable\\GBT_Pro_v1.1.22_dir_parallel\\GBT_Pro_v1.1.22_dir_parallel.exe"
+  },
+  "checks": {
+    "mcp_servers": [
+      "external_ai_stdio"
+    ],
+    "mcp_count": 1,
+    "dashboard_mcp_count": 1,
+    "dashboard_mcp_servers": [
+      "external_ai_stdio"
+    ],
+    "auto_trade": true,
+    "auto_trade_enabled": true,
+    "mode": "conservative"
+  },
+  "pass_criteria": {
+    "mcp_count_min": 1,
+    "dashboard_mcp_count_matches_api": true,
+    "listener_path_must_contain": "GBT_Pro_v1.1.22_portable",
+    "auto_trade_field_consistency": true
+  },
+  "status": "passed"
+}

@@ -38,7 +38,34 @@ def api_devices():return jsonify({"devices":[],"total":0})
 def api_watcher_status():return jsonify({"running":False})
 
 @bp.route("/api/trader/status")
-def api_trader_status():return jsonify({"auto_trade":False})
+def api_trader_status():
+    try:
+        from gbt.autopilot import get_pilot
+        status = get_pilot().status()
+        return jsonify({
+            "ok": True,
+            "running": bool(status.get("running")),
+            "auto_trade": bool(status.get("auto_trade_enabled")),
+            "auto_trade_enabled": bool(status.get("auto_trade_enabled")),
+            "mode": status.get("mode", "conservative"),
+            "scan_count": int(status.get("scan_count", 0) or 0),
+            "trade_count": int(status.get("trade_count", 0) or 0),
+            "signal_count": int(status.get("signal_count", 0) or 0),
+            "pnl": float(status.get("pnl", 0) or 0),
+            "last_scan": status.get("last_scan"),
+            "stop_loss_pct": status.get("stop_loss_pct"),
+            "take_profit_pct": status.get("take_profit_pct"),
+            "watchlist": status.get("watchlist", []),
+            "logs": status.get("logs", []),
+        })
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "running": False,
+            "auto_trade": False,
+            "auto_trade_enabled": False,
+            "error": str(e)[:120],
+        })
 
 @bp.route("/api/connectors")
 def api_connectors():return jsonify({"connectors":[],"total":0})

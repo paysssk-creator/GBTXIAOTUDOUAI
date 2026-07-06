@@ -1,14 +1,14 @@
 {
   "product": "GBT Pro",
-  "version": "v1.1.18",
-  "release_tag": "v1.1.18-desktop-runtime",
+  "version": "v1.1.22",
+  "release_tag": "v1.1.22-desktop-runtime",
   "developer": "自由的风",
-  "build_ts": 1783155149,
+  "build_ts": 1783246963,
   "artifacts": {
-    "GBT_Pro_v1.1.18_portable_download.zip": {
-      "path": "release\\GBT_Pro_v1.1.18_portable_download.zip",
-      "size_bytes": 146181879,
-      "sha256": "969ee3c21c91fc481187dc2629fa866134efe229ec5ac10ee9a1b62fa255a1e5",
+    "GBT_Pro_v1.1.22_portable_download.zip": {
+      "path": "release\\GBT_Pro_v1.1.22_portable_download.zip",
+      "size_bytes": 211465480,
+      "sha256": "0a204d5b53485e27a86cae9ed2b6f9456ca5009a89effc2b9897a345809e6244",
       "package_type": "portable-runtime"
     }
   },
@@ -21,15 +21,32 @@
     "dpi_awareness": "PerMonitorV2"
   },
   "install_instructions": [
-    "1. 下载 GBT_Pro_v1.1.18_portable_download.zip 并解压到任意本地目录",
+    "1. 下载 GBT_Pro_v1.1.22_portable_download.zip 并解压到任意本地目录",
     "2. 双击 Launch GBT Pro.bat 启动桌面端",
     "3. 首次遇到 Windows 安全提示时选择允许运行",
     "4. 默认端口 8765，应用数据与日志保留在运行目录",
     "5. 卸载：删除解压目录即可"
   ],
   "atomic_replace_compliance": {
-    "env_consistency": "源码模板、runtime 模板、portable 包模板已同步到同一逻辑版本",
-    "data_consistency": "便携包仅在运行目录写入数据与日志，不覆盖旧版本目录",
-    "validation_observability": "portable 包已执行 /api/status、/api/panel/status 与 APP 内闭环 UAT"
+    "env_consistency": "fresh8 runtime、portable 根目录、MCP 配置与桥接器已按同一 v1.1.22 版本同步打包",
+    "data_consistency": "便携包独立目录运行，不覆盖旧版本目录；MCP 仅复用本地 HTTP 接口，不做额外数据迁移",
+    "validation_observability": "已完成 v1.1.22 portable 启动演练，验证 /api/mcp/servers=1、dashboard.mcp.count=1、/api/trader/status 自动交易字段一致；证据归档: C:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\qa_uat\\rehearsal_archive\\v1.1.22_portable_validation_20260705_172134.json"
+  },
+  "release_gate": {
+    "status": "blocked_pending_real_broker_gray_acceptance",
+    "production_release_allowed": false,
+    "checklist_path": "qa_uat\\REAL_BROKER_GRAY_ACCEPTANCE_20260705.md",
+    "required_rehearsals": [
+      "forward_rehearsal",
+      "rollback_rehearsal"
+    ],
+    "required_evidence": [
+      "screenshots/trade_validate_*.png",
+      "audit_evidence/trade_validate_*.json",
+      "gray_machine_screenshot",
+      "broker_login_screenshot",
+      "rollback_log"
+    ],
+    "next_action": "完成真实券商登录态灰度验收并补齐回滚演练归档"
   }
 }

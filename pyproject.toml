@@ -47,6 +47,7 @@ dependencies = [
 [project.optional-dependencies]
 ocr = [
     "opencv-python>=4.8",
+    "rapidocr_onnxruntime>=1.2",
     "easyocr>=1.7",
     "pytesseract>=0.3",
 ]

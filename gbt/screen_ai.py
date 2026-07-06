@@ -42,12 +42,21 @@ except ImportError:
     HAS_OCR = False
     L.warning("winrt OCR 不可用，screen_ocr 将降级")
 
+try:
+    from rapidocr_onnxruntime import RapidOCR
+    HAS_RAPIDOCR = True
+except ImportError:
+    RapidOCR = None
+    HAS_RAPIDOCR = False
+
 
 class ScreenOCR:
     """实时桌面屏幕文字识别"""
     
     def __init__(self):
         self.engine = None
+        self.backend = ""
+        self.rapid_ocr = None
         if HAS_OCR:
             try:
                 self.engine = OcrEngine.try_create_from_user_profile_languages()
@@ -57,9 +66,17 @@ class ScreenOCR:
                     )
                 if self.engine:
                     lang = self.engine.recognizer_language.display_name
+                    self.backend = "winrt"
                     L.info(f"OCR 引擎就绪: {lang}")
             except Exception as e:
                 L.error(f"OCR 引擎初始化失败: {e}")
+        if not self.engine and HAS_RAPIDOCR:
+            try:
+                self.rapid_ocr = RapidOCR()
+                self.backend = "rapidocr"
+                L.info("RapidOCR 引擎就绪")
+            except Exception as e:
+                L.error(f"RapidOCR 初始化失败: {e}")
     
     def capture(self, region=None, save_path=None):
         """截屏，返回 PIL Image
@@ -101,6 +118,80 @@ class ScreenOCR:
         bitmap = decoder.get_software_bitmap_async().get()
         return bitmap
     
+    @staticmethod
+    def _normalize_quad_bbox(bbox):
+        points = []
+        for item in bbox or []:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                try:
+                    points.append((float(item[0]), float(item[1])))
+                except Exception:
+                    continue
+        if not points:
+            return None
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        left = int(min(xs))
+        top = int(min(ys))
+        right = int(max(xs))
+        bottom = int(max(ys))
+        return {
+            "x": left,
+            "y": top,
+            "w": max(1, right - left),
+            "h": max(1, bottom - top),
+        }
+
+    def _read_text_by_rapidocr(self, image):
+        if not self.rapid_ocr:
+            return {"ok": False, "error": "RapidOCR未就绪", "text": ""}
+        fp = None
+        try:
+            with tempfile.NamedTemporaryFile(prefix="gbt_screen_ocr_", suffix=".png", delete=False) as tmp:
+                fp = tmp.name
+            image.save(fp)
+            result, elapse = self.rapid_ocr(fp)
+            words = []
+            lines = []
+            texts = []
+            for item in result or []:
+                if not isinstance(item, (list, tuple)) or len(item) < 2:
+                    continue
+                bbox = self._normalize_quad_bbox(item[0])
+                chunk = str(item[1] or "").strip()
+                if not chunk:
+                    continue
+                texts.append(chunk)
+                if chunk not in lines:
+                    lines.append(chunk)
+                if bbox:
+                    word = {"text": chunk, **bbox}
+                    if len(item) >= 3:
+                        try:
+                            word["confidence"] = float(item[2])
+                        except Exception:
+                            pass
+                    words.append(word)
+            return {
+                "ok": True,
+                "text": "\n".join(texts),
+                "lines": lines,
+                "words": words,
+                "word_count": len(words),
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "engine": "rapidocr",
+                "elapsed": elapse,
+            }
+        except Exception as e:
+            L.error(f"RapidOCR 识别失败: {e}")
+            return {"ok": False, "error": str(e)[:160], "text": ""}
+        finally:
+            try:
+                if fp and os.path.exists(fp):
+                    os.remove(fp)
+            except Exception:
+                pass
+
     def read_text(self, image=None, region=None):
         """OCR 识别屏幕文字
         
@@ -111,52 +202,50 @@ class ScreenOCR:
         Returns:
             dict: {
                 "ok": bool,
-                "text": str,          # 完整文本
-                "lines": [str],       # 逐行
-                "words": [{text, bbox}],  # 逐词 + 坐标
+                "text": str,
+                "lines": [str],
+                "words": [{text, bbox}],
                 "timestamp": str
             }
         """
-        if not self.engine:
-            return {"ok": False, "error": "OCR引擎未就绪", "text": ""}
-        
-        try:
-            if image is None:
-                image = self.capture(region=region)
-            if image is None:
-                return {"ok": False, "error": "截屏失败", "text": ""}
-            
-            # PIL → SoftwareBitmap
-            bitmap = self._pil_to_software_bitmap(image)
-            
-            # 执行OCR
-            result = self.engine.recognize_async(bitmap).get()
-            
-            text = result.text or ""
-            lines = [line.text for line in result.lines if line.text.strip()]
-            
-            words = []
-            for line in result.lines:
-                for word in line.words:
-                    b = word.bounding_rect
-                    words.append({
-                        "text": word.text,
-                        "x": b.x, "y": b.y,
-                        "w": b.width, "h": b.height
-                    })
-            
-            return {
-                "ok": True,
-                "text": text,
-                "lines": lines,
-                "words": words,
-                "word_count": len(words),
-                "timestamp": datetime.now().strftime("%H:%M:%S")
-            }
-            
-        except Exception as e:
-            L.error(f"OCR识别失败: {e}")
-            return {"ok": False, "error": str(e)[:120], "text": ""}
+        if image is None:
+            image = self.capture(region=region)
+        if image is None:
+            return {"ok": False, "error": "截屏失败", "text": ""}
+
+        if self.engine:
+            try:
+                bitmap = self._pil_to_software_bitmap(image)
+                result = self.engine.recognize_async(bitmap).get()
+                text = result.text or ""
+                lines = [line.text for line in result.lines if line.text.strip()]
+                words = []
+                for line in result.lines:
+                    for word in line.words:
+                        b = word.bounding_rect
+                        words.append({
+                            "text": word.text,
+                            "x": b.x, "y": b.y,
+                            "w": b.width, "h": b.height
+                        })
+                return {
+                    "ok": True,
+                    "text": text,
+                    "lines": lines,
+                    "words": words,
+                    "word_count": len(words),
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "engine": "winrt",
+                }
+            except Exception as e:
+                L.error(f"OCR识别失败: {e}")
+                if not self.rapid_ocr:
+                    return {"ok": False, "error": str(e)[:120], "text": ""}
+
+        if self.rapid_ocr:
+            return self._read_text_by_rapidocr(image)
+
+        return {"ok": False, "error": "OCR引擎未就绪", "text": ""}
     
     def find_text_on_screen(self, search_text, region=None):
         """在屏幕上查找指定文字位置

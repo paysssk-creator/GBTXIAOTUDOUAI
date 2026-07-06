@@ -36,57 +36,85 @@ class UniversalMCP:
     """万能MCP客户端 — 动态调用任意MCP Server"""
 
     def __init__(self, config_path: Optional[str] = None):
-        self.cfg = config_path or os.path.join(
-            os.path.expanduser("~"), ".cline", "mcp-config.json")
+        self.workspace_root = self._detect_workspace_root()
+        self.cfg = config_path or self._discover_config_path()
+        self.run_cwd = os.path.dirname(self.cfg) if self.cfg else self.workspace_root
         self._s: Dict[str, MCPServer] = {}
         self._load()
 
+    def _detect_workspace_root(self) -> str:
+        """优先定位真正的项目根目录，供 ${workspaceFolder} 展开使用。"""
+        wd = os.getcwd()
+        found = False
+        try:
+            projects = []
+            for entry in os.scandir(wd):
+                if entry.is_dir() and os.path.isdir(os.path.join(entry.path, ".git")):
+                    projects.append(entry.path)
+            if projects:
+                wd = projects[0]
+                found = True
+        except OSError:
+            pass
+        if not found:
+            p = os.path.abspath(wd)
+            for _ in range(10):
+                if os.path.isdir(os.path.join(p, ".git")) and p != os.path.expanduser("~"):
+                    wd = p
+                    found = True
+                    break
+                parent = os.path.dirname(p)
+                if parent == p:
+                    break
+                p = parent
+        if not found:
+            p = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            for _ in range(10):
+                if os.path.isdir(os.path.join(p, ".git")):
+                    wd = p
+                    break
+                parent = os.path.dirname(p)
+                if parent == p:
+                    break
+                p = parent
+        return wd
+
+    def _discover_config_path(self) -> str:
+        """按项目优先、用户目录兜底的顺序查找 MCP 配置。"""
+        candidates = []
+        env_cfg = os.getenv("GBT_MCP_CONFIG", "").strip()
+        if env_cfg:
+            candidates.append(env_cfg)
+        candidates.extend([
+            os.path.join(self.workspace_root, "config", "mcp-config.json"),
+            os.path.join(self.workspace_root, ".cline", "mcp-config.json"),
+            os.path.join(os.path.expanduser("~"), ".cline", "mcp-config.json"),
+        ])
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                return candidate
+        return candidates[0] if candidates else os.path.join(os.path.expanduser("~"), ".cline", "mcp-config.json")
+
     def _load(self):
-        if not os.path.exists(self.cfg): return
+        if not os.path.exists(self.cfg):
+            return
         try:
             with open(self.cfg, "r", encoding="utf-8") as f:
                 c = json.load(f)
-            # 智能解析 workspaceFolder: 搜索 .git 目录找到真正的项目根
-            wd = os.getcwd()
-            # 策略: CWD子目录(项目) → CWD向上(子目录内) → 脚本上级目录
-            found = False
-            # 1. 优先搜索 CWD 的直接子目录 (常放多个项目)
-            try:
-                projects = []
-                for entry in os.scandir(wd):
-                    if entry.is_dir() and os.path.isdir(os.path.join(entry.path, ".git")):
-                        projects.append(entry.path)
-                if projects:
-                    # 如果有多个项目，选第一个 (通常是最常用的)
-                    wd = projects[0]; found = True
-            except OSError:
-                pass
-            # 2. 如果没找到，从 CWD 向上搜索 (处理 CWD 在项目子目录的情况)
-            if not found:
-                p = os.path.abspath(wd)
-                for _ in range(10):
-                    if os.path.isdir(os.path.join(p, ".git")) and p != os.path.expanduser("~"):
-                        wd = p; found = True; break
-                    parent = os.path.dirname(p)
-                    if parent == p: break
-                    p = parent
-            # 3. 从脚本所在目录向上搜索 (fallback)
-            if not found:
-                p = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                for _ in range(10):
-                    if os.path.isdir(os.path.join(p, ".git")):
-                        wd = p; found = True; break
-                    parent = os.path.dirname(p)
-                    if parent == p: break
-                    p = parent
             for n, cfg in c.get("mcpServers", {}).items():
-                args = [a.replace("${workspaceFolder}", wd) for a in cfg.get("args", [])]
+                command = cfg["command"].replace("${workspaceFolder}", self.workspace_root)
+                args = [a.replace("${workspaceFolder}", self.workspace_root) for a in cfg.get("args", [])]
                 env = {}
                 for k, v in cfg.get("env", {}).items():
                     env[k] = os.getenv(v.removeprefix("${").removesuffix("}"), "") if v.startswith("${") and v.endswith("}") else v
-                self._s[n] = MCPServer(name=n, command=cfg["command"],
-                    args=args, description=cfg.get("description", ""), env=env)
-            print(f"🔌 MCP: {len(self._s)}个服务器")
+                self._s[n] = MCPServer(
+                    name=n,
+                    command=command,
+                    args=args,
+                    description=cfg.get("description", ""),
+                    env=env,
+                )
+            print(f"🔌 MCP: {len(self._s)}个服务器 ({self.cfg})")
         except Exception as e:
             print(f"FAIL MCP加载失败: {e}")
 
@@ -123,7 +151,7 @@ class UniversalMCP:
             env = os.environ.copy(); env.update(srv.env)
             r = subprocess.run(parts, shell=False, capture_output=True,
                 text=True, timeout=timeout, encoding='utf-8', errors='replace',
-                cwd=os.path.expanduser("~/.cline"), env=env)
+                cwd=self.run_cwd, env=env)
             out = (r.stdout or "").strip() or (r.stderr or "").strip()
             srv.status = MCPStatus.ONLINE; srv.last_call = time.time()
             ok = r.returncode == 0
@@ -174,7 +202,7 @@ class UniversalMCP:
                 r = subprocess.run(
                     [s.command] + list(s.args[:1]),
                     capture_output=True, text=True, timeout=3,
-                    cwd=os.path.expanduser("~/.cline"),
+                    cwd=self.run_cwd,
                     env={**os.environ, **s.env})
                 h[n] = "OK" if r.returncode == 0 else "WARN"
             except subprocess.TimeoutExpired:

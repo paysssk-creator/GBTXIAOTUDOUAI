@@ -1,0 +1,780 @@
+{
+  "started_at": "2026-07-05T01:44:49.8930611+07:00",
+  "base_url": "http://127.0.0.1:8765",
+  "broker": "同花顺",
+  "stock_code": "600519",
+  "trade_action": "buy",
+  "app_only_preview": false,
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "candidate_zip": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip",
+  "sha256": "2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f",
+  "runtime_dir": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel",
+  "checklist_path": "qa_uat\\REAL_BROKER_GRAY_ACCEPTANCE_20260705.md",
+  "steps": [
+    {
+      "name": "01-候选包与哈希一致性",
+      "status": "PASS",
+      "ms": 193,
+      "detail": "zip_hash_ok=2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f",
+      "payload": {
+        "zip": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip",
+        "sha_file": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\GBT_Pro_v1.1.19_portable_download.zip.sha256.txt"
+      },
+      "response": {
+        "sha256": "2605f2d5c4a0a5b016cb3fad49b1bbdbfa0bfc814c72c933c08bbe58690ca64f"
+      }
+    },
+    {
+      "name": "02-运行时指针检查",
+      "status": "PASS",
+      "ms": 3,
+      "detail": "runtime_exe=c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel\\GBT_Pro_v1.1.19_dir_parallel.exe",
+      "payload": {
+        "runtime_ini": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\release\\current_runtime.ini"
+      },
+      "response": {
+        "runtime_exe": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel\\GBT_Pro_v1.1.19_dir_parallel.exe",
+        "runtime_dir": "c:\\Users\\ADMIN\\Desktop\\自主操盘\\GBTXIAOTUDOUAI\\dist_runtime_fresh5\\GBT_Pro_v1.1.19_dir_parallel"
+      }
+    },
+    {
+      "name": "03-服务状态",
+      "status": "PASS",
+      "ms": 1067,
+      "detail": "version=v1.1.19 role=desktop",
+      "payload": null,
+      "response": {
+        "keys_available": 3,
+        "keys_total": 14,
+        "llm": "Akashic/DeepSeek/Ollama",
+        "mcp_count": 0,
+        "model": "auto",
+        "ok": true,
+        "release_tag": "v1.1.19-desktop-runtime",
+        "role": "desktop",
+        "version": "v1.1.19"
+      }
+    },
+    {
+      "name": "04-真实动作链冒烟",
+      "status": "PASS",
+      "ms": 30,
+      "detail": "chat_action_ok",
+      "payload": {
+        "text": "打开浏览器",
+        "deep_reasoning": false
+      },
+      "response": {
+        "action_payload": {
+          "dry_run": false,
+          "id": "browser_open"
+        },
+        "brain_mode": "local",
+        "deep_reasoning": false,
+        "desktop_result": {
+          "data": "已打开浏览器：https://finance.eastmoney.com",
+          "ok": true,
+          "target": "https://finance.eastmoney.com",
+          "time": "01:44:47"
+        },
+        "dry_run": false,
+        "executed_action": "browser_open",
+        "metrics": {
+          "cost_rmb": 0,
+          "model": "desktop-executor",
+          "time": "01:44:47",
+          "tokens_in": 0,
+          "tokens_out": 0
+        },
+        "model": "desktop-executor",
+        "ok": true,
+        "provider": "GBT Runtime",
+        "reasoning": null,
+        "requires_confirmation": false,
+        "response": "已打开浏览器：https://finance.eastmoney.com",
+        "tokens_consumed": 0,
+        "tokens_remaining": null
+      }
+    },
+    {
+      "name": "05-接管预检",
+      "status": "PASS",
+      "ms": 628,
+      "detail": "precheck=pending next=trade_takeover_watch",
+      "payload": {
+        "price": 1420.55,
+        "trade_action": "buy",
+        "broker": "同花顺",
+        "stock_code": "600519",
+        "auto_focus": true,
+        "lots": 100,
+        "id": "trade_takeover_precheck",
+        "auto_navigate": true
+      },
+      "response": {
+        "active_window": {
+          "height": 770,
+          "left": 67,
+          "ok": true,
+          "title": "Windows PowerShell",
+          "top": 17,
+          "width": 1499
+        },
+        "anchor_state": {
+          "anchors": {},
+          "error": "OCR引擎未就绪",
+          "found": false,
+          "keywords": {},
+          "ok": false
+        },
+        "app_only": false,
+        "broker": "同花顺",
+        "can_fill_form": false,
+        "can_submit_confirm": false,
+        "capture_evidence": false,
+        "confirm_state": {
+          "confirm_btn": null,
+          "error": "OCR引擎未就绪",
+          "found": false,
+          "keywords": [],
+          "ok": false
+        },
+        "data": "接管券商：同花顺\n接管阶段：await_login\n预检结论：尚未进入可接管态\n填单条件：未满足\n确认弹窗：未识别\n下一动作：trade_takeover_watch\n风险提示：请先完成券商登录，登录完成后 AI 自动接管。",
+        "entrust_state": {
+          "bounds": null,
+          "broker": null,
+          "codes": [],
+          "error": "OCR引擎未就绪",
+          "found": false,
+          "matched_lines": [],
+          "metrics": [],
+          "ok": false,
+          "panel": "entrust",
+          "rows": [],
+          "summary": {}
+        },
+        "evidence": null,
+        "focus_state": {
+          "error": "未找到匹配的券商窗口",
+          "ok": false,
+          "scan": {
+            "active_window": {
+              "height": 770,
+              "left": 67,
+              "ok": true,
+              "title": "Windows PowerShell",
+              "top": 17,
+              "width": 1499
+            },
+            "broker_windows": [
+              {
+                "active": false,
+                "broker": "东方财富",
+                "matched_keywords": [
+                  "东方财富"
+                ],
+                "score": 30,
+                "title": "财经首页 - 东方财富网 - Google Chrome"
+              }
+            ],
+            "observed_titles": [
+              "Windows PowerShell",
+              "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+              "财经首页 - 东方财富网 - Google Chrome",
+              "GBT Pro — 自主操盘·AI智能交易终端",
+              "CWebviewHostWnd",
+              "WeChat",
+              "桌面 - 文件资源管理器",
+              "Realtek Audio Console",
+              "Windows 输入体验",
+              "Hugging Face – The AI community building the future. - Google Chrome",
+              "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+              "‎太古传说 – (2600852)",
+              "Program Manager"
+            ],
+            "ok": true,
+            "window_count": 13
+          }
+        },
+        "human_action_required": true,
+        "login_state": {
+          "confidence": 0.0,
+          "error": null,
+          "keywords": [],
+          "logged_in": false,
+          "ok": true
+        },
+        "lots": 100,
+        "missing_fill_anchors": [
+          "stock_code",
+          "price",
+          "lots"
+        ],
+        "missing_payload": [],
+        "next_action_id": "trade_takeover_watch",
+        "next_step": "请先完成券商登录，登录完成后 AI 自动接管。",
+        "ok": true,
+        "page_nav_state": {
+          "ok": false,
+          "reason": "尚未登录券商，暂不切页",
+          "skipped": true
+        },
+        "position_state": {
+          "bounds": null,
+          "broker": null,
+          "codes": [],
+          "error": "OCR引擎未就绪",
+          "found": false,
+          "matched_lines": [],
+          "metrics": [],
+          "ok": false,
+          "panel": "position",
+          "rows": [],
+          "summary": {}
+        },
+        "precheck_passed": false,
+        "price": 1420.55,
+        "ready": false,
+        "risk_gate": {
+          "confirm_required_actions": [
+            "trade_form_fill",
+            "trade_submit_confirm"
+          ],
+          "dry_run_supported": true,
+          "human_action_required": true
+        },
+        "stock_code": "600519",
+        "supported_actions": [
+          "trade_takeover_watch",
+          "trade_panel_probe",
+          "trade_form_fill",
+          "trade_submit_confirm",
+          "trade_result_watch"
+        ],
+        "takeover_phase": "await_login",
+        "time": "01:44:47",
+        "trade_action": "buy",
+        "warnings": [
+          "请先完成券商登录，登录完成后 AI 自动接管。"
+        ],
+        "window_state": {
+          "active_window": {
+            "height": 770,
+            "left": 67,
+            "ok": true,
+            "title": "Windows PowerShell",
+            "top": 17,
+            "width": 1499
+          },
+          "broker_windows": [
+            {
+              "active": false,
+              "broker": "东方财富",
+              "matched_keywords": [
+                "东方财富"
+              ],
+              "score": 30,
+              "title": "财经首页 - 东方财富网 - Google Chrome"
+            }
+          ],
+          "observed_titles": [
+            "Windows PowerShell",
+            "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+            "财经首页 - 东方财富网 - Google Chrome",
+            "GBT Pro — 自主操盘·AI智能交易终端",
+            "CWebviewHostWnd",
+            "WeChat",
+            "桌面 - 文件资源管理器",
+            "Realtek Audio Console",
+            "Windows 输入体验",
+            "Hugging Face – The AI community building the future. - Google Chrome",
+            "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+            "‎太古传说 – (2600853)",
+            "Program Manager"
+          ],
+          "ok": true,
+          "window_count": 13
+        }
+      }
+    },
+    {
+      "name": "06-唯一下一步预演",
+      "status": "PASS",
+      "ms": 620,
+      "detail": "planned=trade_takeover_watch",
+      "payload": {
+        "auto_navigate": true,
+        "dry_run": true,
+        "stock_code": "600519",
+        "price": 1420.55,
+        "id": "trade_execute_next",
+        "lots": 100,
+        "auto_focus": true,
+        "broker": "同花顺",
+        "trade_action": "buy"
+      },
+      "response": {
+        "app_only": false,
+        "auto_selected": true,
+        "data": "预演执行唯一下一步：trade_takeover_watch",
+        "dry_run": true,
+        "executed_action": "trade_takeover_watch",
+        "ok": true,
+        "planned_action": "trade_takeover_watch",
+        "precheck": {
+          "active_window": {
+            "height": 770,
+            "left": 67,
+            "ok": true,
+            "title": "Windows PowerShell",
+            "top": 17,
+            "width": 1499
+          },
+          "anchor_state": {
+            "anchors": {},
+            "error": "OCR引擎未就绪",
+            "found": false,
+            "keywords": {},
+            "ok": false
+          },
+          "app_only": false,
+          "broker": "同花顺",
+          "can_fill_form": false,
+          "can_submit_confirm": false,
+          "capture_evidence": false,
+          "confirm_state": {
+            "confirm_btn": null,
+            "error": "OCR引擎未就绪",
+            "found": false,
+            "keywords": [],
+            "ok": false
+          },
+          "entrust_state": {
+            "bounds": null,
+            "broker": null,
+            "codes": [],
+            "error": "OCR引擎未就绪",
+            "found": false,
+            "matched_lines": [],
+            "metrics": [],
+            "ok": false,
+            "panel": "entrust",
+            "rows": [],
+            "summary": {}
+          },
+          "evidence": null,
+          "focus_state": {
+            "error": "未找到匹配的券商窗口",
+            "ok": false,
+            "scan": {
+              "active_window": {
+                "height": 770,
+                "left": 67,
+                "ok": true,
+                "title": "Windows PowerShell",
+                "top": 17,
+                "width": 1499
+              },
+              "broker_windows": [
+                {
+                  "active": false,
+                  "broker": "东方财富",
+                  "matched_keywords": [
+                    "东方财富"
+                  ],
+                  "score": 30,
+                  "title": "财经首页 - 东方财富网 - Google Chrome"
+                }
+              ],
+              "observed_titles": [
+                "Windows PowerShell",
+                "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+                "财经首页 - 东方财富网 - Google Chrome",
+                "GBT Pro — 自主操盘·AI智能交易终端",
+                "CWebviewHostWnd",
+                "WeChat",
+                "桌面 - 文件资源管理器",
+                "Realtek Audio Console",
+                "Windows 输入体验",
+                "Hugging Face – The AI community building the future. - Google Chrome",
+                "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+                "‎太古传说 – (2600853)",
+                "Program Manager"
+              ],
+              "ok": true,
+              "window_count": 13
+            }
+          },
+          "human_action_required": true,
+          "login_state": {
+            "confidence": 0.0,
+            "error": null,
+            "keywords": [],
+            "logged_in": false,
+            "ok": true
+          },
+          "lots": 100,
+          "missing_fill_anchors": [
+            "stock_code",
+            "price",
+            "lots"
+          ],
+          "missing_payload": [],
+          "next_action_id": "trade_takeover_watch",
+          "next_step": "请先完成券商登录，登录完成后 AI 自动接管。",
+          "page_nav_state": {
+            "ok": false,
+            "reason": "尚未登录券商，暂不切页",
+            "skipped": true
+          },
+          "position_state": {
+            "bounds": null,
+            "broker": null,
+            "codes": [],
+            "error": "OCR引擎未就绪",
+            "found": false,
+            "matched_lines": [],
+            "metrics": [],
+            "ok": false,
+            "panel": "position",
+            "rows": [],
+            "summary": {}
+          },
+          "precheck_passed": false,
+          "price": 1420.55,
+          "ready": false,
+          "risk_gate": {
+            "confirm_required_actions": [
+              "trade_form_fill",
+              "trade_submit_confirm"
+            ],
+            "dry_run_supported": true,
+            "human_action_required": true
+          },
+          "stock_code": "600519",
+          "supported_actions": [
+            "trade_takeover_watch",
+            "trade_panel_probe",
+            "trade_form_fill",
+            "trade_submit_confirm",
+            "trade_result_watch"
+          ],
+          "takeover_phase": "await_login",
+          "trade_action": "buy",
+          "warnings": [
+            "请先完成券商登录，登录完成后 AI 自动接管。"
+          ],
+          "window_state": {
+            "active_window": {
+              "height": 770,
+              "left": 67,
+              "ok": true,
+              "title": "Windows PowerShell",
+              "top": 17,
+              "width": 1499
+            },
+            "broker_windows": [
+              {
+                "active": false,
+                "broker": "东方财富",
+                "matched_keywords": [
+                  "东方财富"
+                ],
+                "score": 30,
+                "title": "财经首页 - 东方财富网 - Google Chrome"
+              }
+            ],
+            "observed_titles": [
+              "Windows PowerShell",
+              "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+              "财经首页 - 东方财富网 - Google Chrome",
+              "GBT Pro — 自主操盘·AI智能交易终端",
+              "CWebviewHostWnd",
+              "WeChat",
+              "桌面 - 文件资源管理器",
+              "Realtek Audio Console",
+              "Windows 输入体验",
+              "Hugging Face – The AI community building the future. - Google Chrome",
+              "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+              "‎太古传说 – (2600853)",
+              "Program Manager"
+            ],
+            "ok": true,
+            "window_count": 13
+          }
+        },
+        "time": "01:44:48"
+      }
+    },
+    {
+      "name": "07-闭环验证预演",
+      "status": "PASS",
+      "ms": 753,
+      "detail": "evidence_plan=audit_evidence/trade_validate_20260705_014449_同花顺_600519.json",
+      "payload": {
+        "auto_navigate": true,
+        "dry_run": true,
+        "stock_code": "600519",
+        "price": 1420.55,
+        "id": "trade_live_validate",
+        "lots": 100,
+        "capture_evidence": true,
+        "auto_focus": true,
+        "broker": "同花顺",
+        "trade_action": "buy"
+      },
+      "response": {
+        "app_only": false,
+        "confirm": false,
+        "data": "预演闭环验证：同花顺 -> 预检 -> 填单 -> 提交 -> 结果回看",
+        "dry_run": true,
+        "ok": true,
+        "report": {
+          "broker": "同花顺",
+          "confirm": false,
+          "evidence": {
+            "report_path": "audit_evidence/trade_validate_20260705_014449_同花顺_600519.json",
+            "screenshot_path": "screenshots/trade_validate_20260705_014449_同花顺_600519.png"
+          },
+          "lots": 100,
+          "mode": "desktop_live",
+          "precheck": {
+            "active_window": {
+              "height": 770,
+              "left": 67,
+              "ok": true,
+              "title": "Windows PowerShell",
+              "top": 17,
+              "width": 1499
+            },
+            "anchor_state": {
+              "anchors": {},
+              "error": "OCR引擎未就绪",
+              "found": false,
+              "keywords": {},
+              "ok": false
+            },
+            "app_only": false,
+            "broker": "同花顺",
+            "can_fill_form": false,
+            "can_submit_confirm": false,
+            "capture_evidence": true,
+            "confirm_state": {
+              "confirm_btn": null,
+              "error": "OCR引擎未就绪",
+              "found": false,
+              "keywords": [],
+              "ok": false
+            },
+            "entrust_state": {
+              "bounds": null,
+              "broker": null,
+              "codes": [],
+              "error": "OCR引擎未就绪",
+              "found": false,
+              "matched_lines": [],
+              "metrics": [],
+              "ok": false,
+              "panel": "entrust",
+              "rows": [],
+              "summary": {}
+            },
+            "evidence": {
+              "ok": true,
+              "report_path": "audit_evidence/trade_probe_20260705_014449_同花顺_600519.json",
+              "screenshot_path": "screenshots/trade_probe_20260705_014449_同花顺_600519.png"
+            },
+            "focus_state": {
+              "error": "未找到匹配的券商窗口",
+              "ok": false,
+              "scan": {
+                "active_window": {
+                  "height": 770,
+                  "left": 67,
+                  "ok": true,
+                  "title": "Windows PowerShell",
+                  "top": 17,
+                  "width": 1499
+                },
+                "broker_windows": [
+                  {
+                    "active": false,
+                    "broker": "东方财富",
+                    "matched_keywords": [
+                      "东方财富"
+                    ],
+                    "score": 30,
+                    "title": "财经首页 - 东方财富网 - Google Chrome"
+                  }
+                ],
+                "observed_titles": [
+                  "Windows PowerShell",
+                  "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+                  "财经首页 - 东方财富网 - Google Chrome",
+                  "GBT Pro — 自主操盘·AI智能交易终端",
+                  "CWebviewHostWnd",
+                  "WeChat",
+                  "桌面 - 文件资源管理器",
+                  "Realtek Audio Console",
+                  "Windows 输入体验",
+                  "Hugging Face – The AI community building the future. - Google Chrome",
+                  "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+                  "‎太古传说 – (2600853)",
+                  "Program Manager"
+                ],
+                "ok": true,
+                "window_count": 13
+              }
+            },
+            "human_action_required": true,
+            "login_state": {
+              "confidence": 0.0,
+              "error": null,
+              "keywords": [],
+              "logged_in": false,
+              "ok": true
+            },
+            "lots": 100,
+            "missing_fill_anchors": [
+              "stock_code",
+              "price",
+              "lots"
+            ],
+            "missing_payload": [],
+            "next_action_id": "trade_takeover_watch",
+            "next_step": "请先完成券商登录，登录完成后 AI 自动接管。",
+            "page_nav_state": {
+              "ok": false,
+              "reason": "尚未登录券商，暂不切页",
+              "skipped": true
+            },
+            "position_state": {
+              "bounds": null,
+              "broker": null,
+              "codes": [],
+              "error": "OCR引擎未就绪",
+              "found": false,
+              "matched_lines": [],
+              "metrics": [],
+              "ok": false,
+              "panel": "position",
+              "rows": [],
+              "summary": {}
+            },
+            "precheck_passed": false,
+            "price": 1420.55,
+            "ready": false,
+            "risk_gate": {
+              "confirm_required_actions": [
+                "trade_form_fill",
+                "trade_submit_confirm"
+              ],
+              "dry_run_supported": true,
+              "human_action_required": true
+            },
+            "stock_code": "600519",
+            "supported_actions": [
+              "trade_takeover_watch",
+              "trade_panel_probe",
+              "trade_form_fill",
+              "trade_submit_confirm",
+              "trade_result_watch"
+            ],
+            "takeover_phase": "await_login",
+            "trade_action": "buy",
+            "warnings": [
+              "请先完成券商登录，登录完成后 AI 自动接管。"
+            ],
+            "window_state": {
+              "active_window": {
+                "height": 770,
+                "left": 67,
+                "ok": true,
+                "title": "Windows PowerShell",
+                "top": 17,
+                "width": 1499
+              },
+              "broker_windows": [
+                {
+                  "active": false,
+                  "broker": "东方财富",
+                  "matched_keywords": [
+                    "东方财富"
+                  ],
+                  "score": 30,
+                  "title": "财经首页 - 东方财富网 - Google Chrome"
+                }
+              ],
+              "observed_titles": [
+                "Windows PowerShell",
+                "run_real_broker_gray_gate.ps1 - GBTXIAOTUDOUAI - Trae",
+                "财经首页 - 东方财富网 - Google Chrome",
+                "GBT Pro — 自主操盘·AI智能交易终端",
+                "CWebviewHostWnd",
+                "WeChat",
+                "桌面 - 文件资源管理器",
+                "Realtek Audio Console",
+                "Windows 输入体验",
+                "Hugging Face – The AI community building the future. - Google Chrome",
+                "访问公共服务器需要登录 · rustdesk/rustdesk Wiki - Google Chrome",
+                "‎太古传说 – (2600853)",
+                "Program Manager"
+              ],
+              "ok": true,
+              "window_count": 13
+            }
+          },
+          "price": 1420.55,
+          "saved_at": 1783190689,
+          "steps": [],
+          "stock_code": "600519",
+          "trade_action": "buy",
+          "validation_state": {
+            "blocked_reason": null,
+            "criteria": {
+              "fill_available": false,
+              "precheck_ready": false,
+              "submit_available": false
+            },
+            "passed": false,
+            "stage": "precheck"
+          }
+        },
+        "time": "01:44:49"
+      }
+    },
+    {
+      "name": "08-发布门禁状态检查",
+      "status": "PASS",
+      "ms": 30,
+      "detail": "gate_status=blocked_pending_real_broker_gray_acceptance",
+      "payload": null,
+      "response": {
+        "status": "blocked_pending_real_broker_gray_acceptance",
+        "production_release_allowed": false,
+        "checklist_path": "qa_uat\\REAL_BROKER_GRAY_ACCEPTANCE_20260705.md",
+        "required_rehearsals": [
+          "forward_rehearsal",
+          "rollback_rehearsal"
+        ],
+        "required_evidence": [
+          "screenshots/trade_validate_*.png",
+          "audit_evidence/trade_validate_*.json",
+          "gray_machine_screenshot",
+          "broker_login_screenshot",
+          "rollback_log"
+        ],
+        "next_action": "完成真实券商登录态灰度验收并补齐回滚演练归档"
+      }
+    }
+  ],
+  "manual_pending": [
+    "真实券商窗口登录态检查",
+    "真实 trade_panel_probe 回读确认",
+    "最小风险单量灰度执行",
+    "回滚演练留档",
+    "签收人复核"
+  ]
+}

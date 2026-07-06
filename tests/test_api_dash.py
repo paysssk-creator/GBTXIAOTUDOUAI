@@ -41,6 +41,12 @@ def test_dash_api_dashboard_data():
     import json
     j = json.loads(body.decode("utf-8", errors="ignore"))
     assert "users" in j or "system" in j or "mcp" in j
+    acct = ((j.get("trade") or {}).get("account") or {})
+    assert "connected" in acct
+    assert "source" in acct
+    if not acct.get("connected"):
+        assert acct.get("cash") is None
+        assert acct.get("equity") is None
 
 
 def test_dash_styles_css():

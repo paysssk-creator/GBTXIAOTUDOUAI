@@ -15,7 +15,7 @@ if (-not (Test-Path $python)) {
     throw "缺少虚拟环境 Python: $python"
 }
 
-$defaultAppName = "GBT_Pro_v1.1.17_dir_parallel"
+$defaultAppName = "GBT_Pro_v1.1.22_dir_parallel"
 if (-not $AppName) { $AppName = $defaultAppName }
 if (-not $DistRoot) { $DistRoot = Join-Path $projectRoot "dist_rebuild_parallel" }
 if (-not $WorkRoot) { $WorkRoot = Join-Path $projectRoot "build_runtime_dir_parallel" }
@@ -135,8 +135,8 @@ if ($SwitchCurrentRuntime) {
     $currentIni = Join-Path $projectRoot "release\current_runtime.ini"
     $iniLines = @(
         "APP_NAME=GBT Pro",
-        "APP_VERSION=v1.1.17",
-        "RELEASE_TAG=v1.1.17-desktop-runtime",
+        "APP_VERSION=v1.1.22",
+        "RELEASE_TAG=v1.1.22-desktop-runtime",
         "RUNTIME_DIR=$runtimeDirRel",
         "RUNTIME_EXE=$runtimeExeRel"
     )

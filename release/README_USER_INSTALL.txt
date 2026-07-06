@@ -1,4 +1,4 @@
-GBT Pro v1.1.18 User Install
+GBT Pro v1.1.22 User Install
 ============================
 
 For end users:
@@ -11,7 +11,7 @@ For end users:
 
 What gets installed:
 
-- App root: %LOCALAPPDATA%\GBT Pro\v1.1.18\
+- App root: %LOCALAPPDATA%\GBT Pro\v1.1.22\
 - Desktop shortcut: %USERPROFILE%\Desktop\GBT Pro.lnk
 - Local launcher: %LOCALAPPDATA%\GBT Pro\Launch GBT Pro.bat
 - Local uninstaller: %LOCALAPPDATA%\GBT Pro\Uninstall GBT Pro.bat
@@ -21,3 +21,4 @@ Notes:
 - This package is for Windows.
 - The app starts locally on the user computer.
 - No Python installation is required for the user install flow.
+

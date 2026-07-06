@@ -33,9 +33,16 @@ def test_connect_watcher_status():
 
 
 def test_connect_trader_status():
-    """GET /api/trader/status"""
+    """GET /api/trader/status 返回真实自主交易状态"""
     code, body = get("/api/trader/status")
     assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert "auto_trade" in j
+    assert "auto_trade_enabled" in j
+    assert j["auto_trade"] == j["auto_trade_enabled"]
+    assert "mode" in j
+    assert "watchlist" in j
+    assert isinstance(j.get("watchlist"), list)
 
 
 def test_connect_connectors():

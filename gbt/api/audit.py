@@ -307,6 +307,48 @@ def _capture_trade_probe_evidence(payload):
     return evidence
 
 
+def _trade_validation_evidence_plan(broker="", stock_code=""):
+    stamp = time.strftime("%Y%m%d_%H%M%S")
+    suffix_parts = []
+    if broker:
+        suffix_parts.append(str(broker).strip().replace(" ", ""))
+    if stock_code:
+        suffix_parts.append(str(stock_code).strip())
+    suffix = ("_" + "_".join(suffix_parts[:2])) if suffix_parts else ""
+    return {
+        "screenshot_path": f"screenshots/trade_validate_{stamp}{suffix}.png",
+        "report_path": f"audit_evidence/trade_validate_{stamp}{suffix}.json",
+    }
+
+
+def _archive_trade_validation_report(report, broker="", stock_code=""):
+    report = report or {}
+    plan = _trade_validation_evidence_plan(broker=broker, stock_code=stock_code)
+    root_dir = _runtime_root()
+    screenshot_abs = os.path.join(root_dir, plan["screenshot_path"].replace("/", os.sep))
+    report_abs = os.path.join(root_dir, plan["report_path"].replace("/", os.sep))
+    os.makedirs(os.path.dirname(screenshot_abs), exist_ok=True)
+    os.makedirs(os.path.dirname(report_abs), exist_ok=True)
+    evidence = {
+        "ok": True,
+        "screenshot_path": plan["screenshot_path"],
+        "report_path": plan["report_path"],
+    }
+    try:
+        import pyautogui
+        pyautogui.screenshot(screenshot_abs)
+    except Exception as e:
+        evidence["ok"] = False
+        evidence["screenshot_error"] = str(e)[:120]
+    try:
+        with open(report_abs, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        evidence["ok"] = False
+        evidence["report_error"] = str(e)[:120]
+    return evidence
+
+
 def _enumerate_window_titles():
     titles = []
     try:
@@ -851,6 +893,17 @@ def _exec_desktop(cid, payload=None):
             broker_hint = _resolve_broker_hint(payload.get("broker"))
             result = _detect_trade_anchors(action=action, broker=broker_hint)
             if not result.get("ok"):
+                if dry_run:
+                    return _preview(
+                        "预演交易锚点识别（OCR引擎未就绪，返回空锚点结构）",
+                        t,
+                        found=False,
+                        anchors={},
+                        keywords=result.get("keywords", {}),
+                        broker=broker_hint or None,
+                        engine_ready=False,
+                        preview_error=result.get("error"),
+                    )
                 return _reply(False, "交易锚点识别失败: " + result.get("error", "未知错误"), t)
             anchors = result.get("anchors", {}) or {}
             if anchors:
@@ -868,6 +921,15 @@ def _exec_desktop(cid, payload=None):
             broker_hint = _resolve_broker_hint(payload.get("broker"))
             result = _public_confirm_state(_detect_trade_confirm_dialog(action=action, stock_code=stock_code, broker=broker_hint))
             if not result.get("ok"):
+                if dry_run:
+                    return _preview(
+                        "预演交易确认弹窗识别（OCR引擎未就绪，返回空确认状态）",
+                        t,
+                        confirm_state=result,
+                        broker=broker_hint or None,
+                        engine_ready=False,
+                        preview_error=result.get("error"),
+                    )
                 return _reply(False, "交易确认弹窗识别失败: " + result.get("error", "未知错误"), t)
             if result.get("found"):
                 btn = result.get("confirm_btn") or {}
@@ -879,6 +941,15 @@ def _exec_desktop(cid, payload=None):
             broker_hint = _resolve_broker_hint(payload.get("broker"))
             state = _public_panel_readback_state(_read_trade_panel(panel="entrust", stock_code=stock_code, broker=broker_hint))
             if not state.get("ok"):
+                if dry_run:
+                    return _preview(
+                        "预演委托区域回读（OCR引擎未就绪，返回空委托结构）",
+                        t,
+                        entrust_state=state,
+                        broker=broker_hint or None,
+                        engine_ready=False,
+                        preview_error=state.get("error"),
+                    )
                 return _reply(False, "委托区域回读失败: " + (state.get("error") or "未知错误"), t, entrust_state=state)
             if state.get("found"):
                 lines = ["已识别委托区域摘要"]
@@ -904,6 +975,15 @@ def _exec_desktop(cid, payload=None):
             broker_hint = _resolve_broker_hint(payload.get("broker"))
             state = _public_panel_readback_state(_read_trade_panel(panel="position", stock_code=stock_code, broker=broker_hint))
             if not state.get("ok"):
+                if dry_run:
+                    return _preview(
+                        "预演持仓区域回读（OCR引擎未就绪，返回空持仓结构）",
+                        t,
+                        position_state=state,
+                        broker=broker_hint or None,
+                        engine_ready=False,
+                        preview_error=state.get("error"),
+                    )
                 return _reply(False, "持仓区域回读失败: " + (state.get("error") or "未知错误"), t, position_state=state)
             if state.get("found"):
                 lines = ["已识别持仓区域摘要"]
@@ -1312,6 +1392,215 @@ def _exec_desktop(cid, payload=None):
             lines.append("下一步：" + str(snapshot.get("next_step")))
             lines.append("监视结论：" + ("已进入可接管态" if snapshot.get("ready") else "仍未进入可接管态"))
             return _reply(True, "\n".join(lines), t, **snapshot)
+
+        if cid == "trade_live_validate":
+            broker = str(payload.get("broker", "")).strip()
+            stock_code = str(payload.get("stock_code", "")).strip()
+            trade_action = str(payload.get("trade_action", "")).strip().lower() or "buy"
+            price = float(payload.get("price", 0) or 0)
+            lots = int(payload.get("lots", 0) or 0)
+            auto_focus = payload.get("auto_focus", True)
+            auto_navigate = payload.get("auto_navigate", True)
+            capture_evidence = True if "capture_evidence" not in payload else _flag(payload, "capture_evidence")
+            app_only = _flag(payload, "app_only")
+            confirm = _flag(payload, "confirm")
+            timeout = max(3, min(int(payload.get("timeout", 15) or 15), 120))
+            precheck = _trade_takeover_precheck(
+                broker=broker,
+                stock_code=stock_code,
+                trade_action=trade_action,
+                price=price,
+                lots=lots,
+                auto_focus=bool(auto_focus),
+                auto_navigate=bool(auto_navigate),
+                capture_evidence=capture_evidence,
+                app_only=app_only,
+            )
+            report = {
+                "saved_at": int(time.time()),
+                "mode": "app_only" if app_only else "desktop_live",
+                "confirm": confirm,
+                "broker": broker or None,
+                "stock_code": stock_code or None,
+                "trade_action": trade_action,
+                "price": price,
+                "lots": lots,
+                "precheck": precheck,
+                "steps": [],
+                "validation_state": {
+                    "passed": False,
+                    "stage": "precheck",
+                    "blocked_reason": None,
+                    "criteria": {
+                        "precheck_ready": bool(precheck.get("precheck_passed")),
+                        "fill_available": bool(precheck.get("can_fill_form")),
+                        "submit_available": bool(precheck.get("can_submit_confirm")),
+                    },
+                },
+            }
+            if dry_run:
+                if capture_evidence:
+                    report["evidence"] = _trade_validation_evidence_plan(broker=broker, stock_code=stock_code)
+                return _preview(
+                    f"预演闭环验证：{broker or '自动识别券商'} -> 预检 -> 填单 -> 提交 -> 结果回看",
+                    t,
+                    report=report,
+                    app_only=app_only,
+                    confirm=confirm,
+                )
+            fill_payload = {
+                "id": "trade_form_fill",
+                "broker": broker,
+                "stock_code": stock_code,
+                "trade_action": trade_action,
+                "price": price,
+                "lots": lots,
+                "auto_focus": bool(auto_focus),
+                "auto_navigate": bool(auto_navigate),
+                "app_only": app_only,
+            }
+            submit_payload = {
+                "id": "trade_submit_confirm",
+                "broker": broker,
+                "stock_code": stock_code,
+                "trade_action": trade_action,
+                "confirm": True,
+                "app_only": app_only,
+            }
+            watch_payload = {
+                "id": "trade_result_watch",
+                "broker": broker,
+                "stock_code": stock_code,
+                "trade_action": trade_action,
+                "timeout": timeout,
+                "app_only": app_only,
+            }
+            if confirm:
+                fill_payload["confirm"] = True
+            else:
+                fill_payload["dry_run"] = True
+            form_result = None
+            submit_result = None
+            watch_result = None
+            if precheck.get("can_fill_form"):
+                form_result = _exec_desktop("trade_form_fill", fill_payload)
+                report["steps"].append({"id": "trade_form_fill", "result": form_result})
+                report["validation_state"]["stage"] = "form_fill"
+                if not form_result.get("ok"):
+                    report["validation_state"]["blocked_reason"] = form_result.get("error") or "填单失败"
+            else:
+                report["validation_state"]["blocked_reason"] = "当前未满足填单条件"
+            if confirm and (precheck.get("can_submit_confirm") or app_only) and (not form_result or form_result.get("ok")):
+                submit_result = _exec_desktop("trade_submit_confirm", submit_payload)
+                report["steps"].append({"id": "trade_submit_confirm", "result": submit_result})
+                report["validation_state"]["stage"] = "submit_confirm"
+                if submit_result.get("ok"):
+                    watch_result = _exec_desktop("trade_result_watch", watch_payload)
+                    report["steps"].append({"id": "trade_result_watch", "result": watch_result})
+                    report["validation_state"]["stage"] = "result_watch"
+                else:
+                    report["validation_state"]["blocked_reason"] = submit_result.get("error") or "提交确认失败"
+            elif confirm and not (precheck.get("can_submit_confirm") or app_only):
+                report["validation_state"]["blocked_reason"] = "当前未识别到可提交确认态"
+            elif not confirm:
+                report["validation_state"]["blocked_reason"] = "未携带 confirm=true，已停在安全预演/预填单阶段"
+            passed = bool(watch_result and watch_result.get("ok")) if confirm else bool(form_result and form_result.get("ok"))
+            report["validation_state"]["passed"] = passed
+            if capture_evidence:
+                report["evidence"] = _archive_trade_validation_report(report, broker=broker, stock_code=stock_code)
+            lines = []
+            lines.append("闭环模式：" + ("APP内闭环" if app_only else "真实桌面闭环"))
+            lines.append("预检：" + ("通过" if precheck.get("precheck_passed") else "未通过"))
+            lines.append("填单：" + ("通过" if form_result and form_result.get("ok") else ("未执行" if form_result is None else "失败")))
+            lines.append("提交：" + ("通过" if submit_result and submit_result.get("ok") else ("未执行" if submit_result is None else "失败")))
+            lines.append("回看：" + ("通过" if watch_result and watch_result.get("ok") else ("未执行" if watch_result is None else "失败")))
+            if report["validation_state"].get("blocked_reason"):
+                lines.append("阻断原因：" + str(report["validation_state"].get("blocked_reason")))
+            if report.get("evidence"):
+                lines.append("证据归档：" + str((report.get("evidence") or {}).get("report_path") or "已记录"))
+            return _reply(
+                passed,
+                "\n".join(lines),
+                t,
+                app_only=app_only,
+                confirm=confirm,
+                precheck=precheck,
+                form_result=form_result,
+                submit_result=submit_result,
+                watch_result=watch_result,
+                validation_state=report["validation_state"],
+                evidence=report.get("evidence"),
+            )
+
+        if cid == "trade_execute_next":
+            broker = str(payload.get("broker", "")).strip()
+            stock_code = str(payload.get("stock_code", "")).strip()
+            trade_action = str(payload.get("trade_action", "")).strip().lower()
+            price = float(payload.get("price", 0) or 0)
+            lots = int(payload.get("lots", 0) or 0)
+            auto_focus = payload.get("auto_focus", True)
+            auto_navigate = payload.get("auto_navigate", True)
+            capture_evidence = _flag(payload, "capture_evidence")
+            app_only = _flag(payload, "app_only")
+            timeout_sec = max(5, min(int(payload.get("timeout_sec", 20) or 20), 180))
+            poll_interval = max(1, min(int(payload.get("poll_interval", 2) or 2), 10))
+            timeout = max(3, min(int(payload.get("timeout", 15) or 15), 120))
+            precheck = _trade_takeover_precheck(
+                broker=broker,
+                stock_code=stock_code,
+                trade_action=trade_action,
+                price=price,
+                lots=lots,
+                auto_focus=bool(auto_focus),
+                auto_navigate=bool(auto_navigate),
+                capture_evidence=capture_evidence,
+                app_only=app_only,
+            )
+            next_action_id = str(precheck.get("next_action_id") or "").strip()
+            if dry_run:
+                label = next_action_id or "无可执行动作"
+                return _preview(
+                    f"预演执行唯一下一步：{label}",
+                    t,
+                    planned_action=next_action_id or None,
+                    executed_action=next_action_id or None,
+                    precheck=precheck,
+                    auto_selected=True,
+                    app_only=app_only,
+                )
+            if not next_action_id:
+                return _reply(False, "当前没有可执行的唯一下一步，请先刷新接管预检并满足条件", t, precheck=precheck, executed_action=None, auto_selected=True, app_only=app_only)
+            exec_payload = {
+                "id": next_action_id,
+                "broker": broker,
+                "stock_code": stock_code,
+                "trade_action": trade_action,
+                "price": price,
+                "lots": lots,
+                "auto_focus": bool(auto_focus),
+                "auto_navigate": bool(auto_navigate),
+                "capture_evidence": capture_evidence,
+                "app_only": app_only,
+            }
+            if next_action_id == "trade_takeover_watch":
+                exec_payload["timeout_sec"] = timeout_sec
+                exec_payload["poll_interval"] = poll_interval
+            elif next_action_id == "trade_panel_probe":
+                exec_payload["capture_evidence"] = True
+            elif next_action_id == "trade_form_fill" and not _flag(payload, "confirm"):
+                exec_payload["dry_run"] = True
+            elif next_action_id == "trade_result_watch":
+                exec_payload["timeout"] = timeout
+            if next_action_id == "trade_submit_confirm" and _flag(payload, "confirm"):
+                exec_payload["confirm"] = True
+            result = _exec_desktop(next_action_id, exec_payload)
+            result_body = dict(result or {})
+            result_body["executed_action"] = next_action_id
+            result_body["planned_action"] = next_action_id
+            result_body["precheck"] = precheck
+            result_body["auto_selected"] = True
+            result_body["app_only"] = app_only if "app_only" not in result_body else result_body.get("app_only")
+            return result_body
 
         if cid == "trade_takeover_precheck":
             broker = str(payload.get("broker", "")).strip()

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "external_ai_stdio": {
+      "command": "${workspaceFolder}\\tools\\mcp_stdio_ai_bridge.exe",
+      "args": [],
+      "description": "通过本地 GBT Runtime 复用已配置外部 AI 的 stdio 桥接器"
+    }
+  }
+}

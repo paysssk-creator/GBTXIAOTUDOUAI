@@ -11,11 +11,11 @@ import sys
 from pathlib import Path
 
 APP_NAME = "GBT Pro"
-APP_VERSION = "v1.1.18"
-RELEASE_TAG = "v1.1.18-desktop-runtime"
+APP_VERSION = "v1.1.22"
+RELEASE_TAG = "v1.1.22-desktop-runtime"
 RUNTIME_FLAVOR = "dir_parallel"
-RUNTIME_DIRNAME = "GBT_Pro_v1.1.18_dir_parallel"
-RUNTIME_EXE = "GBT_Pro_v1.1.18_dir_parallel.exe"
+RUNTIME_DIRNAME = "GBT_Pro_v1.1.22_dir_parallel"
+RUNTIME_EXE = "GBT_Pro_v1.1.22_dir_parallel.exe"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RELEASE_ROOT = PROJECT_ROOT / "release"

@@ -447,6 +447,51 @@ def test_desktop_exec_trade_panel_probe_dry_run_with_evidence():
     assert "audit_evidence/" in (j["evidence"].get("report_path") or "")
 
 
+def test_desktop_exec_trade_execute_next_app_only_defaults_to_fill_preview():
+    """POST /api/desktop/exec 支持服务端自动执行唯一下一步"""
+    assert is_main_alive()
+    code, body = post("/api/desktop/exec", {
+        "id": "trade_execute_next",
+        "broker": "同花顺",
+        "stock_code": "600519",
+        "trade_action": "buy",
+        "price": 1420.55,
+        "lots": 100,
+        "app_only": True,
+    })
+    assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert j["ok"] is True
+    assert j["executed_action"] == "trade_form_fill"
+    assert j["dry_run"] is True
+    assert j["auto_selected"] is True
+    assert j["precheck"]["next_action_id"] == "trade_form_fill"
+
+
+def test_desktop_exec_trade_live_validate_app_only_with_confirm_archives_evidence():
+    """POST /api/desktop/exec 支持闭环验证与证据归档"""
+    assert is_main_alive()
+    code, body = post("/api/desktop/exec", {
+        "id": "trade_live_validate",
+        "broker": "同花顺",
+        "stock_code": "600519",
+        "trade_action": "buy",
+        "price": 1420.55,
+        "lots": 100,
+        "app_only": True,
+        "confirm": True,
+    })
+    assert code == 200
+    j = json.loads(body.decode("utf-8", errors="ignore"))
+    assert j["ok"] is True
+    assert j["validation_state"]["passed"] is True
+    assert j["form_result"]["ok"] is True
+    assert j["submit_result"]["ok"] is True
+    assert j["watch_result"]["ok"] is True
+    assert "screenshots/" in (j["evidence"].get("screenshot_path") or "")
+    assert "audit_evidence/" in (j["evidence"].get("report_path") or "")
+
+
 def test_desktop_exec_trade_submit_confirm_requires_confirm():
     """POST /api/desktop/exec 提交交易确认必须显式 confirm"""
     assert is_main_alive()

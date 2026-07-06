@@ -6,10 +6,110 @@
 
 # 开发者: 自由的风
 from flask import Blueprint, jsonify, request, render_template_string, make_response
-import os, json, time
+import os, json, time, re
 from gbt.api import _state
 from gbt.release_meta import runtime_identity
 bp = Blueprint("dash", __name__)
+
+
+_BROWSER_WINDOW_RE = re.compile(r"(chrome|edge|firefox|浏览器|webview)", re.I)
+
+
+def _parse_amount(value):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    text = text.replace("¥", "").replace("￥", "").replace(",", "").strip()
+    m = re.search(r"([+-]?\d+(?:\.\d+)?)", text)
+    if not m:
+        return None
+    try:
+        return round(float(m.group(1)), 2)
+    except Exception:
+        return None
+
+
+def _extract_labeled_amount(text, labels):
+    content = str(text or "")
+    for label in labels:
+        pattern = rf"(?:{label})[：:\s¥￥]*([+-]?\d[\d,]*(?:\.\d+)?)"
+        m = re.search(pattern, content)
+        if m:
+            amount = _parse_amount(m.group(1))
+            if amount is not None:
+                return amount
+    return None
+
+
+def _empty_live_account(reason="", broker="", window_state=None):
+    return {
+        "cash": None,
+        "equity": None,
+        "pnl": None,
+        "positions": 0,
+        "connected": False,
+        "source": "unavailable",
+        "reason": reason,
+        "broker": broker or None,
+        "window_state": window_state or {},
+        "updated_at": "",
+    }
+
+
+def _live_account_from_screen():
+    try:
+        from gbt.api.audit import _scan_broker_windows
+        scan = _scan_broker_windows()
+        broker_hits = scan.get("broker_windows") or []
+        selected = None
+        for item in broker_hits:
+            title = str((item or {}).get("title") or "").strip()
+            if title and not _BROWSER_WINDOW_RE.search(title):
+                selected = item
+                break
+        if not selected:
+            return _empty_live_account(reason="未识别到真实券商客户端窗口", window_state=scan)
+
+        active_title = str(((scan.get("active_window") or {}).get("title")) or "").strip()
+        selected_title = str(selected.get("title") or "").strip()
+        broker_name = str(selected.get("broker") or "").strip()
+        if not active_title or active_title != selected_title:
+            return _empty_live_account(reason="真实券商客户端未在前台", broker=broker_name, window_state=scan)
+
+        from gbt.screen_ai import ScreenOCR
+        ocr = ScreenOCR()
+        result = ocr.read_text()
+        if not result.get("ok"):
+            return _empty_live_account(reason=result.get("error", "账户OCR读取失败"), broker=broker_name, window_state=scan)
+
+        text = result.get("text") or ""
+        cash = _extract_labeled_amount(text, ["可用资金", "可用余额", "资金余额", "可取资金", "可取金额"])
+        equity = _extract_labeled_amount(text, ["总资产", "资产总值", "账户资产", "总权益", "净资产", "净值"])
+        pnl = _extract_labeled_amount(text, ["参考盈亏", "浮动盈亏", "总盈亏", "当日盈亏", "盈亏"])
+        position_state = ocr.detect_trade_panel_readback(panel="position", broker=broker_name)
+        positions = int(((position_state.get("summary") or {}).get("row_count")) or 0)
+        if not positions:
+            positions = len(position_state.get("rows") or [])
+
+        has_asset_labels = sum(1 for key in ("可用资金", "总资产", "资产总值", "账户资产", "参考盈亏", "浮动盈亏") if key in text)
+        connected = (cash is not None) or (equity is not None) or (has_asset_labels >= 2 and pnl is not None)
+        if not connected:
+            return _empty_live_account(reason="已聚焦券商客户端，但未回读到账户资金区", broker=broker_name, window_state=scan)
+
+        return {
+            "cash": cash,
+            "equity": equity,
+            "pnl": pnl,
+            "positions": positions,
+            "connected": True,
+            "source": "broker_ocr",
+            "reason": "",
+            "broker": broker_name or None,
+            "window_state": scan,
+            "updated_at": result.get("timestamp") or "",
+        }
+    except Exception as e:
+        return _empty_live_account(reason=str(e)[:120])
 
 
 @bp.route("/")
@@ -111,8 +211,7 @@ def dashboard_data():
         data["mcp"] = {"servers": []}
     # Trade / Account
     try:
-        from gbt.paper_account import get_state as _pa_state
-        pa = _pa_state()
+        live_account = _live_account_from_screen()
         watchlist = [("600519", "贵州茅台"), ("600036", "招商银行")]
         watchlist_quotes = []
         # 优先复用 autopilot 最近一次扫描结果，避免 dashboard 请求阻塞在慢行情接口
@@ -130,17 +229,12 @@ def dashboard_data():
         except Exception:
             watchlist_quotes = [{"code": c, "name": n, "price": 0, "change_pct": 0} for c, n in watchlist]
         data["trade"] = {
-            "account": {
-                "cash": round(pa.get("cash", 0), 2),
-                "equity": round(pa.get("equity", 0), 2),
-                "pnl": round(pa.get("total_pnl", 0), 2),
-                "positions": pa.get("position_count", 0),
-            },
+            "account": live_account,
             "watchlist": watchlist_quotes,
         }
     except Exception:
         data["trade"] = {
-            "account": {"cash": 100000, "equity": 100000, "pnl": 0, "positions": 0},
+            "account": _empty_live_account(reason="账户快照读取失败"),
             "watchlist": [
                 {"code": "600519", "name": "贵州茅台", "price": 0, "change_pct": 0},
                 {"code": "600036", "name": "招商银行", "price": 0, "change_pct": 0},

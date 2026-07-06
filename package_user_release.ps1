@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "v1.1.18"
+    [string]$Version = "v1.1.22"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,3 +38,4 @@ Set-Content -Path $shaPath -Value $hash -Encoding ASCII
 Write-Host "OK: user package dir -> $packageDir"
 Write-Host "OK: user zip -> $zipPath"
 Write-Host "OK: sha256 -> $shaPath"
+

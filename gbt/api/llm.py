@@ -335,6 +335,193 @@ def _capability_scope_answer() -> str:
     )
 
 
+_CHAT_EXEC_BROKERS = [
+    "东方财富", "同花顺", "国泰君安", "中信证券", "招商证券", "银河证券", "广发证券",
+]
+
+
+def _extract_chat_broker(text: str) -> str:
+    text = str(text or "")
+    for name in _CHAT_EXEC_BROKERS:
+        if name in text:
+            return name
+    return ""
+
+
+def _extract_chat_stock_code(text: str) -> str:
+    m = re.search(r"(?<!\d)(?:sh|sz)?(\d{6})(?!\d)", str(text or ""), re.I)
+    return m.group(1) if m else ""
+
+
+def _extract_chat_price(text: str) -> float:
+    m = re.search(r"(?:价格|价位|price)\s*[:：=]?\s*(\d+(?:\.\d+)?)", str(text or ""), re.I)
+    return float(m.group(1)) if m else 0.0
+
+
+def _extract_chat_lots(text: str) -> int:
+    text = str(text or "")
+    m = re.search(r"(?:数量|股数|手数|仓位)\s*[:：=]?\s*(\d+)\s*(股|手)?", text, re.I)
+    if not m:
+        m = re.search(r"(\d+)\s*(股|手)", text, re.I)
+    if not m:
+        return 0
+    value = int(m.group(1))
+    unit = str(m.group(2) or "").lower()
+    return value * 100 if unit == "手" else value
+
+
+def _extract_chat_hotkey_keys(text: str) -> list:
+    aliases = {
+        "control": "ctrl", "ctrl": "ctrl", "alt": "alt", "shift": "shift",
+        "win": "win", "windows": "win", "tab": "tab", "enter": "enter",
+        "esc": "esc", "escape": "esc", "delete": "delete", "del": "delete",
+        "space": "space", "backspace": "backspace",
+    }
+    found = []
+    for token in re.split(r"[\s,+，、]+", str(text or "").lower()):
+        key = token.strip()
+        if not key:
+            continue
+        if re.fullmatch(r"f(?:[1-9]|1[0-2])", key):
+            found.append(key)
+            continue
+        if key in aliases:
+            found.append(aliases[key])
+    return found
+
+
+def _extract_chat_xy(text: str):
+    m = re.search(r"(\d{1,5})\s*[,，xX]\s*(\d{1,5})", str(text or ""))
+    if not m:
+        return None, None
+    return int(m.group(1)), int(m.group(2))
+
+
+def _chat_exec_response(result: dict, cid: str, payload: dict) -> dict:
+    ok = bool(result.get("ok"))
+    response = str(result.get("data") or result.get("error") or "").strip()
+    return {
+        "ok": ok,
+        "response": response,
+        "reasoning": None,
+        "model": "desktop-executor",
+        "provider": "GBT Runtime",
+        "deep_reasoning": False,
+        "brain_mode": "local",
+        "metrics": {"tokens_in": 0, "tokens_out": 0, "cost_rmb": 0, "time": time.strftime("%H:%M:%S"), "model": "desktop-executor"},
+        "tokens_consumed": 0,
+        "tokens_remaining": None,
+        "executed_action": cid,
+        "action_payload": payload,
+        "desktop_result": result,
+        "requires_confirmation": bool(result.get("requires_confirmation")),
+        "dry_run": bool(result.get("dry_run")),
+    }
+
+
+def _route_chat_to_desktop_exec(text: str, dry_run: bool = False):
+    text = str(text or "").strip()
+    if not text:
+        return None
+    broker = _extract_chat_broker(text)
+    stock_code = _extract_chat_stock_code(text)
+    price = _extract_chat_price(text)
+    lots = _extract_chat_lots(text)
+
+    if re.search(r"(确认提交|确认下单|立即下单|现在提交)", text):
+        trade_action = "sell" if re.search(r"卖出|卖掉|卖了", text) else "buy"
+        payload = {
+            "id": "trade_submit_confirm",
+            "trade_action": trade_action,
+            "stock_code": stock_code,
+            "broker": broker,
+            "confirm": True,
+            "dry_run": dry_run,
+        }
+        return "trade_submit_confirm", payload
+
+    if re.search(r"(结果回看|回看结果|委托结果|持仓结果|回看委托|回看持仓)", text):
+        trade_action = "sell" if re.search(r"卖出|卖掉|卖了", text) else "buy"
+        payload = {
+            "id": "trade_result_watch",
+            "trade_action": trade_action,
+            "stock_code": stock_code,
+            "broker": broker,
+            "dry_run": dry_run,
+        }
+        return "trade_result_watch", payload
+
+    if re.search(r"(确认填单|执行填单|立即填单)", text):
+        trade_action = "sell" if re.search(r"卖出|卖掉|卖了", text) else "buy"
+        payload = {
+            "id": "trade_form_fill",
+            "trade_action": trade_action,
+            "stock_code": stock_code,
+            "price": price,
+            "lots": lots,
+            "broker": broker,
+            "confirm": True,
+            "dry_run": dry_run,
+        }
+        return "trade_form_fill", payload
+
+    if re.search(r"(买入|卖出|下单|填单|委托|自主操盘|操盘预检|交易预检|开始操盘|检查操盘)", text):
+        trade_action = "sell" if re.search(r"卖出|卖掉|卖了", text) else "buy"
+        payload = {
+            "id": "trade_takeover_precheck",
+            "trade_action": trade_action,
+            "stock_code": stock_code,
+            "price": price,
+            "lots": lots,
+            "broker": broker,
+            "dry_run": dry_run,
+        }
+        return "trade_takeover_precheck", payload
+
+    if re.search(r"(移动鼠标到|鼠标移动到)", text):
+        x, y = _extract_chat_xy(text)
+        if x is not None and y is not None:
+            return "mouse_move", {"id": "mouse_move", "x": x, "y": y, "dry_run": dry_run}
+
+    if re.search(r"(点击|单击|双击|鼠标点击)", text):
+        x, y = _extract_chat_xy(text)
+        clicks = 2 if re.search(r"双击", text) else 1
+        if x is not None and y is not None:
+            return "mouse_click", {"id": "mouse_click", "x": x, "y": y, "clicks": clicks, "button": "left", "dry_run": dry_run}
+        if "当前位置" in text:
+            return "mouse_click", {"id": "mouse_click", "clicks": clicks, "button": "left", "dry_run": dry_run}
+
+    if re.search(r"(快捷键|按下)", text):
+        keys = _extract_chat_hotkey_keys(text)
+        if keys:
+            return "keyboard_hotkey", {"id": "keyboard_hotkey", "keys": keys, "dry_run": dry_run}
+
+    type_match = re.search(r'(?:输入|键入|打字|帮我输入)\s*["\u201c]?(.+?)["\u201d]?$', text, re.S)
+    if type_match and not re.search(r"(股票|买入|卖出|价格|数量|手数)", text):
+        typed_text = type_match.group(1).strip().strip('"')
+        if typed_text:
+            return "keyboard_type", {"id": "keyboard_type", "text": typed_text[:500], "dry_run": dry_run}
+
+    url_match = re.search(r"https?://\S+", text, re.I)
+    wants_browser = bool(re.search(r"(打开|启动|访问|进入|帮我打开).*(浏览器|网页|网站|chrome|edge)", text, re.I))
+    wants_broker = bool(re.search(r"(打开|启动|访问|进入|帮我打开)", text) and broker)
+    wants_search = bool(re.search(r"(打开|启动|访问|进入|帮我打开).*(搜索|查询)", text) or re.match(r"^(搜索|查询)", text))
+    if url_match or wants_browser or wants_broker or wants_search:
+        payload = {"id": "browser_open", "dry_run": dry_run}
+        if broker and not url_match:
+            payload["broker"] = broker
+        if url_match:
+            payload["url"] = url_match.group(0)
+        search_match = re.search(r"(?:搜索|查询)\s*(.+)$", text)
+        if search_match and not payload.get("url"):
+            query = search_match.group(1).strip(" ：:，,。.")
+            if query:
+                payload["query"] = query
+        return "browser_open", payload
+
+    return None
+
+
 @bp.route("/api/config/llm", methods=["POST"])
 def config_llm():
     """保存并初始化 LLM — 用户输入密钥即可启动大模型"""
@@ -535,6 +722,12 @@ def api_chat():
             "tokens_consumed": 0,
             "tokens_remaining": remaining,
         })
+    desktop_route = _route_chat_to_desktop_exec(txt, dry_run=bool(d.get("dry_run")))
+    if desktop_route:
+        cid, payload = desktop_route
+        from gbt.api.audit import _exec_desktop
+        result = _exec_desktop(cid, payload)
+        return jsonify(_chat_exec_response(result, cid, payload))
     try:
         _load_saved_llm_env()
         from gbt.providers import detect_keys, PROVIDERS
@@ -555,25 +748,17 @@ def api_chat():
                     break
         if not provider:
             return jsonify({"ok": False, "error": "未找到可用LLM Key，请先在「连接大模型」面板配置API Key后重试"})
-        # 可选鉴权：前端未登录时走默认余额；登录后可通过 token 绑定到个人余额
+        # 当前版本已移除聊天收费与令牌消耗，仅在传入 token 时校验会话是否合法。
         user_id = "_default"
         auth_token = d.get("token", "").strip() or request.headers.get("X-Auth-Token", "").strip()
+        remaining = None
         try:
-            from gbt.auth import get_auth, get_balance
             if auth_token:
+                from gbt.auth import get_auth
                 verified = get_auth().verify_session(auth_token)
                 if not verified:
                     return jsonify({"ok": False, "error": "会话过期，请重新登录"}), 401
                 user_id = verified
-            balance = get_balance().get_balance(user_id)
-            remaining = max(0, int(balance.get("tokens", 0)) - int(balance.get("used", 0)))
-            if remaining <= 0:
-                if user_id == "_default":
-                    return jsonify({
-                        "ok": False,
-                        "error": "当前为访客模式，Token余额为0。请先登录领取新用户10000 tokens 后再开始对话。当前版本已移除付费模块。"
-                    }), 402
-                return jsonify({"ok": False, "error": "Token余额不足。当前版本已移除付费模块，请专注使用电脑操控与自主操盘主能力。"}), 402
         except Exception:
             remaining = None
         cloud_cfg = _cloud_brain_runtime_cfg()
@@ -584,20 +769,8 @@ def api_chat():
                 if cloud_data.get("ok"):
                     cloud_text = str(cloud_data.get("response", "") or "")
                     llm_metrics = _estimate_cloud_metrics(txt, cloud_text, cloud_data.get("model") or "cloud-brain")
-                    consumed = max(1, int(llm_metrics["tokens_in"]) + int(llm_metrics["tokens_out"]))
-                    try:
-                        from gbt.auth import get_balance
-                        if not get_balance().consume(user_id, consumed):
-                            if user_id == "_default":
-                                return jsonify({
-                                    "ok": False,
-                                    "error": "当前为访客模式，Token余额为0。请先登录领取新用户10000 tokens 后再开始对话。当前版本已移除付费模块。"
-                                }), 402
-                            return jsonify({"ok": False, "error": "Token余额不足。当前版本已移除付费模块，请专注使用电脑操控与自主操盘主能力。"}), 402
-                        bal = get_balance().get_balance(user_id)
-                        remaining = max(0, int(bal.get("tokens", 0)) - int(bal.get("used", 0)))
-                    except Exception:
-                        remaining = None
+                    consumed = 0
+                    remaining = None
                     return jsonify({
                         "ok": True,
                         "response": cloud_text[:6000],
@@ -643,20 +816,8 @@ def api_chat():
                 llm_metrics["reasoning_tokens"] = rt
         llm_metrics["cost_rmb"] = round((llm_metrics["tokens_in"] * 2.5 + llm_metrics["tokens_out"] * 10) / 1000000 * 7.25, 6)
         llm_metrics["model"] = llm.model
-        try:
-            from gbt.auth import get_balance
-            consumed = max(1, int(llm_metrics["tokens_in"]) + int(llm_metrics["tokens_out"]))
-            if not get_balance().consume(user_id, consumed):
-                if user_id == "_default":
-                    return jsonify({
-                        "ok": False,
-                        "error": "当前为访客模式，Token余额为0。请先登录领取新用户10000 tokens 后再开始对话。当前版本已移除付费模块。"
-                    }), 402
-                return jsonify({"ok": False, "error": "Token余额不足。当前版本已移除付费模块，请专注使用电脑操控与自主操盘主能力。"}), 402
-            bal = get_balance().get_balance(user_id)
-            remaining = max(0, int(bal.get("tokens", 0)) - int(bal.get("used", 0)))
-        except Exception:
-            consumed = 0
+        consumed = 0
+        remaining = None
         return jsonify({
             "ok": True,
             "response": content[:6000],

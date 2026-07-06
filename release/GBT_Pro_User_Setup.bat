@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 
 set "APP_NAME=GBT Pro"
-set "APP_VERSION=v1.1.18"
+set "APP_VERSION=v1.1.22"
 set "SOURCE_DIR=%~dp0"
 set "SOURCE_EXE=%SOURCE_DIR%GBT_Pro_%APP_VERSION%.exe"
 
@@ -89,3 +89,4 @@ if /I "%GBT_SKIP_LAUNCH%"=="1" exit /b 0
 
 start "" "%LAUNCHER%"
 exit /b 0
+

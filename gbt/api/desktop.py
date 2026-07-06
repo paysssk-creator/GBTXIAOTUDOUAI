@@ -26,6 +26,8 @@ _DESKTOP_ACTIONS = [
     {"id": "trade_takeover_ready", "name": "自主接管准备", "desc": "自动聚焦券商并判断 AI 是否可接管操盘"},
     {"id": "trade_takeover_watch", "name": "持续接管监视", "desc": "持续等待券商窗口与登录完成，并自动尝试切到交易页"},
     {"id": "trade_takeover_precheck", "name": "接管后预检", "desc": "串联接管状态、填单条件和高风险门禁，给出下一步动作建议"},
+    {"id": "trade_execute_next", "name": "执行唯一下一步", "desc": "由服务端自动判定并执行当前唯一下一步动作"},
+    {"id": "trade_live_validate", "name": "闭环验证", "desc": "执行预检、填单、提交与结果回看，并归档验证证据"},
     {"id": "trade_anchor_detect", "name": "交易锚点识别", "desc": "OCR识别代码/价格/数量输入框与确认按钮锚点"},
     {"id": "trade_confirm_detect", "name": "确认弹窗识别", "desc": "识别交易确认弹窗与确认按钮位置"},
     {"id": "trade_entrust_readback", "name": "委托区域回读", "desc": "OCR回读当前委托列表摘要"},
