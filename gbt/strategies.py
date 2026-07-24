@@ -164,6 +164,141 @@ def bollinger_squeeze(closes, period=20, std=2):
     return {"signal": "hold", "confidence": 0, "reason": f"布林带宽{width_now:.1f}%"}
 
 
+
+# ═══════════ GBT v5.0 专业级策略扩展 ═══════════
+
+def support_resistance(highs, lows, closes, lookback=20):
+    """支撑阻力位分析 — 基于近期高低点和成交量密集区"""
+    if len(closes) < lookback:
+        return {"signal": "hold", "confidence": 0, "reason": "数据不足"}
+    
+    recent_high = max(highs[-lookback:])
+    recent_low = min(lows[-lookback:])
+    current = closes[-1]
+    price_range = recent_high - recent_low
+    
+    if price_range == 0:
+        return {"signal": "hold", "confidence": 0, "reason": "价格不变"}
+    
+    # 计算距离支撑/阻力的百分比
+    dist_to_resist = (recent_high - current) / price_range * 100
+    dist_to_support = (current - recent_low) / price_range * 100
+    
+    # 靠近支撑位 + 有反弹迹象 = 买入信号
+    if dist_to_support < 20 and closes[-1] > closes[-2]:
+        conf = min(80, 50 + (20 - dist_to_support) * 2)
+        return {"signal": "buy", "confidence": round(conf, 1),
+                "reason": f"📐 接近支撑 {recent_low:.2f} (距离{dist_to_support:.0f}%) · 反弹确认"}
+    
+    # 靠近阻力位 + 有回落迹象 = 卖出信号
+    if dist_to_resist < 20 and closes[-1] < closes[-2]:
+        conf = min(80, 50 + (20 - dist_to_resist) * 2)
+        return {"signal": "sell", "confidence": round(conf, 1),
+                "reason": f"📐 接近阻力 {recent_high:.2f} (距离{dist_to_resist:.0f}%) · 遇阻回落"}
+    
+    # 突破阻力 = 强势买入
+    if current > recent_high and closes[-2] <= recent_high:
+        return {"signal": "buy", "confidence": 75,
+                "reason": f"🚀 突破阻力 {recent_high:.2f} · 打开上涨空间"}
+    
+    # 跌破支撑 = 卖出
+    if current < recent_low and closes[-2] >= recent_low:
+        return {"signal": "sell", "confidence": 80,
+                "reason": f"⚠️ 跌破支撑 {recent_low:.2f} · 止损信号"}
+    
+    return {"signal": "hold", "confidence": 15,
+            "reason": f"支撑{recent_low:.2f} ← {current:.2f} → 阻力{recent_high:.2f}"}
+
+
+def trend_strength(closes, period=14):
+    """趋势强度分析 — ADX简化版 + 均线排列"""
+    if len(closes) < period + 2:
+        return {"signal": "hold", "confidence": 0, "reason": "数据不足"}
+    
+    # 计算方向性移动 (+DM/-DM)
+    up_moves = []
+    down_moves = []
+    true_ranges = []
+    for i in range(1, len(closes)):
+        up = closes[i] - closes[i-1] if closes[i] > closes[i-1] else 0
+        down = closes[i-1] - closes[i] if closes[i] < closes[i-1] else 0
+        up_moves.append(up)
+        down_moves.append(down)
+        true_ranges.append(abs(closes[i] - closes[i-1]))
+    
+    # 平滑
+    def ema(data, n):
+        k = 2 / (n + 1)
+        result = [data[0]]
+        for v in data[1:]:
+            result.append(v * k + result[-1] * (1 - k))
+        return result
+    
+    atr = ema(true_ranges, period)[-1]
+    plus_di = ema(up_moves, period)[-1] / atr * 100 if atr > 0 else 0
+    minus_di = ema(down_moves, period)[-1] / atr * 100 if atr > 0 else 0
+    
+    dx = abs(plus_di - minus_di) / (plus_di + minus_di) * 100 if (plus_di + minus_di) > 0 else 0
+    
+    if dx > 40 and plus_di > minus_di:
+        return {"signal": "buy", "confidence": min(85, dx),
+                "reason": f"📈 强趋势上涨 ADX~{dx:.0f} · +DI={plus_di:.0f} > -DI={minus_di:.0f}"}
+    elif dx > 40 and minus_di > plus_di:
+        return {"signal": "sell", "confidence": min(85, dx),
+                "reason": f"📉 强趋势下跌 ADX~{dx:.0f} · -DI={minus_di:.0f} > +DI={plus_di:.0f}"}
+    elif dx < 20:
+        return {"signal": "hold", "confidence": 10,
+                "reason": f"📊 无明显趋势 ADX~{dx:.0f} · 震荡市"}
+    
+    return {"signal": "hold", "confidence": 20,
+            "reason": f"ADX~{dx:.0f} +DI={plus_di:.0f} -DI={minus_di:.0f}"}
+
+
+def fibonacci_retracement(highs, lows, closes):
+    """斐波那契回撤分析"""
+    if len(closes) < 30:
+        return {"signal": "hold", "confidence": 0, "reason": "数据不足"}
+    
+    swing_high = max(highs[-30:])
+    swing_low = min(lows[-30:])
+    current = closes[-1]
+    price_range = swing_high - swing_low
+    
+    if price_range == 0:
+        return {"signal": "hold", "confidence": 0, "reason": "无波动区间"}
+    
+    fib_levels = {
+        "0.236": swing_high - price_range * 0.236,
+        "0.382": swing_high - price_range * 0.382,
+        "0.500": swing_high - price_range * 0.500,
+        "0.618": swing_high - price_range * 0.618,
+        "0.786": swing_high - price_range * 0.786,
+    }
+    
+    # 找最近的关键斐波那契位
+    nearest_level = None
+    nearest_dist = float('inf')
+    for level_name, level_price in fib_levels.items():
+        dist = abs(current - level_price) / price_range * 100
+        if dist < nearest_dist:
+            nearest_dist = dist
+            nearest_level = (level_name, level_price)
+    
+    level_name, level_price = nearest_level
+    
+    # 回撤到0.618且止跌 = 黄金买点
+    if level_name in ("0.618", "0.786") and current > closes[-2]:
+        return {"signal": "buy", "confidence": 70,
+                "reason": f"✨ 斐波那契{level_name}回撤 {level_price:.2f} · 黄金买点"}
+    
+    # 反弹到0.382且遇阻 = 卖点
+    if level_name in ("0.236", "0.382") and current < closes[-2]:
+        return {"signal": "sell", "confidence": 65,
+                "reason": f"📐 斐波那契{level_name}反弹遇阻 {level_price:.2f}"}
+    
+    return {"signal": "hold", "confidence": 20,
+            "reason": f"斐波那契 最近位:{level_name}({level_price:.2f}) 距离{nearest_dist:.1f}%"}
+
 class StrategyEngine:
     """多策略综合评分引擎"""
 
@@ -172,10 +307,13 @@ class StrategyEngine:
         ("RSI背离", rsi_divergence),
         ("放量突破", volume_breakout),
         ("布林收窄", bollinger_squeeze),
+        ("支撑阻力", support_resistance),
+        ("趋势强度", trend_strength),
+        ("斐波那契", fibonacci_retracement),
     ]
 
     def __init__(self):
-        self.weights = {"MA交叉": 1.5, "RSI背离": 1.0, "放量突破": 1.2, "布林收窄": 0.8}
+        self.weights = {"MA交叉": 1.5, "RSI背离": 1.0, "放量突破": 1.2, "布林收窄": 0.8, "支撑阻力": 1.3, "趋势强度": 1.4, "斐波那契": 1.0}
 
     def analyze(self, closes, highs=None, lows=None, volumes=None):
         """

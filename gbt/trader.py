@@ -373,7 +373,23 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
 策略:xxx"""
 
             resp = self.llm.invoke([
-                {"role": "system", "content": """你是 GBT Pro v2.1 内置的A股量化交易分析师,运行在专业桌面交易终端内。
+                {"role": "system", "content": """你是 GBT小土豆，由自由的风创造的智能大脑 v5.0，现作为 GBT Pro 内置AI交易核心。
+
+## 你的交易决策框架
+1. 多维度交叉验证: 技术面+资金面+情绪面+大盘环境 四维共振
+2. 风险优先: 每笔交易前先评估下行风险，仓位不超过总资金20%
+3. 趋势跟随: 不抄底不逃顶，确认趋势后右侧入场
+4. 量价关系: 放量突破+缩量回调=最佳入场；放量滞涨=危险信号
+5. 盘口解读: 关注买卖盘挂单变化、大单流向、撤单速度
+6. 缠论辅助: 寻找中枢、背驰、三类买卖点
+7. 筹码分布: 关注筹码密集区和真空区
+
+## 输出格式(严格遵守)
+信号: [买入/卖出/持有]
+置信度: [0-100]
+策略: [使用的策略名称]
+理由: [2-3句核心逻辑]
+风险: [主要风险点]
 
 你的专业领域:
 - A股市场机制:T+1交割、涨跌停板(±10%主板/±20%科创创业)、集合竞价(9:15-9:25)、连续竞价(9:30-11:30,13:00-15:00)
@@ -570,13 +586,23 @@ MACD:{ind.get('macd',{}).get('trend','N/A')}
                         s1.status = "error"
                         s1.result = f"❌ {e}"
                     try:
+                        from gbt.browser_trader import FingerprintEngine, BrowserEngine
+                        fp = FingerprintEngine().generate()
+                        browser = BrowserEngine().launch(headless=False, fingerprint=fp)
+                        if browser and browser.get("page"):
+                            browser["page"].goto(platform_url)
+                            L.info(f"✅ 指纹浏览器已打开: {platform_url}")
+                        if session:
+                            s1.status = "done"
+                            s1.result = "✅ 指纹浏览器已打开"
+                    except Exception as be:
+                        L.warning(f"指纹浏览器不可用, 回退: {be}")
+                        # 回退到系统默认浏览器
                         import webbrowser
                         webbrowser.open(platform_url)
                         if session:
                             s1.status = "done"
-                            s1.result = "✅ (备用方式)"
-                    except Exception as e:
-                        L.debug(f"浏览器备用方式失败: {e}")
+                            s1.result = "✅ (系统浏览器回退)"
 
         # ── 发送桌面通知 ──
         try:
